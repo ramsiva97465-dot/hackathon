@@ -1,0 +1,113 @@
+import { useState } from 'react'
+import { DashboardLayout } from '@/components/layout/DashboardLayout'
+import { Button } from '@/components/ui/Button'
+import { Input, Textarea } from '@/components/ui/Input'
+import { Save, Calendar, MapPin, Link, Users, Clock, Network, PhoneCall } from 'lucide-react'
+
+export function SettingsPage() {
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = async () => {
+    setSaving(true)
+    await new Promise(r => setTimeout(r, 1200))
+    setSaving(false)
+  }
+
+  return (
+    <DashboardLayout role="admin">
+      <div className="p-6 max-w-[900px] space-y-6">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-slate-900 mb-1">Settings</h1>
+          <p className="text-sm text-slate-500">Configure SnapServe platform and Vobiz telephony integrations.</p>
+        </div>
+
+        {/* Event Info (SnapServe Identity) */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-5">
+          <h3 className="font-display font-bold text-slate-900 border-b border-slate-100 pb-2">Event Information</h3>
+          <Input label="Hackathon Name" defaultValue="AI Voice Agent Hackathon 2026" />
+          <Input label="Tagline" defaultValue="Build the Future of Voice AI" />
+          <Textarea label="Description" defaultValue="India's most competitive AI Voice Agent Hackathon. Over 48 intense hours, teams design, build, and deploy voice AI agents." />
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Start Date" type="datetime-local" defaultValue="2026-08-15T09:00" leftIcon={<Calendar size={15} />} />
+            <Input label="End Date" type="datetime-local" defaultValue="2026-08-17T18:00" leftIcon={<Calendar size={15} />} />
+          </div>
+          <Input label="Registration Deadline" type="datetime-local" defaultValue="2026-08-10T23:59" leftIcon={<Clock size={15} />} />
+          <Input label="Venue" defaultValue="The Aitel HQ, Chennai, India" leftIcon={<MapPin size={15} />} />
+          <Input label="Luma Event URL" defaultValue="https://lu.ma/ai-voice-hackathon-2026" leftIcon={<Link size={15} />} />
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Max Teams" type="number" defaultValue="50" leftIcon={<Users size={15} />} />
+            <Input label="Max Team Size" type="number" defaultValue="4" leftIcon={<Users size={15} />} />
+          </div>
+        </div>
+
+        {/* Vobiz SIP Trunk & Voice Configuration (Voice-Specific / Cyan Accent) */}
+        <div className="bg-white p-6 rounded-2xl border border-cyan-200 shadow-sm space-y-5 relative">
+          <div className="absolute top-4 right-4 flex items-center gap-1.5 text-cyan-600 bg-cyan-50 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border border-cyan-100/50">
+            <Network size={10} />
+            Voice Infra
+          </div>
+          
+          <h3 className="font-display font-bold text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-1.5">
+            <PhoneCall size={16} className="text-cyan-500" />
+            Vobiz Telephony & SIP Gateway
+          </h3>
+          
+          <p className="text-xs text-slate-400">
+            Configure the underlying voice carrier network and real-time SIP settings provided by Vobiz.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input label="SIP Trunk URI" defaultValue="sip.vobiz.net:5060" className="focus:border-cyan-500 focus:ring-cyan-500" />
+            <Input label="Vobiz API Endpoint" defaultValue="https://api.vobiz.net/v1" className="focus:border-cyan-500 focus:ring-cyan-500" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input label="Default Codec" defaultValue="Opus (HD 48kHz)" className="focus:border-cyan-500 focus:ring-cyan-500" />
+            <Input label="Max Concurrent Channels" type="number" defaultValue="100" className="focus:border-cyan-500 focus:ring-cyan-500" />
+          </div>
+
+          <div className="flex items-center justify-between p-4 rounded-xl bg-cyan-50/40 border border-cyan-100/40">
+            <div>
+              <p className="text-xs font-bold text-slate-800">Secure SIP Signaling (TLS)</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">Encrypt voice media streams using SRTP</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" defaultChecked className="sr-only peer" />
+              <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-cyan-500 transition-all peer-checked:after:translate-x-5 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
+            </label>
+          </div>
+        </div>
+
+        {/* Registration Control (SnapServe Rules) */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+          <h3 className="font-display font-bold text-slate-900 border-b border-slate-100 pb-2">Registration Controls</h3>
+          <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100">
+            <div>
+              <p className="text-sm font-semibold text-slate-800">Registration Open</p>
+              <p className="text-xs text-slate-400 mt-0.5">Allow new teams to register via Luma</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" defaultChecked className="sr-only peer" />
+              <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-[#5B5CEB] transition-all peer-checked:after:translate-x-5 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
+            </label>
+          </div>
+          <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100">
+            <div>
+              <p className="text-sm font-semibold text-slate-800">Public Leaderboard</p>
+              <p className="text-xs text-slate-400 mt-0.5">Show leaderboard to public visitors</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" defaultChecked className="sr-only peer" />
+              <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-[#5B5CEB] transition-all peer-checked:after:translate-x-5 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
+            </label>
+          </div>
+        </div>
+
+        {/* SnapServe standard Indigo trigger */}
+        <Button loading={saving} onClick={handleSave} size="lg" glow leftIcon={<Save size={18} />} className="bg-[#5B5CEB] hover:bg-[#4a4bcf]">
+          Save Settings
+        </Button>
+      </div>
+    </DashboardLayout>
+  )
+}
