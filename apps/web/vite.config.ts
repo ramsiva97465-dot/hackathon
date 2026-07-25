@@ -12,6 +12,7 @@ export default defineConfig({
     },
   },
   server: {
+    host: true, // This allows listening on 127.0.0.1 and local network IP
     port: 3000,
     proxy: {
       '/api': {

@@ -74,7 +74,7 @@ export function Hero() {
           transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
           className="flex justify-center pt-4"
         >
-          <Link to="/apply">
+          <Link to="/">
             <button className="inline-flex items-center gap-2.5 px-7 py-3 rounded-full text-xs font-bold text-white bg-[#5B5CEB] hover:bg-[#5B5CEB]/90 transition-all duration-300 shadow-[0_10px_25px_rgba(91,92,235,0.25)] select-none">
               Apply to Accelerate
               <ArrowRight size={14} />

@@ -41,8 +41,7 @@ export const SCORING_RUBRIC = {
   technicalQuality: { max: 25, label: 'Technical Quality', description: 'Code quality, architecture, and scalability' },
   aiUsage: { max: 20, label: 'AI Usage', description: 'Effective and responsible use of AI technologies' },
   businessValue: { max: 15, label: 'Business Value', description: 'Real-world applicability and market potential' },
-  presentation: { max: 10, label: 'Presentation', description: 'Clarity, confidence, and demo quality' },
-  bonus: { max: 5, label: 'Bonus Points', description: 'Exceptional achievement or extra features' },
+  presentation: { max: 15, label: 'Presentation', description: 'Clarity, confidence, and demo quality' },
 } as const;
 
 export const SCHEDULE_ITEMS = [

@@ -11,7 +11,6 @@ import { ScoresModule } from './scores/scores.module'
 import { LeaderboardModule } from './leaderboard/leaderboard.module'
 import { EmailsModule } from './emails/emails.module'
 import { AuditModule } from './audit/audit.module'
-import { WebhooksModule } from './webhooks/webhooks.module'
 import { SettingsModule } from './settings/settings.module'
 import { AnalyticsModule } from './analytics/analytics.module'
 import { HealthController } from './health/health.controller'
@@ -43,7 +42,6 @@ import { HealthController } from './health/health.controller'
     LeaderboardModule,
     EmailsModule,
     AuditModule,
-    WebhooksModule,
     SettingsModule,
     AnalyticsModule,
   ],

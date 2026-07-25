@@ -1,18 +1,23 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
-import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
 import { containerVariants, leaderboardRowVariants } from '@/lib/motion'
-import { Trophy, TrendingUp, TrendingDown, Minus, Crown, Medal } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, Crown, Medal, Edit2 } from 'lucide-react'
 import { getTrackConfig } from '@/lib/utils'
+import { useWebSocket } from '@/hooks/useWebSocket'
+import { api } from '@/lib/api'
+import type { LeaderboardEntry } from '@hackathon/shared'
 
-const leaderboard = [
-  { rank: 1, prev: 2, team: 'SpeakSense', college: 'BITS Pilani', track: 'REAL_WORLD_DEPLOYMENT', total: 91.2, judges: 3 },
-  { rank: 2, prev: 1, team: 'AudioMind', college: 'VIT Chennai', track: 'VOICE_AI_AGENT', total: 88.7, judges: 3 },
-  { rank: 3, prev: 3, team: 'NovaTalk', college: 'NIT Trichy', track: 'MULTIMODAL_AI', total: 84.5, judges: 2 },
-  { rank: 4, prev: 5, team: 'VoiceForge AI', college: 'IIT Madras', track: 'VOICE_AI_AGENT', total: 81.0, judges: 2 },
-  { rank: 5, prev: 4, team: 'EchoBot Labs', college: 'SRM University', track: 'MULTIMODAL_AI', total: 79.3, judges: 3 },
+const mockLeaderboard: LeaderboardEntry[] = [
+  { rank: 1, teamId: '1', teamName: 'SpeakSense',    college: 'BITS Pilani',    track: 'REAL_WORLD_DEPLOYMENT', totalScore: 91.2, judgeCount: 6, previousRank: 2, scores: [] },
+  { rank: 2, teamId: '2', teamName: 'AudioMind',     college: 'VIT Chennai',    track: 'VOICE_AI_AGENT',        totalScore: 88.7, judgeCount: 5, previousRank: 1, scores: [] },
+  { rank: 3, teamId: '3', teamName: 'NovaTalk',      college: 'NIT Trichy',     track: 'MULTIMODAL_AI',         totalScore: 84.5, judgeCount: 5, previousRank: 3, scores: [] },
+  { rank: 4, teamId: '4', teamName: 'VoiceForge AI', college: 'IIT Madras',     track: 'VOICE_AI_AGENT',        totalScore: 81.0, judgeCount: 4, previousRank: 5, scores: [] },
+  { rank: 5, teamId: '5', teamName: 'EchoBot Labs',  college: 'SRM University', track: 'MULTIMODAL_AI',         totalScore: 79.3, judgeCount: 4, previousRank: 4, scores: [] },
+  { rank: 6, teamId: '6', teamName: 'DeepVoice',     college: 'SASTRA',         track: 'VOICE_AI_AGENT',        totalScore: 75.8, judgeCount: 3, previousRank: 6, scores: [] },
+  { rank: 7, teamId: '7', teamName: 'TalkFlow',      college: 'Amrita',         track: 'REAL_WORLD_DEPLOYMENT', totalScore: 72.1, judgeCount: 3, previousRank: 8, scores: [] },
+  { rank: 8, teamId: '8', teamName: 'MindSpeak',     college: 'SSN Engineering',track: 'MULTIMODAL_AI',         totalScore: 68.4, judgeCount: 2, previousRank: 7, scores: [] },
 ]
 
 function RankBadge({ rank }: { rank: number }) {
@@ -45,6 +50,43 @@ function DeltaIcon({ curr, prev }: { curr: number; prev: number }) {
 }
 
 export function LeaderboardAdminPage() {
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([])
+  
+  // Real-time updates via WebSocket
+  const { emit } = useWebSocket<LeaderboardEntry[]>('leaderboard:update', (data) => {
+    setEntries(data)
+  })
+
+  useEffect(() => {
+    emit('leaderboard:subscribe')
+    api.leaderboard.get().then(res => {
+      if (res.data) setEntries(res.data)
+    })
+  }, [emit])
+
+  const handleEditScore = async (teamId: string, currentScore: number) => {
+    const newVal = prompt(`Override score for this team (current: ${currentScore}):\nLeave blank or cancel to keep current score.\nEnter 'clear' to remove the override.`)
+    if (newVal === null) return
+    
+    let score: number | null = null
+    if (newVal.toLowerCase() === 'clear') {
+      score = null
+    } else {
+      const parsed = parseFloat(newVal)
+      if (isNaN(parsed)) return alert('Invalid score')
+      score = parsed
+    }
+
+    try {
+      await api.leaderboard.adminScore(teamId, score)
+    } catch (err) {
+      console.error(err)
+      alert('Failed to override score')
+    }
+  }
+
+  const display = entries.length > 0 ? entries : mockLeaderboard
+
   return (
     <DashboardLayout role="admin">
       <div className="p-6 max-w-[1400px] space-y-6">
@@ -61,28 +103,28 @@ export function LeaderboardAdminPage() {
 
         {/* Top 3 podium */}
         <div className="grid grid-cols-3 gap-4">
-          {leaderboard.slice(0, 3).map((entry, i) => {
+          {display.slice(0, 3).map((_, i) => {
             const podiumOrder = [1, 0, 2]
-            const item = leaderboard[podiumOrder[i]]
-            const track = getTrackConfig(item.track)
+            if (!display[podiumOrder[i]]) return <div key={i} />
+            const entry = display[podiumOrder[i]]
             return (
               <motion.div
-                key={item.team}
+                key={entry.teamId}
                 initial={{ opacity: 0, y: i === 0 ? 20 : 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * i, duration: 0.5 }}
-                className={`bg-white border border-slate-200 p-5 rounded-2xl text-center shadow-sm ${
+                className={`bg-white border border-[#EAE4D8] p-5 rounded-2xl text-center shadow-sm ${
                   podiumOrder[i] === 0 ? 'border-[rgba(245,158,11,0.4)] shadow-[0_0_30px_rgba(245,158,11,0.08)]' :
                   podiumOrder[i] === 1 ? 'mt-4' : 'mt-8'
                 }`}
               >
-                <RankBadge rank={item.rank} />
+                <RankBadge rank={entry.rank} />
                 <div className="mt-3">
-                  <Avatar name={item.team} size="md" className="mx-auto mb-2" />
-                  <h3 className="font-display font-bold text-slate-900 text-sm">{item.team}</h3>
-                  <p className="text-xs text-slate-400 font-medium mb-3">{item.college}</p>
-                  <div className="font-display text-3xl font-bold text-[#5B5CEB]">{item.total.toFixed(1)}</div>
-                  <div className="text-xs text-slate-400 font-semibold mt-0.5">{item.judges} judges</div>
+                  <Avatar name={entry.teamName} size="md" className="mx-auto mb-2" />
+                  <h3 className="font-display font-bold text-slate-900 text-sm">{entry.teamName}</h3>
+                  <p className="text-xs text-slate-400 font-medium mb-3">{entry.college}</p>
+                  <div className="font-display text-3xl font-bold text-[#5B5CEB]">{entry.totalScore.toFixed(1)}</div>
+                  <div className="text-xs text-slate-400 font-semibold mt-0.5">{entry.judgeCount} judges</div>
                 </div>
               </motion.div>
             )
@@ -94,25 +136,26 @@ export function LeaderboardAdminPage() {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm"
+          className="bg-white border border-[#EAE4D8] rounded-2xl overflow-hidden shadow-sm"
         >
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50">
+              <tr className="border-b border-[#EAE4D8] bg-[#F4ECE1]/50">
                 <th className="px-5 py-4 text-left text-xs text-slate-400 font-bold uppercase tracking-wider">Rank</th>
                 <th className="px-5 py-4 text-left text-xs text-slate-400 font-bold uppercase tracking-wider">Team</th>
                 <th className="px-5 py-4 text-left text-xs text-slate-400 font-bold uppercase tracking-wider hidden md:table-cell">Track</th>
                 <th className="px-5 py-4 text-left text-xs text-slate-400 font-bold uppercase tracking-wider hidden lg:table-cell">Judges</th>
                 <th className="px-5 py-4 text-right text-xs text-slate-400 font-bold uppercase tracking-wider">Score</th>
                 <th className="px-5 py-4 text-center text-xs text-slate-400 font-bold uppercase tracking-wider">Change</th>
+                <th className="px-5 py-4 text-center text-xs text-slate-400 font-bold uppercase tracking-wider">Action</th>
               </tr>
             </thead>
             <tbody>
-              {leaderboard.map((entry, i) => {
+              {display.map((entry, i) => {
                 const track = getTrackConfig(entry.track)
                 return (
                   <motion.tr
-                    key={entry.team}
+                    key={entry.teamId}
                     custom={i}
                     variants={leaderboardRowVariants}
                     className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
@@ -122,9 +165,9 @@ export function LeaderboardAdminPage() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <Avatar name={entry.team} size="sm" />
+                        <Avatar name={entry.teamName} size="sm" />
                         <div>
-                          <p className="font-semibold text-slate-900">{entry.team}</p>
+                          <p className="font-semibold text-slate-900">{entry.teamName}</p>
                           <p className="text-xs text-slate-400 font-medium">{entry.college}</p>
                         </div>
                       </div>
@@ -134,10 +177,19 @@ export function LeaderboardAdminPage() {
                         {track.label}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-slate-500 font-medium text-xs hidden lg:table-cell">{entry.judges} / 3</td>
-                    <td className="px-5 py-4 text-right font-display font-bold text-xl text-slate-900">{entry.total.toFixed(1)}</td>
+                    <td className="px-5 py-4 text-slate-500 font-medium text-xs hidden lg:table-cell">{entry.judgeCount} / 3</td>
+                    <td className="px-5 py-4 text-right font-display font-bold text-xl text-slate-900">{entry.totalScore.toFixed(1)}</td>
                     <td className="px-5 py-4 text-center">
-                      <DeltaIcon curr={entry.rank} prev={entry.prev} />
+                      <DeltaIcon curr={entry.rank} prev={entry.previousRank || entry.rank} />
+                    </td>
+                    <td className="px-5 py-4 text-center">
+                      <button 
+                        onClick={() => handleEditScore(entry.teamId, entry.totalScore)}
+                        className="text-slate-400 hover:text-slate-900 transition-colors inline-flex p-1.5 rounded-lg hover:bg-slate-100"
+                        title="Override score"
+                      >
+                        <Edit2 size={16} />
+                      </button>
                     </td>
                   </motion.tr>
                 )

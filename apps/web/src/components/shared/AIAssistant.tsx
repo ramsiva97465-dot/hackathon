@@ -14,7 +14,7 @@ interface Message {
 }
 
 const PREDEFINED_QA: Record<string, string> = {
-  register: `To register, click the "Register on Luma" button on the homepage. You'll be redirected to our official Luma event page where you can sign up with your team. Once registered, your application will be reviewed within 48 hours.`,
+  register: `To register, click the "Register" button on the homepage and complete the form (individual or team). Once submitted, your application will be reviewed within 48 hours.`,
   rules: `Key rules:\n• Teams of 2–4 members\n• Build from scratch during the hackathon\n• Open-source libraries are allowed\n• Projects must use AI/Voice technology\n• Submission must include a working demo`,
   schedule: `The hackathon runs Aug 15–17, 2026:\n• Aug 15, 9AM — Opening Ceremony\n• Aug 15, 11AM — Hacking Begins\n• Aug 16, 5PM — Submission Deadline\n• Aug 17, 10AM — Round 1 Demos\n• Aug 17, 5PM — Awards Ceremony`,
   prizes: `Prize Pool of ₹5,00,000:\n🥇 1st Place — ₹2,00,000 + Internship offers\n🥈 2nd Place — ₹1,00,000\n🥉 3rd Place — ₹50,000\n⭐ Best AI Innovation — ₹75,000\n⭐ Best Presentation — ₹25,000`,

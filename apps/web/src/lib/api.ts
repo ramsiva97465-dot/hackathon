@@ -59,6 +59,8 @@ export const api = {
     get: (id: string) => apiClient.get(`/teams/${id}`),
     assignJudge: (teamId: string, judgeId: string, roundId: string) =>
       apiClient.post(`/teams/${teamId}/assign-judge`, { judgeId, roundId }),
+    updateTableNumber: (teamId: string, tableNumber: string) =>
+      apiClient.patch(`/teams/${teamId}/table-number`, { tableNumber }),
   },
 
   // Judges
@@ -70,6 +72,7 @@ export const api = {
     create: (data: Record<string, unknown>) => apiClient.post('/judges', data),
     update: (id: string, data: Record<string, unknown>) =>
       apiClient.patch(`/judges/${id}`, data),
+    delete: (id: string) => apiClient.delete(`/judges/${id}`),
   },
 
   // Scores
@@ -87,6 +90,8 @@ export const api = {
   leaderboard: {
     get: (params?: { roundId?: string; judgeId?: string }) =>
       apiClient.get('/leaderboard', { params }),
+    adminScore: (teamId: string, score: number | null) =>
+      apiClient.post('/leaderboard/admin-score', { teamId, score }),
   },
 
   // Emails

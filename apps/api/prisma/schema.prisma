@@ -218,7 +218,9 @@ model Team {
   applicationId String?
   name          String
   trackId       String
+  tableNumber   String?
   status        TeamStatus @default(REGISTERED)
+  adminScore    Float?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 

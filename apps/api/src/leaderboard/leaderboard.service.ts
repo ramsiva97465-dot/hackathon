@@ -29,7 +29,9 @@ export class LeaderboardService {
       const submittedSheets = team.scoreSheets.filter((s) => s.isSubmitted)
       
       let overallScore = 0
-      if (submittedSheets.length > 0) {
+      if (team.adminScore !== null && team.adminScore !== undefined) {
+        overallScore = team.adminScore
+      } else if (submittedSheets.length > 0) {
         const total = submittedSheets.reduce((sum, sheet) => {
           const sheetTotal = sheet.scores.reduce((sSum, sc) => sSum + sc.score, 0)
           return sum + (sheet.scores.length > 0 ? sheetTotal / sheet.scores.length : 0)
@@ -81,5 +83,15 @@ export class LeaderboardService {
     return this.prisma.leaderboard.findUnique({
       where: { hackathonId_teamId: { hackathonId: hackathon.id, teamId } },
     })
+  }
+
+  async updateAdminScore(teamId: string, score: number | null) {
+    await this.prisma.team.update({
+      where: { id: teamId },
+      data: { adminScore: score },
+    })
+    // Re-calculate the leaderboard entry for this team specifically
+    // but the easiest way to keep ranks correct is to recalculate the whole leaderboard
+    await this.getLeaderboard()
   }
 }

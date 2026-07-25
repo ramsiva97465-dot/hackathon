@@ -98,23 +98,25 @@ export function EmailsPage() {
                 value={to}
                 onChange={e => setTo(e.target.value)}
                 leftIcon={<Mail size={15} />}
+                className="bg-[#EBE3D5] text-slate-900 border-[#EAE4D8] focus:border-[#E83C00] focus:ring-[#E83C00]/10 placeholder:text-slate-400"
               />
               <Input
                 label="Subject"
                 placeholder="Email subject…"
                 value={subject}
                 onChange={e => setSubject(e.target.value)}
+                className="bg-[#EBE3D5] text-slate-900 border-[#EAE4D8] focus:border-[#E83C00] focus:ring-[#E83C00]/10 placeholder:text-slate-400"
               />
               <Textarea
                 label="Message"
                 placeholder="Email body (HTML is supported)…"
                 value={body}
                 onChange={e => setBody(e.target.value)}
-                className="min-h-[180px]"
+                className="min-h-[180px] bg-[#EBE3D5] text-slate-900 border-[#EAE4D8] focus:border-[#E83C00] focus:ring-[#E83C00]/10 placeholder:text-slate-400"
               />
               <div className="flex gap-3">
                 <Button variant="outline" size="sm" leftIcon={<Eye size={15} />}>Preview</Button>
-                <Button size="sm" loading={sending} leftIcon={<Send size={15} />} onClick={handleSend} fullWidth className="bg-[#5B5CEB] hover:bg-[#4a4bcf]">
+                <Button size="sm" loading={sending} leftIcon={<Send size={15} />} onClick={handleSend} fullWidth className="bg-[#E83C00] hover:bg-[#D63500] text-white">
                   Send Email
                 </Button>
               </div>

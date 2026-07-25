@@ -52,21 +52,24 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   }, [location.pathname])
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden text-[#0F172A]">
-      {/* Sidebar (Linear Light Style) */}
+    <div 
+      className="flex h-screen overflow-hidden text-[#0F172A]"
+      style={{ backgroundColor: role === 'judge' ? '#EBE3D5' : '#F4ECE1' }}
+    >
+      {/* Sidebar (Linear Dark Style) */}
       <motion.aside
         animate={{ width: sidebarOpen ? 240 : 64 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className={cn(
           'relative flex flex-col h-full',
-          'bg-[#F4F6F8] border-r border-slate-200/80',
-          'overflow-hidden shrink-0 z-20 shadow-sm'
+          'bg-[#0A0908] border-r border-white/5',
+          'overflow-hidden shrink-0 z-20 shadow-xl'
         )}
       >
         {/* Logo */}
-        <div className="flex items-center gap-3 p-4 border-b border-slate-200/80 h-16 bg-white/40">
-          <div className="w-8 h-8 rounded-lg bg-[#5B5CEB] flex items-center justify-center shrink-0 shadow-sm">
-            <Zap size={14} className="text-white" />
+        <div className="flex items-center gap-3 p-4 border-b border-white/5 h-16 bg-[#0A0908]">
+          <div className="w-8 h-8 rounded-lg bg-[#1A1512] flex items-center justify-center shrink-0 border border-white/5 shadow-sm">
+            <img src="/logos/snapserve-mark.svg" alt="SnapServe" className="w-5 h-5 object-contain" />
           </div>
           <AnimatePresence>
             {sidebarOpen && (
@@ -77,11 +80,11 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
                 transition={{ duration: 0.2 }}
                 className="flex flex-col min-w-0"
               >
-                <span className="font-display font-bold text-sm text-[#0F172A] leading-tight tracking-tight">
+                <span className="font-display font-bold text-sm text-white leading-tight tracking-tight">
                   SnapServe
                 </span>
                 <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold -mt-0.5">
-                  Powered by Vobiz
+                  ADMIN CONSOLE
                 </span>
               </motion.div>
             )}
@@ -91,7 +94,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         {/* Navigation links */}
         <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto overflow-x-hidden pt-6">
           {sidebarOpen && (
-            <p className="px-3 py-1 text-[9px] uppercase tracking-widest text-slate-400 font-bold mb-1">
+            <p className="px-3 py-1 text-[9px] uppercase tracking-widest text-slate-500 font-bold mb-1">
               {role === 'admin' ? 'Management' : 'Judging'}
             </p>
           )}
@@ -102,11 +105,11 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           {role === 'admin' && (
             <>
               {sidebarOpen && (
-                <p className="px-3 py-1 text-[9px] uppercase tracking-widest text-slate-400 font-bold mt-5 mb-1">
+                <p className="px-3 py-1 text-[9px] uppercase tracking-widest text-slate-500 font-bold mt-5 mb-1">
                   Tools
                 </p>
               )}
-              {!sidebarOpen && <div className="my-3 h-[1px] bg-slate-200" />}
+              {!sidebarOpen && <div className="my-3 h-[1px] bg-white/10" />}
               {adminRoutes.filter(r => r.section === 'tools').map(route => (
                 <SidebarItem key={route.href} route={route} active={location.pathname === route.href} collapsed={!sidebarOpen} />
               ))}
@@ -115,9 +118,9 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         </nav>
 
         {/* Bottom Panel */}
-        <div className="border-t border-slate-200/80 p-3 space-y-2 bg-white/40">
+        <div className="border-t border-white/5 p-3 space-y-2 bg-[#0A0908]">
           <div className={cn(
-            'flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-slate-200/55 transition-colors cursor-pointer',
+            'flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer',
             !sidebarOpen && 'justify-center'
           )}>
             <Avatar name={user?.name ?? 'Admin'} size="sm" status="online" className="shrink-0" />
@@ -129,7 +132,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
                   exit={{ opacity: 0 }}
                   className="flex-1 min-w-0"
                 >
-                  <p className="text-xs font-bold text-[#0F172A] truncate">{user?.name ?? 'Admin User'}</p>
+                  <p className="text-xs font-bold text-white truncate">{user?.name ?? 'Admin User'}</p>
                   <p className="text-[10px] text-slate-400 truncate">{user?.email ?? 'admin@hackathon.com'}</p>
                 </motion.div>
               )}
@@ -138,7 +141,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
 
           <button
             onClick={toggleSidebar}
-            className="w-full flex items-center justify-center p-2 rounded-xl text-slate-400 hover:text-[#0F172A] hover:bg-slate-200/55 transition-all duration-300"
+            className="w-full flex items-center justify-center p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-300"
           >
             {sidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
           </button>
@@ -148,22 +151,23 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       {/* Main Content Layout */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header Bar */}
-        <header className="h-16 flex items-center justify-between px-6 border-b border-slate-200/80 bg-white/80 backdrop-blur-md shrink-0 shadow-sm">
+        <header className="h-16 flex items-center justify-between px-6 shrink-0" style={{ background: 'linear-gradient(135deg, #0A0908 0%, #1A1512 100%)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           <div className="flex items-center gap-2">
-            <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
-              {role === 'admin' ? 'SnapServe Admin Console' : 'Judge Evaluation Workspace'}
+            <span className="h-2 w-2 rounded-full bg-[#E83C00] shadow-[0_0_8px_rgba(232,60,0,0.8)] mr-1" />
+            <span className="text-white text-xs font-bold uppercase tracking-widest opacity-90">
+              {role === 'admin' ? 'ADMIN CONSOLE · VOICEATHON 2026' : 'JUDGE DESK · VOICEATHON 2026'}
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/" className="text-xs text-slate-500 hover:text-[#0F172A] font-semibold transition-colors">
+            <Link to="/" className="text-xs text-slate-300 hover:text-white font-semibold transition-colors px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
               View Website
             </Link>
-            <button className="p-2 rounded-xl text-slate-400 hover:text-[#0F172A] hover:bg-slate-50 transition-all border border-transparent hover:border-slate-200/50">
+            <button className="p-2 rounded-xl text-slate-400 hover:text-white bg-white/5 border border-white/10 transition-all">
               <Bell size={16} />
             </button>
             <button
               onClick={logout}
-              className="p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all border border-transparent"
+              className="p-2 rounded-xl text-[#E83C00] hover:bg-[#E83C00]/10 border border-[#E83C00]/20 transition-all"
             >
               <LogOut size={16} />
             </button>
@@ -171,7 +175,10 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         </header>
 
         {/* Dynamic page content */}
-        <main className="flex-grow overflow-y-auto bg-[#F8FAFC]">
+        <main 
+          className="flex-grow overflow-y-auto"
+          style={{ backgroundColor: 'transparent' }}
+        >
           <motion.div
             key={location.pathname}
             initial={{ opacity: 0, y: 12 }}
@@ -203,16 +210,16 @@ function SidebarItem({
         'group relative flex items-center gap-3 px-3 py-2 rounded-xl',
         'text-xs font-semibold transition-all duration-300 border border-transparent',
         active
-          ? 'bg-[#5B5CEB]/10 text-[#5B5CEB] border-[#5B5CEB]/15 shadow-sm'
-          : 'text-slate-500 hover:text-[#0F172A] hover:bg-slate-200/40',
+          ? 'bg-[#E83C00]/15 text-[#E83C00] border-[#E83C00]/25 shadow-sm'
+          : 'text-slate-400 hover:text-white hover:bg-white/5',
         collapsed && 'justify-center px-2'
       )}
     >
       {active && (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-[#5B5CEB] rounded-r-full" />
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-[#E83C00] rounded-r-full" />
       )}
 
-      <span className={cn('shrink-0', active ? 'text-[#5B5CEB]' : '')}>{route.icon}</span>
+      <span className={cn('shrink-0', active ? 'text-[#E83C00]' : '')}>{route.icon}</span>
 
       <AnimatePresence>
         {!collapsed && (

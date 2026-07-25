@@ -1,9 +1,9 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
+import { motion } from 'framer-motion'
 import { LandingPage } from '@/pages/LandingPage'
 import { LeaderboardPage } from '@/pages/LeaderboardPage'
-import { ApplicationPage } from '@/pages/ApplicationPage'
 import { AdminDashboard } from '@/pages/admin/AdminDashboard'
 import { ApplicationsPage } from '@/pages/admin/ApplicationsPage'
 import { TeamsPage } from '@/pages/admin/TeamsPage'
@@ -13,15 +13,13 @@ import { LeaderboardAdminPage } from '@/pages/admin/LeaderboardAdminPage'
 import { SettingsPage } from '@/pages/admin/SettingsPage'
 import { AuditPage } from '@/pages/admin/AuditPage'
 import { JudgeDashboard } from '@/pages/judge/JudgeDashboard'
-import { TeamEvaluationPage } from '@/pages/judge/TeamEvaluationPage'
-
 // Auth Pages & Client
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
 import { useSession } from '@/lib/auth-client'
 import { Spinner } from '@/components/ui/Spinner'
-import { ReactNode } from 'react'
+import { ReactNode, useState, useEffect } from 'react'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,12 +40,101 @@ interface ProtectedRouteProps {
 
 function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { data: session, isPending } = useSession()
+  const [minDone, setMinDone] = useState(false)
 
-  if (isPending) {
+  useEffect(() => {
+    const t = setTimeout(() => setMinDone(true), 3000)
+    return () => clearTimeout(t)
+  }, [])
+
+  if (isPending || !minDone) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3">
-        <Spinner size="lg" />
-        <span className="text-xs text-muted font-medium select-none">Verifying session token...</span>
+      <div style={{
+        minHeight: '100vh',
+        background: '#080D18',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '36px',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* Ambient background glow */}
+        <div style={{
+          position: 'absolute',
+          width: '500px',
+          height: '500px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(232,60,0,0.07) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+
+        {/* Logo + wordmark */}
+        <motion.div
+          style={{ display: 'flex', alignItems: 'center', gap: '16px', zIndex: 1 }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" style={{ height: '44px', width: '44px' }}>
+            <motion.rect width="32" height="32" rx="7" fill="#0a0a0a"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} />
+            <motion.rect x="3" y="5.5" width="17" height="4.5" rx="2.25" fill="#52525b"
+              initial={{ x: 60, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] }} />
+            <motion.rect x="7" y="12.5" width="17" height="4.5" rx="2.25" fill="#a1a1aa"
+              initial={{ x: 60, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.35, ease: [0.16, 1, 0.3, 1] }} />
+            <motion.rect x="11" y="19.5" width="17" height="4.5" rx="2.25" fill="#e4e4e7"
+              initial={{ x: 60, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.5, ease: [0.16, 1, 0.3, 1] }} />
+          </svg>
+
+          <motion.span
+            style={{
+              fontSize: '26px',
+              fontWeight: 600,
+              color: '#F8FAFC',
+              letterSpacing: '-1px',
+              fontFamily: "'Space Grotesk', system-ui, sans-serif",
+              userSelect: 'none',
+            }}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.45, delay: 0.75, ease: 'easeOut' }}
+          >
+            Snapserve
+          </motion.span>
+        </motion.div>
+
+        {/* 3 pulsing dots */}
+        <motion.div
+          style={{ display: 'flex', alignItems: 'center', gap: '8px', zIndex: 1 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.0, duration: 0.4 }}
+        >
+          {[0, 1, 2].map((i) => (
+            <motion.div
+              key={i}
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: '#E83C00',
+                boxShadow: '0 0 8px rgba(232,60,0,0.7)',
+              }}
+              animate={{ opacity: [0.25, 1, 0.25], scale: [0.8, 1.2, 0.8] }}
+              transition={{
+                duration: 1.1,
+                repeat: Infinity,
+                delay: i * 0.22,
+                ease: 'easeInOut',
+              }}
+            />
+          ))}
+        </motion.div>
       </div>
     )
   }
@@ -79,7 +166,6 @@ export default function App() {
           {/* Public */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
-          <Route path="/apply" element={<ApplicationPage />} />
 
           {/* Auth */}
           <Route path="/login" element={<LoginPage />} />
@@ -160,14 +246,6 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['JUDGE']}>
                 <JudgeDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/judge/team/:id"
-            element={
-              <ProtectedRoute allowedRoles={['JUDGE']}>
-                <TeamEvaluationPage />
               </ProtectedRoute>
             }
           />

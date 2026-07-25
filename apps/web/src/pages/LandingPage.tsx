@@ -4,14 +4,14 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useCountdown } from '@/hooks/useCountdown'
 import { api } from '@/lib/api'
-import { 
-  Sparkles, 
-  Plus, 
-  Trash2, 
-  Check, 
-  Calendar, 
-  MessageSquare, 
-  ArrowRight, 
+import {
+  Sparkles,
+  Plus,
+  Trash2,
+  Check,
+  Calendar,
+  MessageSquare,
+  ArrowRight,
   ArrowLeft,
   CheckCircle2,
   Clock,
@@ -44,7 +44,7 @@ export function LandingPage() {
 
   // Form State
   const [teamName, setTeamName] = useState('')
-  
+
   // Members State
   const [members, setMembers] = useState<TeamMember[]>([
     { id: '1', name: '', email: '', phone: '', linkedin: '', github: '' }
@@ -140,7 +140,7 @@ export function LandingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     // Prevent premature submissions from Enter key presses on inputs
     if (step < totalSteps) {
       handleNext()
@@ -197,10 +197,10 @@ export function LandingPage() {
   }
 
   // Get total steps
-  const totalSteps = regType === 'INDIVIDUAL' ? 2 : 3
+  const totalSteps = regType === 'INDIVIDUAL' ? 3 : 4
 
   return (
-    <div className="min-h-screen bg-[#F4F6F8] text-[#0F172A] flex flex-col items-center py-12 px-4 md:px-6 relative overflow-x-hidden chakra-petch-all">
+    <div className="min-h-screen text-[#1A1A1A] flex flex-col items-center py-12 px-4 md:px-6 relative overflow-x-hidden chakra-petch-all" style={{ backgroundColor: '#EBE3D5' }}>
       <style>{`
         .chakra-petch-all, .chakra-petch-all * {
           font-family: 'Chakra Petch', sans-serif !important;
@@ -230,66 +230,61 @@ export function LandingPage() {
 
       {/* Main Luma Event Card */}
       <div className="w-full max-w-4xl bg-white border border-slate-200 rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.03)] flex flex-col">
-        
+
         {/* Cover Banner Image with Brand & Sponsor Logos */}
-        <div className="w-full h-[400px] md:h-[450px] bg-[#090D16] relative flex items-end p-6 overflow-hidden" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.12) 1px, transparent 0)', backgroundSize: '16px 16px' }}>
-          
+        <div className="w-full h-[320px] md:h-[450px] bg-[#090D16] relative flex items-end p-6 overflow-hidden" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.12) 1px, transparent 0)', backgroundSize: '16px 16px' }}>
+
           {/* Subtle logo backing glowing layers */}
           <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-64 h-64 bg-[#06B6D4]/10 rounded-full blur-3xl pointer-events-none animate-pulse-glow" />
           <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-64 h-64 bg-[#E83C00]/10 rounded-full blur-3xl pointer-events-none animate-pulse-glow" style={{ animationDelay: '1.5s' }} />
-          
+
           {/* Collaborative Logos Centered */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 z-10 px-4">
-            <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-10 w-full max-w-2xl">
-              
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 md:gap-6 z-10 px-4">
+            <div className="flex flex-row items-center justify-center gap-2 md:gap-10 w-full max-w-2xl">
+
               {/* snapserve.AI Logo Card */}
-              <div className="flex flex-col items-center gap-4 bg-white/5 backdrop-blur-md border border-white/10 p-6 md:p-8 rounded-3xl transition-all duration-300 hover:bg-white/10 hover:border-white/20 hover:scale-105 shadow-[0_20px_40px_rgba(0,0,0,0.3)] animate-float-slow shrink-0 w-44 md:w-56">
-                <svg className="w-20 h-20 md:w-24 md:h-24 shrink-0 drop-shadow-[0_8px_20px_rgba(255,255,255,0.2)]" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="32" height="32" rx="7" fill="#0A0A0C" stroke="rgba(255,255,255,0.15)" strokeWidth="0.5"/>
-                  <rect x="3" y="5.5" width="17" height="4.5" rx="2.25" fill="#52525B"/>
-                  <rect x="7" y="12.5" width="17" height="4.5" rx="2.25" fill="#A1A1AA"/>
-                  <rect x="11" y="19.5" width="17" height="4.5" rx="2.25" fill="#E4E4E7"/>
+              <div className="flex flex-col items-center gap-2 md:gap-4 bg-white/5 backdrop-blur-md border border-white/10 p-3 md:p-8 rounded-2xl md:rounded-3xl transition-all duration-300 hover:bg-white/10 hover:border-white/20 hover:scale-105 shadow-[0_20px_40px_rgba(0,0,0,0.3)] animate-float-slow shrink-0 w-[110px] sm:w-44 md:w-56">
+                <svg className="w-10 h-10 sm:w-20 sm:h-20 md:w-24 md:h-24 shrink-0 drop-shadow-[0_8px_20px_rgba(255,255,255,0.2)]" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="32" height="32" rx="7" fill="#0A0A0C" stroke="rgba(255,255,255,0.15)" strokeWidth="0.5" />
+                  <rect x="3" y="5.5" width="17" height="4.5" rx="2.25" fill="#52525B" />
+                  <rect x="7" y="12.5" width="17" height="4.5" rx="2.25" fill="#A1A1AA" />
+                  <rect x="11" y="19.5" width="17" height="4.5" rx="2.25" fill="#E4E4E7" />
                 </svg>
-                <span className="font-black text-2xl md:text-3xl text-white tracking-tight text-center">SnapServe</span>
+                <span className="font-black text-sm sm:text-2xl md:text-3xl text-white tracking-tight text-center">SnapServe</span>
               </div>
 
               {/* Collaboration Connector */}
-              <span className="text-white/20 font-light text-4xl animate-pulse hidden md:inline">✕</span>
+              <span className="text-white/20 font-light text-2xl sm:text-4xl animate-pulse">✕</span>
 
               {/* Vobiz Logo Card */}
-              <div className="flex flex-col items-center gap-4 bg-white/5 backdrop-blur-md border border-white/10 p-6 md:p-8 rounded-3xl transition-all duration-300 hover:bg-white/10 hover:border-white/20 hover:scale-105 shadow-[0_20px_40px_rgba(0,0,0,0.3)] animate-float-delayed shrink-0 w-44 md:w-56">
-                <svg className="w-20 h-20 md:w-24 md:h-24 shrink-0 drop-shadow-[0_8px_20px_rgba(232,60,0,0.25)]" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <div className="flex flex-col items-center gap-2 md:gap-4 bg-white/5 backdrop-blur-md border border-white/10 p-3 md:p-8 rounded-2xl md:rounded-3xl transition-all duration-300 hover:bg-white/10 hover:border-white/20 hover:scale-105 shadow-[0_20px_40px_rgba(0,0,0,0.3)] animate-float-delayed shrink-0 w-[110px] sm:w-44 md:w-56">
+                <svg className="w-10 h-10 sm:w-20 sm:h-20 md:w-24 md:h-24 shrink-0 drop-shadow-[0_8px_20px_rgba(232,60,0,0.25)]" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                   {/* Left orange quadrant */}
                   <path d="M 25 40 A 30 30 0 0 1 55 70 L 25 70 Z" fill="#EF6A00" />
                   {/* Right sweeping arch */}
                   <path d="M 45 90 C 45 60, 60 40, 95 40 L 95 62 C 75 62, 65 72, 65 90 Z" fill="#E83C00" />
                 </svg>
-                <span className="font-black text-2xl md:text-3xl text-white tracking-tight text-center" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>Vobiz</span>
+                <span className="font-black text-sm sm:text-2xl md:text-3xl text-white tracking-tight text-center" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>Vobiz</span>
               </div>
 
             </div>
 
             {/* Tagline "India's Biggest AI Voiceathon" */}
-            <div className="mt-2 relative flex flex-col items-center gap-2">
-              <span className="text-xs md:text-sm font-black tracking-[0.3em] text-white/90 bg-white/5 backdrop-blur-md border border-white/10 px-6 py-2.5 rounded-full uppercase shadow-md transition-all duration-300 hover:scale-105 hover:bg-white/10 hover:border-white/20">
+            <div className="mt-3 md:mt-2 relative flex flex-col items-center gap-2">
+              <span className="text-[9px] md:text-sm font-black tracking-[0.2em] md:tracking-[0.3em] text-white/90 uppercase drop-shadow-md transition-all duration-300 hover:scale-105">
                 India's Biggest AI Voiceathon
               </span>
-              <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] text-[#E83C00] bg-[#E83C00]/10 border border-[#E83C00]/25 px-5 py-1.5 rounded-full uppercase">
+              <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] text-[#E83C00] uppercase drop-shadow-sm">
                 Winning Pool: ₹50K
               </span>
             </div>
           </div>
 
           {/* Date Badge Bottom-Left */}
-          <div className="relative z-10 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shadow-lg">
-              <Sparkles size={18} className="animate-pulse" />
-            </div>
-            <div>
-              <span className="text-[10px] font-bold text-white/90 bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-full uppercase tracking-wider">
-                Sep 05, 2026
-              </span>
-            </div>
+          <div className="relative z-10 flex items-center">
+            <span className="text-[10px] md:text-xs font-bold text-white/90 uppercase tracking-wider drop-shadow-md">
+              Sep 05, 2026
+            </span>
           </div>
         </div>
 
@@ -312,28 +307,14 @@ export function LandingPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={() => {
-                setShowForm(true)
-                setScreen('selection')
-                setTimeout(() => {
-                  document.getElementById('registration-container')?.scrollIntoView({ behavior: 'smooth' })
-                }, 50)
-              }}
-              className="bg-[#E83C00] hover:bg-[#E83C00]/90 text-white font-bold text-xs rounded-xl shadow-sm border border-transparent"
-            >
-              Register
-            </Button>
-          </div>
         </div>
 
         {/* Content Two-Column Grid */}
-        <div className="grid md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-slate-100 bg-white">
-          
+        <div className="grid md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-[#EAE4D8] bg-[#F4ECE1]">
+
           {/* Left Column: Event details (3/5 width) */}
           <div className="p-6 md:p-8 md:col-span-3 space-y-8">
-            
+
             {/* About */}
             <div className="space-y-4">
               <div className="space-y-2">
@@ -343,8 +324,8 @@ export function LandingPage() {
                 </p>
               </div>
               <div className="pt-1">
-                <a 
-                  href="/rules.pdf" 
+                <a
+                  href="/rules.pdf"
                   download="AI_Voice_Voiceathon_Rules.pdf"
                   className="inline-flex items-center gap-2 text-xs font-bold text-[#E83C00] hover:text-[#E83C00]/80 transition-colors bg-[#E83C00]/5 hover:bg-[#E83C00]/10 border border-[#E83C00]/10 px-4 py-2.5 rounded-xl"
                 >
@@ -374,7 +355,7 @@ export function LandingPage() {
                   <h4 className="text-[11px] font-bold text-slate-800">Location</h4>
                   <p className="text-xs text-slate-500 font-light mt-0.5">Chitlapakkam, Chennai</p>
                   <p className="text-[10px] text-slate-400 font-light mt-0.5 leading-snug">1, II Main Rd, Sarvamangala Nagar</p>
-                  <a 
+                  <a
                     href="https://www.google.com/maps/search/?api=1&query=1,+IInd+Main+Road,+Sarvamangala+Nagar,+Chitlapakkam,+Chennai,+Tamil+Nadu+600064"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -389,10 +370,10 @@ export function LandingPage() {
             {/* Prizes List */}
             <div className="space-y-4 pt-6 border-t border-slate-100">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">🏆 Winning Prizes</h3>
-              
+
               <div className="space-y-3">
                 {/* Prize 1 */}
-                <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-slate-100/40 transition-colors">
+                <div className="flex items-start gap-4 p-4 bg-white rounded-2xl border border-[#EAE4D8] hover:bg-white/80 transition-colors shadow-sm">
                   <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/10 border border-[#F59E0B]/20 flex items-center justify-center text-[#F59E0B] shrink-0">
                     <Trophy size={18} />
                   </div>
@@ -404,7 +385,7 @@ export function LandingPage() {
                 </div>
 
                 {/* Prize 2 */}
-                <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-slate-100/40 transition-colors">
+                <div className="flex items-start gap-4 p-4 bg-white rounded-2xl border border-[#EAE4D8] hover:bg-white/80 transition-colors shadow-sm">
                   <div className="w-10 h-10 rounded-xl bg-[#5B5CEB]/10 border border-[#5B5CEB]/20 flex items-center justify-center text-[#5B5CEB] shrink-0">
                     <Award size={18} className="text-[#5B5CEB]" />
                   </div>
@@ -416,7 +397,7 @@ export function LandingPage() {
                 </div>
 
                 {/* Prize 3 */}
-                <div className="flex items-start gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:bg-slate-100/40 transition-colors">
+                <div className="flex items-start gap-4 p-4 bg-white rounded-2xl border border-[#EAE4D8] hover:bg-white/80 transition-colors shadow-sm">
                   <div className="w-10 h-10 rounded-xl bg-[#06B6D4]/10 border border-[#06B6D4]/20 flex items-center justify-center text-[#06B6D4] shrink-0">
                     <Award size={18} className="text-[#06B6D4]" />
                   </div>
@@ -432,8 +413,8 @@ export function LandingPage() {
           </div>
 
           {/* Right Column: Registration Form wizard (2/5 width) */}
-          <div id="registration-container" className="p-6 md:p-8 md:col-span-2 bg-[#F8FAFC] flex flex-col justify-center min-h-[400px]">
-            
+          <div id="registration-container" className="p-6 md:p-8 md:col-span-2 bg-[#F4ECE1] flex flex-col justify-center min-h-[400px]">
+
             <AnimatePresence mode="wait">
               {!showForm ? (
                 <motion.div
@@ -450,7 +431,7 @@ export function LandingPage() {
                     </p>
                   </div>
 
-                  <Button 
+                  <Button
                     fullWidth
                     onClick={() => {
                       setShowForm(true)
@@ -464,313 +445,341 @@ export function LandingPage() {
 
                   <div className="text-[10px] text-slate-400 font-light flex items-center justify-center gap-1">
                     <Clock size={10} />
-                    <span>Closes on August 10, 2026</span>
+                    <span>Closes on August 31, 2026</span>
                   </div>
                 </motion.div>
               ) : (
                 <>
                   {/* Form step 1: Category selection */}
                   {screen === 'selection' && (
-                <motion.div
-                  key="sel"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="space-y-6"
-                >
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Registration</h3>
-                    <p className="text-xs text-slate-500 font-light">Select your participation category to begin.</p>
-                  </div>
-
-                  <div className="space-y-3">
-                    {/* Individual */}
-                    <button
-                      type="button"
-                      onClick={() => selectTrack('INDIVIDUAL')}
-                      className="w-full text-left p-5 rounded-2xl bg-white border border-slate-200 hover:border-[#E83C00] hover:shadow-sm transition-all flex items-center justify-between group"
+                    <motion.div
+                      key="sel"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="space-y-6"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-[#E83C00]/10 flex items-center justify-center text-[#E83C00] group-hover:bg-[#E83C00] group-hover:text-white transition-colors duration-300">
-                          <User size={16} />
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-slate-900">Single Person Participate</h4>
-                          <p className="text-[10px] text-slate-400 font-light mt-0.5">Register as an individual builder</p>
-                        </div>
+                      <div className="space-y-1">
+                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Registration</h3>
+                        <p className="text-xs text-slate-500 font-light">Select your participation category to begin.</p>
                       </div>
-                      <ChevronRight size={14} className="text-slate-300 group-hover:text-[#E83C00] transition-colors" />
-                    </button>
 
-                    {/* Team */}
-                    <button
-                      type="button"
-                      onClick={() => selectTrack('TEAM')}
-                      className="w-full text-left p-5 rounded-2xl bg-white border border-slate-200 hover:border-[#E83C00] hover:shadow-sm transition-all flex items-center justify-between group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-[#E83C00]/10 flex items-center justify-center text-[#E83C00] group-hover:bg-[#E83C00] group-hover:text-white transition-colors duration-300">
-                          <Users size={16} />
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-slate-900">Team Participate</h4>
-                          <p className="text-[10px] text-slate-400 font-light mt-0.5">Register a crew of 2–3 members</p>
-                        </div>
-                      </div>
-                      <ChevronRight size={14} className="text-slate-300 group-hover:text-[#E83C00] transition-colors" />
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Form step 2: The Wizard steps */}
-              {screen === 'form' && (
-                <motion.div
-                  key="form"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="space-y-6"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                        Step 0{step} of 0{totalSteps}
-                      </h3>
-                      <p className="text-[10px] text-slate-400 font-light mt-0.5">
-                        {regType === 'INDIVIDUAL' ? 'Solo Builder Path' : 'Team Crew Path'}
-                      </p>
-                      {regType === 'TEAM' && step > 1 && teamName && (
-                        <p className="text-xs font-bold text-[#E83C00] mt-2.5 uppercase tracking-wider">
-                          Team: {teamName}
-                        </p>
-                      )}
-                    </div>
-                    <div className="w-16 h-1 bg-slate-200 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-[#E83C00] transition-all duration-300"
-                        style={{ width: `${(step / totalSteps) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  <form onSubmit={handleSubmit} className="space-y-5">
-                    
-                    {/* TEAM: Team Name */}
-                    {regType === 'TEAM' && step === 1 && (
                       <div className="space-y-3">
-                        <Input
-                          label="Team Name"
-                          placeholder="e.g., AudioMind"
-                          value={teamName}
-                          onChange={(e) => setTeamName(e.target.value)}
-                          required
-                          className="bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl text-xs focus:border-[#E83C00]/40"
-                        />
-                      </div>
-                    )}
+                        {/* Individual */}
+                        <button
+                          type="button"
+                          onClick={() => selectTrack('INDIVIDUAL')}
+                          className="w-full text-left p-5 rounded-2xl bg-white border border-[#EAE4D8] hover:border-[#E83C00] hover:shadow-sm transition-all flex items-center justify-between group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-[#E83C00]/10 flex items-center justify-center text-[#E83C00] group-hover:bg-[#E83C00] group-hover:text-white transition-colors duration-300">
+                              <User size={16} />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold text-slate-900">Single Person Participate</h4>
+                              <p className="text-[10px] text-slate-400 font-light mt-0.5">Register as an individual builder</p>
+                            </div>
+                          </div>
+                          <ChevronRight size={14} className="text-slate-300 group-hover:text-[#E83C00] transition-colors" />
+                        </button>
 
-                    {/* CONTACT INFO */}
-                    {((regType === 'INDIVIDUAL' && step === 1) || (regType === 'TEAM' && step === 2)) && (
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Members Details</span>
-                          {regType === 'TEAM' && members.length < 3 && (
+                        {/* Team */}
+                        <button
+                          type="button"
+                          onClick={() => selectTrack('TEAM')}
+                          className="w-full text-left p-5 rounded-2xl bg-white border border-[#EAE4D8] hover:border-[#E83C00] hover:shadow-sm transition-all flex items-center justify-between group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-[#E83C00]/10 flex items-center justify-center text-[#E83C00] group-hover:bg-[#E83C00] group-hover:text-white transition-colors duration-300">
+                              <Users size={16} />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold text-slate-900">Team Participate</h4>
+                              <p className="text-[10px] text-slate-400 font-light mt-0.5">Register a crew of 2–3 members</p>
+                            </div>
+                          </div>
+                          <ChevronRight size={14} className="text-slate-300 group-hover:text-[#E83C00] transition-colors" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Form step 2: The Wizard steps */}
+                  {screen === 'form' && (
+                    <motion.div
+                      key="form"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="space-y-6"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                            Step 0{step} of 0{totalSteps}
+                          </h3>
+                          <p className="text-[10px] text-slate-400 font-light mt-0.5">
+                            {regType === 'INDIVIDUAL' ? 'Solo Builder Path' : 'Team Crew Path'}
+                          </p>
+                          {regType === 'TEAM' && step > 1 && teamName && (
+                            <p className="text-xs font-bold text-[#E83C00] mt-2.5 uppercase tracking-wider">
+                              Team: {teamName}
+                            </p>
+                          )}
+                        </div>
+                        <div className="w-16 h-1 bg-slate-200 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-[#E83C00] transition-all duration-300"
+                            style={{ width: `${(step / totalSteps) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <form onSubmit={handleSubmit} className="space-y-5">
+
+                        {/* TEAM: Team Name */}
+                        {regType === 'TEAM' && step === 1 && (
+                          <div className="space-y-3">
+                            <Input
+                              label="Team Name"
+                              placeholder="e.g., AudioMind"
+                              value={teamName}
+                              onChange={(e) => setTeamName(e.target.value)}
+                              required
+                              className="bg-white border-[#EAE4D8] text-[#1A1A1A] placeholder:text-slate-400 rounded-xl text-xs focus:border-[#E83C00]/40"
+                            />
+                          </div>
+                        )}
+
+                        {/* CONTACT INFO */}
+                        {((regType === 'INDIVIDUAL' && step === 1) || (regType === 'TEAM' && step === 2)) && (
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Members Details</span>
+                              {regType === 'TEAM' && members.length < 3 && (
+                                <button
+                                  type="button"
+                                  onClick={addMember}
+                                  className="text-[10px] font-bold text-[#E83C00] hover:underline flex items-center gap-1"
+                                >
+                                  <Plus size={11} /> Add Member
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                              {members.map((member, idx) => (
+                                <div key={member.id} className="bg-white border border-[#EAE4D8] p-4 rounded-xl space-y-3 relative shadow-sm">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-[9px] font-bold text-[#E83C00] uppercase tracking-wider">
+                                      {regType === 'INDIVIDUAL' ? 'Solo Member' : idx === 0 ? '🏆 Leader' : `Member 0${idx + 1}`}
+                                    </span>
+                                    {regType === 'TEAM' && idx > 0 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => removeMember(member.id)}
+                                        className="text-slate-400 hover:text-[#EF4444] transition-colors"
+                                      >
+                                        <Trash2 size={12} />
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <input
+                                      placeholder="Full Name *"
+                                      value={member.name}
+                                      onChange={(e) => updateMember(member.id, 'name', e.target.value)}
+                                      required
+                                      className="w-full bg-[#F4ECE1]/50 border border-[#EAE4D8] text-xs px-3 py-2 rounded-lg text-[#1A1A1A] focus:outline-none focus:border-[#E83C00]/40"
+                                    />
+                                    <div>
+                                      <input
+                                        placeholder="Email Address *"
+                                        type="email"
+                                        value={member.email}
+                                        onChange={(e) => updateMember(member.id, 'email', e.target.value)}
+                                        required
+                                        className={`w-full bg-[#F4ECE1]/50 border text-xs px-3 py-2 rounded-lg text-[#1A1A1A] focus:outline-none focus:border-[#E83C00]/40 ${member.email && !isValidEmail(member.email) ? 'border-red-400' : 'border-[#EAE4D8]'}`}
+                                      />
+                                      {member.email && !isValidEmail(member.email) && (
+                                        <p className="text-[9px] text-red-500 mt-0.5 font-medium">Please enter a valid email address</p>
+                                      )}
+                                    </div>
+                                    <input
+                                      placeholder="Phone Number"
+                                      value={member.phone}
+                                      onChange={(e) => updateMember(member.id, 'phone', e.target.value)}
+                                      required
+                                      className="w-full bg-[#F4ECE1]/50 border border-[#EAE4D8] text-xs px-3 py-2 rounded-lg text-[#1A1A1A] focus:outline-none focus:border-[#E83C00]/40"
+                                    />
+                                    <input
+                                      placeholder="LinkedIn URL *"
+                                      type="url"
+                                      value={member.linkedin}
+                                      onChange={(e) => updateMember(member.id, 'linkedin', e.target.value)}
+                                      required
+                                      className={`w-full bg-[#F4ECE1]/50 border text-xs px-3 py-2 rounded-lg text-[#1A1A1A] focus:outline-none focus:border-[#E83C00]/40 ${member.linkedin && !isValidLinkedIn(member.linkedin) ? 'border-red-400' : 'border-[#EAE4D8]'}`}
+                                    />
+                                    {member.linkedin && !isValidLinkedIn(member.linkedin) && (
+                                      <p className="text-[9px] text-red-500 mt-0.5 font-medium">Please enter a valid LinkedIn URL</p>
+                                    )}
+                                    <input
+                                      placeholder="GitHub URL (Optional)"
+                                      type="url"
+                                      value={member.github}
+                                      onChange={(e) => updateMember(member.id, 'github', e.target.value)}
+                                      className="w-full bg-[#F4ECE1]/50 border border-[#EAE4D8] text-xs px-3 py-2 rounded-lg text-[#1A1A1A] focus:outline-none focus:border-[#E83C00]/40"
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* PROJECT DETAILS */}
+                        {((regType === 'INDIVIDUAL' && step === 2) || (regType === 'TEAM' && step === 3)) && (
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Project Details</span>
+                            </div>
+                            <div className="bg-white border border-[#EAE4D8] p-4 rounded-xl space-y-3">
+                              <div className="space-y-2">
+                                <Input
+                                  label="Project/Agent Name *"
+                                  placeholder="What do you call it?"
+                                  value={projectTitle}
+                                  onChange={(e) => setProjectTitle(e.target.value)}
+                                  required
+                                  className="bg-white border-[#EAE4D8] text-[#1A1A1A] placeholder:text-slate-400 rounded-xl text-xs focus:border-[#E83C00]/40"
+                                />
+                                <div className="space-y-1.5">
+                                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Agent Idea / Core Use Case *</label>
+                                  <textarea
+                                    placeholder="Briefly describe what your voice agent will do..."
+                                    value={projectIdea}
+                                    onChange={(e) => setProjectIdea(e.target.value)}
+                                    required
+                                    className="w-full bg-white border border-[#EAE4D8] text-xs px-4 py-3 rounded-xl text-[#1A1A1A] placeholder:text-slate-400 focus:outline-none focus:border-[#E83C00]/40 min-h-[100px] resize-none"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* REVIEW DETAILS */}
+                        {((regType === 'INDIVIDUAL' && step === 3) || (regType === 'TEAM' && step === 4)) && (
+                          <div className="space-y-3 text-xs max-h-[300px] overflow-y-auto pr-1">
+
+                            <div className="bg-white border border-slate-200 p-4 rounded-xl space-y-2">
+                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Category</span>
+                              <p className="font-bold text-slate-900">{regType === 'TEAM' ? `Team: ${teamName}` : 'Individual Participation'}</p>
+                            </div>
+
+                            <div className="bg-white border border-slate-200 p-4 rounded-xl space-y-2">
+                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Project</span>
+                              <p className="font-bold text-slate-900">{projectTitle || 'AI Voice Project'}</p>
+                              <p className="text-[10px] text-slate-500 font-light">{projectIdea || 'No description provided'}</p>
+                            </div>
+
+                            <div className="bg-white border border-slate-200 p-4 rounded-xl space-y-2">
+                              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Members ({members.length})</span>
+                              <div className="space-y-2">
+                                {members.map((m) => (
+                                  <div key={m.id} className="border-b border-slate-100 last:border-0 pb-1.5 last:pb-0">
+                                    <span className="font-bold text-slate-900 block">{m.name || 'Unnamed'}</span>
+                                    <span className="text-[10px] text-slate-500 font-light block">{m.email}{m.phone ? ` // ${m.phone}` : ''}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Navigation Buttons */}
+                        <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                          {step > 1 ? (
                             <button
                               type="button"
-                              onClick={addMember}
-                              className="text-[10px] font-bold text-[#E83C00] hover:underline flex items-center gap-1"
+                              onClick={handleBack}
+                              className="text-xs font-bold text-slate-400 hover:text-slate-700 flex items-center gap-1"
                             >
-                              <Plus size={11} /> Add Member
+                              <ArrowLeft size={13} /> Back
                             </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowForm(false)
+                                setScreen('selection')
+                              }}
+                              className="text-xs font-bold text-slate-400 hover:text-slate-700"
+                            >
+                              Cancel
+                            </button>
+                          )}
+
+                          {step < totalSteps ? (
+                            <Button
+                              type="button"
+                              onClick={handleNext}
+                              className="rounded-xl px-5 bg-[#E83C00] hover:bg-[#E83C00]/95 text-white font-bold text-xs"
+                              rightIcon={<ArrowRight size={13} />}
+                            >
+                              Continue
+                            </Button>
+                          ) : (
+                            <Button
+                              type="submit"
+                              loading={submitting}
+                              className="rounded-xl px-6 bg-[#E83C00] hover:bg-[#E83C00]/95 text-white font-bold text-xs shadow-md"
+                              rightIcon={<Check size={13} />}
+                            >
+                              Submit
+                            </Button>
                           )}
                         </div>
 
-                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-                          {members.map((member, idx) => (
-                            <div key={member.id} className="bg-white border border-slate-200 p-4 rounded-xl space-y-3 relative">
-                              <div className="flex justify-between items-center">
-                                <span className="text-[9px] font-bold text-[#E83C00] uppercase tracking-wider">
-                                  {regType === 'INDIVIDUAL' ? 'Solo Member' : idx === 0 ? '🏆 Leader' : `Member 0${idx + 1}`}
-                                </span>
-                                {regType === 'TEAM' && idx > 0 && (
-                                  <button
-                                    type="button"
-                                    onClick={() => removeMember(member.id)}
-                                    className="text-slate-400 hover:text-[#EF4444] transition-colors"
-                                  >
-                                    <Trash2 size={12} />
-                                  </button>
-                                )}
-                              </div>
+                      </form>
+                    </motion.div>
+                  )}
 
-                              <div className="space-y-2">
-                                <input
-                                  placeholder="Full Name *"
-                                  value={member.name}
-                                  onChange={(e) => updateMember(member.id, 'name', e.target.value)}
-                                  required
-                                  className="w-full bg-slate-50/50 border border-slate-200 text-xs px-3 py-2 rounded-lg text-slate-900 focus:outline-none focus:border-[#E83C00]/40"
-                                />
-                                <div>
-                                  <input
-                                    placeholder="Email Address *"
-                                    type="email"
-                                    value={member.email}
-                                    onChange={(e) => updateMember(member.id, 'email', e.target.value)}
-                                    required
-                                    className={`w-full bg-slate-50/50 border text-xs px-3 py-2 rounded-lg text-slate-900 focus:outline-none focus:border-[#E83C00]/40 ${member.email && !isValidEmail(member.email) ? 'border-red-400' : 'border-slate-200'}`}
-                                  />
-                                  {member.email && !isValidEmail(member.email) && (
-                                    <p className="text-[9px] text-red-500 mt-0.5 font-medium">Please enter a valid email address</p>
-                                  )}
-                                </div>
-                                <input
-                                  placeholder="Phone Number"
-                                  value={member.phone}
-                                  onChange={(e) => updateMember(member.id, 'phone', e.target.value)}
-                                  className="w-full bg-slate-50/50 border border-slate-200 text-xs px-3 py-2 rounded-lg text-slate-900 focus:outline-none focus:border-[#E83C00]/40"
-                                />
-                                <div>
-                                  <input
-                                    placeholder="LinkedIn Profile URL *"
-                                    value={member.linkedin}
-                                    onChange={(e) => updateMember(member.id, 'linkedin', e.target.value)}
-                                    required
-                                    className={`w-full bg-slate-50/50 border text-xs px-3 py-2 rounded-lg text-slate-900 focus:outline-none focus:border-[#E83C00]/40 ${member.linkedin && !isValidLinkedIn(member.linkedin) ? 'border-red-400' : 'border-slate-200'}`}
-                                  />
-                                  {member.linkedin && !isValidLinkedIn(member.linkedin) && (
-                                    <p className="text-[9px] text-red-500 mt-0.5 font-medium">Please enter a valid LinkedIn URL (e.g. https://linkedin.com/in/yourname)</p>
-                                  )}
-                                </div>
-                                <input
-                                  placeholder="GitHub Profile URL (optional)"
-                                  value={member.github}
-                                  onChange={(e) => updateMember(member.id, 'github', e.target.value)}
-                                  className="w-full bg-slate-50/50 border border-slate-200 text-xs px-3 py-2 rounded-lg text-slate-900 focus:outline-none focus:border-[#E83C00]/40"
-                                />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* REVIEW DETAILS */}
-                    {((regType === 'INDIVIDUAL' && step === 2) || (regType === 'TEAM' && step === 3)) && (
-                      <div className="space-y-3 text-xs max-h-[300px] overflow-y-auto pr-1">
-                        
-                        <div className="bg-white border border-slate-200 p-4 rounded-xl space-y-2">
-                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Category</span>
-                          <p className="font-bold text-slate-900">{regType === 'TEAM' ? `Team: ${teamName}` : 'Individual Participation'}</p>
-                        </div>
-
-                        <div className="bg-white border border-slate-200 p-4 rounded-xl space-y-2">
-                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Members ({members.length})</span>
-                          <div className="space-y-2">
-                            {members.map((m) => (
-                              <div key={m.id} className="border-b border-slate-100 last:border-0 pb-1.5 last:pb-0">
-                                <span className="font-bold text-slate-900 block">{m.name || 'Unnamed'}</span>
-                                <span className="text-[10px] text-slate-500 font-light block">{m.email}{m.phone ? ` // ${m.phone}` : ''}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Navigation Buttons */}
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                      {step > 1 ? (
-                        <button
-                          type="button"
-                          onClick={handleBack}
-                          className="text-xs font-bold text-slate-400 hover:text-slate-700 flex items-center gap-1"
-                        >
-                          <ArrowLeft size={13} /> Back
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowForm(false)
-                            setScreen('selection')
-                          }}
-                          className="text-xs font-bold text-slate-400 hover:text-slate-700"
-                        >
-                          Cancel
-                        </button>
-                      )}
-
-                      {step < totalSteps ? (
-                        <Button
-                          type="button"
-                          onClick={handleNext}
-                          className="rounded-xl px-5 bg-[#E83C00] hover:bg-[#E83C00]/95 text-white font-bold text-xs"
-                          rightIcon={<ArrowRight size={13} />}
-                        >
-                          Continue
-                        </Button>
-                      ) : (
-                        <Button
-                          type="submit"
-                          loading={submitting}
-                          className="rounded-xl px-6 bg-[#E83C00] hover:bg-[#E83C00]/95 text-white font-bold text-xs shadow-md"
-                          rightIcon={<Check size={13} />}
-                        >
-                          Submit
-                        </Button>
-                      )}
-                    </div>
-
-                  </form>
-                </motion.div>
-              )}
-
-              {/* Form step 3: Success card */}
-              {screen === 'success' && (
-                <motion.div
-                  key="suc"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="text-center space-y-6"
-                >
-                  <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-500 mx-auto">
-                    <CheckCircle2 size={24} />
-                  </div>
-
-                  <div className="space-y-1">
-                    <h3 className="text-base font-bold text-slate-900">Application Received</h3>
-                    <p className="text-xs text-slate-500 font-light">Your details have been successfully saved to our database.</p>
-                  </div>
-
-                  <div className="bg-white border border-slate-200 p-4 rounded-xl text-left space-y-3">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-slate-400">ID</span>
-                      <span className="font-mono font-bold text-slate-900">{successAppId}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-slate-400">Status</span>
-                      <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-amber-50 border border-amber-100 text-amber-600">PENDING REVIEW</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <a
-                      href="https://discord.gg/ai-voice"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full flex items-center justify-center gap-2 bg-[#E83C00]/10 hover:bg-[#E83C00]/20 text-[#E83C00] px-4 py-2.5 rounded-xl border border-[#E83C00]/20 text-xs font-bold transition-all"
+                  {/* Form step 3: Success card */}
+                  {screen === 'success' && (
+                    <motion.div
+                      key="suc"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="text-center space-y-6"
                     >
-                      <MessageSquare size={13} /> Join Discord Channel
-                    </a>
-                  </div>
-                 </motion.div>
-               )}
+                      <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-500 mx-auto">
+                        <CheckCircle2 size={24} />
+                      </div>
+
+                      <div className="space-y-1">
+                        <h3 className="text-base font-bold text-slate-900">Application Received</h3>
+                        <p className="text-xs text-slate-500 font-light">Your details have been successfully saved to our database.</p>
+                      </div>
+
+                      <div className="bg-white border border-slate-200 p-4 rounded-xl text-left space-y-3">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-slate-400">ID</span>
+                          <span className="font-mono font-bold text-slate-900">{successAppId}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-slate-400">Status</span>
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-amber-50 border border-amber-100 text-amber-600">PENDING REVIEW</span>
+                        </div>
+                      </div>
+
+                    </motion.div>
+                  )}
                 </>
               )}
 
-             </AnimatePresence>
+            </AnimatePresence>
           </div>
 
         </div>

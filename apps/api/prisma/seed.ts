@@ -1,7 +1,29 @@
 import { PrismaClient } from '@prisma/client'
-import * as bcrypt from 'bcryptjs'
+import { hashPassword } from 'better-auth/crypto'
 
 const prisma = new PrismaClient()
+
+async function upsertCredentialAccount(
+  userId: string,
+  accountKey: string,
+  passwordHash: string,
+) {
+  await prisma.account.upsert({
+    where: { id: accountKey },
+    update: {
+      providerId: 'credential',
+      accountId: userId,
+      password: passwordHash,
+    },
+    create: {
+      id: accountKey,
+      userId,
+      providerId: 'credential',
+      accountId: userId,
+      password: passwordHash,
+    },
+  })
+}
 
 async function main() {
   console.log('🌱 Seeding database for Multi-Hackathon Architecture...')
@@ -16,10 +38,10 @@ async function main() {
   const judgeEmail = process.env.SEED_JUDGE_EMAIL ?? 'judge@theaitel.com'
   const judgePassword = process.env.SEED_JUDGE_PASSWORD ?? 'JudgeSecurePass123!'
 
-  // Hash passwords
-  const superAdminHashed = await bcrypt.hash(superAdminPassword, 10)
-  const adminHashed = await bcrypt.hash(adminPassword, 10)
-  const judgeHashed = await bcrypt.hash(judgePassword, 10)
+  // Hash with Better Auth's hasher so sign-in/password.verify succeeds
+  const superAdminHashed = await hashPassword(superAdminPassword)
+  const adminHashed = await hashPassword(adminPassword)
+  const judgeHashed = await hashPassword(judgePassword)
 
   // 1. Create Default Hackathon
   const hackathon = await prisma.hackathon.upsert({
@@ -94,17 +116,7 @@ async function main() {
     },
   })
 
-  await prisma.account.upsert({
-    where: { id: `acc_super_${superUser.id}` },
-    update: { password: superAdminHashed },
-    create: {
-      id: `acc_super_${superUser.id}`,
-      userId: superUser.id,
-      providerId: 'email',
-      accountId: superAdminEmail,
-      password: superAdminHashed,
-    },
-  })
+  await upsertCredentialAccount(superUser.id, `acc_super_${superUser.id}`, superAdminHashed)
 
   // Executive Admin
   const adminUser = await prisma.user.upsert({
@@ -118,17 +130,7 @@ async function main() {
     },
   })
 
-  await prisma.account.upsert({
-    where: { id: `acc_admin_${adminUser.id}` },
-    update: { password: adminHashed },
-    create: {
-      id: `acc_admin_${adminUser.id}`,
-      userId: adminUser.id,
-      providerId: 'email',
-      accountId: adminEmail,
-      password: adminHashed,
-    },
-  })
+  await upsertCredentialAccount(adminUser.id, `acc_admin_${adminUser.id}`, adminHashed)
 
   // Judge
   const judgeUser = await prisma.user.upsert({
@@ -142,17 +144,7 @@ async function main() {
     },
   })
 
-  await prisma.account.upsert({
-    where: { id: `acc_judge_${judgeUser.id}` },
-    update: { password: judgeHashed },
-    create: {
-      id: `acc_judge_${judgeUser.id}`,
-      userId: judgeUser.id,
-      providerId: 'email',
-      accountId: judgeEmail,
-      password: judgeHashed,
-    },
-  })
+  await upsertCredentialAccount(judgeUser.id, `acc_judge_${judgeUser.id}`, judgeHashed)
 
   // Create Judge Profile
   await prisma.judge.upsert({
@@ -167,7 +159,49 @@ async function main() {
     },
   })
 
-  // 5. Seed Event Settings
+  // 5. Create 5 Dummy Teams and Assign to Judge
+  const dummyTeamsData = [
+    { name: 'EchoFlow AI', college: 'IIT Madras', trackId: trackVoice.id, title: 'Real-time Latency Voice Assistant' },
+    { name: 'VoxAgent Pro', college: 'BITS Pilani', trackId: trackVoice.id, title: 'Conversational Sales Voice Bot' },
+    { name: 'AudioMind', college: 'VIT Vellore', trackId: trackConv.id, title: 'Multilingual Audio Summarizer' },
+    { name: 'SonicPulse', college: 'NIT Trichy', trackId: trackConv.id, title: 'Noise Cancelling Voice Streamer' },
+    { name: 'ResoNance', college: 'SRM Institute', trackId: trackVoice.id, title: 'Emotion Aware Voice Cloning Engine' },
+  ]
+
+  for (const [idx, dt] of dummyTeamsData.entries()) {
+    let team = await prisma.team.findFirst({
+      where: { hackathonId: hackathon.id, name: dt.name }
+    })
+
+    if (!team) {
+      team = await prisma.team.create({
+        data: {
+          hackathonId: hackathon.id,
+          name: dt.name,
+          trackId: dt.trackId,
+          tableNumber: `T-0${idx + 1}`,
+          status: 'COMPETING',
+        }
+      })
+    }
+
+    // Assign team to judge
+    const existingAssignment = await prisma.judgeAssignment.findFirst({
+      where: { judgeId: judgeUser.id, teamId: team.id }
+    })
+
+    if (!existingAssignment) {
+      await prisma.judgeAssignment.create({
+        data: {
+          hackathonId: hackathon.id,
+          judgeId: judgeUser.id,
+          teamId: team.id,
+        }
+      })
+    }
+  }
+
+  // 6. Seed Event Settings
   await prisma.setting.upsert({
     where: { hackathonId: hackathon.id },
     update: {},

@@ -54,8 +54,8 @@ export function Footer() {
               {[
                 { label: 'Leaderboard', href: '/leaderboard' },
                 { label: 'Admin Panel', href: '/admin' },
-                { label: 'Judge Portal', href: '/judge' },
-                { label: 'Apply Registration', href: '/apply' },
+                { label: 'Judge Panel', href: '/judge' },
+                { label: 'Register', href: '/' },
               ].map((item) => (
                 <li key={item.label}>
                   <Link to={item.href} className="text-xs text-[#475569] hover:text-[#0F172A] font-light transition-colors">

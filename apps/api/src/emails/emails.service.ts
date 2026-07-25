@@ -2,32 +2,31 @@ import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { PrismaService } from '../prisma/prisma.service'
 
-// Resend is imported dynamically to avoid issues if not installed
-let resendInstance: any = null
+// Brevo API implementation
+let brevoApiKey: string | null = null
 
 @Injectable()
 export class EmailsService {
   private readonly logger = new Logger(EmailsService.name)
   private readonly fromEmail: string
+  private readonly fromName: string
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
   ) {
     this.fromEmail = config.get('EMAIL_FROM') ?? 'hackathon@theaitel.com'
-    this.initResend()
+    this.fromName = config.get('HACKATHON_NAME') ?? 'AI Voice Hackathon'
+    this.initBrevo()
   }
 
-  private async initResend() {
-    try {
-      const { Resend } = await import('resend')
-      const apiKey = this.config.get('RESEND_API_KEY')
-      if (apiKey) {
-        resendInstance = new Resend(apiKey)
-        this.logger.log('Resend email service initialized')
-      }
-    } catch {
-      this.logger.warn('Resend not available, emails will be logged only')
+  private initBrevo() {
+    const apiKey = this.config.get('BREVO_API_KEY')
+    if (apiKey) {
+      brevoApiKey = apiKey
+      this.logger.log('Brevo email service initialized')
+    } else {
+      this.logger.warn('Brevo API key not found, emails will be logged only')
     }
   }
 
@@ -47,13 +46,26 @@ export class EmailsService {
     })
 
     try {
-      if (resendInstance) {
-        await resendInstance.emails.send({
-          from: this.fromEmail,
-          to: params.to,
-          subject: params.subject,
-          html: params.html,
+      if (brevoApiKey) {
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'accept': 'application/json',
+            'api-key': brevoApiKey,
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify({
+            sender: { name: this.fromName, email: this.fromEmail },
+            to: params.to.map(email => ({ email })),
+            subject: params.subject,
+            htmlContent: params.html
+          })
         })
+
+        if (!response.ok) {
+          const errorData = await response.text()
+          throw new Error(`Brevo API error: ${response.status} - ${errorData}`)
+        }
       } else {
         this.logger.log(`[EMAIL MOCK] To: ${params.to.join(', ')} | Subject: ${params.subject}`)
       }

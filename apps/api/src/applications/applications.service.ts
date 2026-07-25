@@ -82,7 +82,8 @@ export class ApplicationsService {
     })
 
     try {
-      await this.emails.sendRegistrationEmail([leader.email], finalTeamName)
+      const toEmails = dto.members.map(m => m.email)
+      await this.emails.sendRegistrationEmail(toEmails, finalTeamName)
     } catch (err) {
       console.error('Failed to send registration confirmation email:', err)
     }
@@ -171,7 +172,7 @@ export class ApplicationsService {
     }
 
     // Create team record
-    await this.prisma.team.create({
+    const team = await this.prisma.team.create({
       data: {
         hackathonId: application.hackathonId,
         applicationId: id,
@@ -181,9 +182,19 @@ export class ApplicationsService {
       },
     })
 
+    // Attach team members to the new team
+    await this.prisma.teamMember.updateMany({
+      where: { applicationId: id },
+      data: { teamId: team.id },
+    })
+
     // Send approval email
-    const toEmails = application.teamMembers.map(m => m.email)
-    await this.emails.sendApprovalEmail(toEmails, application.teamName)
+    try {
+      const toEmails = application.teamMembers.map(m => m.email)
+      await this.emails.sendApprovalEmail(toEmails, application.teamName)
+    } catch (err) {
+      console.error('Failed to send approval email', err)
+    }
 
     return { success: true, data: application }
   }
@@ -199,8 +210,12 @@ export class ApplicationsService {
     })
 
     // Send rejection email
-    const toEmails = application.teamMembers.map(m => m.email)
-    await this.emails.sendRejectionEmail(toEmails, application.teamName, reason)
+    try {
+      const toEmails = application.teamMembers.map(m => m.email)
+      await this.emails.sendRejectionEmail(toEmails, application.teamName, reason)
+    } catch (err) {
+      console.error('Failed to send rejection email', err)
+    }
 
     return { success: true, data: application }
   }
@@ -213,58 +228,4 @@ export class ApplicationsService {
     return { success: true, data: application }
   }
 
-  // Called by Luma webhook
-  async createFromWebhook(data: {
-    teamName: string
-    college: string
-    email: string
-    name: string
-    lumaEventId: string
-    lumaRegistrationId: string
-    hackathonId: string
-  }) {
-    // Search or create track
-    let track = await this.prisma.track.findFirst({
-      where: { hackathonId: data.hackathonId },
-    })
-
-    if (!track) {
-      track = await this.prisma.track.create({
-        data: {
-          hackathonId: data.hackathonId,
-          name: 'Voice AI',
-          slug: 'voice-ai',
-        },
-      })
-    }
-
-    const application = await this.prisma.application.create({
-      data: {
-        hackathon: { connect: { id: data.hackathonId } },
-        teamName: data.teamName,
-        college: data.college,
-        teamLeaderName: data.name,
-        teamLeaderEmail: data.email,
-        track: { connect: { id: track.id } },
-        status: 'PENDING',
-        lumaEventId: data.lumaEventId,
-        lumaRegistrationId: data.lumaRegistrationId,
-        teamMembers: {
-          create: {
-            name: data.name,
-            email: data.email,
-            role: 'Team Lead',
-          },
-        },
-      },
-      include: {
-        teamMembers: true,
-      },
-    })
-
-    // Send confirmation email
-    await this.emails.sendRegistrationEmail([data.email], data.teamName)
-
-    return application
-  }
 }
