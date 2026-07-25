@@ -23,6 +23,7 @@
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.4.0",
     "@nestjs/platform-socket.io": "^10.4.0",
+    "@nestjs/serve-static": "^4.0.2",
     "@nestjs/throttler": "^6.2.0",
     "@nestjs/websockets": "^10.4.0",
     "@prisma/client": "^5.22.0",
