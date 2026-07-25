@@ -275,7 +275,7 @@ export function LandingPage() {
                 India's Biggest AI Voiceathon
               </span>
               <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] text-[#E83C00] uppercase drop-shadow-sm">
-                Winning Pool: ₹50K
+                Winning Pool: ₹1 Lakh
               </span>
             </div>
           </div>
@@ -427,7 +427,7 @@ export function LandingPage() {
                   <div className="space-y-2">
                     <h3 className="text-lg font-extrabold text-slate-900">Registration is Open</h3>
                     <p className="text-xs text-slate-500 font-light leading-relaxed max-w-xs mx-auto">
-                      Secure your place in the AI Voice Voiceathon. Build, collaborate, and compete for a ₹50K cash prize pool.
+                      Secure your place in the AI Voice Voiceathon. Build, collaborate, and compete for a ₹1 Lakh cash prize pool.
                     </p>
                   </div>
 
