@@ -20,5 +20,6 @@
     "paths": {
       "@hackathon/shared": ["../../packages/shared/src"]
     }
-  }
+  },
+  "include": ["src/**/*"]
 }
