@@ -23,6 +23,18 @@ import { join } from 'path'
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'web', 'dist'),
       exclude: ['/api/(.*)', '/health'],
+      serveStaticOptions: {
+        maxAge: 31536000000, // 1 year in milliseconds
+        setHeaders: (res, path) => {
+          if (path.endsWith('.html')) {
+            // HTML files should check for changes on every request
+            res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate')
+          } else {
+            // Hashed JS, CSS, images, and fonts can be cached forever
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+          }
+        },
+      },
     }),
 
     // Config
