@@ -175,7 +175,7 @@ export function JudgesPage() {
                         <span className="text-xs text-slate-500 font-bold">Scoring progress</span>
                         <span className="text-xs font-black text-[#1A1A1A]">{judge.completedScores}/{judge.totalTeams}</span>
                       </div>
-                      <Progress value={progress} variant={progress === 100 ? 'success' : 'primary'} size="sm" className="bg-[#EAE4D8]" indicatorClassName="bg-[#E83C00]" />
+                      <Progress value={progress} variant={progress === 100 ? 'success' : 'primary'} size="sm" className="bg-[#EAE4D8]" />
                     </div>
 
                     {/* Email */}
