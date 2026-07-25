@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "start": "sirv dist --port $PORT --single --host 0.0.0.0",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "type-check": "tsc --noEmit"
@@ -41,6 +42,7 @@
     "react-intersection-observer": "^9.13.1",
     "react-router-dom": "^7.1.0",
     "recharts": "^2.14.1",
+    "sirv-cli": "^3.0.1",
     "socket.io-client": "^4.8.1",
     "sonner": "^1.7.1",
     "tailwind-merge": "^2.5.5",

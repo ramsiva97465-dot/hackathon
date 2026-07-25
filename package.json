@@ -12,6 +12,8 @@
     "build:web": "turbo build --filter=@hackathon/web",
     "build:api": "turbo build --filter=@hackathon/api",
     "start": "pnpm --filter @hackathon/api start",
+    "start:web": "pnpm --filter @hackathon/web start",
+    "start:api": "pnpm --filter @hackathon/api start",
     "lint": "turbo lint",
     "type-check": "turbo type-check",
     "clean": "turbo clean && rimraf node_modules"
