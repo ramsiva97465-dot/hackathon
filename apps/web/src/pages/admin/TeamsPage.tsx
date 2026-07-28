@@ -64,9 +64,9 @@ function processCsvData(text: string) {
   const tableIdx = rawHeaders.findIndex(h => h.includes('tablenumber') || h === 'table' || h === 'tableno')
   const collegeIdx = rawHeaders.findIndex(h => h.includes('college') || h === 'university' || h === 'school')
   const nameIdx = rawHeaders.findIndex(h => h === 'name' || h.includes('participantname') || h.includes('membername') || h.includes('leadername'))
-  const emailIdx = rawHeaders.findIndex(h === 'email' || h.includes('participantemail') || h.includes('memberemail') || h.includes('leaderemail'))
-  const phoneIdx = rawHeaders.findIndex(h === 'phone' || h.includes('phone') || h.includes('mobile'))
-  const roleIdx = rawHeaders.findIndex(h === 'role' || h.includes('memberrole') || h.includes('position'))
+  const emailIdx = rawHeaders.findIndex(h => h === 'email' || h.includes('participantemail') || h.includes('memberemail') || h.includes('leaderemail'))
+  const phoneIdx = rawHeaders.findIndex(h => h === 'phone' || h.includes('phone') || h.includes('mobile'))
+  const roleIdx = rawHeaders.findIndex(h => h === 'role' || h.includes('memberrole') || h.includes('position'))
 
   if (teamNameIdx === -1) return { error: 'Could not find "Team Name" column in the CSV.' }
   if (nameIdx === -1) return { error: 'Could not find "Name" or "Participant Name" column in the CSV.' }
@@ -223,10 +223,12 @@ export function TeamsPage() {
         setParsedTeams([])
         setParseErrors([])
       } else {
-        setParsedTeams(result.teams || [])
-        setParseErrors(result.errors || [])
-        if ((result.teams || []).length > 0) {
-          toast.success(`Parsed ${result.teams.length} teams successfully!`)
+        const teams = result.teams || []
+        const errors = result.errors || []
+        setParsedTeams(teams)
+        setParseErrors(errors)
+        if (teams.length > 0) {
+          toast.success(`Parsed ${teams.length} teams successfully!`)
         } else {
           toast.warning('No valid teams found in the CSV.')
         }
