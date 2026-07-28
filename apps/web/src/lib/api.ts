@@ -64,6 +64,8 @@ export const api = {
       apiClient.post(`/teams/${teamId}/assign-judge`, { judgeId, roundId }),
     updateTableNumber: (teamId: string, tableNumber: string) =>
       apiClient.patch(`/teams/${teamId}/table-number`, { tableNumber }),
+    import: (teams: any[]) =>
+      apiClient.post('/teams/import', { teams }),
   },
 
   // Judges

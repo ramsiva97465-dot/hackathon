@@ -25,4 +25,9 @@ export class TeamsController {
   ) {
     return this.service.updateTableNumber(id, tableNumber)
   }
+
+  @Post('import')
+  importTeams(@Body('teams') teams: any[]) {
+    return this.service.importTeams(teams)
+  }
 }

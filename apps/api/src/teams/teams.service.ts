@@ -76,4 +76,108 @@ export class TeamsService {
     })
     return { success: true, data: team }
   }
+
+  async importTeams(teamsData: any[]) {
+    let hackathon = await this.prisma.hackathon.findFirst({
+      where: { slug: 'ai-voice-agent-2026' }
+    })
+    if (!hackathon) {
+      hackathon = await this.prisma.hackathon.findFirst()
+    }
+    if (!hackathon) {
+      return { success: false, error: 'No active hackathon found to import teams into.' }
+    }
+
+    const tracks = await this.prisma.track.findMany({
+      where: { hackathonId: hackathon.id }
+    })
+
+    const results = await this.prisma.$transaction(async (tx) => {
+      let createdTeams = 0
+      let createdMembers = 0
+
+      for (const teamInput of teamsData) {
+        // 1. Resolve Track
+        let trackId: string
+        const match = tracks.find(
+          t => t.name.toLowerCase() === teamInput.track?.toLowerCase() ||
+               t.slug.toLowerCase() === teamInput.track?.toLowerCase()
+        )
+        if (match) {
+          trackId = match.id
+        } else if (tracks.length > 0) {
+          trackId = tracks[0].id
+        } else {
+          const newTrack = await tx.track.create({
+            data: {
+              hackathonId: hackathon.id,
+              name: teamInput.track || 'Voice AI',
+              slug: (teamInput.track || 'Voice-AI').toLowerCase().replace(/\s+/g, '-'),
+            }
+          })
+          tracks.push(newTrack)
+          trackId = newTrack.id
+        }
+
+        // 2. Find or Create Team
+        let team = await tx.team.findFirst({
+          where: { hackathonId: hackathon.id, name: teamInput.name }
+        })
+        if (!team) {
+          team = await tx.team.create({
+            data: {
+              hackathonId: hackathon.id,
+              name: teamInput.name,
+              trackId,
+              tableNumber: teamInput.tableNumber || null,
+              status: 'COMPETING',
+            }
+          })
+          createdTeams++
+        } else {
+          team = await tx.team.update({
+            where: { id: team.id },
+            data: {
+              tableNumber: teamInput.tableNumber || team.tableNumber,
+              trackId,
+            }
+          })
+        }
+
+        // 3. Create or Update Members
+        if (Array.isArray(teamInput.members)) {
+          for (const member of teamInput.members) {
+            const existingMember = await tx.teamMember.findFirst({
+              where: { teamId: team.id, email: member.email }
+            })
+            if (!existingMember) {
+              await tx.teamMember.create({
+                data: {
+                  teamId: team.id,
+                  name: member.name,
+                  email: member.email,
+                  phone: member.phone || null,
+                  role: member.role || 'Member',
+                }
+              })
+              createdMembers++
+            } else {
+              await tx.teamMember.update({
+                where: { id: existingMember.id },
+                data: {
+                  name: member.name || existingMember.name,
+                  phone: member.phone || existingMember.phone,
+                  role: member.role || existingMember.role,
+                }
+              })
+            }
+          }
+        }
+      }
+
+      return { createdTeams, createdMembers }
+    })
+
+    return { success: true, data: results }
+  }
 }

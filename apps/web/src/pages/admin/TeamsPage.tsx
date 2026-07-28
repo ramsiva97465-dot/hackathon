@@ -7,9 +7,130 @@ import { containerVariants, itemVariants } from '@/lib/motion'
 import { getTrackConfig } from '@/lib/utils'
 import {
   Trophy, Users, Award, X, Check,
-  Search, Hash, Star, UserPlus
+  Search, Hash, Star, UserPlus, Download, Upload, AlertCircle, CheckCircle
 } from 'lucide-react'
 import { api } from '@/lib/api'
+import { toast } from 'sonner'
+
+function parseCSV(text: string): string[][] {
+  const lines: string[][] = []
+  let row: string[] = []
+  let inQuotes = false
+  let currentVal = ''
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i]
+    const nextChar = text[i + 1]
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        currentVal += '"'
+        i++
+      } else {
+        inQuotes = !inQuotes
+      }
+    } else if (char === ',' && !inQuotes) {
+      row.push(currentVal.trim())
+      currentVal = ''
+    } else if ((char === '\r' || char === '\n') && !inQuotes) {
+      if (char === '\r' && nextChar === '\n') {
+        i++
+      }
+      row.push(currentVal.trim())
+      lines.push(row)
+      row = []
+      currentVal = ''
+    } else {
+      currentVal += char
+    }
+  }
+  if (row.length > 0 || currentVal !== '') {
+    row.push(currentVal.trim())
+    lines.push(row)
+  }
+  return lines.filter(r => r.some(cell => cell !== ''))
+}
+
+function processCsvData(text: string) {
+  const parsed = parseCSV(text)
+  if (parsed.length < 2) {
+    return { error: 'The CSV file is empty or missing headers.' }
+  }
+
+  const rawHeaders = parsed[0].map(h => h.toLowerCase().trim().replace(/[^a-z0-9]/g, ''))
+  
+  const teamNameIdx = rawHeaders.findIndex(h => h.includes('teamname') || h === 'team')
+  const trackIdx = rawHeaders.findIndex(h => h.includes('track') || h === 'category')
+  const tableIdx = rawHeaders.findIndex(h => h.includes('tablenumber') || h === 'table' || h === 'tableno')
+  const collegeIdx = rawHeaders.findIndex(h => h.includes('college') || h === 'university' || h === 'school')
+  const nameIdx = rawHeaders.findIndex(h => h === 'name' || h.includes('participantname') || h.includes('membername') || h.includes('leadername'))
+  const emailIdx = rawHeaders.findIndex(h === 'email' || h.includes('participantemail') || h.includes('memberemail') || h.includes('leaderemail'))
+  const phoneIdx = rawHeaders.findIndex(h === 'phone' || h.includes('phone') || h.includes('mobile'))
+  const roleIdx = rawHeaders.findIndex(h === 'role' || h.includes('memberrole') || h.includes('position'))
+
+  if (teamNameIdx === -1) return { error: 'Could not find "Team Name" column in the CSV.' }
+  if (nameIdx === -1) return { error: 'Could not find "Name" or "Participant Name" column in the CSV.' }
+  if (emailIdx === -1) return { error: 'Could not find "Email" or "Participant Email" column in the CSV.' }
+
+  const teamsMap: Record<string, any> = {}
+  const errors: string[] = []
+
+  for (let i = 1; i < parsed.length; i++) {
+    const row = parsed[i]
+    if (row.length === 0 || row.every(c => c === '')) continue
+
+    const teamName = row[teamNameIdx]?.trim()
+    const track = trackIdx !== -1 ? row[trackIdx]?.trim() : undefined
+    const tableNumber = tableIdx !== -1 ? row[tableIdx]?.trim() : undefined
+    const college = collegeIdx !== -1 ? row[collegeIdx]?.trim() : undefined
+    const name = row[nameIdx]?.trim()
+    const email = row[emailIdx]?.trim()
+    const phone = phoneIdx !== -1 ? row[phoneIdx]?.trim() : undefined
+    const role = roleIdx !== -1 ? row[roleIdx]?.trim() : undefined
+
+    const rowNum = i + 1
+
+    if (!teamName) {
+      errors.push(`Row ${rowNum}: Team Name is missing.`)
+      continue
+    }
+    if (!name) {
+      errors.push(`Row ${rowNum} (${teamName}): Participant Name is missing.`)
+      continue
+    }
+    if (!email) {
+      errors.push(`Row ${rowNum} (${teamName}): Email is missing.`)
+      continue
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.push(`Row ${rowNum} (${teamName}): Invalid email format "${email}".`)
+      continue
+    }
+
+    if (!teamsMap[teamName]) {
+      teamsMap[teamName] = {
+        name: teamName,
+        track,
+        tableNumber,
+        college,
+        members: []
+      }
+    }
+
+    teamsMap[teamName].members.push({
+      name,
+      email,
+      phone,
+      role: role || (teamsMap[teamName].members.length === 0 ? 'Leader' : 'Member')
+    })
+  }
+
+  return {
+    teams: Object.values(teamsMap),
+    errors
+  }
+}
+
 
 type Team = {
   id: string; name: string; college: string; track: string
@@ -40,6 +161,101 @@ export function TeamsPage() {
   const [editingTableId, setEditingTableId] = useState<string | null>(null)
   const [editingTableValue, setEditingTableValue] = useState('')
   const [savingTable, setSavingTable] = useState(false)
+
+  const [csvImportOpen, setCsvImportOpen] = useState(false)
+  const [importingCsv, setImportingCsv] = useState(false)
+  const [parsedTeams, setParsedTeams] = useState<any[]>([])
+  const [parseErrors, setParseErrors] = useState<string[]>([])
+  const [dragActive, setDragActive] = useState(false)
+
+  const handleDownloadTemplate = () => {
+    const csvContent = "Team Name,Track,Table Number,College,Name,Email,Phone,Role\n" +
+      "EchoFlow AI,Voice AI,T-01,IIT Madras,Arjun Mehta,arjun@example.com,9876543210,Leader\n" +
+      "EchoFlow AI,Voice AI,T-01,IIT Madras,Sneha Rao,sneha@example.com,9876543211,Member\n" +
+      "VoxAgent Pro,Conversational AI,T-02,BITS Pilani,Karthik Sen,karthik@example.com,,Leader"
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.setAttribute("href", url)
+    link.setAttribute("download", "hackathon_teams_template.csv")
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) processFile(file)
+  }
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true)
+    } else if (e.type === "dragleave") {
+      setDragActive(false)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file) processFile(file)
+  }
+
+  const processFile = (file: File) => {
+    if (!file.name.endsWith('.csv')) {
+      toast.error('Please upload a valid CSV file.')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const text = event.target?.result as string
+      const result = processCsvData(text)
+      if (result.error) {
+        toast.error(result.error)
+        setParsedTeams([])
+        setParseErrors([])
+      } else {
+        setParsedTeams(result.teams || [])
+        setParseErrors(result.errors || [])
+        if ((result.teams || []).length > 0) {
+          toast.success(`Parsed ${result.teams.length} teams successfully!`)
+        } else {
+          toast.warning('No valid teams found in the CSV.')
+        }
+      }
+    }
+    reader.readAsText(file)
+  }
+
+  const handleUploadCsv = async () => {
+    if (parsedTeams.length === 0) return
+    try {
+      setImportingCsv(true)
+      const res = await api.teams.import(parsedTeams)
+      if (res.data?.success) {
+        toast.success(`Successfully imported ${res.data.data.createdTeams} teams and ${res.data.data.createdMembers} members!`)
+        await fetchTeams()
+        setCsvImportOpen(false)
+        setParsedTeams([])
+        setParseErrors([])
+      } else {
+        toast.error(res.data?.error || 'Failed to import teams.')
+      }
+    } catch (err: any) {
+      console.error(err)
+      toast.error(err.response?.data?.message || 'Failed to import teams.')
+    } finally {
+      setImportingCsv(false)
+    }
+  }
 
   useEffect(() => { fetchTeams(); fetchJudges() }, [])
 
@@ -118,19 +334,28 @@ export function TeamsPage() {
           style={{ border: '1.5px solid #EEF2F7', boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
 
           {/* Search Bar */}
-          <div className="flex items-center justify-between px-5 py-4"
+          <div className="flex items-center justify-between px-5 py-4 flex-wrap gap-3"
             style={{ borderBottom: '1px solid #F1F5F9' }}>
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search teams or college…"
-                className="pl-9 pr-4 py-2 text-sm rounded-xl outline-none transition-all w-64"
-                style={{ border: '1.5px solid #EEF2F7', background: '#F8FAFC', color: '#0F172A' }}
-                onFocus={e => { e.currentTarget.style.borderColor = 'rgba(232,60,0,0.35)'; e.currentTarget.style.background = '#fff' }}
-                onBlur={e => { e.currentTarget.style.borderColor = '#EEF2F7'; e.currentTarget.style.background = '#F8FAFC' }}
-              />
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Search teams or college…"
+                  className="pl-9 pr-4 py-2 text-sm rounded-xl outline-none transition-all w-64"
+                  style={{ border: '1.5px solid #EEF2F7', background: '#F8FAFC', color: '#0F172A' }}
+                  onFocus={e => { e.currentTarget.style.borderColor = 'rgba(232,60,0,0.35)'; e.currentTarget.style.background = '#fff' }}
+                  onBlur={e => { e.currentTarget.style.borderColor = '#EEF2F7'; e.currentTarget.style.background = '#F8FAFC' }}
+                />
+              </div>
+              <button
+                onClick={() => setCsvImportOpen(true)}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-xl text-white transition-all bg-[#E83C00] hover:bg-[#c93400] shadow-sm shadow-orange-950/10"
+              >
+                <UserPlus size={14} />
+                Import CSV
+              </button>
             </div>
             <span className="text-xs font-semibold text-slate-400">{filtered.length} teams</span>
           </div>
@@ -381,6 +606,159 @@ export function TeamsPage() {
                     </button>
                   </div>
                 ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── CSV Import Modal ── */}
+      <AnimatePresence>
+        {csvImportOpen && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: 'rgba(8,13,28,0.72)', backdropFilter: 'blur(6px)' }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.28 }}
+              className="bg-white rounded-2xl w-full max-w-2xl overflow-hidden flex flex-col"
+              style={{ maxHeight: '85vh', border: '1px solid #E2E8F0', boxShadow: '0 24px 64px rgba(0,0,0,0.14)' }}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-5 py-4"
+                style={{ borderBottom: '1px solid #F1F5F9' }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-orange-50 border border-orange-100">
+                    <Upload size={16} className="text-[#E83C00]" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm">Import Teams & Members</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">Bulk upload via CSV file</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setCsvImportOpen(false); setParsedTeams([]); setParseErrors([]) }}
+                  className="p-2 rounded-xl transition-colors text-slate-400 hover:bg-slate-50 hover:text-slate-600 border border-transparent hover:border-slate-200"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-5 overflow-y-auto flex-1 space-y-4">
+                
+                {/* Instructions */}
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-3 justify-between">
+                  <div className="space-y-1">
+                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">CSV Requirements</h4>
+                    <p className="text-xs text-slate-500 leading-relaxed font-light">
+                      Must contain columns for <strong>Team Name</strong>, <strong>Name</strong>, and <strong>Email</strong>. 
+                      Multiple rows with the same <strong>Team Name</strong> are grouped into one team automatically.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleDownloadTemplate}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 shadow-sm shrink-0"
+                  >
+                    <Download size={12} />
+                    Template
+                  </button>
+                </div>
+
+                {/* Dropzone */}
+                <div
+                  onDragEnter={handleDrag}
+                  onDragOver={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDrop={handleDrop}
+                  className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all cursor-pointer relative ${
+                    dragActive ? 'border-orange-400 bg-orange-50/20' : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'
+                  }`}
+                >
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileChange}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  />
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-white border border-slate-100 shadow-sm text-slate-400">
+                      <Upload size={18} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700">Drag and drop your CSV here, or <span className="text-[#E83C00]">browse</span></p>
+                      <p className="text-xs text-slate-400 mt-1">Supports standard CSV files (.csv)</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Errors list if any */}
+                {parseErrors.length > 0 && (
+                  <div className="p-4 rounded-xl bg-red-50 border border-red-100 space-y-2">
+                    <div className="flex items-center gap-2 text-red-700">
+                      <AlertCircle size={14} />
+                      <h4 className="text-xs font-bold uppercase tracking-wider">Validation Errors ({parseErrors.length})</h4>
+                    </div>
+                    <div className="max-h-24 overflow-y-auto space-y-1">
+                      {parseErrors.map((err, idx) => (
+                        <p key={idx} className="text-xs text-red-600 font-medium">{err}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Preview Table */}
+                {parsedTeams.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-600 uppercase tracking-wider">
+                      <span>Import Preview</span>
+                      <span className="text-[#E83C00]">{parsedTeams.length} Teams parsed</span>
+                    </div>
+                    <div className="border border-slate-100 rounded-xl overflow-hidden max-h-52 overflow-y-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-bold">
+                          <tr>
+                            <th className="px-4 py-2">Team Name</th>
+                            <th className="px-4 py-2">Track</th>
+                            <th className="px-4 py-2">College</th>
+                            <th className="px-4 py-2 text-right">Members</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50 text-slate-700">
+                          {parsedTeams.map((pt, idx) => (
+                            <tr key={idx} className="hover:bg-slate-50/50">
+                              <td className="px-4 py-2.5 font-bold">{pt.name}</td>
+                              <td className="px-4 py-2.5">{pt.track || 'Default'}</td>
+                              <td className="px-4 py-2.5">{pt.college || '—'}</td>
+                              <td className="px-4 py-2.5 text-right font-semibold text-[#E83C00]">{pt.members.length} members</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-5 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+                <button
+                  onClick={() => { setCsvImportOpen(false); setParsedTeams([]); setParseErrors([]) }}
+                  className="px-4 py-2 text-sm font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUploadCsv}
+                  disabled={importingCsv || parsedTeams.length === 0}
+                  className="flex items-center gap-2 px-5 py-2 text-sm font-semibold rounded-xl text-white transition-all bg-[#E83C00] hover:bg-[#c93400] disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-orange-950/10"
+                >
+                  {importingCsv ? 'Importing...' : `Import ${parsedTeams.length} Teams`}
+                </button>
               </div>
             </motion.div>
           </motion.div>
