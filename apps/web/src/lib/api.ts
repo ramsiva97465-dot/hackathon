@@ -71,6 +71,10 @@ export const api = {
     myTeam: () => apiClient.get('/teams/my-team'),
     submitProject: (data: Record<string, any>) =>
       apiClient.post('/teams/submit-project', data),
+    promote: (currentRound: number) =>
+      apiClient.post('/teams/promote', { currentRound }),
+    resetRounds: () =>
+      apiClient.post('/teams/reset-rounds'),
   },
 
   // Judges
@@ -98,7 +102,7 @@ export const api = {
 
   // Leaderboard
   leaderboard: {
-    get: (params?: { roundId?: string; judgeId?: string }) =>
+    get: (params?: { round?: number; hackathonId?: string }) =>
       apiClient.get('/leaderboard', { params }),
     adminScore: (teamId: string, score: number | null) =>
       apiClient.post('/leaderboard/admin-score', { teamId, score }),

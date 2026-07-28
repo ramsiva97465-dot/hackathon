@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service'
 export class LeaderboardService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getLeaderboard(params?: { hackathonId?: string }) {
+  async getLeaderboard(params?: { hackathonId?: string; round?: number }) {
     // Locate hackathon
     const hackathon = params?.hackathonId
       ? { id: params.hackathonId }
@@ -13,8 +13,20 @@ export class LeaderboardService {
 
     if (!hackathon) return []
 
+    const targetRound = params?.round ? Number(params.round) : 1
+    const whereCondition: any = {
+      hackathonId: hackathon.id,
+      status: 'COMPETING'
+    }
+
+    if (targetRound === 3) {
+      whereCondition.round = 3
+    } else if (targetRound === 2) {
+      whereCondition.round = { in: [2, 3] }
+    }
+
     const teams = await this.prisma.team.findMany({
-      where: { hackathonId: hackathon.id, status: 'COMPETING' },
+      where: whereCondition,
       include: {
         track: true,
         scoreSheets: {
@@ -45,6 +57,7 @@ export class LeaderboardService {
         track: team.track.name,
         overallScore: Math.round(overallScore * 10) / 10,
         judgeCount: submittedSheets.length,
+        round: team.round,
       }
     })
 

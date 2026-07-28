@@ -285,4 +285,101 @@ export class TeamsService {
     })
     return { success: true, data: team }
   }
+
+  async promoteTeams(currentRound: number) {
+    const hackathon = await this.prisma.hackathon.findFirst()
+    if (!hackathon) throw new Error('No hackathon found')
+
+    if (currentRound === 1) {
+      const teams = await this.prisma.team.findMany({
+        where: { hackathonId: hackathon.id, status: 'COMPETING', round: 1 },
+        include: {
+          scoreSheets: {
+            where: { isSubmitted: true },
+            include: { scores: true }
+          }
+        }
+      })
+
+      const sortedTeams = teams.map(t => {
+        const submittedSheets = t.scoreSheets.filter(s => s.isSubmitted)
+        let overallScore = 0
+        if (t.adminScore !== null && t.adminScore !== undefined) {
+          overallScore = t.adminScore
+        } else if (submittedSheets.length > 0) {
+          const total = submittedSheets.reduce((sum, sheet) => {
+            const sheetTotal = sheet.scores.reduce((sSum, sc) => sSum + sc.score, 0)
+            return sum + (sheet.scores.length > 0 ? sheetTotal / sheet.scores.length : 0)
+          }, 0)
+          overallScore = total / submittedSheets.length
+        }
+        return { id: t.id, overallScore }
+      }).sort((a, b) => b.overallScore - a.overallScore)
+
+      const top20Ids = sortedTeams.slice(0, 20).map(t => t.id)
+      if (top20Ids.length === 0) {
+        throw new Error('No teams have been graded yet in Round 1.')
+      }
+
+      await this.prisma.team.updateMany({
+        where: { id: { in: top20Ids } },
+        data: { round: 2 }
+      })
+
+      return { success: true, promotedCount: top20Ids.length }
+    } else if (currentRound === 2) {
+      const teams = await this.prisma.team.findMany({
+        where: { hackathonId: hackathon.id, status: 'COMPETING', round: 2 },
+        include: {
+          scoreSheets: {
+            where: { isSubmitted: true },
+            include: { scores: true }
+          }
+        }
+      })
+
+      const sortedTeams = teams.map(t => {
+        const submittedSheets = t.scoreSheets.filter(s => s.isSubmitted)
+        let overallScore = 0
+        if (t.adminScore !== null && t.adminScore !== undefined) {
+          overallScore = t.adminScore
+        } else if (submittedSheets.length > 0) {
+          const total = submittedSheets.reduce((sum, sheet) => {
+            const sheetTotal = sheet.scores.reduce((sSum, sc) => sSum + sc.score, 0)
+            return sum + (sheet.scores.length > 0 ? sheetTotal / sheet.scores.length : 0)
+          }, 0)
+          overallScore = total / submittedSheets.length
+        }
+        return { id: t.id, overallScore }
+      }).sort((a, b) => b.overallScore - a.overallScore)
+
+      const top3 = sortedTeams.slice(0, 3)
+      if (top3.length === 0) {
+        throw new Error('No teams have been graded yet in Round 2.')
+      }
+
+      for (let i = 0; i < top3.length; i++) {
+        await this.prisma.team.update({
+          where: { id: top3[i].id },
+          data: { round: 3 }
+        })
+      }
+
+      return { success: true, promotedCount: top3.length }
+    }
+
+    throw new Error('Invalid round promotion request.')
+  }
+
+  async resetRounds() {
+    const hackathon = await this.prisma.hackathon.findFirst()
+    if (!hackathon) throw new Error('No hackathon found')
+
+    await this.prisma.team.updateMany({
+      where: { hackathonId: hackathon.id },
+      data: { round: 1 }
+    })
+
+    return { success: true }
+  }
 }

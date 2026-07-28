@@ -51,6 +51,7 @@ function DeltaIcon({ curr, prev }: { curr: number; prev: number }) {
 
 export function LeaderboardAdminPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
+  const [activeRound, setActiveRound] = useState<number>(1)
   
   // Real-time updates via WebSocket
   const { emit } = useWebSocket<LeaderboardEntry[]>('leaderboard:update', (data) => {
@@ -85,7 +86,15 @@ export function LeaderboardAdminPage() {
     }
   }
 
-  const display = entries.length > 0 ? entries : mockLeaderboard
+  const rawDisplay = entries.length > 0 ? entries : mockLeaderboard
+  const display = rawDisplay
+    .filter(e => {
+      const teamRound = (e as any).round || 1
+      if (activeRound === 3) return teamRound === 3
+      if (activeRound === 2) return teamRound >= 2
+      return true
+    })
+    .map((e, idx) => ({ ...e, rank: idx + 1 }))
 
   return (
     <DashboardLayout role="admin">
@@ -99,6 +108,28 @@ export function LeaderboardAdminPage() {
             <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
             <span className="text-xs text-green-700 font-semibold">Live Scoring</span>
           </div>
+        </div>
+
+        {/* Round Tab Selector */}
+        <div className="flex bg-slate-100 p-1 rounded-2xl gap-1 w-max border">
+          <button
+            onClick={() => setActiveRound(1)}
+            className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${activeRound === 1 ? 'bg-white text-[#E83C00] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            Round 1 (All)
+          </button>
+          <button
+            onClick={() => setActiveRound(2)}
+            className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${activeRound === 2 ? 'bg-white text-[#E83C00] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            Round 2 (Top 20)
+          </button>
+          <button
+            onClick={() => setActiveRound(3)}
+            className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${activeRound === 3 ? 'bg-white text-[#E83C00] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            Winners (Top 3)
+          </button>
         </div>
 
         {/* Top 3 podium */}

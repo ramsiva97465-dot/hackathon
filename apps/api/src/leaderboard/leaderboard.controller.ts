@@ -20,8 +20,14 @@ export class LeaderboardController {
   ) {}
 
   @Get()
-  getLeaderboard(@Query('hackathonId') hackathonId?: string) {
-    return this.service.getLeaderboard(hackathonId ? { hackathonId } : undefined)
+  getLeaderboard(
+    @Query('hackathonId') hackathonId?: string,
+    @Query('round') round?: string
+  ) {
+    return this.service.getLeaderboard({
+      hackathonId,
+      round: round ? Number(round) : undefined
+    })
   }
 
   @Post('admin-score')

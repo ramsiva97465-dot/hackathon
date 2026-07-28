@@ -221,6 +221,7 @@ model Team {
   tableNumber        String?
   status             TeamStatus @default(REGISTERED)
   adminScore         Float?
+  round              Int        @default(1)
   projectTitle       String?
   projectDescription String?
   githubUrl          String?

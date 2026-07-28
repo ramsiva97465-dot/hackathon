@@ -50,6 +50,16 @@ export class TeamsController {
     return this.service.updateTableNumber(id, tableNumber)
   }
 
+  @Post('promote')
+  promoteTeams(@Body('currentRound') currentRound: number) {
+    return this.service.promoteTeams(Number(currentRound))
+  }
+
+  @Post('reset-rounds')
+  resetRounds() {
+    return this.service.resetRounds()
+  }
+
   @Post('import')
   importTeams(@Body('teams') teams: any[]) {
     return this.service.importTeams(teams)

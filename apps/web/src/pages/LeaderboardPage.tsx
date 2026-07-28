@@ -27,6 +27,7 @@ function Delta({ curr, prev }: { curr: number; prev?: number }) {
 export function LeaderboardPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
   const [clock, setClock] = useState(new Date())
+  const [activeRound, setActiveRound] = useState<number>(1)
 
   const { emit } = useWebSocket<LeaderboardEntry[]>('leaderboard:update', (data) => {
     setEntries(data)
@@ -35,12 +36,20 @@ export function LeaderboardPage() {
   useEffect(() => { emit('leaderboard:subscribe') }, [emit])
   useEffect(() => { const t = setInterval(() => setClock(new Date()), 1000); return () => clearInterval(t) }, [])
 
-  const display = entries.length > 0 ? entries : mockLeaderboard
-  
-  // From 100 teams, we only select the top 20. Then from top 20, the top 3 go to podium.
-  const top20 = display.slice(0, 20)
-  const top3 = top20.slice(0, 3)
-  const rest = top20.slice(3)
+  const rawDisplay = entries.length > 0 ? entries : mockLeaderboard
+
+  // Filter based on active round
+  const filtered = rawDisplay
+    .filter(e => {
+      const teamRound = (e as any).round || 1
+      if (activeRound === 3) return teamRound === 3
+      if (activeRound === 2) return teamRound >= 2
+      return true
+    })
+    .map((e, idx) => ({ ...e, rank: idx + 1 }))
+
+  const top3 = filtered.slice(0, 3)
+  const rest = filtered.slice(3)
 
   // Reorder podium to be 2nd, 1st, 3rd visually
   const podiumOrder = [
@@ -85,17 +94,41 @@ export function LeaderboardPage() {
       <div className="relative z-10 flex-1 flex flex-col items-center pt-10 pb-20 px-8 max-w-7xl mx-auto w-full">
         
         {/* Header */}
-        <div className="text-center mb-16 relative">
+        <div className="text-center mb-8 relative">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/5 text-slate-700 mb-4 shadow-xl shadow-black/5">
              <Trophy size={14} className="text-amber-500" />
-             <span className="text-xs font-bold uppercase tracking-widest">Phase 2: Final Selection</span>
+             <span className="text-xs font-bold uppercase tracking-widest">
+               {activeRound === 3 ? 'Stage 3: Winners podium' : activeRound === 2 ? 'Stage 2: Top 20 Shortlist' : 'Stage 1: All Teams'}
+             </span>
           </div>
           <h2 className="text-[#E83C00] font-bold tracking-[0.2em] uppercase text-sm mb-3">
             AI Voice Hackathon 2026
           </h2>
           <h1 className="text-7xl font-black text-[#1A1A1A] tracking-tighter" style={{ textShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
-            Top 20 Shortlist
+            {activeRound === 3 ? 'Final Winners' : activeRound === 2 ? 'Round 2 Qualified' : 'Live Scoreboard'}
           </h1>
+        </div>
+
+        {/* Round Tab Selector */}
+        <div className="flex bg-slate-200/50 p-1.5 rounded-2xl gap-2 mb-12 shadow-inner border border-black/5">
+          <button
+            onClick={() => setActiveRound(1)}
+            className={`px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${activeRound === 1 ? 'bg-white text-[#E83C00] shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+          >
+            Round 1 (All)
+          </button>
+          <button
+            onClick={() => setActiveRound(2)}
+            className={`px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${activeRound === 2 ? 'bg-white text-[#E83C00] shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+          >
+            Round 2 (Top 20)
+          </button>
+          <button
+            onClick={() => setActiveRound(3)}
+            className={`px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${activeRound === 3 ? 'bg-white text-[#E83C00] shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+          >
+            Winners (Top 3)
+          </button>
         </div>
 
         {/* ── Podium (Top 3) ── */}

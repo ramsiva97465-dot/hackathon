@@ -112,8 +112,19 @@ export class JudgesService {
       return { success: true, data: [] }
     }
 
+    // Determine current active evaluation round
+    const hasRound2Teams = await this.prisma.team.findFirst({
+      where: { hackathonId: judgeRecord.hackathonId, status: 'COMPETING', round: 2 }
+    })
+    const activeJudgingRound = hasRound2Teams ? 2 : 1
+
     const assignments = await this.prisma.judgeAssignment.findMany({
-      where: { judgeId: judgeRecord.id },
+      where: { 
+        judgeId: judgeRecord.id,
+        team: {
+          round: activeJudgingRound
+        }
+      },
       include: {
         team: {
           include: {

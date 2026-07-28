@@ -30,6 +30,7 @@ const adminRoutes: SidebarRoute[] = [
   { href: '/admin/teams', label: 'Teams', icon: <Users size={17} />, section: 'main' },
   { href: '/admin/judges', label: 'Judges', icon: <Award size={17} />, section: 'main' },
   { href: '/admin/leaderboard', label: 'Leaderboard', icon: <Trophy size={17} />, section: 'main' },
+  { href: '/admin/rounds', label: 'Rounds Management', icon: <Zap size={17} />, section: 'main' },
   { href: '/admin/emails', label: 'Emails', icon: <Mail size={17} />, section: 'tools' },
   { href: '/admin/audit', label: 'Audit Logs', icon: <ScrollText size={17} />, section: 'tools' },
   { href: '/admin/settings', label: 'Settings', icon: <Settings size={17} />, section: 'tools' },
