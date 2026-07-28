@@ -12,6 +12,9 @@ async function bootstrap() {
     },
   })
 
+  // Trust proxy headers for client IP resolution behind Railway proxy
+  app.getHttpAdapter().getInstance().set('trust proxy', 1)
+
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
