@@ -12,13 +12,12 @@ import { EmailsPage } from '@/pages/admin/EmailsPage'
 import { LeaderboardAdminPage } from '@/pages/admin/LeaderboardAdminPage'
 import { SettingsPage } from '@/pages/admin/SettingsPage'
 import { AuditPage } from '@/pages/admin/AuditPage'
+import { ParticipantDashboard } from '@/pages/participant/ParticipantDashboard'
 import { JudgeDashboard } from '@/pages/judge/JudgeDashboard'
-// Auth Pages & Client
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
 import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
 import { useSession } from '@/lib/auth-client'
-import { Spinner } from '@/components/ui/Spinner'
 import { ReactNode, useState, useEffect } from 'react'
 
 const queryClient = new QueryClient({
@@ -156,6 +155,14 @@ function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   return <>{children}</>
 }
 
+function ParticipantProtectedRoute({ children }: { children: ReactNode }) {
+  const token = localStorage.getItem('auth_token')
+  if (!token) {
+    return <Navigate to="/login" replace />
+  }
+  return <>{children}</>
+}
+
 // ─── Main Router App ─────────────────────────────────────────────────────────
 
 export default function App() {
@@ -247,6 +254,14 @@ export default function App() {
               <ProtectedRoute allowedRoles={['JUDGE']}>
                 <JudgeDashboard />
               </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/participant"
+            element={
+              <ParticipantProtectedRoute>
+                <ParticipantDashboard />
+              </ParticipantProtectedRoute>
             }
           />
 

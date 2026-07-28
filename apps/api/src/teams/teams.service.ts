@@ -180,4 +180,109 @@ export class TeamsService {
 
     return { success: true, data: results }
   }
+
+  async findMyTeam(teamId: string) {
+    const team = await this.prisma.team.findUnique({
+      where: { id: teamId },
+      include: {
+        track: true,
+        members: true,
+        scoreSheets: {
+          where: { isSubmitted: true },
+          include: {
+            scores: {
+              include: { criteria: true }
+            }
+          }
+        }
+      }
+    })
+
+    if (!team) throw new Error('Team not found')
+
+    // Fetch all score criteria to ensure we list all criteria even if not graded yet
+    const criteriaList = await this.prisma.scoreCriteria.findMany({
+      where: { hackathonId: team.hackathonId }
+    })
+
+    // Calculate score details per criteria
+    const criteriaScores = criteriaList.map(c => {
+      const scoresForCriteria = team.scoreSheets.flatMap(sheet => 
+        sheet.scores.filter(s => s.criteriaId === c.id)
+      )
+      
+      const avgScore = scoresForCriteria.length > 0
+        ? parseFloat((scoresForCriteria.reduce((sum, s) => sum + s.score, 0) / scoresForCriteria.length).toFixed(2))
+        : null
+
+      const comments = scoresForCriteria
+        .map(s => s.comments?.trim())
+        .filter(Boolean) as string[]
+
+      return {
+        id: c.id,
+        name: c.name,
+        description: c.description,
+        maxScore: c.maxScore,
+        weight: c.weight,
+        avgScore,
+        comments
+      }
+    })
+
+    // Get overall score from leaderboard if available
+    const leaderboardEntry = await this.prisma.leaderboard.findUnique({
+      where: { hackathonId_teamId: { hackathonId: team.hackathonId, teamId: team.id } }
+    })
+
+    return {
+      success: true,
+      data: {
+        id: team.id,
+        name: team.name,
+        tableNumber: team.tableNumber,
+        track: team.track,
+        projectTitle: team.projectTitle,
+        projectDescription: team.projectDescription,
+        githubUrl: team.githubUrl,
+        demoUrl: team.demoUrl,
+        techStack: team.techStack,
+        members: team.members.map(m => ({
+          id: m.id,
+          name: m.name,
+          email: m.email,
+          phone: m.phone,
+          role: m.role,
+          linkedin: m.linkedin,
+          github: m.github
+        })),
+        evaluation: {
+          submittedSheetsCount: team.scoreSheets.length,
+          overallScore: leaderboardEntry?.overallScore || null,
+          rank: leaderboardEntry?.rank || null,
+          criteria: criteriaScores
+        }
+      }
+    }
+  }
+
+  async submitProject(teamId: string, body: {
+    projectTitle?: string
+    projectDescription?: string
+    githubUrl?: string
+    demoUrl?: string
+    techStack?: string[]
+  }) {
+    const team = await this.prisma.team.update({
+      where: { id: teamId },
+      data: {
+        projectTitle: body.projectTitle,
+        projectDescription: body.projectDescription,
+        githubUrl: body.githubUrl,
+        demoUrl: body.demoUrl,
+        techStack: body.techStack,
+      }
+    })
+    return { success: true, data: team }
+  }
 }

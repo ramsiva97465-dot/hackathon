@@ -38,6 +38,8 @@ export const api = {
       apiClient.post('/auth/login', { email, password }),
     logout: () => apiClient.post('/auth/logout'),
     me: () => apiClient.get('/auth/me'),
+    participantLogin: (email: string) =>
+      apiClient.post('/auth/participant-login', { email }),
   },
 
   // Applications
@@ -66,6 +68,9 @@ export const api = {
       apiClient.patch(`/teams/${teamId}/table-number`, { tableNumber }),
     import: (teams: any[]) =>
       apiClient.post('/teams/import', { teams }),
+    myTeam: () => apiClient.get('/teams/my-team'),
+    submitProject: (data: Record<string, any>) =>
+      apiClient.post('/teams/submit-project', data),
   },
 
   // Judges

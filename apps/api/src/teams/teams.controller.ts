@@ -1,9 +1,33 @@
-import { Controller, Get, Post, Body, Param, Patch } from '@nestjs/common'
+import { Controller, Get, Post, Body, Param, Patch, UseGuards, Req } from '@nestjs/common'
 import { TeamsService } from './teams.service'
+import { ParticipantGuard } from '../auth/participant.guard'
 
 @Controller('teams')
 export class TeamsController {
   constructor(private readonly service: TeamsService) {}
+
+  @Get('my-team')
+  @UseGuards(ParticipantGuard)
+  findMyTeam(@Req() req: any) {
+    const teamId = req.participant.teamId
+    return this.service.findMyTeam(teamId)
+  }
+
+  @Post('submit-project')
+  @UseGuards(ParticipantGuard)
+  submitProject(
+    @Req() req: any,
+    @Body() body: {
+      projectTitle?: string
+      projectDescription?: string
+      githubUrl?: string
+      demoUrl?: string
+      techStack?: string[]
+    }
+  ) {
+    const teamId = req.participant.teamId
+    return this.service.submitProject(teamId, body)
+  }
 
   @Get()
   findAll() {

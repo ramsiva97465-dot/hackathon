@@ -36,56 +36,10 @@ export class EmailsService {
     html: string
     template: string
   }) {
-    const logEntry = await this.prisma.auditLog.create({
-      data: {
-        action: 'EMAIL_SENT',
-        entityType: 'EMAIL',
-        entityId: params.to.join(','),
-        newValue: { subject: params.subject, template: params.template, status: 'QUEUED' },
-      },
-    })
-
-    try {
-      if (brevoApiKey) {
-        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-          method: 'POST',
-          headers: {
-            'accept': 'application/json',
-            'api-key': brevoApiKey,
-            'content-type': 'application/json'
-          },
-          body: JSON.stringify({
-            sender: { name: this.fromName, email: this.fromEmail },
-            to: params.to.map(email => ({ email })),
-            subject: params.subject,
-            htmlContent: params.html
-          })
-        })
-
-        if (!response.ok) {
-          const errorData = await response.text()
-          throw new Error(`Brevo API error: ${response.status} - ${errorData}`)
-        }
-      } else {
-        this.logger.log(`[EMAIL MOCK] To: ${params.to.join(', ')} | Subject: ${params.subject}`)
-      }
-
-      await this.prisma.auditLog.update({
-        where: { id: logEntry.id },
-        data: {
-          newValue: { subject: params.subject, template: params.template, status: 'SENT', sentAt: new Date() }
-        },
-      })
-    } catch (err) {
-      this.logger.error('Failed to send email', err)
-      await this.prisma.auditLog.update({
-        where: { id: logEntry.id },
-        data: {
-          newValue: { subject: params.subject, template: params.template, status: 'FAILED' }
-        },
-      })
-    }
+    this.logger.log(`Email sending is disabled. Skipped sending to: ${params.to.join(', ')} (Subject: ${params.subject})`)
+    return
   }
+
 
   async sendRegistrationEmail(to: string[], teamName: string) {
     await this.sendEmail({

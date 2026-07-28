@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { BrandPair } from '@/components/brand/BrandLogos'
 import { signIn } from '@/lib/auth-client'
+import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { Mail, Lock, ArrowRight } from 'lucide-react'
 
@@ -19,17 +20,19 @@ function LoginFields({
   title,
   desc,
   cta,
+  showPassword = true,
 }: {
   email: string
   setEmail: (v: string) => void
-  password: string
-  setPassword: (v: string) => void
+  password?: string
+  setPassword?: (v: string) => void
   loading: boolean
   onSubmit: (e: React.FormEvent) => void
   emailPlaceholder: string
   title: string
   desc: string
   cta: string
+  showPassword?: boolean
 }) {
   return (
     <div className="space-y-5">
@@ -51,27 +54,29 @@ function LoginFields({
           className="bg-[#F8FAFC] border-slate-200 focus:border-[#E83C00]/50 focus:ring-[#E83C00]/10 text-slate-900 placeholder:text-slate-400 rounded-xl text-sm sm:text-xs h-12 sm:h-11"
         />
 
-        <div className="space-y-1.5">
-          <div className="flex justify-between items-center px-0.5">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Password</span>
-            <Link
-              to="/forgot-password"
-              className="text-[11px] font-semibold text-[#E83C00] hover:text-[#E83C00]/80 uppercase tracking-wider transition-colors"
-            >
-              Forgot?
-            </Link>
+        {showPassword && setPassword && (
+          <div className="space-y-1.5">
+            <div className="flex justify-between items-center px-0.5">
+              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Password</span>
+              <Link
+                to="/forgot-password"
+                className="text-[11px] font-semibold text-[#E83C00] hover:text-[#E83C00]/80 uppercase tracking-wider transition-colors"
+              >
+                Forgot?
+              </Link>
+            </div>
+            <Input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+              leftIcon={<Lock size={15} className="text-slate-400" />}
+              className="bg-[#F8FAFC] border-slate-200 focus:border-[#E83C00]/50 focus:ring-[#E83C00]/10 text-slate-900 placeholder:text-slate-400 rounded-xl text-sm sm:text-xs h-12 sm:h-11"
+            />
           </div>
-          <Input
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-            leftIcon={<Lock size={15} className="text-slate-400" />}
-            className="bg-[#F8FAFC] border-slate-200 focus:border-[#E83C00]/50 focus:ring-[#E83C00]/10 text-slate-900 placeholder:text-slate-400 rounded-xl text-sm sm:text-xs h-12 sm:h-11"
-          />
-        </div>
+        )}
 
         <div className="pt-1">
           <Button
@@ -99,10 +104,30 @@ export function LoginPage() {
 
   const isAdminPath = location.pathname === '/admin-login'
   const isJudgePath = location.pathname === '/judge-login'
+  const isParticipantPath = !isAdminPath && !isJudgePath
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+
+    if (isParticipantPath) {
+      try {
+        const res = await api.auth.participantLogin(email)
+        if (res.data?.success) {
+          toast.success('Successfully logged in!')
+          localStorage.setItem('auth_token', res.data.token)
+          navigate('/participant')
+        } else {
+          toast.error(res.data?.error || 'Login failed.')
+        }
+      } catch (err: any) {
+        console.error(err)
+        toast.error(err.response?.data?.message || 'Email is not registered in any team.')
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
 
     try {
       const { data, error } = await signIn.email({
@@ -128,15 +153,15 @@ export function LoginPage() {
     }
   }
 
-  const roleLabel = isJudgePath ? 'Judge Access' : isAdminPath ? 'Admin Access' : null
-  const title = isJudgePath ? 'Judge Panel' : isAdminPath ? 'Admin Portal' : 'Platform Login'
+  const roleLabel = isJudgePath ? 'Judge Access' : isAdminPath ? 'Admin Access' : 'Participant Access'
+  const title = isJudgePath ? 'Judge Panel' : isAdminPath ? 'Admin Portal' : 'Participant Desk'
   const desc = isJudgePath
     ? 'Sign in on your phone or laptop to score assigned teams.'
     : isAdminPath
       ? 'Manage applications, teams, and event operations.'
-      : 'Access your secure hackathon workspace.'
-  const emailPlaceholder = isJudgePath ? 'judge@theaitel.com' : 'admin@theaitel.com'
-  const cta = isJudgePath ? 'Enter Judge Desk' : 'Sign In'
+      : 'Enter your registered email to access your team dashboard.'
+  const emailPlaceholder = isJudgePath ? 'judge@theaitel.com' : isAdminPath ? 'admin@theaitel.com' : 'you@example.com'
+  const cta = isJudgePath ? 'Enter Judge Desk' : isAdminPath ? 'Sign In' : 'Enter Portal'
 
   return (
     <div
@@ -196,7 +221,27 @@ export function LoginPage() {
               title={title}
               desc={desc}
               cta={cta}
+              showPassword={!isParticipantPath}
             />
+
+            {/* Toggle Role Links */}
+            <div className="mt-4 text-center">
+              {isParticipantPath ? (
+                <Link
+                  to="/judge-login"
+                  className="text-[11px] font-bold text-slate-500 hover:text-slate-800 tracking-wide uppercase transition-colors"
+                >
+                  Are you an Organizer or Judge? <span className="text-[#E83C00] underline">Log in here</span>
+                </Link>
+              ) : (
+                <Link
+                  to="/login"
+                  className="text-[11px] font-bold text-slate-500 hover:text-slate-800 tracking-wide uppercase transition-colors"
+                >
+                  Are you a Participant? <span className="text-[#E83C00] underline">Log in here</span>
+                </Link>
+              )}
+            </div>
 
             <p className="mt-6 text-center text-[10px] sm:text-[11px] text-slate-400 font-normal leading-relaxed">
               Hosted by{' '}
@@ -217,3 +262,4 @@ export function LoginPage() {
 }
 
 export default LoginPage
+

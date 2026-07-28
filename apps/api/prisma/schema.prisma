@@ -213,16 +213,21 @@ model Application {
 }
 
 model Team {
-  id            String     @id @default(cuid())
-  hackathonId   String
-  applicationId String?
-  name          String
-  trackId       String
-  tableNumber   String?
-  status        TeamStatus @default(REGISTERED)
-  adminScore    Float?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  id                 String     @id @default(cuid())
+  hackathonId        String
+  applicationId      String?
+  name               String
+  trackId            String
+  tableNumber        String?
+  status             TeamStatus @default(REGISTERED)
+  adminScore         Float?
+  projectTitle       String?
+  projectDescription String?
+  githubUrl          String?
+  demoUrl            String?
+  techStack          String[]
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
 
   hackathon     Hackathon    @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
   application   Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
