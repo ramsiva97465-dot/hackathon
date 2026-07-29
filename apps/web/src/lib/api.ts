@@ -66,6 +66,8 @@ export const api = {
       apiClient.post(`/teams/${teamId}/assign-judge`, { judgeId, roundId }),
     updateTableNumber: (teamId: string, tableNumber: string) =>
       apiClient.patch(`/teams/${teamId}/table-number`, { tableNumber }),
+    updateBonus: (teamId: string, bonusPoints: number) =>
+      apiClient.patch(`/teams/${teamId}/bonus`, { bonusPoints }),
     import: (teams: any[]) =>
       apiClient.post('/teams/import', { teams }),
     myTeam: () => apiClient.get('/teams/my-team'),
@@ -75,6 +77,8 @@ export const api = {
       apiClient.post('/teams/promote', { currentRound }),
     resetRounds: () =>
       apiClient.post('/teams/reset-rounds'),
+    validateUrl: (url: string) =>
+      apiClient.post('/teams/validate-url', { url }),
   },
 
   // Judges
@@ -123,6 +127,17 @@ export const api = {
     scores: () => apiClient.get('/analytics/scores'),
   },
 
+
+  // Help Requests
+  helpRequests: {
+    create: (data: { teamId?: string; issueType: string; description?: string } | string, description?: string) => {
+      const payload = typeof data === 'string' ? { issueType: data, description } : data
+      return apiClient.post('/help-requests', payload)
+    },
+    getActive: () => apiClient.get('/help-requests/active'),
+    resolve: (id: string) => apiClient.patch(`/help-requests/${id}/resolve`),
+  },
+
   // Audit logs
   audit: {
     list: (params?: Record<string, string | number>) =>
@@ -139,6 +154,15 @@ export const api = {
   hackathon: {
     get: () => apiClient.get('/hackathon'),
     update: (data: Record<string, unknown>) => apiClient.patch('/hackathon', data),
+  },
+
+  // Announcements
+  announcements: {
+    getActive: () => apiClient.get('/announcements'),
+    getAll: () => apiClient.get('/announcements/all'),
+    create: (message: string) => apiClient.post('/announcements', { message }),
+    toggleActive: (id: string, isActive: boolean) => apiClient.patch(`/announcements/${id}/toggle`, { isActive }),
+    delete: (id: string) => apiClient.delete(`/announcements/${id}`),
   },
 }
 

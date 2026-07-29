@@ -7,7 +7,7 @@ import { containerVariants, itemVariants } from '@/lib/motion'
 import { getTrackConfig } from '@/lib/utils'
 import {
   Trophy, Users, Award, X, Check,
-  Search, Hash, Star, UserPlus, Download, Upload, AlertCircle, CheckCircle
+  Search, Hash, Star, UserPlus, Download, Upload, AlertCircle, CheckCircle, Eye, ExternalLink, Github, Phone, Cpu, Layers
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
@@ -134,10 +134,19 @@ function processCsvData(text: string) {
 
 type Team = {
   id: string; name: string; college: string; track: string
-  members: { name: string; avatar?: string }[]
+  members: { name: string; email?: string; phone?: string; role?: string; linkedin?: string; github?: string }[]
   judgesAssigned: number; totalJudges: number
   avgScore: number | null; rank: number | null
   status: string; tableNumber: string | null
+  projectTitle?: string | null
+  projectDescription?: string | null
+  agentName?: string | null
+  agentSolution?: string | null
+  agentPhoneNumber?: string | null
+  githubUrl?: string | null
+  demoUrl?: string | null
+  techStack?: string[]
+  bonusPoints: number; followedInstagram: boolean; followedLinkedin: boolean
 }
 
 type Judge = {
@@ -157,10 +166,15 @@ export function TeamsPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [assignTarget, setAssignTarget] = useState<Team | null>(null)
+  const [viewTarget, setViewTarget] = useState<Team | null>(null)
   const [assigning, setAssigning] = useState(false)
   const [editingTableId, setEditingTableId] = useState<string | null>(null)
   const [editingTableValue, setEditingTableValue] = useState('')
   const [savingTable, setSavingTable] = useState(false)
+
+  const [editingBonusId, setEditingBonusId] = useState<string | null>(null)
+  const [editingBonusValue, setEditingBonusValue] = useState<number>(0)
+  const [savingBonus, setSavingBonus] = useState(false)
 
   const [csvImportOpen, setCsvImportOpen] = useState(false)
   const [importingCsv, setImportingCsv] = useState(false)
@@ -259,6 +273,74 @@ export function TeamsPage() {
     }
   }
 
+  const handleExportAllTeamsCSV = () => {
+    if (!teams || teams.length === 0) {
+      toast.error('No teams to export.')
+      return
+    }
+
+    const headers = [
+      'Team ID',
+      'Team Name',
+      'Team Lead Name',
+      'Team Lead Login Email',
+      'Portal Login Link',
+      'Track',
+      'Table Number',
+      'College',
+      'Project Title',
+      'Agent System',
+      'Hotline Number',
+      'Live Demo URL',
+      'GitHub URL',
+      'Tech Stack',
+      'Bonus Points',
+      'Avg Score',
+      'Rank',
+      'Member Names',
+      'Member Emails'
+    ]
+
+    const rows = teams.map(t => {
+      const leadMember = t.members[0] || { name: '', email: '' }
+      const memberNames = t.members.map(m => m.name).join('; ')
+      const memberEmails = t.members.map(m => m.email || '').join('; ')
+      const techStackStr = t.techStack ? t.techStack.join('; ') : ''
+      const origin = typeof window !== 'undefined' ? window.location.origin : ''
+
+      return [
+        `"${t.id}"`,
+        `"${t.name.replace(/"/g, '""')}"`,
+        `"${(leadMember.name || '').replace(/"/g, '""')}"`,
+        `"${(leadMember.email || '').replace(/"/g, '""')}"`,
+        `"${origin}/participant/login"`,
+        `"${t.track}"`,
+        `"${t.tableNumber || ''}"`,
+        `"${(t.college || '').replace(/"/g, '""')}"`,
+        `"${(t.projectTitle || '').replace(/"/g, '""')}"`,
+        `"${(t.agentName || '').replace(/"/g, '""')}"`,
+        `"${(t.agentPhoneNumber || '').replace(/"/g, '""')}"`,
+        `"${(t.demoUrl || '').replace(/"/g, '""')}"`,
+        `"${(t.githubUrl || '').replace(/"/g, '""')}"`,
+        `"${techStackStr.replace(/"/g, '""')}"`,
+        `"${t.bonusPoints || 0}"`,
+        `"${t.avgScore !== null ? t.avgScore.toFixed(2) : ''}"`,
+        `"${t.rank || ''}"`,
+        `"${memberNames.replace(/"/g, '""')}"`,
+        `"${memberEmails.replace(/"/g, '""')}"`
+      ].join(',')
+    })
+
+    const csvContent = [headers.join(','), ...rows].join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `SnapServe_Hackathon_Teams_Export_${new Date().toISOString().split('T')[0]}.csv`
+    link.click()
+    toast.success('Exported all teams data to CSV!')
+  }
+
   useEffect(() => { fetchTeams(); fetchJudges() }, [])
 
   const fetchTeams = async () => {
@@ -292,10 +374,28 @@ export function TeamsPage() {
     try {
       setSavingTable(true)
       await api.teams.updateTableNumber(teamId, editingTableValue)
-      await fetchTeams()
+      toast.success('Table number updated')
       setEditingTableId(null)
-    } catch (err) { console.error('Failed to update table number', err) }
-    finally { setSavingTable(false) }
+      fetchTeams()
+    } catch (err) {
+      toast.error('Failed to update table number')
+    } finally {
+      setSavingTable(false)
+    }
+  }
+
+  const handleSaveBonus = async (teamId: string) => {
+    try {
+      setSavingBonus(true)
+      await api.teams.updateBonus(teamId, editingBonusValue)
+      toast.success('Bonus points updated')
+      setEditingBonusId(null)
+      fetchTeams()
+    } catch (err) {
+      toast.error('Failed to update bonus points')
+    } finally {
+      setSavingBonus(false)
+    }
   }
 
   const filtered = teams.filter(t =>
@@ -316,46 +416,54 @@ export function TeamsPage() {
         {/* ── Header ── */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Teams</h1>
-            <p className="text-sm text-slate-500 mt-0.5">All approved teams competing in the hackathon.</p>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Teams</h1>
+            <p className="text-sm text-white/50 mt-0.5">All approved teams competing in the hackathon.</p>
           </div>
           <div className="flex gap-3 flex-wrap">
             {stats.map(({ icon: Icon, label, value, color, border }) => (
-              <div key={label} className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white"
-                style={{ border: `1.5px solid ${border}` }}>
+              <div key={label} className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl"
+                style={{ border: `1.5px solid ${border}`, background: '#111' }}>
                 <Icon size={14} style={{ color }} />
-                <span className="text-sm font-bold text-slate-900">{value}</span>
-                <span className="text-xs text-slate-400 font-medium">{label}</span>
+                <span className="text-sm font-bold text-white">{value}</span>
+                <span className="text-xs text-white/40 font-medium">{label}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* ── Search + Table Card ── */}
-        <div className="bg-white rounded-2xl overflow-hidden"
-          style={{ border: '1.5px solid #EEF2F7', boxShadow: '0 2px 12px rgba(15,23,42,0.05)' }}>
+        <div className="bg-[#0A0A0A] rounded-2xl overflow-hidden shadow-2xl"
+          style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
 
           {/* Search Bar */}
           <div className="flex items-center justify-between px-5 py-4 flex-wrap gap-3"
-            style={{ borderBottom: '1px solid #F1F5F9' }}>
+            style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
             <div className="flex items-center gap-3">
               <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Search teams or college…"
-                  className="pl-9 pr-4 py-2 text-sm rounded-xl outline-none transition-all w-64"
-                  style={{ border: '1.5px solid #EEF2F7', background: '#F8FAFC', color: '#0F172A' }}
-                  onFocus={e => { e.currentTarget.style.borderColor = 'rgba(232,60,0,0.35)'; e.currentTarget.style.background = '#fff' }}
-                  onBlur={e => { e.currentTarget.style.borderColor = '#EEF2F7'; e.currentTarget.style.background = '#F8FAFC' }}
+                  className="pl-9 pr-4 py-2 text-sm rounded-xl outline-none transition-all w-64 text-white placeholder:text-slate-500"
+                  style={{ border: '1px solid rgba(255,255,255,0.1)', background: '#111' }}
+                  onFocus={e => { e.currentTarget.style.borderColor = 'rgba(232,60,0,0.5)'; e.currentTarget.style.background = '#1a1a1a' }}
+                  onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.background = '#111' }}
                 />
               </div>
+              <button
+                onClick={handleExportAllTeamsCSV}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-xl text-slate-200 transition-all bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-500"
+              >
+                <Download size={14} />
+                Export CSV
+              </button>
+
               <button
                 onClick={() => setCsvImportOpen(true)}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-xl text-white transition-all bg-[#E83C00] hover:bg-[#c93400] shadow-sm shadow-orange-950/10"
               >
-                <UserPlus size={14} />
+                <Upload size={14} />
                 Import CSV
               </button>
             </div>
@@ -365,29 +473,29 @@ export function TeamsPage() {
           {/* Column Headers */}
           <div className="grid px-5 py-3"
             style={{
-              gridTemplateColumns: '2fr 1.5fr 1fr 0.8fr 1fr 1.2fr 110px',
-              background: '#F8FAFC',
-              borderBottom: '1px solid #F1F5F9',
+              gridTemplateColumns: '2fr 1.5fr 1fr 0.8fr 1fr 1fr 1.2fr 110px',
+              background: '#111',
+              borderBottom: '1px solid rgba(255,255,255,0.05)',
             }}>
-            {['Team', 'College', 'Track', 'Table', 'Members', 'Judging', 'Actions'].map(col => (
-              <span key={col} className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{col}</span>
+            {['Team', 'College', 'Track', 'Table', 'Members', 'Bonus', 'Judging', 'Actions'].map(col => (
+              <span key={col} className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{col}</span>
             ))}
           </div>
 
           {/* Rows */}
           {loading ? (
             <div className="py-24 text-center">
-              <div className="w-8 h-8 border-4 border-slate-200 border-t-[#E83C00] rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-sm font-semibold text-slate-400">Loading teams…</p>
+              <div className="w-8 h-8 border-4 border-slate-800 border-t-[#E83C00] rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-sm font-semibold text-slate-500">Loading teams…</p>
             </div>
           ) : filtered.length === 0 ? (
             <div className="py-24 text-center">
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-                style={{ background: '#F8FAFC', border: '1.5px solid #EEF2F7' }}>
-                <Users size={28} style={{ color: '#CBD5E1' }} />
+                style={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <Users size={28} style={{ color: '#475569' }} />
               </div>
               <p className="text-sm font-semibold text-slate-400">No teams found</p>
-              <p className="text-xs text-slate-300 mt-1">Try a different search or approve applications first.</p>
+              <p className="text-xs text-slate-500 mt-1">Try a different search or import CSV first.</p>
             </div>
           ) : (
             <motion.div variants={containerVariants} initial="hidden" animate="visible">
@@ -403,10 +511,10 @@ export function TeamsPage() {
                     variants={itemVariants}
                     className="grid px-5 py-4 items-center transition-colors cursor-default"
                     style={{
-                      gridTemplateColumns: '2fr 1.5fr 1fr 0.8fr 1fr 1.2fr 110px',
-                      borderBottom: isLast ? 'none' : '1px solid #F8FAFC',
+                      gridTemplateColumns: '2fr 1.5fr 1fr 0.8fr 1fr 1fr 1.2fr 110px',
+                      borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.02)',
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#FAFBFC')}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     {/* Team */}
@@ -418,13 +526,13 @@ export function TeamsPage() {
                         </div>
                       ) : team.rank ? (
                         <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-black shrink-0"
-                          style={{ background: '#F1F5F9', color: '#94A3B8' }}>
+                          style={{ background: '#1a1a1a', color: '#64748B' }}>
                           #{team.rank}
                         </div>
                       ) : null}
                       <Avatar name={team.name} size="sm" />
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-slate-900 truncate">{team.name}</p>
+                        <p className="text-sm font-bold text-white truncate">{team.name}</p>
                         <p className="text-[10px] text-slate-400 font-medium">
                           {team.members.length === 1 ? 'Solo' : `${team.members.length} members`}
                         </p>
@@ -432,7 +540,7 @@ export function TeamsPage() {
                     </div>
 
                     {/* College */}
-                    <p className="text-xs text-slate-600 font-medium truncate pr-2">{team.college || '—'}</p>
+                    <p className="text-xs text-slate-400 font-medium truncate pr-2">{team.college || '—'}</p>
 
                     {/* Track */}
                     <span className="text-[10px] font-bold px-2.5 py-1 rounded-full w-fit"
@@ -469,9 +577,9 @@ export function TeamsPage() {
                           onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(232,60,0,0.2)')}
                           onMouseLeave={e => (e.currentTarget.style.borderColor = 'transparent')}
                         >
-                          <Hash size={11} className="text-slate-300 group-hover:text-[#E83C00] transition-colors" />
-                          <span className="text-sm font-bold text-slate-700 group-hover:text-[#E83C00] transition-colors">
-                            {team.tableNumber || <span className="text-slate-300 text-xs font-medium">—</span>}
+                          <Hash size={11} className="text-slate-500 group-hover:text-[#E83C00] transition-colors" />
+                          <span className="text-sm font-bold text-slate-200 group-hover:text-[#E83C00] transition-colors">
+                            {team.tableNumber || <span className="text-slate-500 text-xs font-medium">—</span>}
                           </span>
                         </div>
                       )}
@@ -485,8 +593,51 @@ export function TeamsPage() {
                         </div>
                       ))}
                       {team.members.length > 4 && (
-                        <div className="w-6 h-6 rounded-full bg-slate-100 ring-2 ring-white flex items-center justify-center text-[9px] font-bold text-slate-500">
+                        <div className="w-6 h-6 rounded-full bg-slate-800 ring-2 ring-[#0A0A0A] flex items-center justify-center text-[9px] font-bold text-slate-400">
                           +{team.members.length - 4}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Bonus Points */}
+                    <div className="pr-3">
+                      {editingBonusId === team.id ? (
+                        <div className="flex items-center gap-1">
+                          <input
+                            autoFocus
+                            type="number"
+                            min="0"
+                            max="2"
+                            value={editingBonusValue}
+                            onChange={e => setEditingBonusValue(parseInt(e.target.value) || 0)}
+                            onKeyDown={e => e.key === 'Enter' && handleSaveBonus(team.id)}
+                            className="w-12 px-2 py-1 text-xs font-bold rounded-lg outline-none transition-all text-center"
+                            style={{ border: '1.5px solid rgba(245,158,11,0.4)', background: '#fff' }}
+                          />
+                          <button disabled={savingBonus} onClick={() => handleSaveBonus(team.id)}
+                            className="text-emerald-500 hover:text-emerald-700 transition-colors">
+                            <Check size={13} />
+                          </button>
+                          <button disabled={savingBonus} onClick={() => setEditingBonusId(null)}
+                            className="text-slate-400 hover:text-slate-600 transition-colors">
+                            <X size={13} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div
+                          className="flex items-center gap-1.5 group cursor-pointer w-fit px-2 py-1 rounded-lg transition-all"
+                          onClick={() => { setEditingBonusId(team.id); setEditingBonusValue(team.bonusPoints || 0) }}
+                          style={{ border: '1px solid transparent' }}
+                          onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(245,158,11,0.2)')}
+                          onMouseLeave={e => (e.currentTarget.style.borderColor = 'transparent')}
+                        >
+                          <Star size={11} className={team.bonusPoints ? "text-amber-500 fill-amber-500" : "text-slate-300"} />
+                          <span className={`text-sm font-bold ${team.bonusPoints ? 'text-amber-600' : 'text-slate-400'} group-hover:text-amber-600 transition-colors`}>
+                            {team.bonusPoints || 0}
+                          </span>
+                          {(team.followedInstagram || team.followedLinkedin) && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-pink-500 absolute ml-8 -mt-2 animate-pulse" title="Bonus Claimed!"></span>
+                          )}
                         </div>
                       )}
                     </div>
@@ -496,8 +647,8 @@ export function TeamsPage() {
                       {team.avgScore !== null ? (
                         <div className="flex items-center gap-1.5">
                           <Star size={13} className="text-amber-400 fill-amber-400" />
-                          <span className="text-sm font-black text-slate-800">{team.avgScore.toFixed(1)}</span>
-                          <span className="text-[10px] text-slate-400 font-medium">avg</span>
+                          <span className="text-sm font-black text-slate-200">{team.avgScore.toFixed(1)}</span>
+                          <span className="text-[10px] text-slate-500 font-medium">avg</span>
                         </div>
                       ) : (
                         <div className="space-y-1.5">
@@ -511,10 +662,16 @@ export function TeamsPage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => setViewTarget(team)}
+                        className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition-all text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200"
+                      >
+                        <Eye size={11} /> Details
+                      </button>
                       <button
                         onClick={() => setAssignTarget(team)}
-                        className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-lg transition-all"
+                        className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition-all"
                         style={{ color: '#E83C00', background: 'rgba(232,60,0,0.06)', border: '1px solid rgba(232,60,0,0.15)' }}
                         onMouseEnter={e => (e.currentTarget.style.background = 'rgba(232,60,0,0.12)')}
                         onMouseLeave={e => (e.currentTarget.style.background = 'rgba(232,60,0,0.06)')}
@@ -529,6 +686,160 @@ export function TeamsPage() {
           )}
         </div>
       </div>
+
+      {/* ── View Team Submission Details Modal ── */}
+      <AnimatePresence>
+        {viewTarget && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: 'rgba(8,13,28,0.72)', backdropFilter: 'blur(6px)' }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.28 }}
+              className="bg-white rounded-2xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl border border-slate-200 max-h-[85vh]"
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#E83C00]/10 border border-[#E83C00]/20 text-[#E83C00]">
+                    <Eye size={16} />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-slate-900 text-base">{viewTarget.name}</h3>
+                    <p className="text-xs text-slate-500 font-semibold">{viewTarget.college} • Table {viewTarget.tableNumber || 'N/A'}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setViewTarget(null)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-5 overflow-y-auto space-y-4">
+                {/* Project Overview Box */}
+                <div className="p-3.5 bg-slate-900 text-white rounded-xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-black text-[#E83C00] uppercase tracking-widest">Project Submission</span>
+                    {viewTarget.tableNumber && (
+                      <span className="px-2 py-0.5 rounded bg-white/10 text-amber-400 font-mono text-[10px] font-bold">
+                        Table {viewTarget.tableNumber}
+                      </span>
+                    )}
+                  </div>
+
+                  <h4 className="font-extrabold text-lg text-white">{viewTarget.projectTitle || viewTarget.name}</h4>
+                  
+                  {viewTarget.agentName && (
+                    <div className="flex items-center gap-2 pt-1 border-t border-white/10 text-xs">
+                      <Cpu size={12} className="text-[#E83C00]" />
+                      <span className="text-slate-400">Agent System:</span>
+                      <span className="font-bold text-white">{viewTarget.agentName}</span>
+                    </div>
+                  )}
+
+                  {viewTarget.agentPhoneNumber && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <Phone size={12} className="text-emerald-400" />
+                      <span className="text-slate-400">Hotline:</span>
+                      <span className="font-mono font-bold text-emerald-400">{viewTarget.agentPhoneNumber}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Solution Description */}
+                {viewTarget.agentSolution && (
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Solution Description</span>
+                    <p className="text-xs text-slate-700 leading-relaxed p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                      {viewTarget.agentSolution}
+                    </p>
+                  </div>
+                )}
+
+                {/* Links Row */}
+                {(viewTarget.githubUrl || viewTarget.demoUrl) && (
+                  <div className="flex items-center gap-2 flex-wrap pt-1">
+                    {viewTarget.demoUrl && (
+                      <a
+                        href={viewTarget.demoUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#E83C00] text-white text-xs font-bold rounded-xl shadow-xs hover:bg-[#c93400] transition-colors"
+                      >
+                        <ExternalLink size={12} /> Live Demo URL
+                      </a>
+                    )}
+
+                    {viewTarget.githubUrl && (
+                      <a
+                        href={viewTarget.githubUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-xs hover:bg-slate-800 transition-colors"
+                      >
+                        <Github size={12} /> GitHub Code Repo
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {/* Tech Stack */}
+                {viewTarget.techStack && viewTarget.techStack.length > 0 && (
+                  <div className="space-y-1 pt-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block flex items-center gap-1">
+                      <Layers size={11} className="text-[#E83C00]" /> Tech Stack
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {viewTarget.techStack.map((tech, idx) => (
+                        <span key={idx} className="px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-800 text-[11px] font-bold rounded-md font-mono">
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Member Roster List */}
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Team Roster ({viewTarget.members.length} Members)
+                  </span>
+                  <div className="space-y-1.5">
+                    {viewTarget.members.map((m, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                        <div>
+                          <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                            <span>{m.name}</span>
+                            {idx === 0 && (
+                              <span className="px-1.5 py-0.2 rounded bg-[#E83C00]/10 text-[#E83C00] text-[9px] font-extrabold uppercase">
+                                Team Lead
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[10.5px] text-slate-500 font-mono mt-0.5">{m.email}</div>
+                        </div>
+
+                        {m.phone && (
+                          <div className="text-right">
+                            <span className="text-[10px] font-mono text-slate-600 block">{m.phone}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Assign Judge Modal ── */}
       <AnimatePresence>

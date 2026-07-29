@@ -148,6 +148,7 @@ model Hackathon {
   scoreCriteria          ScoreCriteria[]
   scoreSheets            ScoreSheet[]
   leaderboard            Leaderboard[]
+  helpRequests           HelpRequest[]
   sponsors               Sponsor[]
   announcements          Announcement[]
   emailTemplates         EmailTemplate[]
@@ -224,9 +225,15 @@ model Team {
   round              Int        @default(1)
   projectTitle       String?
   projectDescription String?
+  agentName          String?
+  agentSolution      String?
+  agentPhoneNumber   String?
   githubUrl          String?
   demoUrl            String?
   techStack          String[]
+  followedInstagram  Boolean    @default(false)
+  followedLinkedin   Boolean    @default(false)
+  bonusPoints        Int        @default(0)
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
@@ -237,6 +244,7 @@ model Team {
   assignments   JudgeAssignment[]
   scoreSheets   ScoreSheet[]
   leaderboard   Leaderboard[]
+  helpRequests  HelpRequest[]
 
   @@index([hackathonId])
   @@index([trackId])
@@ -263,6 +271,24 @@ model TeamMember {
   @@index([teamId])
   @@index([applicationId])
   @@map("team_members")
+}
+
+model HelpRequest {
+  id          String   @id @default(cuid())
+  teamId      String
+  hackathonId String
+  issueType   String
+  description String?
+  status      String   @default("PENDING") // PENDING, IN_PROGRESS, RESOLVED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  team      Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  hackathon Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@index([hackathonId])
+  @@map("help_requests")
 }
 
 // ─── Judge & Evaluation system ───────────────────────────────────────────────
@@ -327,6 +353,7 @@ model ScoreSheet {
   teamId      String
   isSubmitted Boolean  @default(false)
   submittedAt DateTime?
+  notes       String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

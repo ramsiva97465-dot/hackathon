@@ -38,8 +38,13 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
 
   // Called by ScoresService after score submission
   async broadcastLeaderboardUpdate() {
-    const leaderboard = await this.leaderboardService.getLeaderboard()
-    this.server.to('leaderboard').emit('leaderboard:update', leaderboard)
-    console.log('[WS] Leaderboard broadcast sent')
+    try {
+      if (!this.server) return
+      const leaderboard = await this.leaderboardService.getLeaderboard()
+      this.server.to('leaderboard').emit('leaderboard:update', leaderboard)
+      console.log('[WS] Leaderboard broadcast sent')
+    } catch (err) {
+      console.error('[WS] Leaderboard broadcast failed:', err)
+    }
   }
 }

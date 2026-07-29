@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
+import { LeaderboardGateway } from '../leaderboard/leaderboard.gateway'
 
 @Injectable()
 export class TeamsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly leaderboardGateway: LeaderboardGateway,
+  ) {}
 
   async findAll() {
     const teams = await this.prisma.team.findMany({
@@ -40,6 +44,17 @@ export class TeamsService {
       rank: t.leaderboard[0]?.rank || null,
       status: t.status,
       tableNumber: t.tableNumber,
+      projectTitle: t.projectTitle,
+      projectDescription: t.projectDescription,
+      agentName: t.agentName,
+      agentSolution: t.agentSolution,
+      agentPhoneNumber: t.agentPhoneNumber,
+      githubUrl: t.githubUrl,
+      demoUrl: t.demoUrl,
+      techStack: t.techStack,
+      bonusPoints: t.bonusPoints,
+      followedInstagram: t.followedInstagram,
+      followedLinkedin: t.followedLinkedin,
     }))
 
     return { success: true, data: mapped }
@@ -75,6 +90,41 @@ export class TeamsService {
       data: { tableNumber },
     })
     return { success: true, data: team }
+  }
+
+  async updateBonus(id: string, bonusPoints: number) {
+    const team = await this.prisma.team.update({
+      where: { id },
+      data: { bonusPoints }
+    })
+    return { success: true, data: team }
+  }
+
+  async validateUrl(url: string) {
+    try {
+      // Basic regex check first
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        return { success: true, valid: false, error: 'URL must start with http:// or https://' }
+      }
+
+      // We'll do a simple GET or HEAD request using global fetch
+      const response = await fetch(url, { 
+        method: 'GET', // Many sites like GitHub block HEAD, GET is safer for public link validation
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        }
+      })
+      
+      // If it's 404, 401, 403, it's likely broken or private
+      if (!response.ok && response.status !== 405 && response.status !== 429) {
+        return { success: true, valid: false, error: `Link returned status ${response.status}` }
+      }
+      
+      return { success: true, valid: true }
+    } catch (err: any) {
+      return { success: true, valid: false, error: 'Could not reach the URL' }
+    }
   }
 
   async importTeams(teamsData: any[]) {
@@ -244,9 +294,16 @@ export class TeamsService {
         track: team.track,
         projectTitle: team.projectTitle,
         projectDescription: team.projectDescription,
+        agentName: team.agentName,
+        agentSolution: team.agentSolution,
+        agentPhoneNumber: team.agentPhoneNumber,
         githubUrl: team.githubUrl,
         demoUrl: team.demoUrl,
         techStack: team.techStack,
+        followedInstagram: team.followedInstagram,
+        followedLinkedin: team.followedLinkedin,
+        bonusPoints: team.bonusPoints,
+        round: team.round,
         members: team.members.map(m => ({
           id: m.id,
           name: m.name,
@@ -269,21 +326,77 @@ export class TeamsService {
   async submitProject(teamId: string, body: {
     projectTitle?: string
     projectDescription?: string
+    agentName?: string
+    agentSolution?: string
+    agentPhoneNumber?: string
     githubUrl?: string
     demoUrl?: string
     techStack?: string[]
+    followedInstagram?: boolean
+    followedLinkedin?: boolean
+    members?: { id?: string; name: string; email: string; role?: string; linkedin?: string; github?: string }[]
   }) {
+    const currentTeam = await this.prisma.team.findUnique({ where: { id: teamId } })
+    
+    // We only update the claims. Admin will verify and set bonusPoints.
     const team = await this.prisma.team.update({
       where: { id: teamId },
       data: {
         projectTitle: body.projectTitle,
         projectDescription: body.projectDescription,
+        agentName: body.agentName,
+        agentSolution: body.agentSolution,
+        agentPhoneNumber: body.agentPhoneNumber,
         githubUrl: body.githubUrl,
         demoUrl: body.demoUrl,
         techStack: body.techStack,
+        followedInstagram: body.followedInstagram,
+        followedLinkedin: body.followedLinkedin,
       }
     })
-    return { success: true, data: team }
+
+    if (body.members) {
+      // Upsert members or create new ones, and remove deleted ones
+      const incomingIds = body.members.map(m => m.id).filter(id => !!id)
+      
+      // Delete members that are not in the incoming list
+      await this.prisma.teamMember.deleteMany({
+        where: {
+          teamId,
+          id: { notIn: incomingIds }
+        }
+      })
+
+      // Upsert incoming members
+      for (const member of body.members) {
+        if (member.id) {
+          await this.prisma.teamMember.update({
+            where: { id: member.id },
+            data: {
+              name: member.name,
+              email: member.email,
+              role: member.role,
+              linkedin: member.linkedin,
+              github: member.github,
+            }
+          })
+        } else {
+          await this.prisma.teamMember.create({
+            data: {
+              teamId,
+              name: member.name,
+              email: member.email,
+              role: member.role,
+              linkedin: member.linkedin,
+              github: member.github,
+            }
+          })
+        }
+      }
+    }
+
+    // Re-fetch to return complete team
+    return this.findMyTeam(teamId)
   }
 
   async promoteTeams(currentRound: number) {
@@ -309,7 +422,7 @@ export class TeamsService {
         } else if (submittedSheets.length > 0) {
           const total = submittedSheets.reduce((sum, sheet) => {
             const sheetTotal = sheet.scores.reduce((sSum, sc) => sSum + sc.score, 0)
-            return sum + (sheet.scores.length > 0 ? sheetTotal / sheet.scores.length : 0)
+            return sum + sheetTotal
           }, 0)
           overallScore = total / submittedSheets.length
         }
@@ -325,6 +438,11 @@ export class TeamsService {
         where: { id: { in: top20Ids } },
         data: { round: 2 }
       })
+
+      // Broadcast immediately so leaderboard auto-switches to Stage 2
+      this.leaderboardGateway.broadcastLeaderboardUpdate().catch(err =>
+        console.error('[WS] Promote R1→R2 broadcast failed:', err)
+      )
 
       return { success: true, promotedCount: top20Ids.length }
     } else if (currentRound === 2) {
@@ -346,7 +464,7 @@ export class TeamsService {
         } else if (submittedSheets.length > 0) {
           const total = submittedSheets.reduce((sum, sheet) => {
             const sheetTotal = sheet.scores.reduce((sSum, sc) => sSum + sc.score, 0)
-            return sum + (sheet.scores.length > 0 ? sheetTotal / sheet.scores.length : 0)
+            return sum + sheetTotal
           }, 0)
           overallScore = total / submittedSheets.length
         }
@@ -365,6 +483,11 @@ export class TeamsService {
         })
       }
 
+      // Broadcast immediately so leaderboard auto-switches to Stage 3 (Winners)
+      this.leaderboardGateway.broadcastLeaderboardUpdate().catch(err =>
+        console.error('[WS] Promote R2→R3 broadcast failed:', err)
+      )
+
       return { success: true, promotedCount: top3.length }
     }
 
@@ -375,9 +498,14 @@ export class TeamsService {
     const hackathon = await this.prisma.hackathon.findFirst()
     if (!hackathon) throw new Error('No hackathon found')
 
+    await this.prisma.score.deleteMany({})
+    await this.prisma.scoreSheet.deleteMany({})
+    await this.prisma.leaderboard.deleteMany({
+      where: { hackathonId: hackathon.id }
+    })
     await this.prisma.team.updateMany({
       where: { hackathonId: hackathon.id },
-      data: { round: 1 }
+      data: { round: 1, adminScore: null }
     })
 
     return { success: true }

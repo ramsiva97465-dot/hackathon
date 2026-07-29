@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { BrandPair } from '@/components/brand/BrandLogos'
-import { signIn } from '@/lib/auth-client'
+import { signIn, signOut } from '@/lib/auth-client'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { Mail, Lock, ArrowRight } from 'lucide-react'
@@ -138,8 +138,24 @@ export function LoginPage() {
       if (error) {
         toast.error(error.message || 'Login failed. Please check credentials.')
       } else {
-        toast.success('Successfully logged in!')
         const role = (data as any)?.user?.role
+        
+        // Enforce strict portal separation
+        if (isAdminPath && role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
+          await signOut()
+          toast.error('Access Denied. Please use the Judge Login portal.')
+          setLoading(false)
+          return
+        }
+        
+        if (isJudgePath && role !== 'JUDGE') {
+          await signOut()
+          toast.error('Access Denied. Please use the Admin Login portal.')
+          setLoading(false)
+          return
+        }
+
+        toast.success('Successfully logged in!')
         if (role === 'JUDGE') {
           navigate('/judge')
         } else {
@@ -198,8 +214,12 @@ export function LoginPage() {
             </div>
 
             <div className="relative z-10 flex flex-col items-center gap-2 px-1">
-              <span className="text-[9px] sm:text-[10px] font-semibold tracking-[0.16em] sm:tracking-[0.2em] text-white/90 bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-full uppercase text-center">
-                AI Voice Voiceathon 2026
+              <span className="text-[10px] sm:text-[11px] font-bold tracking-[0.16em] sm:tracking-[0.2em] text-white/90 bg-white/5 border border-white/10 px-3.5 py-1.5 rounded-full uppercase text-center flex items-center justify-center gap-1.5">
+                <span className="font-bold text-slate-200">AI குரல்</span>
+                <span className="text-white/40">·</span>
+                <span className="text-white font-extrabold">VOICE FOR TAMIL NADU</span>
+                <span className="text-white/40">·</span>
+                <span className="text-white font-bold">2026</span>
               </span>
               {roleLabel && (
                 <span className="text-[9px] sm:text-[10px] font-semibold tracking-[0.16em] text-[#E83C00] bg-[#E83C00]/10 border border-[#E83C00]/25 px-3 py-1 rounded-full uppercase">

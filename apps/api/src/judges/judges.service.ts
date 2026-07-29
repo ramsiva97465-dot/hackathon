@@ -99,57 +99,55 @@ export class JudgesService {
   }
 
   async getAssignedTeams(userId: string) {
-    const judge = await this.prisma.judge.findUnique({
-      where: { id: userId }
-    })
-    
-    // Fallback: If it's a User ID, find the associated Judge
-    const judgeRecord = judge || await this.prisma.judge.findFirst({
-      where: { id: userId }
+    const judgeRecord = await this.prisma.judge.findFirst({
+      where: { OR: [{ id: userId }, { id: userId }] }
     })
 
     if (!judgeRecord) {
       return { success: true, data: [] }
     }
 
-    // Determine current active evaluation round
-    const hasRound2Teams = await this.prisma.team.findFirst({
-      where: { hackathonId: judgeRecord.hackathonId, status: 'COMPETING', round: 2 }
-    })
-    const activeJudgingRound = hasRound2Teams ? 2 : 1
-
     const assignments = await this.prisma.judgeAssignment.findMany({
-      where: { 
-        judgeId: judgeRecord.id,
-        team: {
-          round: activeJudgingRound
-        }
-      },
+      where: { judgeId: judgeRecord.id },
       include: {
         team: {
           include: {
             members: true,
             track: true,
             application: true,
+            scoreSheets: {
+              where: { judgeId: judgeRecord.id },
+              include: { scores: { include: { criteria: true } } }
+            }
           }
         }
       }
     })
 
-    const scoreSheets = await this.prisma.scoreSheet.findMany({
-      where: { judgeId: judgeRecord.id },
-      include: { scores: true }
-    })
+    const hasRound2 = assignments.some(a => a.team.round === 2)
+    const activeJudgingRound = hasRound2 ? 2 : 1
+    const filteredAssignments = assignments.filter(a => a.team.round === activeJudgingRound)
 
     return {
       success: true,
-      data: assignments.map(a => {
+      activeRound: activeJudgingRound,
+      data: filteredAssignments.map(a => {
         const team = a.team
-        const scoreSheet = scoreSheets.find(s => s.teamId === team.id)
+        const scoreSheet = team.scoreSheets?.[0]
         
         let totalScore: number | null = null
+        const existingScores: Record<string, number> = {}
+
         if (scoreSheet && scoreSheet.isSubmitted) {
           totalScore = scoreSheet.scores.reduce((acc, curr) => acc + curr.score, 0)
+        }
+
+        if (scoreSheet && scoreSheet.scores) {
+          scoreSheet.scores.forEach(s => {
+            if (s.criteria?.name) {
+              existingScores[s.criteria.name] = s.score
+            }
+          })
         }
 
         return {
@@ -158,11 +156,21 @@ export class JudgesService {
           college: team.application?.college || 'Unknown',
           track: team.track.slug === 'real-world-deployment' ? 'Real World Deployment' : 
                  team.track.slug === 'multimodal-ai' ? 'Multimodal AI' : 'Voice AI',
-          projectTitle: team.application?.projectTitle || 'Untitled Project',
+          projectTitle: team.projectTitle || team.application?.projectTitle || 'Untitled Project',
+          projectDescription: team.projectDescription || team.application?.projectDescription || 'No description provided',
+          agentName: team.agentName || 'Unknown Agent',
+          agentSolution: team.agentSolution || 'No solution provided',
+          agentPhoneNumber: team.agentPhoneNumber || null,
+          githubUrl: team.githubUrl || null,
+          demoUrl: team.demoUrl || null,
+          techStack: team.techStack || [],
+          tableNumber: team.tableNumber || 'TBA',
           members: team.members,
           isScored: scoreSheet?.isSubmitted || false,
           isLocked: scoreSheet?.isSubmitted || false,
-          totalScore
+          totalScore,
+          notes: scoreSheet?.notes || null,
+          existingScores
         }
       })
     }

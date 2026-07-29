@@ -89,12 +89,12 @@ export function JudgesPage() {
 
   return (
     <DashboardLayout role="admin">
-      <div className="min-h-[calc(100vh-64px)] w-full" style={{ backgroundColor: '#EBE3D5' }}>
+      <div className="min-h-[calc(100vh-64px)] w-full">
         <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="font-display text-2xl font-bold text-[#1A1A1A] mb-1">Judges</h1>
-              <p className="text-sm text-slate-500 font-medium">Manage judge assignments and scoring progress</p>
+              <h1 className="font-display text-2xl font-bold text-white mb-1">Judges</h1>
+              <p className="text-sm text-white/50 font-medium">Manage judge assignments and scoring progress</p>
             </div>
             <Button onClick={() => setShowAddModal(true)} leftIcon={<Plus size={16} />} size="sm" className="bg-[#E83C00] hover:bg-[#c93400] text-white">Add Judge</Button>
           </div>
@@ -106,9 +106,9 @@ export function JudgesPage() {
               { label: 'Active', value: judges.filter(j => j.isActive).length },
               { label: 'Completed Scoring', value: judges.filter(j => j.completedScores >= j.totalTeams).length },
             ].map(s => (
-              <div key={s.label} className="border p-4 rounded-xl shadow-sm" style={{ backgroundColor: '#F4ECE1', borderColor: '#EAE4D8' }}>
-                <p className="font-display text-3xl font-black text-[#1A1A1A]">{s.value}</p>
-                <p className="text-xs text-slate-500 font-bold tracking-wide uppercase mt-1">{s.label}</p>
+              <div key={s.label} className="border p-4 rounded-2xl shadow-2xl" style={{ backgroundColor: '#0A0A0A', borderColor: 'rgba(255,255,255,0.1)' }}>
+                <p className="font-display text-3xl font-black text-white">{s.value}</p>
+                <p className="text-xs text-slate-400 font-bold tracking-wide uppercase mt-1">{s.label}</p>
               </div>
             ))}
           </div>
@@ -116,7 +116,7 @@ export function JudgesPage() {
           {/* Judges grid */}
           {loading ? (
             <div className="py-20 text-center">
-              <div className="w-8 h-8 border-4 border-[#EAE4D8] border-t-[#E83C00] rounded-full animate-spin mx-auto mb-4"></div>
+              <div className="w-8 h-8 border-4 border-slate-800 border-t-[#E83C00] rounded-full animate-spin mx-auto mb-4"></div>
               <p className="text-sm font-semibold text-slate-500">Loading judges...</p>
             </div>
           ) : judges.length === 0 ? (
@@ -136,16 +136,16 @@ export function JudgesPage() {
               const progress = (judge.completedScores / judge.totalTeams) * 100 || 0
               return (
                 <motion.div key={judge.id} variants={itemVariants} whileHover={{ y: -4 }} transition={{ duration: 0.25 }}>
-                  <div className="p-6 rounded-[1.5rem] shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col gap-5 border"
-                       style={{ backgroundColor: '#F4ECE1', borderColor: '#EAE4D8' }}>
+                  <div className="p-6 rounded-[1.5rem] shadow-2xl transition-all duration-300 h-full flex flex-col gap-5 border"
+                       style={{ backgroundColor: '#0A0A0A', borderColor: 'rgba(255,255,255,0.1)' }}>
                     {/* Header */}
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-4">
-                        <Avatar name={judge.name} size="md" status={judge.isActive ? 'online' : 'offline'} className="ring-2 ring-[#F4ECE1] shadow-sm" />
+                        <Avatar name={judge.name} size="md" status={judge.isActive ? 'online' : 'offline'} className="ring-2 ring-[#0A0A0A] shadow-sm" />
                         <div>
-                          <h3 className="font-display font-black text-[#1A1A1A] text-base">{judge.name}</h3>
+                          <h3 className="font-display font-black text-white text-base">{judge.name}</h3>
                           <p className="text-xs text-[#E83C00] font-bold">{judge.title}</p>
-                          <p className="text-xs text-slate-500 font-medium">{judge.company}</p>
+                          <p className="text-xs text-slate-400 font-medium">{judge.company}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -154,7 +154,7 @@ export function JudgesPage() {
                         </Badge>
                         <button 
                           onClick={() => handleDeleteJudge(judge.id)}
-                          className="text-slate-400 hover:text-red-500 transition-colors p-1 rounded-md hover:bg-red-50"
+                          className="text-slate-400 hover:text-red-500 transition-colors p-1 rounded-md hover:bg-red-500/10"
                           title="Delete Judge"
                         >
                           <Trash2 size={16} />
@@ -165,27 +165,26 @@ export function JudgesPage() {
                     {/* Expertise */}
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {judge.expertise.map(e => (
-                        <span key={e} className="text-[10px] px-2 py-1 rounded-xl bg-white border border-[#EAE4D8] text-slate-600 font-bold shadow-sm">{e}</span>
+                        <span key={e} className="text-[10px] px-2 py-1 rounded-xl bg-[#111] border border-white/10 text-slate-300 font-bold shadow-sm">{e}</span>
                       ))}
                     </div>
 
                     {/* Progress */}
                     <div className="mt-2">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs text-slate-500 font-bold">Scoring progress</span>
-                        <span className="text-xs font-black text-[#1A1A1A]">{judge.completedScores}/{judge.totalTeams}</span>
+                        <span className="text-xs text-slate-400 font-bold">Scoring progress</span>
+                        <span className="text-xs font-black text-white">{judge.completedScores}/{judge.totalTeams}</span>
                       </div>
-                      <Progress value={progress} variant={progress === 100 ? 'success' : 'primary'} size="sm" className="bg-[#EAE4D8]" />
+                      <Progress value={progress} variant={progress === 100 ? 'success' : 'primary'} size="sm" className="bg-white/10" />
                     </div>
 
-                    {/* Email */}
-                    <p className="text-[11px] text-slate-400 font-bold font-mono bg-white/50 px-2 py-1 rounded w-max border border-[#EAE4D8]">{judge.email}</p>
+                    <p className="text-[11px] text-slate-500 font-bold font-mono bg-[#111] px-2 py-1 rounded w-max border border-white/10">{judge.email}</p>
 
                     {/* Actions */}
                     <div className="flex gap-2 mt-auto pt-2">
-                      <Button size="xs" variant="outline" fullWidth leftIcon={<Users size={13} />} className="border-[#EAE4D8] text-slate-600 hover:bg-white bg-transparent">Teams</Button>
+                      <Button size="xs" variant="outline" fullWidth leftIcon={<Users size={13} />} className="border-white/10 text-slate-300 hover:bg-white/5 hover:text-white bg-transparent">Teams</Button>
                       {progress === 100
-                        ? <Button size="xs" variant="ghost" fullWidth leftIcon={<Lock size={13} />} className="text-slate-500 hover:bg-black/5">Locked</Button>
+                        ? <Button size="xs" variant="ghost" fullWidth leftIcon={<Lock size={13} />} className="text-slate-500 hover:bg-white/5 hover:text-white">Locked</Button>
                         : <Button size="xs" variant="ghost" fullWidth leftIcon={<Unlock size={13} />} className="text-[#E83C00] hover:bg-[#E83C00]/10">Unlock</Button>
                       }
                     </div>
@@ -205,39 +204,39 @@ export function JudgesPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-[#EAE4D8]"
-              style={{ backgroundColor: '#F4ECE1' }}
+              className="rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-white/10"
+              style={{ backgroundColor: '#0A0A0A' }}
             >
-              <div className="flex items-center justify-between p-6 border-b border-[#EAE4D8]">
-                <h3 className="font-black text-xl text-[#1A1A1A]">Add New Judge</h3>
-                <button onClick={() => setShowAddModal(false)} className="p-1 rounded-xl text-slate-400 hover:bg-black/5"><X size={20} /></button>
+              <div className="flex items-center justify-between p-6 border-b border-white/10">
+                <h3 className="font-black text-xl text-white">Add New Judge</h3>
+                <button onClick={() => setShowAddModal(false)} className="p-1 rounded-xl text-slate-400 hover:bg-white/10 hover:text-white"><X size={20} /></button>
               </div>
               <form onSubmit={handleAddJudge} className="p-6 space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">Full Name</label>
-                  <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} type="text" className="w-full px-4 py-2.5 border border-[#EAE4D8] rounded-xl text-sm outline-none focus:border-[#E83C00] focus:ring-1 focus:ring-[#E83C00]/20 bg-white" placeholder="Jane Doe" />
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wide">Full Name</label>
+                  <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} type="text" className="w-full px-4 py-2.5 border border-white/10 rounded-xl text-sm outline-none focus:border-[#E83C00] focus:ring-1 focus:ring-[#E83C00]/20 bg-[#111] text-white placeholder:text-slate-600" placeholder="Jane Doe" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">Email Address</label>
-                  <input required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} type="email" className="w-full px-4 py-2.5 border border-[#EAE4D8] rounded-xl text-sm outline-none focus:border-[#E83C00] focus:ring-1 focus:ring-[#E83C00]/20 bg-white" placeholder="jane@example.com" />
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wide">Email Address</label>
+                  <input required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} type="email" className="w-full px-4 py-2.5 border border-white/10 rounded-xl text-sm outline-none focus:border-[#E83C00] focus:ring-1 focus:ring-[#E83C00]/20 bg-[#111] text-white placeholder:text-slate-600" placeholder="jane@example.com" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">Temporary Password</label>
-                  <input required value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} type="password" className="w-full px-4 py-2.5 border border-[#EAE4D8] rounded-xl text-sm outline-none focus:border-[#E83C00] focus:ring-1 focus:ring-[#E83C00]/20 bg-white" placeholder="Set a secure password" />
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wide">Temporary Password</label>
+                  <input required value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} type="password" className="w-full px-4 py-2.5 border border-white/10 rounded-xl text-sm outline-none focus:border-[#E83C00] focus:ring-1 focus:ring-[#E83C00]/20 bg-[#111] text-white placeholder:text-slate-600" placeholder="Set a secure password" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">Company</label>
-                    <input value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} type="text" className="w-full px-4 py-2.5 border border-[#EAE4D8] rounded-xl text-sm outline-none focus:border-[#E83C00] focus:ring-1 focus:ring-[#E83C00]/20 bg-white" placeholder="Google" />
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wide">Company</label>
+                    <input value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} type="text" className="w-full px-4 py-2.5 border border-white/10 rounded-xl text-sm outline-none focus:border-[#E83C00] focus:ring-1 focus:ring-[#E83C00]/20 bg-[#111] text-white placeholder:text-slate-600" placeholder="Google" />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">Designation</label>
-                    <input value={formData.designation} onChange={e => setFormData({...formData, designation: e.target.value})} type="text" className="w-full px-4 py-2.5 border border-[#EAE4D8] rounded-xl text-sm outline-none focus:border-[#E83C00] focus:ring-1 focus:ring-[#E83C00]/20 bg-white" placeholder="Sr. Engineer" />
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wide">Designation</label>
+                    <input value={formData.designation} onChange={e => setFormData({...formData, designation: e.target.value})} type="text" className="w-full px-4 py-2.5 border border-white/10 rounded-xl text-sm outline-none focus:border-[#E83C00] focus:ring-1 focus:ring-[#E83C00]/20 bg-[#111] text-white placeholder:text-slate-600" placeholder="Sr. Engineer" />
                   </div>
                 </div>
                 
-                <div className="pt-6 mt-2 border-t border-[#EAE4D8] flex justify-end gap-3">
-                  <Button type="button" variant="ghost" onClick={() => setShowAddModal(false)} className="hover:bg-black/5 text-slate-600">Cancel</Button>
+                <div className="pt-6 mt-2 border-t border-white/10 flex justify-end gap-3">
+                  <Button type="button" variant="ghost" onClick={() => setShowAddModal(false)} className="hover:bg-white/10 text-slate-400 hover:text-white">Cancel</Button>
                   <Button type="submit" loading={submitting} className="bg-[#E83C00] hover:bg-[#c93400] text-white shadow-lg shadow-orange-900/10 rounded-xl px-6">Create Judge</Button>
                 </div>
               </form>

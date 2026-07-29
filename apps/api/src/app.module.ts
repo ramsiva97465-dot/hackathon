@@ -13,6 +13,8 @@ import { EmailsModule } from './emails/emails.module'
 import { AuditModule } from './audit/audit.module'
 import { SettingsModule } from './settings/settings.module'
 import { AnalyticsModule } from './analytics/analytics.module'
+import { AnnouncementsModule } from './announcements/announcements.module'
+import { HelpRequestsModule } from './help-requests/help-requests.module'
 import { HealthController } from './health/health.controller'
 import { ServeStaticModule } from '@nestjs/serve-static'
 import { join } from 'path'
@@ -64,6 +66,8 @@ import { join } from 'path'
     AuditModule,
     SettingsModule,
     AnalyticsModule,
+    AnnouncementsModule,
+    HelpRequestsModule,
   ],
   controllers: [HealthController],
 })

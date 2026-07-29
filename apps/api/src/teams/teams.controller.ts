@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Param, Patch, UseGuards, Req } from '@nestjs/common'
 import { TeamsService } from './teams.service'
 import { ParticipantGuard } from '../auth/participant.guard'
+import { AuthGuard, PermissionsGuard, RequirePermissions } from '../auth/guards'
 
 @Controller('teams')
 export class TeamsController {
@@ -20,9 +21,14 @@ export class TeamsController {
     @Body() body: {
       projectTitle?: string
       projectDescription?: string
+      agentName?: string
+      agentSolution?: string
       githubUrl?: string
       demoUrl?: string
       techStack?: string[]
+      followedInstagram?: boolean
+      followedLinkedin?: boolean
+      members?: { id?: string; name: string; email: string; role?: string; linkedin?: string; github?: string }[]
     }
   ) {
     const teamId = req.participant.teamId
@@ -34,6 +40,11 @@ export class TeamsController {
     return this.service.findAll()
   }
 
+  @Post('validate-url')
+  validateUrl(@Body('url') url: string) {
+    return this.service.validateUrl(url)
+  }
+
   @Post(':id/assign-judge')
   assignJudge(
     @Param('id') id: string,
@@ -43,11 +54,17 @@ export class TeamsController {
   }
 
   @Patch(':id/table-number')
-  updateTableNumber(
-    @Param('id') id: string,
-    @Body('tableNumber') tableNumber: string
-  ) {
+  @UseGuards(AuthGuard, PermissionsGuard)
+  @RequirePermissions('SETTINGS_MANAGE')
+  updateTableNumber(@Param('id') id: string, @Body('tableNumber') tableNumber: string) {
     return this.service.updateTableNumber(id, tableNumber)
+  }
+
+  @Patch(':id/bonus')
+  @UseGuards(AuthGuard, PermissionsGuard)
+  @RequirePermissions('SETTINGS_MANAGE')
+  updateBonus(@Param('id') id: string, @Body('bonusPoints') bonusPoints: number) {
+    return this.service.updateBonus(id, bonusPoints)
   }
 
   @Post('promote')

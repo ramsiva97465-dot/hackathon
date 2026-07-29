@@ -17,13 +17,13 @@ export function SettingsPage() {
     <DashboardLayout role="admin">
       <div className="p-6 max-w-[900px] space-y-6">
         <div>
-          <h1 className="font-display text-2xl font-bold text-slate-900 mb-1">Settings</h1>
-          <p className="text-sm text-slate-500">Configure SnapServe platform and Vobiz telephony integrations.</p>
+          <h1 className="font-display text-2xl font-bold text-white mb-1">Settings</h1>
+          <p className="text-sm text-slate-400">Configure SnapServe platform and Vobiz telephony integrations.</p>
         </div>
 
         {/* Event Info (SnapServe Identity) */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-5">
-          <h3 className="font-display font-bold text-slate-900 border-b border-slate-100 pb-2">Event Information</h3>
+        <div className="bg-[#0A0A0A] p-6 rounded-2xl border border-white/10 shadow-2xl space-y-5">
+          <h3 className="font-display font-bold text-white border-b border-white/10 pb-2">Event Information</h3>
           <Input label="Hackathon Name" defaultValue="AI Voice Agent Hackathon 2026" />
           <Input label="Tagline" defaultValue="Build the Future of Voice AI" />
           <Textarea label="Description" defaultValue="India's most competitive AI Voice Agent Hackathon. Over 48 intense hours, teams design, build, and deploy voice AI agents." />
@@ -41,13 +41,13 @@ export function SettingsPage() {
         </div>
 
         {/* Vobiz SIP Trunk & Voice Configuration (Voice-Specific / Cyan Accent) */}
-        <div className="bg-white p-6 rounded-2xl border border-cyan-200 shadow-sm space-y-5 relative">
-          <div className="absolute top-4 right-4 flex items-center gap-1.5 text-cyan-600 bg-cyan-50 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border border-cyan-100/50">
+        <div className="bg-[#0A0A0A] p-6 rounded-2xl border border-cyan-500/20 shadow-2xl space-y-5 relative">
+          <div className="absolute top-4 right-4 flex items-center gap-1.5 text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border border-cyan-500/20">
             <Network size={10} />
             Voice Infra
           </div>
           
-          <h3 className="font-display font-bold text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-1.5">
+          <h3 className="font-display font-bold text-white border-b border-white/10 pb-2 flex items-center gap-1.5">
             <PhoneCall size={16} className="text-cyan-500" />
             Vobiz Telephony & SIP Gateway
           </h3>
@@ -66,39 +66,39 @@ export function SettingsPage() {
             <Input label="Max Concurrent Channels" type="number" defaultValue="100" className="focus:border-cyan-500 focus:ring-cyan-500" />
           </div>
 
-          <div className="flex items-center justify-between p-4 rounded-xl bg-cyan-50/40 border border-cyan-100/40">
+          <div className="flex items-center justify-between p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/10">
             <div>
-              <p className="text-xs font-bold text-slate-800">Secure SIP Signaling (TLS)</p>
+              <p className="text-xs font-bold text-white">Secure SIP Signaling (TLS)</p>
               <p className="text-[10px] text-slate-400 mt-0.5">Encrypt voice media streams using SRTP</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" defaultChecked className="sr-only peer" />
-              <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-cyan-500 transition-all peer-checked:after:translate-x-5 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
+              <div className="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-cyan-500 transition-all peer-checked:after:translate-x-5 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
             </label>
           </div>
         </div>
 
         {/* Registration Control (SnapServe Rules) */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
-          <h3 className="font-display font-bold text-slate-900 border-b border-slate-100 pb-2">Registration Controls</h3>
-          <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100">
+        <div className="bg-[#0A0A0A] p-6 rounded-2xl border border-white/10 shadow-2xl space-y-4">
+          <h3 className="font-display font-bold text-white border-b border-white/10 pb-2">Registration Controls</h3>
+          <div className="flex items-center justify-between p-4 rounded-xl bg-[#111] border border-white/5">
             <div>
-              <p className="text-sm font-semibold text-slate-800">Registration Open</p>
+              <p className="text-sm font-semibold text-white">Registration Open</p>
               <p className="text-xs text-slate-400 mt-0.5">Allow new teams to register via Luma</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" defaultChecked className="sr-only peer" />
-              <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-[#5B5CEB] transition-all peer-checked:after:translate-x-5 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
+              <div className="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-[#5B5CEB] transition-all peer-checked:after:translate-x-5 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
             </label>
           </div>
-          <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100">
+          <div className="flex items-center justify-between p-4 rounded-xl bg-[#111] border border-white/5">
             <div>
-              <p className="text-sm font-semibold text-slate-800">Public Leaderboard</p>
+              <p className="text-sm font-semibold text-white">Public Leaderboard</p>
               <p className="text-xs text-slate-400 mt-0.5">Show leaderboard to public visitors</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" defaultChecked className="sr-only peer" />
-              <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:bg-[#5B5CEB] transition-all peer-checked:after:translate-x-5 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
+              <div className="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-[#5B5CEB] transition-all peer-checked:after:translate-x-5 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
             </label>
           </div>
         </div>

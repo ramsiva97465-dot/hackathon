@@ -29,11 +29,13 @@ export function RoundsManagement() {
 
   useEffect(() => {
     fetchLeaderboard()
+    const interval = setInterval(() => fetchLeaderboard(true), 10_000)
+    return () => clearInterval(interval)
   }, [activeTab])
 
-  const fetchLeaderboard = async () => {
+  const fetchLeaderboard = async (silent = false) => {
     try {
-      setLoading(true)
+      if (!silent) setLoading(true)
       const res = await api.leaderboard.get({ round: activeTab })
       if (Array.isArray(res.data)) {
         setTeams(res.data)
@@ -51,7 +53,7 @@ export function RoundsManagement() {
       console.error(err)
       toast.error('Failed to load rounds data.')
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
@@ -107,16 +109,16 @@ export function RoundsManagement() {
         {/* Page Title */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
               <Zap size={22} className="text-[#E83C00]" />
               Rounds Management
             </h1>
-            <p className="text-sm text-slate-500 mt-0.5">Control stages, promote top teams, and select winners</p>
+            <p className="text-sm text-slate-400 mt-0.5">Control stages, promote top teams, and select winners</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handleReset}
-              className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-600 transition-all shadow-sm"
+              className="flex items-center gap-1.5 px-4 py-2 border border-white/10 bg-[#111] hover:bg-[#1a1a1a] rounded-xl text-xs font-bold text-slate-300 transition-all shadow-2xl hover:text-white"
             >
               <RefreshCw size={13} />
               Reset All to Round 1
@@ -125,14 +127,14 @@ export function RoundsManagement() {
         </div>
 
         {/* Current Active Round Status Bar */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm relative overflow-hidden">
+        <div className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 shadow-2xl relative overflow-hidden">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-[#E83C00]">
+            <div className="w-12 h-12 rounded-xl bg-[#E83C00]/10 border border-[#E83C00]/20 flex items-center justify-center text-[#E83C00]">
               <Zap size={20} />
             </div>
             <div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Active Judging State</span>
-              <h2 className="text-lg font-black text-slate-800">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Active Judging State</span>
+              <h2 className="text-lg font-black text-white">
                 {activeRoundNum === 3 ? '🏆 Winners Announced' : activeRoundNum === 2 ? '⚡ Round 2 (Top 20)' : '📝 Round 1 (All Teams)'}
               </h2>
             </div>
@@ -163,22 +165,22 @@ export function RoundsManagement() {
         </div>
 
         {/* Round Tab Selector */}
-        <div className="flex border-b border-slate-200 gap-6">
+        <div className="flex border-b border-white/10 gap-6">
           <button
             onClick={() => setActiveTab(1)}
-            className={`pb-3 text-xs font-bold tracking-wider uppercase border-b-2 transition-all ${activeTab === 1 ? 'border-[#E83C00] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+            className={`pb-3 text-xs font-bold tracking-wider uppercase border-b-2 transition-all ${activeTab === 1 ? 'border-[#E83C00] text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
           >
             Round 1 ({round1Count})
           </button>
           <button
             onClick={() => setActiveTab(2)}
-            className={`pb-3 text-xs font-bold tracking-wider uppercase border-b-2 transition-all ${activeTab === 2 ? 'border-[#E83C00] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+            className={`pb-3 text-xs font-bold tracking-wider uppercase border-b-2 transition-all ${activeTab === 2 ? 'border-[#E83C00] text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
           >
             Round 2 ({round2Count > 20 ? 20 : round2Count})
           </button>
           <button
             onClick={() => setActiveTab(3)}
-            className={`pb-3 text-xs font-bold tracking-wider uppercase border-b-2 transition-all ${activeTab === 3 ? 'border-[#E83C00] text-slate-900' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+            className={`pb-3 text-xs font-bold tracking-wider uppercase border-b-2 transition-all ${activeTab === 3 ? 'border-[#E83C00] text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
           >
             Winners ({winnersCount})
           </button>
@@ -189,62 +191,62 @@ export function RoundsManagement() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto py-6">
             {/* 2nd Place (Silver) */}
             <div className="flex flex-col items-center justify-end order-2 md:order-1">
-              <div className="bg-white border rounded-2xl p-6 text-center w-full max-w-[240px] flex flex-col items-center justify-center relative overflow-hidden shadow-sm">
+              <div className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-6 text-center w-full max-w-[240px] flex flex-col items-center justify-center relative overflow-hidden shadow-2xl">
                 <div className="absolute top-0 inset-x-0 h-1 bg-slate-300" />
-                <Medal size={32} className="text-slate-400 mb-2" />
+                <Medal size={32} className="text-slate-300 mb-2" />
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">2nd Place</span>
-                <h3 className="text-lg font-black text-slate-800 mt-1">{teams[1]?.teamName}</h3>
+                <h3 className="text-lg font-black text-white mt-1">{teams[1]?.teamName}</h3>
                 <p className="text-xs text-slate-400 font-medium mt-1">{teams[1]?.track}</p>
-                <span className="mt-3 text-2xl font-black text-slate-700 block">{teams[1]?.overallScore}</span>
+                <span className="mt-3 text-2xl font-black text-slate-300 block">{teams[1]?.overallScore}</span>
               </div>
             </div>
 
             {/* 1st Place (Gold) */}
             <div className="flex flex-col items-center justify-end order-1 md:order-2">
-              <div className="bg-white border-2 border-amber-300 rounded-2xl p-8 text-center w-full max-w-[260px] flex flex-col items-center justify-center relative overflow-hidden shadow-md transform md:-translate-y-4">
+              <div className="bg-[#0A0A0A] border-2 border-amber-500/50 rounded-2xl p-8 text-center w-full max-w-[260px] flex flex-col items-center justify-center relative overflow-hidden shadow-2xl transform md:-translate-y-4">
                 <div className="absolute top-0 inset-x-0 h-1.5 bg-amber-400" />
-                <Trophy size={42} className="text-amber-500 mb-2" />
+                <Trophy size={42} className="text-amber-500 mb-2 drop-shadow-lg" />
                 <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest block">1st Place Winner</span>
-                <h3 className="text-xl font-black text-slate-900 mt-1">{teams[0]?.teamName}</h3>
+                <h3 className="text-xl font-black text-white mt-1">{teams[0]?.teamName}</h3>
                 <p className="text-xs text-slate-400 font-medium mt-1">{teams[0]?.track}</p>
-                <span className="mt-3 text-3xl font-black text-amber-600 block">{teams[0]?.overallScore}</span>
+                <span className="mt-3 text-3xl font-black text-amber-500 block drop-shadow-md">{teams[0]?.overallScore}</span>
               </div>
             </div>
 
             {/* 3rd Place (Bronze) */}
             <div className="flex flex-col items-center justify-end order-3 md:order-3">
-              <div className="bg-white border rounded-2xl p-6 text-center w-full max-w-[240px] flex flex-col items-center justify-center relative overflow-hidden shadow-sm">
-                <div className="absolute top-0 inset-x-0 h-1 bg-amber-700/50" />
-                <Medal size={32} className="text-amber-700 mb-2" />
+              <div className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-6 text-center w-full max-w-[240px] flex flex-col items-center justify-center relative overflow-hidden shadow-2xl">
+                <div className="absolute top-0 inset-x-0 h-1 bg-amber-800" />
+                <Medal size={32} className="text-amber-600 mb-2" />
                 <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest block">3rd Place</span>
-                <h3 className="text-lg font-black text-slate-800 mt-1">{teams[2]?.teamName}</h3>
+                <h3 className="text-lg font-black text-white mt-1">{teams[2]?.teamName}</h3>
                 <p className="text-xs text-slate-400 font-medium mt-1">{teams[2]?.track}</p>
-                <span className="mt-3 text-2xl font-black text-slate-700 block">{teams[2]?.overallScore}</span>
+                <span className="mt-3 text-2xl font-black text-slate-300 block">{teams[2]?.overallScore}</span>
               </div>
             </div>
           </div>
         )}
 
         {/* Teams Table */}
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-          <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-            <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+        <div className="bg-[#0A0A0A] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+          <div className="px-6 py-4 border-b border-white/5 bg-[#111] flex items-center justify-between">
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
               {activeTab === 3 ? 'Winners Standings' : activeTab === 2 ? 'Round 2 Qualified Teams' : 'Round 1 Leaderboard'}
             </h3>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
               {teams.length} Teams
             </span>
           </div>
 
           {teams.length === 0 ? (
-            <div className="p-8 text-center text-slate-400">
+            <div className="p-8 text-center text-slate-500">
               <p className="text-xs font-medium">No teams are active or graded in this round yet.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <tr className="border-b border-white/5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                     <th className="px-6 py-3">Rank</th>
                     <th className="px-6 py-3">Team Name</th>
                     <th className="px-6 py-3">Track</th>
@@ -252,22 +254,22 @@ export function RoundsManagement() {
                     <th className="px-6 py-3 text-right">Avg Score</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-xs">
+                <tbody className="divide-y divide-white/5 text-xs">
                   {teams.map((t, idx) => (
-                    <tr key={t.teamId} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-6 py-4 font-bold text-slate-400">
+                    <tr key={t.teamId} className="hover:bg-white/5 transition-colors">
+                      <td className="px-6 py-4 font-bold text-slate-500">
                         #{idx + 1}
                       </td>
-                      <td className="px-6 py-4 font-bold text-slate-800">
+                      <td className="px-6 py-4 font-bold text-white">
                         {t.teamName}
                       </td>
-                      <td className="px-6 py-4 text-slate-500 font-medium">
+                      <td className="px-6 py-4 text-slate-400 font-medium">
                         {t.track}
                       </td>
-                      <td className="px-6 py-4 text-center font-bold text-slate-600">
+                      <td className="px-6 py-4 text-center font-bold text-slate-300">
                         {t.judgeCount}
                       </td>
-                      <td className="px-6 py-4 text-right font-black text-slate-900">
+                      <td className="px-6 py-4 text-right font-black text-white">
                         {t.overallScore}
                       </td>
                     </tr>

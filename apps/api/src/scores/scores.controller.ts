@@ -1,5 +1,5 @@
 import { Controller, Post, Body } from '@nestjs/common'
-import { IsString, IsNumber, IsArray, ValidateNested } from 'class-validator'
+import { IsString, IsNumber, IsArray, ValidateNested, IsOptional } from 'class-validator'
 import { Type } from 'class-transformer'
 import { ScoresService } from './scores.service'
 
@@ -22,6 +22,10 @@ class SubmitScoreDto {
   @ValidateNested({ each: true })
   @Type(() => ScoreEntryDto)
   scores: ScoreEntryDto[]
+
+  @IsOptional()
+  @IsString()
+  notes?: string
 }
 
 @Controller('scores')
@@ -30,6 +34,6 @@ export class ScoresController {
 
   @Post()
   async submitScore(@Body() dto: SubmitScoreDto) {
-    return this.scoresService.submitScore(dto.judgeId, dto.teamId, dto.scores)
+    return this.scoresService.submitScore(dto.judgeId, dto.teamId, dto.scores, dto.notes)
   }
 }

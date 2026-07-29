@@ -1,4 +1,4 @@
-export * from './types';
+export * from './types.js';
 
 export const HACKATHON_CONFIG = {
   name: 'AI Voice Agent Hackathon',
@@ -37,30 +37,28 @@ export const CHALLENGE_TRACKS = [
 ] as const;
 
 export const SCORING_RUBRIC = {
-  innovation: { max: 25, label: 'Innovation & Creativity', description: 'Novelty and originality of the solution' },
-  technicalQuality: { max: 25, label: 'Technical Quality', description: 'Code quality, architecture, and scalability' },
-  aiUsage: { max: 20, label: 'AI Usage', description: 'Effective and responsible use of AI technologies' },
-  businessValue: { max: 15, label: 'Business Value', description: 'Real-world applicability and market potential' },
-  presentation: { max: 15, label: 'Presentation', description: 'Clarity, confidence, and demo quality' },
+  latency: { max: 10, label: 'Latency & Speed', description: 'Response time and real-time conversational capability on the phone call' },
+  conversationalQuality: { max: 10, label: 'Conversational Flow', description: 'Natural turn-taking, handling interruptions and context' },
+  languageAccuracy: { max: 10, label: 'Tamil Language Accuracy', description: 'Fluency, grammar, and pronunciation in Tamil/regional languages' },
+  aiUsage: { max: 10, label: 'Voice Realism & Persona', description: 'Quality of TTS, emotion, and character consistency' },
+  technicalQuality: { max: 10, label: 'Technical Implementation', description: 'Code quality, architecture, and telephony integration' },
 } as const;
 
 export const SCHEDULE_ITEMS = [
-  { date: 'Aug 15', time: '09:00 AM', title: 'Opening Ceremony', description: 'Welcome address, keynotes from industry leaders' },
-  { date: 'Aug 15', time: '11:00 AM', title: 'Hacking Begins', description: 'Teams start building their solutions' },
-  { date: 'Aug 15', time: '01:00 PM', title: 'Lunch + Mentor Sessions', description: 'Network and get guidance from mentors' },
-  { date: 'Aug 16', time: '10:00 AM', title: 'Mid-Point Check-in', description: 'Progress review, office hours' },
-  { date: 'Aug 16', time: '05:00 PM', title: 'Submission Deadline', description: 'Final code and demo submission' },
-  { date: 'Aug 17', time: '10:00 AM', title: 'Round 1 — Demos', description: 'Team presentations to judges' },
-  { date: 'Aug 17', time: '02:00 PM', title: 'Round 2 — Finals', description: 'Top 5 teams present to all judges' },
-  { date: 'Aug 17', time: '05:00 PM', title: 'Awards Ceremony', description: 'Winner announcement and prize distribution' },
+  { date: 'Sep 05', time: '09:00 AM', title: 'Opening Ceremony', description: 'Welcome address, keynotes from industry leaders' },
+  { date: 'Sep 05', time: '11:00 AM', title: 'Hacking Begins', description: 'Teams start building their voice agents' },
+  { date: 'Sep 05', time: '01:00 PM', title: 'Lunch + Mentor Sessions', description: 'Network and get guidance from mentors' },
+  { date: 'Sep 06', time: '10:00 AM', title: 'Mid-Point Check-in', description: 'Progress review, API troubleshooting' },
+  { date: 'Sep 06', time: '05:00 PM', title: 'Submission Deadline', description: 'Final code and voice agent demo submission' },
+  { date: 'Sep 07', time: '10:00 AM', title: 'Round 1 — Demos', description: 'Team presentations to judges' },
+  { date: 'Sep 07', time: '02:00 PM', title: 'Round 2 — Finals', description: 'Top 20 teams present to all judges' },
+  { date: 'Sep 07', time: '05:00 PM', title: 'Awards Ceremony', description: 'Winner announcement and prize distribution' },
 ] as const;
 
 export const PRIZE_TIERS = [
-  { rank: 1, label: '1st Place', prize: '₹2,00,000', perks: ['Internship Offers', 'Cloud Credits $10K', 'Trophy', 'Certificates'] },
-  { rank: 2, label: '2nd Place', prize: '₹1,00,000', perks: ['Cloud Credits $5K', 'Trophy', 'Certificates'] },
-  { rank: 3, label: '3rd Place', prize: '₹50,000', perks: ['Cloud Credits $2K', 'Trophy', 'Certificates'] },
-  { rank: null, label: 'Best AI Innovation', prize: '₹75,000', perks: ['Special Recognition', 'Certificates'] },
-  { rank: null, label: 'Best Presentation', prize: '₹25,000', perks: ['Certificates'] },
+  { rank: 1, label: '1st Place', prize: '₹50,000', perks: ['Internship Offers', 'Cloud Credits $5K', 'Trophy', 'Certificates'] },
+  { rank: 2, label: '2nd Place', prize: '₹30,000', perks: ['Cloud Credits $2K', 'Trophy', 'Certificates'] },
+  { rank: 3, label: '3rd Place', prize: '₹20,000', perks: ['Mentorship Keys', 'Certificates'] },
 ] as const;
 
 export const FAQ_ITEMS = [

@@ -4,11 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Users, FileText, Award, Mail, Trophy,
   Settings, ScrollText, Mic, ChevronLeft, ChevronRight,
-  Bell, LogOut, Gavel, Zap
+  Bell, LogOut, Gavel, Zap, Radio
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store/app.store'
 import { useAuthStore } from '@/store/auth.store'
+import { signOut } from '@/lib/auth-client'
 import { Avatar } from '@/components/ui/Avatar'
 
 interface SidebarRoute {
@@ -26,13 +27,11 @@ interface DashboardLayoutProps {
 
 const adminRoutes: SidebarRoute[] = [
   { href: '/admin', label: 'Dashboard', icon: <LayoutDashboard size={17} />, section: 'main' },
-  { href: '/admin/applications', label: 'Applications', icon: <FileText size={17} />, section: 'main' },
   { href: '/admin/teams', label: 'Teams', icon: <Users size={17} />, section: 'main' },
   { href: '/admin/judges', label: 'Judges', icon: <Award size={17} />, section: 'main' },
   { href: '/admin/leaderboard', label: 'Leaderboard', icon: <Trophy size={17} />, section: 'main' },
   { href: '/admin/rounds', label: 'Rounds Management', icon: <Zap size={17} />, section: 'main' },
-  { href: '/admin/emails', label: 'Emails', icon: <Mail size={17} />, section: 'tools' },
-  { href: '/admin/audit', label: 'Audit Logs', icon: <ScrollText size={17} />, section: 'tools' },
+  { href: '/admin/command-center', label: 'Command Center', icon: <Radio size={17} />, section: 'tools' },
   { href: '/admin/settings', label: 'Settings', icon: <Settings size={17} />, section: 'tools' },
 ]
 
@@ -46,6 +45,12 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const location = useLocation()
   const routes = role === 'admin' ? adminRoutes : judgeRoutes
 
+  const handleSignOut = async () => {
+    logout() // clear local store
+    await signOut() // clear server session cookie
+    window.location.href = role === 'admin' ? '/admin-login' : '/judge-login'
+  }
+
   useEffect(() => {
     if (window.innerWidth < 768) {
       useAppStore.getState().setSidebarOpen(false)
@@ -54,8 +59,11 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
 
   return (
     <div 
-      className="flex h-screen overflow-hidden text-[#0F172A]"
-      style={{ backgroundColor: role === 'judge' ? '#EBE3D5' : '#F4ECE1' }}
+      className={cn(
+        "flex h-screen overflow-hidden",
+        role === 'admin' ? "text-slate-100" : "text-[#0F172A]"
+      )}
+      style={{ backgroundColor: role === 'admin' ? '#050505' : (role === 'judge' ? '#EBE3D5' : '#F4ECE1') }}
     >
       {/* Sidebar (Linear Dark Style) */}
       <motion.aside
@@ -69,9 +77,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       >
         {/* Logo */}
         <div className="flex items-center gap-3 p-4 border-b border-white/5 h-16 bg-[#0A0908]">
-          <div className="w-8 h-8 rounded-lg bg-[#1A1512] flex items-center justify-center shrink-0 border border-white/5 shadow-sm">
-            <img src="/logos/snapserve-mark.svg" alt="SnapServe" className="w-5 h-5 object-contain" />
-          </div>
+          <img src="/logos/snapserve-mark.svg" alt="SnapServe" className="w-8 h-8 object-contain shrink-0 rounded-lg shadow-sm" />
           <AnimatePresence>
             {sidebarOpen && (
               <motion.div
@@ -167,7 +173,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
               <Bell size={16} />
             </button>
             <button
-              onClick={logout}
+              onClick={handleSignOut}
               className="p-2 rounded-xl text-[#E83C00] hover:bg-[#E83C00]/10 border border-[#E83C00]/20 transition-all"
             >
               <LogOut size={16} />

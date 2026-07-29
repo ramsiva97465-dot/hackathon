@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { LeaderboardGateway } from '../leaderboard/leaderboard.gateway'
+import { SCORING_RUBRIC } from '@hackathon/shared'
 
 @Injectable()
 export class ScoresService {
@@ -9,44 +10,54 @@ export class ScoresService {
     private readonly leaderboardGateway: LeaderboardGateway
   ) {}
 
-  async submitScore(judgeId: string, teamId: string, scores: { criteriaId: string; score: number }[]) {
-    // Upsert the score sheet to ensure it exists
+  async submitScore(judgeId: string, teamId: string, scores: { criteriaId: string; score: number }[], notes?: string) {
+    // 1. Resolve judge ID (support either User ID or Judge Record ID)
+    const judgeRecord = await this.prisma.judge.findUnique({ where: { id: judgeId } })
+      || await this.prisma.judge.findFirst({ where: { id: judgeId } })
+    const resolvedJudgeId = judgeRecord ? judgeRecord.id : judgeId
+
+    // 2. Fetch or create scoreSheet
     let scoreSheet = await this.prisma.scoreSheet.findUnique({
       where: {
-        judgeId_teamId: {
-          judgeId,
-          teamId,
-        },
+        judgeId_teamId: { judgeId: resolvedJudgeId, teamId },
       },
     })
 
     if (!scoreSheet) {
-      // Find the hackathon ID from the team
       const team = await this.prisma.team.findUnique({ where: { id: teamId } })
       if (!team) throw new NotFoundException('Team not found')
 
       scoreSheet = await this.prisma.scoreSheet.create({
         data: {
-          judgeId,
+          judgeId: resolvedJudgeId,
           teamId,
           hackathonId: team.hackathonId,
         },
       })
     }
 
-    // Save individual scores
+    // 3. Process each score criteria safely
     for (const s of scores) {
-      // Find or create the criteria by name (since the frontend passes criteriaKey as ID)
       let criteria = await this.prisma.scoreCriteria.findFirst({
-        where: { name: s.criteriaId, hackathonId: scoreSheet.hackathonId }
+        where: { hackathonId: scoreSheet.hackathonId, name: s.criteriaId }
       })
+
       if (!criteria) {
-        criteria = await this.prisma.scoreCriteria.create({
-          data: {
-            name: s.criteriaId,
+        const rubricItem = SCORING_RUBRIC[s.criteriaId as keyof typeof SCORING_RUBRIC]
+        criteria = await this.prisma.scoreCriteria.upsert({
+          where: {
+            hackathonId_name: {
+              hackathonId: scoreSheet.hackathonId,
+              name: s.criteriaId
+            }
+          },
+          update: {},
+          create: {
             hackathonId: scoreSheet.hackathonId,
-            maxScore: 10,
-            weight: 1.0,
+            name: s.criteriaId,
+            description: rubricItem?.description || s.criteriaId,
+            maxScore: rubricItem?.max || 10,
+            weight: 1.0
           }
         })
       }
@@ -58,9 +69,7 @@ export class ScoresService {
             criteriaId: criteria.id,
           },
         },
-        update: {
-          score: s.score,
-        },
+        update: { score: s.score },
         create: {
           scoreSheetId: scoreSheet.id,
           criteriaId: criteria.id,
@@ -69,17 +78,20 @@ export class ScoresService {
       })
     }
 
-    // Mark as submitted
+    // 4. Mark scoreSheet as submitted
     await this.prisma.scoreSheet.update({
       where: { id: scoreSheet.id },
       data: {
         isSubmitted: true,
         submittedAt: new Date(),
+        notes,
       },
     })
 
-    // Trigger websocket
-    await this.leaderboardGateway.broadcastLeaderboardUpdate()
+    // 5. Trigger websocket (non-blocking)
+    this.leaderboardGateway.broadcastLeaderboardUpdate().catch(err => {
+      console.error('Failed to send leaderboard update:', err)
+    })
 
     return { success: true }
   }

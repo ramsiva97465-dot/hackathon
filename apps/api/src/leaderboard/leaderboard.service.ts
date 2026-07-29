@@ -29,10 +29,12 @@ export class LeaderboardService {
       where: whereCondition,
       include: {
         track: true,
+        application: { select: { college: true } },
         scoreSheets: {
           where: { isSubmitted: true },
           include: { scores: true },
         },
+        leaderboard: { select: { rank: true } },
       },
     })
 
@@ -40,30 +42,36 @@ export class LeaderboardService {
       // Calculate overall score: average of submitted score sheets
       const submittedSheets = team.scoreSheets.filter((s) => s.isSubmitted)
       
-      let overallScore = 0
+      let totalScore = 0
       if (team.adminScore !== null && team.adminScore !== undefined) {
-        overallScore = team.adminScore
+        totalScore = team.adminScore
       } else if (submittedSheets.length > 0) {
         const total = submittedSheets.reduce((sum, sheet) => {
           const sheetTotal = sheet.scores.reduce((sSum, sc) => sSum + sc.score, 0)
-          return sum + (sheet.scores.length > 0 ? sheetTotal / sheet.scores.length : 0)
+          return sum + sheetTotal
         }, 0)
-        overallScore = total / submittedSheets.length
+        totalScore = total / submittedSheets.length
       }
+
+      // Add bonus points
+      totalScore += team.bonusPoints || 0
 
       return {
         teamId: team.id,
         teamName: team.name,
+        college: (team as any).application?.college || 'Unknown',
         track: team.track.name,
-        overallScore: Math.round(overallScore * 10) / 10,
+        totalScore: Math.round(totalScore * 10) / 10,
         judgeCount: submittedSheets.length,
+        previousRank: (team as any).leaderboard?.rank ?? undefined,
         round: team.round,
+        scores: [],
       }
     })
 
     // Sort by score desc and add rank
     const sorted = entries
-      .sort((a, b) => b.overallScore - a.overallScore)
+      .sort((a, b) => b.totalScore - a.totalScore)
       .map((entry, i) => ({ ...entry, rank: i + 1 }))
 
     // Update leaderboard table
@@ -75,12 +83,12 @@ export class LeaderboardService {
             hackathonId: hackathon.id,
             teamId: e.teamId,
             rank: e.rank,
-            overallScore: e.overallScore,
+            overallScore: e.totalScore,
             judgeCount: e.judgeCount,
           },
           update: {
             rank: e.rank,
-            overallScore: e.overallScore,
+            overallScore: e.totalScore,
             judgeCount: e.judgeCount,
           },
         })

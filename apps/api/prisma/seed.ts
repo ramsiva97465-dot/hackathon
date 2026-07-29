@@ -92,13 +92,13 @@ async function main() {
   for (const criteria of defaultCriteria) {
     await prisma.scoreCriteria.upsert({
       where: { hackathonId_name: { hackathonId: hackathon.id, name: criteria.name } },
-      update: { weight: criteria.weight },
+      update: { weight: criteria.weight, maxScore: 2 },
       create: {
         hackathonId: hackathon.id,
         name: criteria.name,
         description: criteria.description,
         weight: criteria.weight,
-        maxScore: 10,
+        maxScore: 2,
       },
     })
   }
@@ -160,12 +160,102 @@ async function main() {
   })
 
   // 5. Create 5 Dummy Teams and Assign to Judge
-  const dummyTeamsData = [
-    { name: 'EchoFlow AI', college: 'IIT Madras', trackId: trackVoice.id, title: 'Real-time Latency Voice Assistant' },
-    { name: 'VoxAgent Pro', college: 'BITS Pilani', trackId: trackVoice.id, title: 'Conversational Sales Voice Bot' },
-    { name: 'AudioMind', college: 'VIT Vellore', trackId: trackConv.id, title: 'Multilingual Audio Summarizer' },
-    { name: 'SonicPulse', college: 'NIT Trichy', trackId: trackConv.id, title: 'Noise Cancelling Voice Streamer' },
-    { name: 'ResoNance', college: 'SRM Institute', trackId: trackVoice.id, title: 'Emotion Aware Voice Cloning Engine' },
+  const dummyTeamsData: Array<{
+    name: string
+    college: string
+    trackId: string
+    title: string
+    description: string
+    agentName: string
+    agentSolution: string
+    agentPhoneNumber: string
+    techStack: string[]
+    githubUrl: string
+    demoUrl: string
+    members: Array<{ name: string; email: string; role?: string; linkedin?: string; github?: string }>
+  }> = [
+    {
+      name: 'EchoFlow AI',
+      college: 'IIT Madras',
+      trackId: trackVoice.id,
+      title: 'Real-time Latency Tamil Voice Assistant',
+      description: 'A streaming STT-LLM-TTS pipeline tuned specifically for conversational Tamil and English code-mixing over phone calls.',
+      agentName: 'Vaani Voice Bot',
+      agentSolution: 'Real-time Tamil customer service AI with ultra-low 250ms voice latency for automated support.',
+      agentPhoneNumber: '+91 98765 43210',
+      techStack: ['Python', 'FastAPI', 'Whisper', 'ElevenLabs', 'Twilio'],
+      githubUrl: 'https://github.com/echoflow/voice-agent',
+      demoUrl: 'https://youtube.com/watch?v=demo1',
+      members: [
+        { name: 'Aravinth Kumar', email: 'aravinth@echoflow.ai', role: 'Team Lead', linkedin: 'https://linkedin.com/in/aravinth', github: 'https://github.com/aravinth' },
+        { name: 'Swetha Ramesh', email: 'swetha@echoflow.ai', role: 'Voice AI Specialist', linkedin: 'https://linkedin.com/in/swetha', github: 'https://github.com/swetha' }
+      ]
+    },
+    {
+      name: 'VoxAgent Pro',
+      college: 'BITS Pilani',
+      trackId: trackVoice.id,
+      title: 'Conversational Medical Voice Triage',
+      description: 'Handles emergency phone calls, triages patient symptoms in Tamil, and dispatches nearest ambulance.',
+      agentName: 'Kural Health Assist',
+      agentSolution: 'Autonomous emergency medical response agent for rural health kiosks operating over PSTN phone calls.',
+      agentPhoneNumber: '+91 91234 56789',
+      techStack: ['NestJS', 'React', 'LiveKit', 'Deepgram', 'OpenAI'],
+      githubUrl: 'https://github.com/voxagent/kural-triage',
+      demoUrl: 'https://youtube.com/watch?v=demo2',
+      members: [
+        { name: 'Vijay Anand', email: 'vijay@voxagent.io', role: 'Backend Lead' },
+        { name: 'Priya Dharshini', email: 'priya@voxagent.io', role: 'Frontend Engineer' }
+      ]
+    },
+    {
+      name: 'AudioMind',
+      college: 'VIT Vellore',
+      trackId: trackConv.id,
+      title: 'Multilingual Legal Audio Assistant',
+      description: 'Translates complex legal jargon into conversational Tamil spoken audio over standard phone calls.',
+      agentName: 'Niti Tamil AI',
+      agentSolution: 'Voice-enabled legal consultation agent helping farmers understand agricultural land documents.',
+      agentPhoneNumber: '+91 94440 12345',
+      techStack: ['Python', 'LangChain', 'Sarvam AI', 'Twilio', 'Pinecone'],
+      githubUrl: 'https://github.com/audiomind/niti-ai',
+      demoUrl: 'https://youtube.com/watch?v=demo3',
+      members: [
+        { name: 'Dinesh Karthik', email: 'dinesh@audiomind.ai', role: 'AI Engineer' }
+      ]
+    },
+    {
+      name: 'SonicPulse',
+      college: 'NIT Trichy',
+      trackId: trackConv.id,
+      title: 'Farmer Voice Helpline AI',
+      description: 'Connects rural farmers to instant AI voice advisory for crops without needing internet or smartphones.',
+      agentName: 'AgriCall Bot',
+      agentSolution: 'Real-time crop advisory phone agent answering weather & crop disease queries in regional dialects.',
+      agentPhoneNumber: '+91 99887 76655',
+      techStack: ['Node.js', 'Vapi', 'OpenAI', 'Subspace'],
+      githubUrl: 'https://github.com/sonicpulse/agri-call',
+      demoUrl: 'https://youtube.com/watch?v=demo4',
+      members: [
+        { name: 'Kavitha S', email: 'kavitha@sonicpulse.dev', role: 'Full Stack' }
+      ]
+    },
+    {
+      name: 'ResoNance',
+      college: 'SRM Institute',
+      trackId: trackVoice.id,
+      title: 'Interactive Tamil Tutor Agent',
+      description: 'Engaging voice tutor for children to learn regional languages interactively over direct phone calls.',
+      agentName: 'Tamil Echo',
+      agentSolution: 'Natural voice clone agent providing interactive storytelling & educational tutoring.',
+      agentPhoneNumber: '+91 90000 11223',
+      techStack: ['Python', 'RVC', 'ElevenLabs', 'FastAPI'],
+      githubUrl: 'https://github.com/resonance/tamil-echo',
+      demoUrl: 'https://youtube.com/watch?v=demo5',
+      members: [
+        { name: 'Siddharth R', email: 'siddharth@resonance.app', role: 'ML Researcher' }
+      ]
+    },
   ]
 
   for (const [idx, dt] of dummyTeamsData.entries()) {
@@ -179,10 +269,52 @@ async function main() {
           hackathonId: hackathon.id,
           name: dt.name,
           trackId: dt.trackId,
-          tableNumber: `T-0${idx + 1}`,
+          tableNumber: `${idx + 1}`,
           status: 'COMPETING',
+          projectTitle: dt.title,
+          projectDescription: dt.description,
+          agentName: dt.agentName,
+          agentSolution: dt.agentSolution,
+          agentPhoneNumber: dt.agentPhoneNumber,
+          techStack: dt.techStack,
+          githubUrl: dt.githubUrl,
+          demoUrl: dt.demoUrl,
         }
       })
+    } else {
+      team = await prisma.team.update({
+        where: { id: team.id },
+        data: {
+          projectTitle: dt.title,
+          projectDescription: dt.description,
+          agentName: dt.agentName,
+          agentSolution: dt.agentSolution,
+          agentPhoneNumber: dt.agentPhoneNumber,
+          techStack: dt.techStack,
+          githubUrl: dt.githubUrl,
+          demoUrl: dt.demoUrl,
+          tableNumber: `${idx + 1}`,
+        }
+      })
+    }
+
+    // Ensure members exist
+    for (const m of dt.members) {
+      const existingMember = await prisma.teamMember.findFirst({
+        where: { teamId: team.id, email: m.email }
+      })
+      if (!existingMember) {
+        await prisma.teamMember.create({
+          data: {
+            teamId: team.id,
+            name: m.name,
+            email: m.email,
+            role: m.role,
+            linkedin: m.linkedin,
+            github: m.github
+          }
+        })
+      }
     }
 
     // Assign team to judge

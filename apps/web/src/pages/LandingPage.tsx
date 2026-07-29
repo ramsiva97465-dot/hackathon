@@ -26,7 +26,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
-const CLOSING_DATE = '2026-08-10T23:59:59+05:30'
+const CLOSING_DATE = '2026-09-05T09:00:00+05:30'
 
 interface TeamMember {
   id: string
@@ -291,8 +291,12 @@ export function LandingPage() {
         {/* Header Title Block */}
         <div className="p-6 md:p-8 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white">
           <div className="space-y-2">
-            <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-              AI Voice Voiceathon 2026
+            <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight flex items-center gap-2 flex-wrap">
+              <span>AI குரல்</span>
+              <span className="text-slate-300 font-light">·</span>
+              <span className="bg-gradient-to-r from-[#E83C00] via-[#FF6B35] to-[#E83C00] bg-clip-text text-transparent font-extrabold">VOICE FOR TAMIL NADU</span>
+              <span className="text-slate-300 font-light">·</span>
+              <span className="text-slate-500 font-bold text-2xl md:text-3xl">2026</span>
             </h1>
             <div className="flex items-center gap-3 text-xs text-slate-500">
               <span className="font-semibold text-slate-700">Hosted by snapserve.AI</span>

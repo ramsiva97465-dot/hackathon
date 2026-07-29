@@ -12,6 +12,7 @@ import { EmailsPage } from '@/pages/admin/EmailsPage'
 import { LeaderboardAdminPage } from '@/pages/admin/LeaderboardAdminPage'
 import { SettingsPage } from '@/pages/admin/SettingsPage'
 import { RoundsManagement } from '@/pages/admin/RoundsManagement'
+import { CommandCenterPage } from '@/pages/admin/CommandCenterPage'
 import { AuditPage } from '@/pages/admin/AuditPage'
 import { ParticipantDashboard } from '@/pages/participant/ParticipantDashboard'
 import { JudgeDashboard } from '@/pages/judge/JudgeDashboard'
@@ -43,7 +44,7 @@ function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const [minDone, setMinDone] = useState(false)
 
   useEffect(() => {
-    const t = setTimeout(() => setMinDone(true), 3000)
+    const t = setTimeout(() => setMinDone(true), 400)
     return () => clearTimeout(t)
   }, [])
 
@@ -193,11 +194,7 @@ export default function App() {
           />
           <Route
             path="/admin/applications"
-            element={
-              <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}>
-                <ApplicationsPage />
-              </ProtectedRoute>
-            }
+            element={<Navigate to="/admin/teams" replace />}
           />
           <Route
             path="/admin/teams"
@@ -217,11 +214,7 @@ export default function App() {
           />
           <Route
             path="/admin/emails"
-            element={
-              <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}>
-                <EmailsPage />
-              </ProtectedRoute>
-            }
+            element={<Navigate to="/admin/teams" replace />}
           />
           <Route
             path="/admin/leaderboard"
@@ -248,12 +241,16 @@ export default function App() {
             }
           />
           <Route
-            path="/admin/audit"
+            path="/admin/command-center"
             element={
-              <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-                <AuditPage />
+              <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}>
+                <CommandCenterPage />
               </ProtectedRoute>
             }
+          />
+          <Route
+            path="/admin/audit"
+            element={<Navigate to="/admin/teams" replace />}
           />
 
           {/* Judge Protected routes */}

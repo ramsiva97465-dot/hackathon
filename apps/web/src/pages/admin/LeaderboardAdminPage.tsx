@@ -37,7 +37,7 @@ function RankBadge({ rank }: { rank: number }) {
     </div>
   )
   return (
-    <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center">
+    <div className="w-9 h-9 rounded-xl bg-[#111] border border-white/10 flex items-center justify-center">
       <span className="font-display font-bold text-sm text-slate-500">#{rank}</span>
     </div>
   )
@@ -101,32 +101,32 @@ export function LeaderboardAdminPage() {
       <div className="p-6 max-w-[1400px] space-y-6">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="font-display text-2xl font-bold text-slate-900 mb-1">Leaderboard</h1>
-            <p className="text-sm text-slate-500">Live standings — auto-updates as judges submit scores</p>
+            <h1 className="font-display text-2xl font-bold text-white mb-1">Leaderboard</h1>
+            <p className="text-sm text-slate-400">Live standings — auto-updates as judges submit scores</p>
           </div>
-          <div className="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-xl border border-green-150">
+          <div className="flex items-center gap-2 bg-green-500/10 px-3 py-2 rounded-xl border border-green-500/20">
             <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-            <span className="text-xs text-green-700 font-semibold">Live Scoring</span>
+            <span className="text-xs text-green-400 font-semibold">Live Scoring</span>
           </div>
         </div>
 
         {/* Round Tab Selector */}
-        <div className="flex bg-slate-100 p-1 rounded-2xl gap-1 w-max border">
+        <div className="flex bg-[#111] p-1 rounded-2xl gap-1 w-max border border-white/10">
           <button
             onClick={() => setActiveRound(1)}
-            className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${activeRound === 1 ? 'bg-white text-[#E83C00] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${activeRound === 1 ? 'bg-[#222] text-[#E83C00] shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
           >
             Round 1 (All)
           </button>
           <button
             onClick={() => setActiveRound(2)}
-            className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${activeRound === 2 ? 'bg-white text-[#E83C00] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${activeRound === 2 ? 'bg-[#222] text-[#E83C00] shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
           >
             Round 2 (Top 20)
           </button>
           <button
             onClick={() => setActiveRound(3)}
-            className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${activeRound === 3 ? 'bg-white text-[#E83C00] shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${activeRound === 3 ? 'bg-[#222] text-[#E83C00] shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
           >
             Winners (Top 3)
           </button>
@@ -144,18 +144,18 @@ export function LeaderboardAdminPage() {
                 initial={{ opacity: 0, y: i === 0 ? 20 : 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * i, duration: 0.5 }}
-                className={`bg-white border border-[#EAE4D8] p-5 rounded-2xl text-center shadow-sm ${
-                  podiumOrder[i] === 0 ? 'border-[rgba(245,158,11,0.4)] shadow-[0_0_30px_rgba(245,158,11,0.08)]' :
+                className={`bg-[#0A0A0A] border border-white/10 p-5 rounded-2xl text-center shadow-2xl ${
+                  podiumOrder[i] === 0 ? 'border-[rgba(245,158,11,0.4)] shadow-[0_0_30px_rgba(245,158,11,0.15)]' :
                   podiumOrder[i] === 1 ? 'mt-4' : 'mt-8'
                 }`}
               >
                 <RankBadge rank={entry.rank} />
                 <div className="mt-3">
                   <Avatar name={entry.teamName} size="md" className="mx-auto mb-2" />
-                  <h3 className="font-display font-bold text-slate-900 text-sm">{entry.teamName}</h3>
+                  <h3 className="font-display font-bold text-white text-sm">{entry.teamName}</h3>
                   <p className="text-xs text-slate-400 font-medium mb-3">{entry.college}</p>
-                  <div className="font-display text-3xl font-bold text-[#5B5CEB]">{entry.totalScore.toFixed(1)}</div>
-                  <div className="text-xs text-slate-400 font-semibold mt-0.5">{entry.judgeCount} judges</div>
+                  <div className="font-display text-3xl font-bold text-[#7C7DF5]">{entry.totalScore.toFixed(1)}</div>
+                  <div className="text-xs text-slate-500 font-semibold mt-0.5">{entry.judgeCount} judges</div>
                 </div>
               </motion.div>
             )
@@ -167,18 +167,18 @@ export function LeaderboardAdminPage() {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="bg-white border border-[#EAE4D8] rounded-2xl overflow-hidden shadow-sm"
+          className="bg-[#0A0A0A] border border-white/10 rounded-2xl overflow-hidden shadow-2xl"
         >
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#EAE4D8] bg-[#F4ECE1]/50">
-                <th className="px-5 py-4 text-left text-xs text-slate-400 font-bold uppercase tracking-wider">Rank</th>
-                <th className="px-5 py-4 text-left text-xs text-slate-400 font-bold uppercase tracking-wider">Team</th>
-                <th className="px-5 py-4 text-left text-xs text-slate-400 font-bold uppercase tracking-wider hidden md:table-cell">Track</th>
-                <th className="px-5 py-4 text-left text-xs text-slate-400 font-bold uppercase tracking-wider hidden lg:table-cell">Judges</th>
-                <th className="px-5 py-4 text-right text-xs text-slate-400 font-bold uppercase tracking-wider">Score</th>
-                <th className="px-5 py-4 text-center text-xs text-slate-400 font-bold uppercase tracking-wider">Change</th>
-                <th className="px-5 py-4 text-center text-xs text-slate-400 font-bold uppercase tracking-wider">Action</th>
+              <tr className="border-b border-white/5 bg-[#111]">
+                <th className="px-5 py-4 text-left text-xs text-slate-500 font-bold uppercase tracking-wider">Rank</th>
+                <th className="px-5 py-4 text-left text-xs text-slate-500 font-bold uppercase tracking-wider">Team</th>
+                <th className="px-5 py-4 text-left text-xs text-slate-500 font-bold uppercase tracking-wider hidden md:table-cell">Track</th>
+                <th className="px-5 py-4 text-left text-xs text-slate-500 font-bold uppercase tracking-wider hidden lg:table-cell">Judges</th>
+                <th className="px-5 py-4 text-right text-xs text-slate-500 font-bold uppercase tracking-wider">Score</th>
+                <th className="px-5 py-4 text-center text-xs text-slate-500 font-bold uppercase tracking-wider">Change</th>
+                <th className="px-5 py-4 text-center text-xs text-slate-500 font-bold uppercase tracking-wider">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -189,7 +189,7 @@ export function LeaderboardAdminPage() {
                     key={entry.teamId}
                     custom={i}
                     variants={leaderboardRowVariants}
-                    className="border-b border-slate-100 hover:bg-slate-50 transition-colors"
+                    className="border-b border-white/5 hover:bg-white/5 transition-colors"
                   >
                     <td className="px-5 py-4">
                       <RankBadge rank={entry.rank} />
@@ -198,7 +198,7 @@ export function LeaderboardAdminPage() {
                       <div className="flex items-center gap-3">
                         <Avatar name={entry.teamName} size="sm" />
                         <div>
-                          <p className="font-semibold text-slate-900">{entry.teamName}</p>
+                          <p className="font-semibold text-white">{entry.teamName}</p>
                           <p className="text-xs text-slate-400 font-medium">{entry.college}</p>
                         </div>
                       </div>
@@ -208,15 +208,15 @@ export function LeaderboardAdminPage() {
                         {track.label}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-slate-500 font-medium text-xs hidden lg:table-cell">{entry.judgeCount} / 3</td>
-                    <td className="px-5 py-4 text-right font-display font-bold text-xl text-slate-900">{entry.totalScore.toFixed(1)}</td>
+                    <td className="px-5 py-4 text-slate-400 font-medium text-xs hidden lg:table-cell">{entry.judgeCount} / 3</td>
+                    <td className="px-5 py-4 text-right font-display font-bold text-xl text-white">{entry.totalScore.toFixed(1)}</td>
                     <td className="px-5 py-4 text-center">
                       <DeltaIcon curr={entry.rank} prev={entry.previousRank || entry.rank} />
                     </td>
                     <td className="px-5 py-4 text-center">
                       <button 
                         onClick={() => handleEditScore(entry.teamId, entry.totalScore)}
-                        className="text-slate-400 hover:text-slate-900 transition-colors inline-flex p-1.5 rounded-lg hover:bg-slate-100"
+                        className="text-slate-500 hover:text-white transition-colors inline-flex p-1.5 rounded-lg hover:bg-white/10"
                         title="Override score"
                       >
                         <Edit2 size={16} />
