@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { BrandLockup } from '@/components/brand/BrandLogos'
 import { LanyardBadge } from '@/components/ui/LanyardBadge'
+import { ParticipantPlaybook } from '@/components/participant/ParticipantPlaybook'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -57,11 +58,11 @@ type LeaderboardEntry = {
 type Tab = 'home' | 'playbook' | 'submission' | 'bonus' | 'leaderboard'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-  { id: 'home',        label: 'Home',        icon: <Home size={16} /> },
-  { id: 'playbook',   label: 'Playbook',    icon: <BookOpen size={16} /> },
-  { id: 'submission', label: 'Submission',  icon: <FileText size={16} /> },
-  { id: 'bonus',      label: 'Bonus Pts',   icon: <Star size={16} /> },
-  { id: 'leaderboard',label: 'Leaderboard', icon: <Trophy size={16} /> },
+  { id: 'home', label: 'Home', icon: <Home size={16} /> },
+  { id: 'playbook', label: 'Playbook', icon: <BookOpen size={16} /> },
+  { id: 'submission', label: 'Submission', icon: <FileText size={16} /> },
+  { id: 'bonus', label: 'Bonus Pts', icon: <Star size={16} /> },
+  { id: 'leaderboard', label: 'Leaderboard', icon: <Trophy size={16} /> },
 ]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -122,11 +123,10 @@ function TabButton({ tab, active, onClick }: { tab: typeof TABS[0]; active: bool
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-center gap-0.5 px-2 py-2 rounded-xl transition-all flex-1 md:flex-none md:flex-row md:gap-2.5 md:px-3 md:py-2.5 md:w-full ${
-        active
+      className={`flex flex-col items-center gap-0.5 px-2 py-2 rounded-xl transition-all flex-1 md:flex-none md:flex-row md:gap-2.5 md:px-3 md:py-2.5 md:w-full ${active
           ? 'bg-[#E83C00] text-white shadow-md shadow-[#E83C00]/20'
           : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
-      }`}
+        }`}
     >
       <span className={`${active ? 'text-white' : 'text-current'}`}>{tab.icon}</span>
       <span className={`text-[9px] md:text-[11px] font-bold tracking-wide ${active ? '' : ''}`}>{tab.label}</span>
@@ -209,7 +209,7 @@ export function ParticipantDashboard() {
       if (res.data?.success) {
         const team = res.data.data as TeamDetails
         setData(team)
-        
+
         // Only populate form fields on initial load / explicit refresh, NEVER during background polling
         if (!silent) {
           setProjectTitle(team.projectTitle || '')
@@ -229,7 +229,7 @@ export function ParticipantDashboard() {
           }
           setFollowedInstagram(team.followedInstagram)
           setFollowedLinkedin(team.followedLinkedin)
-          
+
           // Populate members
           if (team.members && team.members.length > 0) {
             setMembersForm(team.members.map(m => ({
@@ -279,7 +279,7 @@ export function ParticipantDashboard() {
     }
   }, [])
 
-  useEffect(() => { 
+  useEffect(() => {
     fetchMyTeam()
     fetchAnnouncements()
 
@@ -357,7 +357,7 @@ export function ParticipantDashboard() {
         `LLM: ${llmProvider}`,
         `TTS: ${ttsProvider}`
       ]
-      
+
       // Basic validation for members
       const validMembers = membersForm.filter(m => m.name.trim() !== '' && m.email.trim() !== '')
       if (validMembers.length === 0) {
@@ -752,36 +752,7 @@ export function ParticipantDashboard() {
 
               {/* ── PLAYBOOK TAB ── */}
               {activeTab === 'playbook' && (
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                  <div className="px-5 pt-5 pb-4 border-b border-slate-100 flex items-center gap-2.5">
-                    <BookOpen className="text-[#E83C00]" size={16} />
-                    <h2 className="text-sm font-black text-slate-900">Hackathon Schedule</h2>
-                  </div>
-                  
-                  <div className="p-6">
-                    <div className="relative border-l-2 border-slate-100 ml-4 space-y-8 pb-4">
-                      {[
-                        { time: '09:00 AM', title: 'Check-in & Breakfast', icon: '☕' },
-                        { time: '10:00 AM', title: 'Opening Ceremony & Rules', icon: '🎤' },
-                        { time: '10:30 AM', title: 'Hacking Begins!', icon: '🚀', highlight: true },
-                        { time: '01:00 PM', title: 'Lunch Break', icon: '🍱' },
-                        { time: '04:00 PM', title: 'Mentor Check-ins', icon: '💡' },
-                        { time: '08:00 PM', title: 'Dinner', icon: '🍕' },
-                        { time: '10:00 PM', title: 'Hacking Ends / Submissions Close', icon: '🛑', highlight: true },
-                        { time: '10:30 PM', title: 'Judging (Round 1)', icon: '⚖️' },
-                        { time: '11:30 PM', title: 'Finals & Closing Ceremony', icon: '🏆' },
-                      ].map((item, i) => (
-                        <div key={i} className="relative pl-6">
-                          <span className="absolute -left-3.5 top-0.5 text-lg bg-white rounded-full p-1 shadow-sm border border-slate-100">{item.icon}</span>
-                          <div className="pt-1.5">
-                            <span className="text-[10px] font-bold text-[#E83C00] uppercase tracking-widest bg-orange-50 px-2 py-0.5 rounded-md inline-block mb-1">{item.time}</span>
-                            <h3 className={`text-sm ${item.highlight ? 'font-black text-slate-900' : 'font-bold text-slate-700'}`}>{item.title}</h3>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                <ParticipantPlaybook />
               )}
 
               {/* ── SUBMISSION TAB ── */}
@@ -801,8 +772,8 @@ export function ParticipantDashboard() {
                             Edit Submission
                           </button>
                         </div>
-                        
-                        <LanyardBadge 
+
+                        <LanyardBadge
                           participantName={data.members[0]?.name || 'Participant'}
                           memberRole="Team Lead"
                           teamName={data.name}
@@ -859,7 +830,7 @@ export function ParticipantDashboard() {
                         <Field label="Project Title" placeholder="e.g. Real-time Voice Triage Bot" value={projectTitle} onChange={setProjectTitle} />
 
                         <Field label="What are you building?" placeholder="Describe what your project does in 1-2 sentences..." value={projectDescription} onChange={setProjectDescription} textarea rows={3} />
-                        <Field label="Solution for your Agent" placeholder="Explain the specific problem your agent solves, and how it uses voice AI..." value={agentSolution} onChange={setAgentSolution} textarea rows={4} />
+                        <Field label="What problem does your agent solving?" placeholder="Explain the specific problem your agent solves, and how it uses voice AI..." value={agentSolution} onChange={setAgentSolution} textarea rows={4} />
 
                         <Field label="Presentation Drive URL" placeholder="https://drive.google.com/... or Presentation Link" value={demoUrl} onChange={setDemoUrl} type="url" />
 
@@ -1044,11 +1015,10 @@ export function ParticipantDashboard() {
                         <button
                           key={r}
                           onClick={() => setLbRound(r)}
-                          className={`flex-1 py-2.5 text-[11px] font-bold transition-all ${
-                            lbRound === r
+                          className={`flex-1 py-2.5 text-[11px] font-bold transition-all ${lbRound === r
                               ? 'text-[#E83C00] border-b-2 border-[#E83C00]'
                               : 'text-slate-400 hover:text-slate-600'
-                          }`}
+                            }`}
                         >
                           {r === 3 ? 'Finals' : `Round ${r}`}
                         </button>
@@ -1097,12 +1067,11 @@ export function ParticipantDashboard() {
                                 key={entry.teamId}
                                 className={`flex items-center gap-3 px-5 py-3 transition-colors ${isMyTeam ? 'bg-[#E83C00]/5' : 'hover:bg-slate-50'}`}
                               >
-                                <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
-                                  entry.rank === 1 ? 'bg-amber-100 text-amber-700' :
-                                  entry.rank === 2 ? 'bg-slate-100 text-slate-600' :
-                                  entry.rank === 3 ? 'bg-orange-100 text-orange-700' :
-                                  'bg-slate-50 text-slate-400'
-                                }`}>
+                                <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${entry.rank === 1 ? 'bg-amber-100 text-amber-700' :
+                                    entry.rank === 2 ? 'bg-slate-100 text-slate-600' :
+                                      entry.rank === 3 ? 'bg-orange-100 text-orange-700' :
+                                        'bg-slate-50 text-slate-400'
+                                  }`}>
                                   {entry.rank}
                                 </span>
                                 <div className="flex-1 min-w-0">
