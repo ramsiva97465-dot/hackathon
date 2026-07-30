@@ -147,11 +147,34 @@ export function ParticipantPlaybook() {
         )}
       </AnimatePresence>
 
+      {/* ── MOBILE HORIZONTAL SECTION NAV ── */}
+      <div className="block lg:hidden bg-white rounded-2xl border border-slate-200 p-3 shadow-xs">
+        <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+          <Compass size={13} className="text-[#E83C00]" /> Jump to Section
+        </p>
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {SECTIONS.map((sec) => (
+            <button
+              key={sec.id}
+              onClick={() => scrollToSection(sec.id)}
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-xl transition-all whitespace-nowrap ${
+                activeSection === sec.id
+                  ? 'bg-[#E83C00] text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              <span>{sec.icon}</span>
+              <span>{sec.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* ── LAYOUT WITH STICKY SIDEBAR ON DESKTOP ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-        {/* ── SIDEBAR NAVIGATION ── */}
-        <div className="lg:col-span-3 sticky top-4 space-y-3">
+        {/* ── DESKTOP SIDEBAR NAVIGATION ONLY ── */}
+        <div className="hidden lg:block lg:col-span-3 lg:sticky lg:top-4 space-y-3">
           <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
             <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
               <Compass size={13} className="text-[#E83C00]" /> Table of Contents
