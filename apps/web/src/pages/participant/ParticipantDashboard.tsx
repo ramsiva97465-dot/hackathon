@@ -73,6 +73,40 @@ const ROUND_COLORS: Record<number, string> = {
   3: 'bg-amber-500/10 text-amber-600 border-amber-200',
 }
 
+const STT_OPTIONS = [
+  'Deepgram',
+  'OpenAI Whisper',
+  'AssemblyAI',
+  'Sarvam AI',
+  'Google Cloud STT',
+  'Azure Speech',
+  'Gladia',
+  'Custom / Other'
+]
+
+const LLM_OPTIONS = [
+  'OpenAI (GPT-4o)',
+  'Anthropic (Claude 3.5)',
+  'Groq / Llama 3',
+  'Google Gemini',
+  'Mistral AI',
+  'Together AI',
+  'Ollama / Self-hosted',
+  'Custom / Other'
+]
+
+const TTS_OPTIONS = [
+  'ElevenLabs',
+  'Cartesia',
+  'PlayHT',
+  'Murf AI',
+  'Rime AI',
+  'Google Cloud TTS',
+  'Azure TTS',
+  'OpenAI Audio',
+  'Custom / Other'
+]
+
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function RoundBadge({ round }: { round: number }) {
@@ -115,7 +149,9 @@ export function ParticipantDashboard() {
   const [agentPhoneNumber, setAgentPhoneNumber] = useState('')
   const [githubUrl, setGithubUrl] = useState('')
   const [demoUrl, setDemoUrl] = useState('')
-  const [techStackText, setTechStackText] = useState('')
+  const [sttProvider, setSttProvider] = useState('Deepgram')
+  const [llmProvider, setLlmProvider] = useState('OpenAI (GPT-4o)')
+  const [ttsProvider, setTtsProvider] = useState('ElevenLabs')
   const [saving, setSaving] = useState(false)
   const [membersForm, setMembersForm] = useState<{ id?: string; name: string; email: string; role?: string; linkedin?: string; github?: string }[]>([])
 
@@ -183,7 +219,14 @@ export function ParticipantDashboard() {
           setAgentPhoneNumber(team.agentPhoneNumber || '')
           setGithubUrl(team.githubUrl || '')
           setDemoUrl(team.demoUrl || '')
-          setTechStackText(team.techStack ? team.techStack.join(', ') : '')
+          if (team.techStack && team.techStack.length > 0) {
+            const stt = team.techStack.find(s => s.startsWith('STT: '))?.replace('STT: ', '')
+            const llm = team.techStack.find(s => s.startsWith('LLM: '))?.replace('LLM: ', '')
+            const tts = team.techStack.find(s => s.startsWith('TTS: '))?.replace('TTS: ', '')
+            if (stt) setSttProvider(stt)
+            if (llm) setLlmProvider(llm)
+            if (tts) setTtsProvider(tts)
+          }
           setFollowedInstagram(team.followedInstagram)
           setFollowedLinkedin(team.followedLinkedin)
           
@@ -309,7 +352,11 @@ export function ParticipantDashboard() {
 
     try {
       setSaving(true)
-      const techStack = techStackText.split(',').map(t => t.trim()).filter(Boolean)
+      const techStack = [
+        `STT: ${sttProvider}`,
+        `LLM: ${llmProvider}`,
+        `TTS: ${ttsProvider}`
+      ]
       
       // Basic validation for members
       const validMembers = membersForm.filter(m => m.name.trim() !== '' && m.email.trim() !== '')
@@ -814,9 +861,36 @@ export function ParticipantDashboard() {
                         <Field label="What are you building?" placeholder="Describe what your project does in 1-2 sentences..." value={projectDescription} onChange={setProjectDescription} textarea rows={3} />
                         <Field label="Solution for your Agent" placeholder="Explain the specific problem your agent solves, and how it uses voice AI..." value={agentSolution} onChange={setAgentSolution} textarea rows={4} />
 
-                        <Field label="Demo / Video URL" placeholder="https://youtube.com/... or Loom" value={demoUrl} onChange={setDemoUrl} type="url" />
+                        <Field label="Presentation Drive URL" placeholder="https://drive.google.com/... or Presentation Link" value={demoUrl} onChange={setDemoUrl} type="url" />
 
-                        <Field label="Tech Stack (comma separated)" placeholder="e.g. NestJS, React, ElevenLabs, Whisper" value={techStackText} onChange={setTechStackText} />
+                        <div className="pt-2">
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
+                            Provider Stack (STT, LLM, TTS)
+                          </label>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <SelectField
+                              label="STT Provider"
+                              value={sttProvider}
+                              onChange={setSttProvider}
+                              options={STT_OPTIONS}
+                              required
+                            />
+                            <SelectField
+                              label="LLM Provider"
+                              value={llmProvider}
+                              onChange={setLlmProvider}
+                              options={LLM_OPTIONS}
+                              required
+                            />
+                            <SelectField
+                              label="TTS Provider"
+                              value={ttsProvider}
+                              onChange={setTtsProvider}
+                              options={TTS_OPTIONS}
+                              required
+                            />
+                          </div>
+                        </div>
 
                         {/* Team Members Section */}
                         <div className="pt-4 border-t border-slate-100">
@@ -1244,6 +1318,37 @@ function Field({
           required={required}
         />
       )}
+    </div>
+  )
+}
+
+function SelectField({
+  label, value, onChange, options, hint, required
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  options: string[]
+  hint?: string
+  required?: boolean
+}) {
+  const cls = "w-full text-xs font-bold text-slate-900 px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/80 outline-none focus:border-[#E83C00] focus:ring-2 focus:ring-[#E83C00]/15 focus:bg-white transition-all cursor-pointer"
+  return (
+    <div className="space-y-1.5">
+      <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+        {label} {required && <span className="text-red-500">*</span>}
+        {hint && <span className="normal-case tracking-normal font-normal text-slate-400">· {hint}</span>}
+      </label>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className={cls}
+        required={required}
+      >
+        {options.map(opt => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </select>
     </div>
   )
 }
