@@ -1,6 +1,10 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { ThrottlerModule } from '@nestjs/throttler'
+import { ServeStaticModule } from '@nestjs/serve-static'
+import { join, resolve } from 'path'
+import { existsSync } from 'fs'
+
 import { PrismaModule } from './prisma/prisma.module'
 import { AuthModule } from './auth/auth.module'
 import { UsersModule } from './users/users.module'
@@ -16,23 +20,33 @@ import { AnalyticsModule } from './analytics/analytics.module'
 import { AnnouncementsModule } from './announcements/announcements.module'
 import { HelpRequestsModule } from './help-requests/help-requests.module'
 import { HealthController } from './health/health.controller'
-import { ServeStaticModule } from '@nestjs/serve-static'
-import { join } from 'path'
+
+function getWebDistPath(): string {
+  const candidates = [
+    resolve(process.cwd(), '../web/dist'),
+    resolve(process.cwd(), 'apps/web/dist'),
+    resolve(__dirname, '../../../../web/dist'),
+    resolve(__dirname, '../../../web/dist'),
+    resolve(__dirname, '../../web/dist'),
+  ]
+  for (const p of candidates) {
+    if (existsSync(p)) return p
+  }
+  return candidates[0]
+}
 
 @Module({
   imports: [
     // Serve frontend static assets
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', '..', 'web', 'dist'),
+      rootPath: getWebDistPath(),
       exclude: ['/api/(.*)', '/health'],
       serveStaticOptions: {
-        maxAge: 31536000000, // 1 year in milliseconds
+        maxAge: 31536000000,
         setHeaders: (res, path) => {
           if (path.endsWith('.html')) {
-            // HTML files should check for changes on every request
             res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate')
           } else {
-            // Hashed JS, CSS, images, and fonts can be cached forever
             res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
           }
         },
