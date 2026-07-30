@@ -319,41 +319,6 @@ export function ParticipantDashboard() {
         return
       }
 
-      // LinkedIn required validation
-      const missingLinkedin = validMembers.some(m => !m.linkedin || m.linkedin.trim() === '')
-      if (missingLinkedin) {
-        toast.error('LinkedIn URL is required for all team members.')
-        setSaving(false)
-        return
-      }
-
-      // Automated URL Validation
-      toast.loading('Validating URLs...', { id: 'url-validation' })
-      
-      const urlsToValidate = []
-      if (githubUrl) urlsToValidate.push({ name: 'Project GitHub', url: githubUrl })
-      if (demoUrl) urlsToValidate.push({ name: 'Project Demo', url: demoUrl })
-      
-      validMembers.forEach((m, idx) => {
-        if (m.linkedin) urlsToValidate.push({ name: `${m.name}'s LinkedIn`, url: m.linkedin })
-        if (m.github) urlsToValidate.push({ name: `${m.name}'s GitHub`, url: m.github })
-      })
-
-      for (const item of urlsToValidate) {
-        try {
-          const valRes = await api.teams.validateUrl(item.url)
-          if (valRes.data && !valRes.data.valid) {
-            toast.dismiss('url-validation')
-            toast.error(`Invalid ${item.name} URL: ${valRes.data.error || 'Broken or private link'}`)
-            setSaving(false)
-            return
-          }
-        } catch (err) {
-           // Ignore network errors for validation so we don't block them completely on our end's failure
-        }
-      }
-      toast.dismiss('url-validation')
-
       const res = await api.teams.submitProject({
         projectTitle, projectDescription, agentName, agentSolution, agentPhoneNumber,
         githubUrl, demoUrl, techStack,
@@ -849,10 +814,7 @@ export function ParticipantDashboard() {
                         <Field label="What are you building?" placeholder="Describe what your project does in 1-2 sentences..." value={projectDescription} onChange={setProjectDescription} textarea rows={3} />
                         <Field label="Solution for your Agent" placeholder="Explain the specific problem your agent solves, and how it uses voice AI..." value={agentSolution} onChange={setAgentSolution} textarea rows={4} />
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <Field label="GitHub Repository URL" placeholder="https://github.com/..." value={githubUrl} onChange={setGithubUrl} type="url" />
-                          <Field label="Demo / Video URL" placeholder="https://youtube.com/... or Loom" value={demoUrl} onChange={setDemoUrl} type="url" />
-                        </div>
+                        <Field label="Demo / Video URL" placeholder="https://youtube.com/... or Loom" value={demoUrl} onChange={setDemoUrl} type="url" />
 
                         <Field label="Tech Stack (comma separated)" placeholder="e.g. NestJS, React, ElevenLabs, Whisper" value={techStackText} onChange={setTechStackText} />
 
@@ -888,14 +850,6 @@ export function ParticipantDashboard() {
                                     <Field label="Email Address *" type="email" placeholder="john@example.com" value={member.email} onChange={(v) => {
                                       const newM = [...membersForm]; newM[idx].email = v; setMembersForm(newM);
                                     }} required />
-                                  </div>
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <Field label="LinkedIn Profile *" type="url" placeholder="https://linkedin.com/in/..." value={member.linkedin || ''} onChange={(v) => {
-                                      const newM = [...membersForm]; newM[idx].linkedin = v; setMembersForm(newM);
-                                    }} required />
-                                    <Field label="GitHub Profile (Optional)" type="url" placeholder="https://github.com/..." value={member.github || ''} onChange={(v) => {
-                                      const newM = [...membersForm]; newM[idx].github = v; setMembersForm(newM);
-                                    }} />
                                   </div>
                                 </div>
                                 {membersForm.length > 1 && (
