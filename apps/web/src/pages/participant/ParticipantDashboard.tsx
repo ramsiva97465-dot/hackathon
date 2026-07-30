@@ -5,13 +5,14 @@ import { toast } from 'sonner'
 import {
   Trophy, Users, BookOpen, FileText, Star, LogOut, Save,
   Instagram, Linkedin, CheckCircle2, Clock, RefreshCw,
-  ChevronRight, ChevronDown, Home, Award, ExternalLink, Medal, Bell, Megaphone, Plus, Trash2, User
+  ChevronRight, ChevronDown, Home, Award, ExternalLink, Medal, Bell, Megaphone, Plus, Trash2, User, Bot, Layers
 } from 'lucide-react'
 import { BrandLockup } from '@/components/brand/BrandLogos'
 import { LanyardBadge } from '@/components/ui/LanyardBadge'
 import { ParticipantPlaybook } from '@/components/participant/ParticipantPlaybook'
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+// ─── Types ──────────────────────────────────────────────────────────────
+// ────
 
 type TeamDetails = {
   id: string
@@ -124,8 +125,8 @@ function TabButton({ tab, active, onClick }: { tab: typeof TABS[0]; active: bool
     <button
       onClick={onClick}
       className={`flex flex-col items-center gap-0.5 px-2 py-2 rounded-xl transition-all flex-1 md:flex-none md:flex-row md:gap-2.5 md:px-3 md:py-2.5 md:w-full ${active
-          ? 'bg-[#E83C00] text-white shadow-md shadow-[#E83C00]/20'
-          : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+        ? 'bg-[#E83C00] text-white shadow-md shadow-[#E83C00]/20'
+        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
         }`}
     >
       <span className={`${active ? 'text-white' : 'text-current'}`}>{tab.icon}</span>
@@ -145,6 +146,11 @@ export function ParticipantDashboard() {
   const [projectTitle, setProjectTitle] = useState('')
   const [projectDescription, setProjectDescription] = useState('')
   const [agentName, setAgentName] = useState('')
+  const [agentType, setAgentType] = useState<'SINGLE_AGENT' | 'MULTI_AGENT'>('SINGLE_AGENT')
+  const [squadAgents, setSquadAgents] = useState<{ name: string; role: string; phone?: string }[]>([
+    { name: 'Router / Master Agent', role: 'Initial caller greeting & intent classification' },
+    { name: 'Specialized Sub-Agent', role: 'Executes specific workflow action (booking / triage)' }
+  ])
   const [agentSolution, setAgentSolution] = useState('')
   const [agentPhoneNumber, setAgentPhoneNumber] = useState('')
   const [githubUrl, setGithubUrl] = useState('')
@@ -158,6 +164,13 @@ export function ParticipantDashboard() {
   // Bonus state
   const [followedInstagram, setFollowedInstagram] = useState(false)
   const [followedLinkedin, setFollowedLinkedin] = useState(false)
+  const [socialTasks, setSocialTasks] = useState({
+    instaSnapserve: false,
+    instaVobiz: false,
+    linkedinVobiz: false,
+    linkedinSnapserve: false,
+    linkedinVoiceBuilder: false,
+  })
   const [savingBonus, setSavingBonus] = useState(false)
 
   // Leaderboard state
@@ -229,6 +242,15 @@ export function ParticipantDashboard() {
           }
           setFollowedInstagram(team.followedInstagram)
           setFollowedLinkedin(team.followedLinkedin)
+          const bonusPts = team.bonusPoints || 0
+          const count = Math.min(5, Math.floor(bonusPts / 2))
+          setSocialTasks({
+            instaSnapserve: count >= 1 || team.followedInstagram,
+            instaVobiz: count >= 2,
+            linkedinVobiz: count >= 3,
+            linkedinSnapserve: count >= 4 || team.followedLinkedin,
+            linkedinVoiceBuilder: count >= 5,
+          })
 
           // Populate members
           if (team.members && team.members.length > 0) {
@@ -295,7 +317,7 @@ export function ParticipantDashboard() {
   useEffect(() => {
     if (activeTab === 'leaderboard') {
       fetchLeaderboard(lbRound)
-      const interval = setInterval(() => fetchLeaderboard(lbRound), 30_000)
+      const interval = setInterval(() => fetchLeaderboard(lbRound), 5_000)
       return () => clearInterval(interval)
     }
   }, [activeTab, lbRound, fetchLeaderboard])
@@ -386,6 +408,25 @@ export function ParticipantDashboard() {
       toast.error('Failed to save.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleSocialTaskToggle = async (key: keyof typeof socialTasks, value: boolean) => {
+    if (!data?.id) return
+    const updated = { ...socialTasks, [key]: value }
+    setSocialTasks(updated)
+    const points = Object.values(updated).filter(Boolean).length * 2
+
+    try {
+      setSavingBonus(true)
+      await api.teams.updateBonus(data.id, points)
+      toast.success(value ? `+2 Bonus points claimed! (Total: +${points} Pts)` : 'Bonus point updated.')
+      fetchMyTeam()
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to update bonus points.')
+    } finally {
+      setSavingBonus(false)
     }
   }
 
@@ -522,7 +563,7 @@ export function ParticipantDashboard() {
     )
   }
 
-  const bonusPoints = (followedInstagram ? 1 : 0) + (followedLinkedin ? 1 : 0)
+  const bonusPoints = Object.values(socialTasks).filter(Boolean).length * 2
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
@@ -579,16 +620,49 @@ export function ParticipantDashboard() {
       <div className="flex flex-1 max-w-6xl mx-auto w-full px-4 py-6 gap-6 lg:gap-10">
 
         {/* Desktop Sidebar Nav */}
-        <aside className="hidden md:flex flex-col gap-1 w-48 shrink-0 pt-1">
-          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Menu</p>
-          {TABS.map(tab => (
-            <TabButton key={tab.id} tab={tab} active={activeTab === tab.id} onClick={() => setActiveTab(tab.id)} />
-          ))}
+        <aside className="hidden md:flex flex-col gap-4 w-56 shrink-0 pt-1 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto pr-1">
+          <div className="space-y-1">
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Menu</p>
+            {TABS.map(tab => (
+              <TabButton key={tab.id} tab={tab} active={activeTab === tab.id} onClick={() => setActiveTab(tab.id)} />
+            ))}
+          </div>
+
+          {/* Team Members Card */}
+          <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <div className="min-w-0">
+                <p className="text-[9px] font-bold text-[#E83C00] uppercase tracking-wider truncate">{data.track.name}</p>
+                <h3 className="text-xs font-black text-slate-900 truncate">{data.name}</h3>
+              </div>
+              <div className="text-right shrink-0">
+                <span className="text-[8px] font-bold text-slate-400 uppercase block">Table</span>
+                <span className="text-sm font-black text-slate-800">{data.tableNumber || '—'}</span>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Team Members ({data.members.length})</p>
+              <div className="space-y-2">
+                {data.members.map((m, i) => (
+                  <div key={i} className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#E83C00] to-orange-400 flex items-center justify-center font-black text-white text-[10px] shrink-0">
+                      {m.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-bold text-slate-800 truncate">{m.name}</p>
+                      <p className="text-[9px] text-slate-400 truncate">{i === 0 ? 'Team Lead' : 'Member'}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
           {/* Bonus Points Chip */}
-          <div className="mt-6 mx-1 p-4 rounded-xl border border-amber-200 bg-amber-50 text-center shadow-sm">
+          <div className="p-4 rounded-2xl border border-amber-200 bg-amber-50 text-center shadow-sm">
             <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Bonus Points</p>
-            <p className="text-3xl font-black text-amber-700 mt-1">{bonusPoints}<span className="text-sm font-bold opacity-60">/2</span></p>
+            <p className="text-2xl font-black text-amber-700 mt-0.5">{bonusPoints}<span className="text-xs font-bold opacity-60">/10</span></p>
           </div>
 
         </aside>
@@ -607,121 +681,219 @@ export function ParticipantDashboard() {
 
               {/* ── HOME TAB ── */}
               {activeTab === 'home' && (
-                <>
-                  {/* Team Card */}
-                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div className="px-5 pt-5 pb-4 border-b border-slate-100 flex items-start justify-between gap-3">
-                      <div>
-                        <span className="text-[10px] font-bold text-[#E83C00] uppercase tracking-widest">{data.track.name}</span>
-                        <h1 className="text-xl font-black text-slate-900 mt-0.5 leading-tight">{data.name}</h1>
-                        <p className="text-xs text-slate-400 mt-0.5">{data.members.length} members</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Table</p>
-                        <p className="text-3xl font-black text-slate-800">{data.tableNumber || '—'}</p>
-                      </div>
-                    </div>
+                <div className="space-y-5">
 
-                    {/* Members */}
-                    <div className="px-5 py-4 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setMembersExpanded(!membersExpanded)}>
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Team Members</p>
-                        <ChevronDown className={`text-slate-400 transition-transform duration-200 ${membersExpanded ? 'rotate-180' : ''}`} size={16} />
-                      </div>
-                      <AnimatePresence initial={false}>
-                        {membersExpanded && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
-                              {data.members.map((m, i) => (
-                                <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#E83C00] to-orange-400 flex items-center justify-center font-black text-white text-xs shrink-0">
-                                    {m.name.charAt(0).toUpperCase()}
-                                  </div>
-                                  <div className="min-w-0 flex-1">
-                                    <p className="text-xs font-bold text-slate-800 truncate">{m.name}</p>
-                                    <p className="text-[10px] text-slate-400 truncate">{m.email}</p>
-                                  </div>
-                                  <span className="ml-auto shrink-0 text-[8px] font-extrabold bg-[#E83C00]/10 text-[#E83C00] border border-[#E83C00]/20 px-2 py-0.5 rounded-md uppercase tracking-wider">
-                                    {i === 0 ? 'TEAM LEAD' : 'TEAM MEMBER'}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </div>
+                  {/* 1. TOP SUBMIT PROJECT BANNER */}
+                  {(() => {
+                    const hasSubmitted = Boolean(data?.projectTitle || data?.agentName || data?.demoUrl)
+                    return (
+                      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="space-y-1.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className={`px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-md ${hasSubmitted ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                              {hasSubmitted ? 'SUBMISSION SAVED' : 'ACTION REQUIRED'}
+                            </span>
+                            <span className="px-2.5 py-0.5 bg-slate-100 text-slate-700 text-[10px] font-bold rounded-md border border-slate-200 flex items-center gap-1">
+                              <Clock size={11} className="text-slate-500" /> Deadline: 21.08.2026
+                            </span>
+                          </div>
 
-                  {/* Leaderboard Preview */}
-                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div className="px-5 pt-5 pb-4 border-b border-slate-100 flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <Trophy className="text-[#E83C00]" size={16} />
-                        <h2 className="text-sm font-black text-slate-900">Top Teams (Round {lbRound})</h2>
-                      </div>
-                      <button onClick={() => fetchLeaderboard(lbRound)} disabled={lbLoading} className="text-slate-400 hover:text-[#E83C00] transition-colors disabled:opacity-50">
-                        <RefreshCw size={14} className={lbLoading ? 'animate-spin' : ''} />
-                      </button>
-                    </div>
-                    <div className="p-4 space-y-2">
-                      {leaderboard.slice(0, 3).map((entry) => (
-                        <div key={entry.teamId} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
-                          <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black ${entry.rank === 1 ? 'bg-amber-100 text-amber-700' : entry.rank === 2 ? 'bg-slate-200 text-slate-600' : entry.rank === 3 ? 'bg-orange-100 text-orange-700' : 'bg-white text-slate-400'}`}>
-                            #{entry.rank}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs font-bold text-slate-800 truncate">{entry.teamName}</p>
-                            <p className="text-[9px] text-slate-400 truncate">{entry.track}</p>
-                          </div>
-                          <div className="text-xs font-black text-slate-800">{entry.overallScore.toFixed(1)}</div>
+                          <h2 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
+                            {hasSubmitted ? 'Project Submission Received' : 'Submit Project Details & Claim Access Pass'}
+                          </h2>
+
+                          <p className="text-xs text-slate-500 max-w-xl leading-relaxed">
+                            {hasSubmitted
+                              ? `Submitted Project: "${data.projectTitle || 'Voice AI Agent'}". Access Pass unlocked! Click below to view or update your demo URL and presentation drive link.`
+                              : 'Please submit your project title, agent name, phone number, and presentation drive URL to unlock & claim your official Access Pass.'}
+                          </p>
                         </div>
-                      ))}
-                      {leaderboard.length > 3 && data.evaluation.rank && data.evaluation.rank > 3 && (
-                        <>
-                          <div className="flex justify-center py-1">
-                            <div className="w-1 h-1 rounded-full bg-slate-200" />
-                          </div>
-                          <div className="flex items-center gap-3 p-3 rounded-xl bg-[#E83C00]/5 border border-[#E83C00]/20">
-                            <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black bg-[#E83C00] text-white">
-                              #{data.evaluation.rank}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-bold text-slate-800 truncate">You ({data.name})</p>
-                              <p className="text-[9px] text-slate-400 truncate">{data.track.name}</p>
-                            </div>
-                            <div className="text-xs font-black text-[#E83C00]">{data.evaluation.overallScore?.toFixed(1) || '0.0'}</div>
-                          </div>
-                        </>
-                      )}
-                      {leaderboard.length === 0 && !lbLoading && (
-                        <p className="text-xs text-center text-slate-400 py-4">No scores yet</p>
-                      )}
+
+                        <button
+                          onClick={() => {
+                            if (hasSubmitted) {
+                              setIsEditingSubmission(true)
+                            }
+                            setActiveTab('submission')
+                          }}
+                          className="px-4 py-2 bg-[#E83C00] hover:bg-[#d03500] text-white font-semibold text-xs rounded-lg shadow-sm hover:shadow transition-all shrink-0 flex items-center gap-2 group"
+                        >
+                          <FileText size={13} className="opacity-90" />
+                          <span>{hasSubmitted ? 'View / Edit Submission' : 'Submit & Claim Pass'}</span>
+                          <ChevronRight size={13} className="opacity-80 group-hover:translate-x-0.5 transition-transform" />
+                        </button>
+                      </div>
+                    )
+                  })()}
+
+                  {/* 2. WELCOME HERO CARD */}
+                  <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-7 shadow-sm space-y-4">
+                    <div className="border-b border-slate-100 pb-3 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="px-2.5 py-0.5 bg-[#E83C00]/10 text-[#E83C00] text-[10px] font-black uppercase tracking-widest rounded-md">
+                          India's Biggest Voice-a-thon — AI Voice for Tamil Nadu
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 font-medium">
+                        Powered by <strong className="text-[#E83C00]">Vobiz.ai</strong> · Organized by <strong className="text-slate-800">SnapServe.ai</strong>
+                      </p>
+                      <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight pt-1">
+                        Welcome, Builders! 👋
+                      </h1>
+                    </div>
+
+                    <div className="text-xs sm:text-sm text-slate-600 space-y-2.5 leading-relaxed font-normal">
+                      <p className="font-semibold text-slate-900">Today isn't a hackathon. It's your launchpad.</p>
+                      <p>You have a few hours to build a real, working AI voice agent — one that talks, listens, and solves a genuine business problem over an actual phone call. No mockups. No slides. Just your agent, live on a call, proving itself in front of judges who've built and scaled voice AI for a living.</p>
+                      <p>Five teams walk out winners. Every team walks out with an agent that works.</p>
+                      <p className="font-bold text-[#E83C00] pt-1">Let's build something that talks back.</p>
                     </div>
                   </div>
 
-                  {/* Quick nav to submission */}
-                  <button
-                    onClick={() => setActiveTab('submission')}
-                    className="w-full flex items-center justify-between p-4 bg-[#E83C00] text-white rounded-2xl shadow-md shadow-[#E83C00]/20 hover:bg-[#c93400] transition-all"
-                  >
-                    <div className="flex items-center gap-3">
-                      <FileText size={16} />
-                      <div className="text-left">
-                        <p className="text-xs font-black">Submit your project</p>
-                        <p className="text-[10px] opacity-70">Fill in your agent details &amp; links</p>
+                  {/* 3. EVENT DAY PLAN TABLE */}
+                  <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                    <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                      <Clock className="text-[#E83C00]" size={18} />
+                      <h2 className="text-base font-black text-slate-900">📅 Event Day Plan</h2>
+                    </div>
+
+                    <div className="overflow-x-auto rounded-xl border border-slate-200">
+                      <table className="w-full text-xs text-left">
+                        <thead className="bg-slate-50 text-slate-700 uppercase tracking-wider text-[10px] border-b border-slate-200">
+                          <tr>
+                            <th className="px-4 py-2.5 font-black w-32">Time</th>
+                            <th className="px-4 py-2.5 font-black">Activity</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                          <tr>
+                            <td className="px-4 py-3 font-bold text-[#E83C00]">9:30 AM</td>
+                            <td className="px-4 py-3 font-bold text-slate-900">Registration &amp; Check-in</td>
+                          </tr>
+                          <tr className="bg-orange-50/60">
+                            <td className="px-4 py-3 font-bold text-[#E83C00]">11:00 AM</td>
+                            <td className="px-4 py-3 text-slate-800">
+                              <p className="font-black text-slate-900">🔔 Round 1 Begins</p>
+                              <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed">Teams seated at tables. Judges visit each table. Present your problem statement, demo your AI agent live via a real phone call.</p>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-3 font-bold text-slate-500">Lunch</td>
+                            <td className="px-4 py-3 text-slate-700 font-semibold">Break &amp; Networking</td>
+                          </tr>
+                          <tr className="bg-amber-50/60">
+                            <td className="px-4 py-3 font-bold text-[#E83C00]">Post-Lunch</td>
+                            <td className="px-4 py-3 text-slate-800">
+                              <p className="font-black text-slate-900">🏆 Top 20 Teams announced — advance to the Grand Finale</p>
+                              <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed">Live problem statement revealed on stage by judges</p>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-3 font-bold text-slate-600">+2 Hours</td>
+                            <td className="px-4 py-3 text-slate-700 font-medium">Finalists build, test, and refine their agent against the new problem</td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-3 font-bold text-slate-900">Final Round</td>
+                            <td className="px-4 py-3 font-bold text-slate-900">Top 20 present live on stage</td>
+                          </tr>
+                          <tr className="bg-emerald-50/60">
+                            <td className="px-4 py-3 font-bold text-emerald-600">Closing</td>
+                            <td className="px-4 py-3 font-black text-emerald-900">🏆 Winners announced</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* 4. PRIZES SECTION */}
+                  <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                    <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                      <Trophy className="text-amber-500" size={18} />
+                      <h2 className="text-base font-black text-slate-900">🏆 Prizes</h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="p-4 rounded-xl bg-amber-500 text-white shadow-sm space-y-1">
+                        <span className="text-[10px] font-black uppercase tracking-widest opacity-90">🥇 1st Place</span>
+                        <p className="text-xl font-black">₹50,000 Cash</p>
+                        <p className="text-[11px] opacity-95">+ Trophy + SnapServe &amp; Vobiz credits</p>
+                      </div>
+                      <div className="p-4 rounded-xl bg-slate-700 text-white shadow-sm space-y-1">
+                        <span className="text-[10px] font-black uppercase tracking-widest opacity-80">🥈 2nd Place</span>
+                        <p className="text-xl font-black">₹30,000 Cash</p>
+                        <p className="text-[11px] font-medium">+ Trophy + SnapServe &amp; Vobiz credits</p>
+                      </div>
+                      <div className="p-4 rounded-xl bg-amber-700 text-white shadow-sm space-y-1">
+                        <span className="text-[10px] font-black uppercase tracking-widest opacity-90">🥉 3rd Place</span>
+                        <p className="text-xl font-black">₹20,000 Cash</p>
+                        <p className="text-[11px] opacity-95">+ Trophy + SnapServe &amp; Vobiz credits</p>
                       </div>
                     </div>
-                    <ChevronRight size={16} className="opacity-70" />
-                  </button>
 
-                  {/* Certificates (Only available if demo URL submitted) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+                        <div>
+                          <span className="font-bold text-slate-900 block">4th &amp; 5th Place</span>
+                          <span className="text-slate-500 text-[11px]">Trophy + SnapServe credits</span>
+                        </div>
+                        <Award className="text-slate-400" size={18} />
+                      </div>
+                      <div className="p-3.5 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-between text-xs">
+                        <div>
+                          <span className="font-bold text-purple-950 block">⭐ Participants' Choice</span>
+                          <span className="text-purple-700 text-[11px]">Voted by participants themselves</span>
+                        </div>
+                        <Star className="text-purple-600" size={18} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 5. JUDGING CRITERIA TABLE */}
+                  <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                    <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+                      <Award className="text-[#E83C00]" size={18} />
+                      <h2 className="text-base font-black text-slate-900">🧑⚖️ Judging Criteria</h2>
+                    </div>
+
+                    <div className="overflow-x-auto rounded-xl border border-slate-200">
+                      <table className="w-full text-xs text-left">
+                        <thead className="bg-slate-50 text-slate-700 uppercase tracking-wider text-[10px] border-b border-slate-200">
+                          <tr>
+                            <th className="px-4 py-2.5 font-black w-48 sm:w-56">Criteria</th>
+                            <th className="px-4 py-2.5 font-black">What Judges Are Looking For</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                          <tr>
+                            <td className="px-4 py-3 font-bold text-slate-900">1. Problem Clarity &amp; Business Impact</td>
+                            <td className="px-4 py-3 text-slate-600 leading-relaxed">Is the agent's role clearly defined? Does it solve a real problem or enhance an actual business use case — not a generic demo?</td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-3 font-bold text-slate-900">2. Language Accuracy</td>
+                            <td className="px-4 py-3 text-slate-600 leading-relaxed">How accurately does the agent understand and respond in the language it's built for. (Note: latency is not penalized — it's model-dependent. Language accuracy is what counts.)</td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-3 font-bold text-slate-900">3. Call Flow Design</td>
+                            <td className="px-4 py-3 text-slate-600 leading-relaxed">Is the conversation flow logical, natural, and complete? Bonus for teams using Squad Agents where the problem needs multi-agent handling.</td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-3 font-bold text-slate-900">4. Lead Source Automation</td>
+                            <td className="px-4 py-3 text-slate-600 leading-relaxed">Is the agent connected to a real lead source — e.g., website form → AI agent — showing end-to-end automation, not a manual trigger?</td>
+                          </tr>
+                          <tr>
+                            <td className="px-4 py-3 font-bold text-slate-900">5. Overall Demo &amp; Presentation</td>
+                            <td className="px-4 py-3 text-slate-600 leading-relaxed">Does the live call demo actually work? Is the pitch sharp, confident, and clear on stage/table?</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-orange-50 border border-orange-200 text-center text-xs font-bold text-[#E83C00]">
+                      See you on the floor. Let's make Tamil Nadu talk. 🚀
+                    </div>
+                  </div>
+
+                  {/* 6. CERTIFICATE CARD */}
                   {data.demoUrl ? (
                     <button
                       onClick={generateCertificate}
@@ -747,7 +919,8 @@ export function ParticipantDashboard() {
                       </div>
                     </div>
                   )}
-                </>
+
+                </div>
               )}
 
               {/* ── PLAYBOOK TAB ── */}
@@ -813,6 +986,65 @@ export function ParticipantDashboard() {
 
                       <form onSubmit={(e) => { e.preventDefault(); setShowNameConfirmModal(true); }} className="p-5 space-y-5">
 
+                        {/* ── AGENT ARCHITECTURE TYPE (SINGLE VS MULTI AGENT) ── */}
+                        <div className="space-y-2 pb-2 border-b border-slate-100">
+                          <label className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between">
+                            <span>Agent Architecture Type *</span>
+                            <span className="text-[10px] text-[#E83C00] font-bold">Select Setup Type</span>
+                          </label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setAgentType('SINGLE_AGENT')}
+                              className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 cursor-pointer ${agentType === 'SINGLE_AGENT'
+                                ? 'bg-orange-50/80 border-[#E83C00] text-slate-900 shadow-xs ring-2 ring-[#E83C00]/20'
+                                : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                                }`}
+                            >
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold shrink-0 mt-0.5 ${agentType === 'SINGLE_AGENT' ? 'bg-[#E83C00] text-white' : 'bg-slate-200 text-slate-600'
+                                }`}>
+                                <Bot size={18} />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="text-xs font-black text-slate-900">Single Agent</h4>
+                                  {agentType === 'SINGLE_AGENT' && (
+                                    <span className="px-1.5 py-0.2 bg-[#E83C00] text-white text-[9px] font-bold uppercase rounded">Active</span>
+                                  )}
+                                </div>
+                                <p className="text-[10px] text-slate-500 mt-0.5 leading-relaxed">
+                                  One standalone voice agent handling the entire conversation flow.
+                                </p>
+                              </div>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setAgentType('MULTI_AGENT')}
+                              className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 cursor-pointer ${agentType === 'MULTI_AGENT'
+                                ? 'bg-orange-50/80 border-[#E83C00] text-slate-900 shadow-xs ring-2 ring-[#E83C00]/20'
+                                : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                                }`}
+                            >
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold shrink-0 mt-0.5 ${agentType === 'MULTI_AGENT' ? 'bg-[#E83C00] text-white' : 'bg-slate-200 text-slate-600'
+                                }`}>
+                                <Layers size={18} />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="text-xs font-black text-slate-900">Multi Agent (Squad)</h4>
+                                  {agentType === 'MULTI_AGENT' && (
+                                    <span className="px-1.5 py-0.2 bg-[#E83C00] text-white text-[9px] font-bold uppercase rounded">Active</span>
+                                  )}
+                                </div>
+                                <p className="text-[10px] text-slate-500 mt-0.5 leading-relaxed">
+                                  Multiple specialized sub-agents working together (e.g. Triage + Booking).
+                                </p>
+                              </div>
+                            </button>
+                          </div>
+                        </div>
+
                         {/* Team name (readonly) */}
                         <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-3">
                           <Users size={14} className="text-slate-400 shrink-0" />
@@ -823,9 +1055,90 @@ export function ParticipantDashboard() {
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <Field label="Agent Name" placeholder="e.g. VoiceGenie" value={agentName} onChange={setAgentName} hint="Name of your AI agent" required />
-                          <Field label="Agent Phone Number" placeholder="+1 (555) 000-0000" value={agentPhoneNumber} onChange={setAgentPhoneNumber} hint="For live demo verification" required />
+                          <Field
+                            label={agentType === 'MULTI_AGENT' ? "Router / Master Agent Name *" : "Agent Name *"}
+                            placeholder={agentType === 'MULTI_AGENT' ? "e.g. Master Triage Router" : "e.g. VoiceGenie"}
+                            value={agentName}
+                            onChange={setAgentName}
+                            hint={agentType === 'MULTI_AGENT' ? "Primary agent receiving incoming calls" : "Name of your AI agent"}
+                            required
+                          />
+                          <Field
+                            label={agentType === 'MULTI_AGENT' ? "Master Hotline Phone Number *" : "Agent Phone Number *"}
+                            placeholder="+1 (555) 000-0000"
+                            value={agentPhoneNumber}
+                            onChange={setAgentPhoneNumber}
+                            hint="For live demo verification"
+                            required
+                          />
                         </div>
+
+                        {/* ── MULTI-AGENT SQUAD BREAKDOWN ── */}
+                        {agentType === 'MULTI_AGENT' && (
+                          <div className="p-4 bg-orange-50/40 border border-orange-200/80 rounded-2xl space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-lg bg-[#E83C00] text-white flex items-center justify-center font-bold">
+                                  <Layers size={15} />
+                                </div>
+                                <div>
+                                  <h4 className="text-xs font-black text-slate-900">Squad Sub-Agents Roster</h4>
+                                  <p className="text-[10px] text-slate-500">Detail each sub-agent &amp; its specialized task</p>
+                                </div>
+                              </div>
+
+                              {squadAgents.length < 5 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setSquadAgents([...squadAgents, { name: `Sub-Agent ${squadAgents.length + 1}`, role: '' }])}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#E83C00] hover:bg-[#d03500] text-white text-[10px] font-bold rounded-lg transition-all shadow-xs"
+                                >
+                                  <Plus size={12} /> Add Sub-Agent
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="space-y-2.5">
+                              {squadAgents.map((sq, sIdx) => (
+                                <div key={sIdx} className="p-3 bg-white border border-slate-200/80 rounded-xl space-y-2 relative group shadow-2xs">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <Field
+                                      label={`Sub-Agent #${sIdx + 1} Name`}
+                                      placeholder="e.g. Booking Agent"
+                                      value={sq.name}
+                                      onChange={(v) => {
+                                        const newS = [...squadAgents]; newS[sIdx].name = v; setSquadAgents(newS);
+                                      }}
+                                      required
+                                    />
+                                    <Field
+                                      label="Specialized Role / Function"
+                                      placeholder="e.g. Integrates with Calendar API & sends SMS"
+                                      value={sq.role}
+                                      onChange={(v) => {
+                                        const newS = [...squadAgents]; newS[sIdx].role = v; setSquadAgents(newS);
+                                      }}
+                                      required
+                                    />
+                                  </div>
+                                  {squadAgents.length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const newS = [...squadAgents];
+                                        newS.splice(sIdx, 1);
+                                        setSquadAgents(newS);
+                                      }}
+                                      className="absolute -top-2 -right-2 w-5 h-5 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100 shadow-2xs"
+                                    >
+                                      <Trash2 size={10} />
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         <Field label="Project Title" placeholder="e.g. Real-time Voice Triage Bot" value={projectTitle} onChange={setProjectTitle} />
 
@@ -915,6 +1228,68 @@ export function ParticipantDashboard() {
                           </div>
                         </div>
 
+                        {/* Social Media Follow Verification */}
+                        <div className="pt-4 border-t border-slate-100 space-y-3">
+                          <div>
+                            <h3 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                              <Instagram size={13} className="text-pink-500" /> Social Media Follow Verification
+                            </h3>
+                            <p className="text-[10px] text-slate-500 mt-0.5">Verify that your team members have followed SnapServe on Instagram &amp; LinkedIn</p>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <label className={`p-3 rounded-xl border flex items-start gap-3 cursor-pointer transition-all ${followedInstagram ? 'bg-pink-50/70 border-pink-200 text-pink-950 font-bold' : 'bg-slate-50 border-slate-200 text-slate-700'
+                              }`}>
+                              <input
+                                type="checkbox"
+                                checked={followedInstagram}
+                                onChange={(e) => setFollowedInstagram(e.target.checked)}
+                                className="mt-0.5 w-4 h-4 text-pink-600 rounded focus:ring-pink-500 border-slate-300"
+                              />
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-1.5 text-xs font-bold">
+                                  <Instagram size={14} className="text-pink-600" />
+                                  <span>Followed Instagram (@snapserve.ai)</span>
+                                </div>
+                                <a
+                                  href="https://instagram.com/snapserve.ai"
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-[10px] text-pink-700 font-semibold underline block"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  Open @snapserve.ai on Instagram ↗
+                                </a>
+                              </div>
+                            </label>
+
+                            <label className={`p-3 rounded-xl border flex items-start gap-3 cursor-pointer transition-all ${followedLinkedin ? 'bg-blue-50/70 border-blue-200 text-blue-950 font-bold' : 'bg-slate-50 border-slate-200 text-slate-700'
+                              }`}>
+                              <input
+                                type="checkbox"
+                                checked={followedLinkedin}
+                                onChange={(e) => setFollowedLinkedin(e.target.checked)}
+                                className="mt-0.5 w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-slate-300"
+                              />
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-1.5 text-xs font-bold">
+                                  <Linkedin size={14} className="text-blue-600" />
+                                  <span>Followed LinkedIn (SnapServe)</span>
+                                </div>
+                                <a
+                                  href="https://linkedin.com/company/snapserve"
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-[10px] text-blue-700 font-semibold underline block"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  Open SnapServe on LinkedIn ↗
+                                </a>
+                              </div>
+                            </label>
+                          </div>
+                        </div>
+
                         <button
                           type="submit"
                           disabled={saving}
@@ -932,52 +1307,117 @@ export function ParticipantDashboard() {
               {/* ── BONUS POINTS TAB ── */}
               {activeTab === 'bonus' && (
                 <>
-                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div className="px-5 pt-5 pb-4 border-b border-slate-100 flex items-center gap-2.5">
-                      <Star className="text-amber-500" size={16} />
-                      <div>
-                        <h2 className="text-sm font-black text-slate-900">Bonus Points</h2>
-                        <p className="text-[10px] text-slate-400 mt-0.5">Earn up to +2 bonus points</p>
+                  <div className="bg-white rounded-3xl border border-[#EAE4D8] shadow-sm overflow-hidden">
+                    {/* Top Header + Live Progress Bar */}
+                    <div className="p-5 sm:p-6 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-purple-500/10 border-b border-[#EAE4D8] space-y-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-[#E83C00] text-white flex items-center justify-center shadow-md shrink-0">
+                            <Trophy size={20} />
+                          </div>
+                          <div>
+                            <h2 className="text-base font-black text-slate-900">Bonus Points Hub</h2>
+                            <p className="text-xs text-slate-500 font-medium mt-0.5">Follow official channels to gain up to +10 Bonus Pts for your leaderboard rank!</p>
+                          </div>
+                        </div>
+                        <div className="px-3.5 py-1.5 rounded-2xl bg-white border border-amber-300 shadow-xs font-mono font-black text-sm text-[#E83C00] shrink-0">
+                          +{bonusPoints} <span className="text-xs text-slate-400 font-bold">/ 10 Pts</span>
+                        </div>
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div className="space-y-1 pt-1">
+                        <div className="flex justify-between text-[11px] font-bold text-slate-600">
+                          <span>Completion Progress</span>
+                          <span className="font-mono">{bonusPoints * 10}%</span>
+                        </div>
+                        <div className="w-full h-2.5 bg-slate-200/80 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-amber-400 via-orange-500 to-[#E83C00] rounded-full transition-all duration-500"
+                            style={{ width: `${(bonusPoints / 10) * 100}%` }}
+                          />
+                        </div>
                       </div>
                     </div>
-                    <div className="p-5 space-y-4">
-                      <p className="text-xs text-slate-500 leading-relaxed">
-                        Follow <span className="font-bold text-slate-800">SnapServe.ai</span> on social media to earn bonus points that are added to your score!
-                      </p>
 
-                      {/* Instagram */}
+                    <div className="p-5 sm:p-6 space-y-3.5">
+                      {/* 1. Instagram SnapServe.ai */}
                       <SocialCard
-                        platform="Instagram"
+                        platform="Instagram (SnapServe.ai)"
                         handle="@snapserve_ai"
-                        url="https://www.instagram.com/snapserve_ai"
-                        icon={<Instagram size={20} className="text-pink-500" />}
+                        url="https://www.instagram.com/snapserve_ai?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+                        icon={<Instagram size={18} className="text-white" />}
                         color="pink"
-                        followed={followedInstagram}
-                        onToggle={(v) => handleBonusToggle('instagram', v)}
-                        disabled={savingBonus || followedInstagram}
-                        status={data?.bonusPoints && data.bonusPoints > 0 ? (followedInstagram ? 'verified' : 'none') : (followedInstagram ? 'pending' : 'none')}
+                        followed={socialTasks.instaSnapserve}
+                        onToggle={(v) => handleSocialTaskToggle('instaSnapserve', v)}
+                        disabled={savingBonus}
+                        pts={2}
                       />
 
-                      {/* LinkedIn */}
+                      {/* 2. Instagram Vobiz.ai */}
                       <SocialCard
-                        platform="LinkedIn"
+                        platform="Instagram (Vobiz.ai)"
+                        handle="@vobiz_ai"
+                        url="https://www.instagram.com/vobiz.ai?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+                        icon={<Instagram size={18} className="text-white" />}
+                        color="pink"
+                        followed={socialTasks.instaVobiz}
+                        onToggle={(v) => handleSocialTaskToggle('instaVobiz', v)}
+                        disabled={savingBonus}
+                        pts={2}
+                      />
+
+                      {/* 3. LinkedIn Vobiz */}
+                      <SocialCard
+                        platform="LinkedIn (Vobiz)"
+                        handle="Vobiz AI"
+                        url="https://www.linkedin.com/company/vobizai/"
+                        icon={<Linkedin size={18} className="text-white" />}
+                        color="blue"
+                        followed={socialTasks.linkedinVobiz}
+                        onToggle={(v) => handleSocialTaskToggle('linkedinVobiz', v)}
+                        disabled={savingBonus}
+                        pts={2}
+                      />
+
+                      {/* 4. LinkedIn SnapServe */}
+                      <SocialCard
+                        platform="LinkedIn (SnapServe)"
                         handle="SnapServe.ai"
                         url="https://www.linkedin.com/company/snapserve-ai/"
-                        icon={<Linkedin size={20} className="text-blue-600" />}
+                        icon={<Linkedin size={18} className="text-white" />}
                         color="blue"
-                        followed={followedLinkedin}
-                        onToggle={(v) => handleBonusToggle('linkedin', v)}
-                        disabled={savingBonus || followedLinkedin}
-                        status={data?.bonusPoints && data.bonusPoints > 1 ? (followedLinkedin ? 'verified' : 'none') : (followedLinkedin ? 'pending' : 'none')}
+                        followed={socialTasks.linkedinSnapserve}
+                        onToggle={(v) => handleSocialTaskToggle('linkedinSnapserve', v)}
+                        disabled={savingBonus}
+                        pts={2}
                       />
 
-                      {/* Total */}
-                      <div className="mt-5 p-4 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-between">
-                        <div>
-                          <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Your Bonus Points</p>
-                          <p className="text-xs text-amber-700 mt-0.5">Added to your team's total score</p>
+                      {/* 5. LinkedIn Voice Builder Community */}
+                      <SocialCard
+                        platform="LinkedIn (Voice Builder Community)"
+                        handle="Voice Builder Community Group"
+                        url="https://www.linkedin.com/groups/36920147/"
+                        icon={<Linkedin size={18} className="text-white" />}
+                        color="purple"
+                        followed={socialTasks.linkedinVoiceBuilder}
+                        onToggle={(v) => handleSocialTaskToggle('linkedinVoiceBuilder', v)}
+                        disabled={savingBonus}
+                        pts={2}
+                      />
+
+                      {/* Total Banner */}
+                      <div className="mt-5 p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border border-amber-400/40 flex items-center justify-between shadow-xs">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-700 flex items-center justify-center font-bold text-lg shrink-0">
+                            ⭐
+                          </div>
+                          <div>
+                            <p className="text-xs font-black text-amber-950 uppercase tracking-wider">Total Bonus Earned</p>
+                            <p className="text-[11px] text-amber-900/80 font-medium">Added live to your team leaderboard rank</p>
+                          </div>
                         </div>
-                        <p className="text-4xl font-black text-amber-600">{bonusPoints}<span className="text-lg">/2</span></p>
+                        <p className="text-3xl font-black text-[#E83C00] font-mono">+{bonusPoints}<span className="text-xs font-bold text-amber-600">/10 Pts</span></p>
                       </div>
                     </div>
                   </div>
@@ -1016,8 +1456,8 @@ export function ParticipantDashboard() {
                           key={r}
                           onClick={() => setLbRound(r)}
                           className={`flex-1 py-2.5 text-[11px] font-bold transition-all ${lbRound === r
-                              ? 'text-[#E83C00] border-b-2 border-[#E83C00]'
-                              : 'text-slate-400 hover:text-slate-600'
+                            ? 'text-[#E83C00] border-b-2 border-[#E83C00]'
+                            : 'text-slate-400 hover:text-slate-600'
                             }`}
                         >
                           {r === 3 ? 'Finals' : `Round ${r}`}
@@ -1068,9 +1508,9 @@ export function ParticipantDashboard() {
                                 className={`flex items-center gap-3 px-5 py-3 transition-colors ${isMyTeam ? 'bg-[#E83C00]/5' : 'hover:bg-slate-50'}`}
                               >
                                 <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${entry.rank === 1 ? 'bg-amber-100 text-amber-700' :
-                                    entry.rank === 2 ? 'bg-slate-100 text-slate-600' :
-                                      entry.rank === 3 ? 'bg-orange-100 text-orange-700' :
-                                        'bg-slate-50 text-slate-400'
+                                  entry.rank === 2 ? 'bg-slate-100 text-slate-600' :
+                                    entry.rank === 3 ? 'bg-orange-100 text-orange-700' :
+                                      'bg-slate-50 text-slate-400'
                                   }`}>
                                   {entry.rank}
                                 </span>
@@ -1325,62 +1765,84 @@ function SelectField({
 // ─── Social Card Component ────────────────────────────────────────────────────
 
 function SocialCard({
-  platform, handle, url, icon, color, followed, onToggle, disabled, status
+  platform, handle, url, icon, color, followed, onToggle, disabled, pts = 2
 }: {
   platform: string
   handle: string
   url: string
   icon: React.ReactNode
-  color: 'pink' | 'blue'
+  color: 'pink' | 'blue' | 'purple'
   followed: boolean
   onToggle: (v: boolean) => void
   disabled?: boolean
-  status?: 'none' | 'pending' | 'verified'
+  pts?: number
 }) {
-  const colorMap = {
-    pink: {
-      bg: followed ? 'bg-pink-50 border-pink-200' : 'bg-white border-slate-200',
-      btn: followed ? 'bg-pink-100 text-pink-600 border-pink-200' : 'bg-white text-pink-500 border-pink-200 hover:bg-pink-50',
-    },
-    blue: {
-      bg: followed ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-200',
-      btn: followed ? 'bg-blue-100 text-blue-700 border-blue-200' : 'bg-white text-blue-600 border-blue-200 hover:bg-blue-50',
-    },
+  const brandIconBg = {
+    pink: 'bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600 text-white shadow-xs',
+    blue: 'bg-[#0A66C2] text-white shadow-xs',
+    purple: 'bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-xs',
   }
-  const c = colorMap[color]
-
-  let buttonContent = <>+ I Follow</>
-  if (status === 'verified') buttonContent = <><CheckCircle2 size={11} /> Verified!</>
-  else if (status === 'pending') buttonContent = <><Clock size={11} /> Pending Verification</>
-  else if (followed) buttonContent = <><CheckCircle2 size={11} /> Claimed</>
 
   return (
-    <div className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${c.bg}`}>
-      <div className="shrink-0">{icon}</div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-black text-slate-800">{platform}</p>
-        <p className="text-[10px] text-slate-400">{handle}</p>
+    <div className={`p-4 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 ${
+      followed
+        ? 'bg-emerald-50/70 border-emerald-300 shadow-xs'
+        : 'bg-white border-[#EAE4D8] hover:border-orange-300 hover:shadow-sm'
+    }`}>
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        {/* Brand Icon Box */}
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${brandIconBg[color]}`}>
+          {icon}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h4 className="text-xs font-black text-slate-900">{platform}</h4>
+            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border font-mono ${
+              followed
+                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                : 'bg-orange-50 text-[#E83C00] border-orange-200'
+            }`}>
+              +{pts} Pts
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 font-medium truncate mt-0.5">{handle}</p>
+        </div>
       </div>
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all shrink-0"
-      >
-        <ExternalLink size={12} />
-      </a>
-      <button
-        onClick={() => {
-          if (!followed) {
-            window.open(url, '_blank', 'noopener,noreferrer')
-          }
-          if (!disabled) onToggle(!followed)
-        }}
-        disabled={disabled || status === 'pending' || status === 'verified'}
-        className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[10px] font-bold transition-all ${c.btn} disabled:opacity-75 disabled:cursor-not-allowed`}
-      >
-        {buttonContent}
-      </button>
+
+      {/* Action Buttons */}
+      <div className="flex items-center gap-2 shrink-0">
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200"
+          title="Open Channel Link"
+        >
+          <ExternalLink size={14} />
+        </a>
+
+        <button
+          onClick={() => {
+            if (!followed) {
+              window.open(url, '_blank', 'noopener,noreferrer')
+            }
+            if (!disabled) onToggle(!followed)
+          }}
+          disabled={disabled}
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-50 ${
+            followed
+              ? 'bg-emerald-600 text-white shadow-xs hover:bg-emerald-700'
+              : 'bg-[#E83C00] text-white shadow-xs hover:bg-[#FF4500]'
+          }`}
+        >
+          {followed ? (
+            <><CheckCircle2 size={13} /> Completed (+{pts})</>
+          ) : (
+            <><ExternalLink size={12} /> Follow &amp; Claim (+{pts})</>
+          )}
+        </button>
+      </div>
     </div>
   )
 }

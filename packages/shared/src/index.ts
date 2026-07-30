@@ -37,11 +37,11 @@ export const CHALLENGE_TRACKS = [
 ] as const;
 
 export const SCORING_RUBRIC = {
-  latency: { max: 10, label: 'Latency & Speed', description: 'Response time and real-time conversational capability on the phone call' },
-  conversationalQuality: { max: 10, label: 'Conversational Flow', description: 'Natural turn-taking, handling interruptions and context' },
-  languageAccuracy: { max: 10, label: 'Tamil Language Accuracy', description: 'Fluency, grammar, and pronunciation in Tamil/regional languages' },
-  aiUsage: { max: 10, label: 'Voice Realism & Persona', description: 'Quality of TTS, emotion, and character consistency' },
-  technicalQuality: { max: 10, label: 'Technical Implementation', description: 'Code quality, architecture, and telephony integration' },
+  latency: { max: 2, label: 'Latency & Speed', description: 'Response time and real-time conversational capability on the phone call' },
+  conversationalQuality: { max: 2, label: 'Conversational Flow', description: 'Natural turn-taking, handling interruptions and context' },
+  languageAccuracy: { max: 2, label: 'Tamil Language Accuracy', description: 'Fluency, grammar, and pronunciation in Tamil/regional languages' },
+  aiUsage: { max: 2, label: 'Voice Realism & Persona', description: 'Quality of TTS, emotion, and character consistency' },
+  technicalQuality: { max: 2, label: 'Technical Implementation', description: 'Code quality, architecture, and telephony integration' },
 } as const;
 
 export const SCHEDULE_ITEMS = [

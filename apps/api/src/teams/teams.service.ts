@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { LeaderboardGateway } from '../leaderboard/leaderboard.gateway'
+import { LeaderboardService } from '../leaderboard/leaderboard.service'
 
 @Injectable()
 export class TeamsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly leaderboardGateway: LeaderboardGateway,
+    private readonly leaderboardService: LeaderboardService,
   ) {}
 
   async findAll() {
@@ -39,7 +41,7 @@ export class TeamsService {
         github: m.github
       })),
       judgesAssigned: t.assignments.length,
-      totalJudges,
+      totalJudges: 1, // 1 Judge per Team requirement
       avgScore: t.leaderboard[0]?.overallScore || null,
       rank: t.leaderboard[0]?.rank || null,
       status: t.status,
@@ -84,6 +86,47 @@ export class TeamsService {
     return { success: true, data: assignment }
   }
 
+  async autoDistributeJudges(judgesPerTeam: number = 1) {
+    const teams = await this.prisma.team.findMany({ where: { status: 'COMPETING' } })
+    const judges = await this.prisma.judge.findMany()
+
+    if (teams.length === 0) return { success: false, message: 'No active teams to assign.' }
+    if (judges.length === 0) return { success: false, message: 'No judges available.' }
+
+    let count = 0
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i]
+      for (let j = 0; j < Math.min(judgesPerTeam, judges.length); j++) {
+        const judgeIdx = (i * judgesPerTeam + j) % judges.length
+        const judge = judges[judgeIdx]
+
+        const existing = await this.prisma.judgeAssignment.findFirst({
+          where: { teamId: team.id, judgeId: judge.id }
+        })
+
+        if (!existing) {
+          await this.prisma.judgeAssignment.create({
+            data: {
+              hackathonId: team.hackathonId,
+              judgeId: judge.id,
+              teamId: team.id,
+            }
+          })
+          await this.prisma.scoreSheet.create({
+            data: {
+              hackathonId: team.hackathonId,
+              judgeId: judge.id,
+              teamId: team.id,
+            }
+          })
+          count++
+        }
+      }
+    }
+
+    return { success: true, message: `Successfully assigned ${count} judge assignments across ${teams.length} teams.` }
+  }
+
   async updateTableNumber(teamId: string, tableNumber: string) {
     const team = await this.prisma.team.update({
       where: { id: teamId },
@@ -97,6 +140,15 @@ export class TeamsService {
       where: { id },
       data: { bonusPoints }
     })
+
+    // Immediately recalculate leaderboard scores & broadcast live update via WebSocket to all clients!
+    try {
+      await this.leaderboardService.getLeaderboard()
+      await this.leaderboardGateway.broadcastLeaderboardUpdate()
+    } catch (err) {
+      console.error('Failed to update live leaderboard after bonus update:', err)
+    }
+
     return { success: true, data: team }
   }
 

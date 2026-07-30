@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
-import { Save, Calendar, MapPin, Link, Users, Clock, Network, PhoneCall } from 'lucide-react'
+import { Save, Calendar, MapPin, Link, Users, Clock } from 'lucide-react'
 
 export function SettingsPage() {
   const [saving, setSaving] = useState(false)
@@ -18,7 +18,7 @@ export function SettingsPage() {
       <div className="p-6 max-w-[900px] space-y-6">
         <div>
           <h1 className="font-display text-2xl font-bold text-white mb-1">Settings</h1>
-          <p className="text-sm text-slate-400">Configure SnapServe platform and Vobiz telephony integrations.</p>
+          <p className="text-sm text-slate-400">Configure SnapServe platform settings.</p>
         </div>
 
         {/* Event Info (SnapServe Identity) */}
@@ -37,44 +37,6 @@ export function SettingsPage() {
           <div className="grid grid-cols-2 gap-4">
             <Input label="Max Teams" type="number" defaultValue="50" leftIcon={<Users size={15} />} />
             <Input label="Max Team Size" type="number" defaultValue="4" leftIcon={<Users size={15} />} />
-          </div>
-        </div>
-
-        {/* Vobiz SIP Trunk & Voice Configuration (Voice-Specific / Cyan Accent) */}
-        <div className="bg-[#0A0A0A] p-6 rounded-2xl border border-cyan-500/20 shadow-2xl space-y-5 relative">
-          <div className="absolute top-4 right-4 flex items-center gap-1.5 text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border border-cyan-500/20">
-            <Network size={10} />
-            Voice Infra
-          </div>
-          
-          <h3 className="font-display font-bold text-white border-b border-white/10 pb-2 flex items-center gap-1.5">
-            <PhoneCall size={16} className="text-cyan-500" />
-            Vobiz Telephony & SIP Gateway
-          </h3>
-          
-          <p className="text-xs text-slate-400">
-            Configure the underlying voice carrier network and real-time SIP settings provided by Vobiz.
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="SIP Trunk URI" defaultValue="sip.vobiz.net:5060" className="focus:border-cyan-500 focus:ring-cyan-500" />
-            <Input label="Vobiz API Endpoint" defaultValue="https://api.vobiz.net/v1" className="focus:border-cyan-500 focus:ring-cyan-500" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input label="Default Codec" defaultValue="Opus (HD 48kHz)" className="focus:border-cyan-500 focus:ring-cyan-500" />
-            <Input label="Max Concurrent Channels" type="number" defaultValue="100" className="focus:border-cyan-500 focus:ring-cyan-500" />
-          </div>
-
-          <div className="flex items-center justify-between p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/10">
-            <div>
-              <p className="text-xs font-bold text-white">Secure SIP Signaling (TLS)</p>
-              <p className="text-[10px] text-slate-400 mt-0.5">Encrypt voice media streams using SRTP</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" defaultChecked className="sr-only peer" />
-              <div className="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-cyan-500 transition-all peer-checked:after:translate-x-5 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
-            </label>
           </div>
         </div>
 

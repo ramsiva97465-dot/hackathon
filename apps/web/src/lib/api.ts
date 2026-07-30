@@ -64,6 +64,8 @@ export const api = {
     get: (id: string) => apiClient.get(`/teams/${id}`),
     assignJudge: (teamId: string, judgeId: string, roundId: string) =>
       apiClient.post(`/teams/${teamId}/assign-judge`, { judgeId, roundId }),
+    autoDistributeJudges: (judgesPerTeam?: number) =>
+      apiClient.post('/teams/auto-distribute-judges', { judgesPerTeam }),
     updateTableNumber: (teamId: string, tableNumber: string) =>
       apiClient.patch(`/teams/${teamId}/table-number`, { tableNumber }),
     updateBonus: (teamId: string, bonusPoints: number) =>

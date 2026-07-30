@@ -169,6 +169,7 @@ export class JudgesService {
           isScored: scoreSheet?.isSubmitted || false,
           isLocked: scoreSheet?.isSubmitted || false,
           totalScore,
+          bonusPoints: team.bonusPoints || 0,
           notes: scoreSheet?.notes || null,
           existingScores
         }

@@ -7,7 +7,7 @@ import { containerVariants, itemVariants } from '@/lib/motion'
 import { getTrackConfig } from '@/lib/utils'
 import {
   Trophy, Users, Award, X, Check,
-  Search, Hash, Star, UserPlus, Download, Upload, AlertCircle, CheckCircle, Eye, ExternalLink, Github, Phone, Cpu, Layers
+  Search, Hash, Star, UserPlus, Download, Upload, AlertCircle, CheckCircle, Eye, ExternalLink, Github, Phone, Cpu, Layers, Instagram, Linkedin
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
@@ -134,7 +134,7 @@ function processCsvData(text: string) {
 
 type Team = {
   id: string; name: string; college: string; track: string
-  members: { name: string; email?: string; phone?: string; role?: string; linkedin?: string; github?: string }[]
+  members: { name: string; email?: string; phone?: string; role?: string; linkedin?: string; instagram?: string; github?: string; followedInstagram?: boolean; followedLinkedin?: boolean }[]
   judgesAssigned: number; totalJudges: number
   avgScore: number | null; rank: number | null
   status: string; tableNumber: string | null
@@ -398,6 +398,25 @@ export function TeamsPage() {
     }
   }
 
+  const [distributing, setDistributing] = useState(false)
+
+  const handleAutoDistribute = async () => {
+    try {
+      setDistributing(true)
+      const res = await api.teams.autoDistributeJudges(1)
+      if (res.data?.success) {
+        toast.success(res.data.message || 'Auto-assigned 1 judge per team across all judges!')
+        fetchTeams()
+      } else {
+        toast.error(res.data?.message || 'Auto-assignment failed.')
+      }
+    } catch (err) {
+      toast.error('Failed to auto-distribute teams.')
+    } finally {
+      setDistributing(false)
+    }
+  }
+
   const filtered = teams.filter(t =>
     t.name.toLowerCase().includes(search.toLowerCase()) ||
     t.college?.toLowerCase().includes(search.toLowerCase())
@@ -466,6 +485,16 @@ export function TeamsPage() {
                 <Upload size={14} />
                 Import CSV
               </button>
+
+              <button
+                disabled={distributing}
+                onClick={handleAutoDistribute}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-xl text-amber-300 transition-all bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 disabled:opacity-50 cursor-pointer"
+                title="Auto-distribute 100 teams evenly across all confirmed judges"
+              >
+                <UserPlus size={14} className="text-amber-400" />
+                {distributing ? 'Assigning…' : '⚡ Auto-Assign to Judges'}
+              </button>
             </div>
             <span className="text-xs font-semibold text-slate-400">{filtered.length} teams</span>
           </div>
@@ -473,11 +502,11 @@ export function TeamsPage() {
           {/* Column Headers */}
           <div className="grid px-5 py-3"
             style={{
-              gridTemplateColumns: '2fr 1.5fr 1fr 0.8fr 1fr 1fr 1.2fr 110px',
+              gridTemplateColumns: '2.5fr 1fr 0.8fr 1.6fr 1.1fr 220px',
               background: '#111',
               borderBottom: '1px solid rgba(255,255,255,0.05)',
             }}>
-            {['Team', 'College', 'Track', 'Table', 'Members', 'Bonus', 'Judging', 'Actions'].map(col => (
+            {['Team', 'Track', 'Table', 'Social Follows', 'Judging', 'Actions'].map(col => (
               <span key={col} className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{col}</span>
             ))}
           </div>
@@ -501,7 +530,8 @@ export function TeamsPage() {
             <motion.div variants={containerVariants} initial="hidden" animate="visible">
               {filtered.map((team, idx) => {
                 const track = getTrackConfig(team.track)
-                const judgeProgress = team.totalJudges > 0 ? (team.judgesAssigned / team.totalJudges) * 100 : 0
+                const requiredJudges = 1
+                const judgeProgress = Math.min(100, (team.judgesAssigned / requiredJudges) * 100)
                 const isLast = idx === filtered.length - 1
                 const rankStyle = team.rank && team.rank <= 3 ? RANK_STYLE[team.rank] : null
 
@@ -511,7 +541,7 @@ export function TeamsPage() {
                     variants={itemVariants}
                     className="grid px-5 py-4 items-center transition-colors cursor-default"
                     style={{
-                      gridTemplateColumns: '2fr 1.5fr 1fr 0.8fr 1fr 1fr 1.2fr 110px',
+                      gridTemplateColumns: '2.5fr 1fr 0.8fr 1.6fr 1.1fr 220px',
                       borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.02)',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
@@ -538,9 +568,6 @@ export function TeamsPage() {
                         </p>
                       </div>
                     </div>
-
-                    {/* College */}
-                    <p className="text-xs text-slate-400 font-medium truncate pr-2">{team.college || '—'}</p>
 
                     {/* Track */}
                     <span className="text-[10px] font-bold px-2.5 py-1 rounded-full w-fit"
@@ -585,60 +612,47 @@ export function TeamsPage() {
                       )}
                     </div>
 
-                    {/* Members Avatars */}
-                    <div className="flex items-center -space-x-2">
-                      {team.members.slice(0, 4).map(m => (
-                        <div key={m.name} className="ring-2 ring-white rounded-full">
-                          <Avatar name={m.name} size="xs" />
-                        </div>
-                      ))}
-                      {team.members.length > 4 && (
-                        <div className="w-6 h-6 rounded-full bg-slate-800 ring-2 ring-[#0A0A0A] flex items-center justify-center text-[9px] font-bold text-slate-400">
-                          +{team.members.length - 4}
-                        </div>
-                      )}
-                    </div>
+                    {/* Social Follows & Bonus Points */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                        team.followedInstagram ? 'bg-pink-500/10 text-pink-400 border border-pink-500/20' : 'bg-slate-800/80 text-slate-500 border border-slate-700/50'
+                      }`}>
+                        <Instagram size={10} /> {team.followedInstagram ? 'IG ✓' : 'IG ✗'}
+                      </span>
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
+                        team.followedLinkedin ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-slate-800/80 text-slate-500 border border-slate-700/50'
+                      }`}>
+                        <Linkedin size={10} /> {team.followedLinkedin ? 'LI ✓' : 'LI ✗'}
+                      </span>
 
-                    {/* Bonus Points */}
-                    <div className="pr-3">
+                      {/* Interactive Bonus Points Chip */}
                       {editingBonusId === team.id ? (
                         <div className="flex items-center gap-1">
                           <input
-                            autoFocus
                             type="number"
-                            min="0"
-                            max="2"
+                            min={0}
+                            max={10}
                             value={editingBonusValue}
-                            onChange={e => setEditingBonusValue(parseInt(e.target.value) || 0)}
+                            onChange={e => setEditingBonusValue(Number(e.target.value))}
                             onKeyDown={e => e.key === 'Enter' && handleSaveBonus(team.id)}
-                            className="w-12 px-2 py-1 text-xs font-bold rounded-lg outline-none transition-all text-center"
-                            style={{ border: '1.5px solid rgba(245,158,11,0.4)', background: '#fff' }}
+                            className="w-12 px-1 py-0.5 text-xs font-bold rounded bg-slate-900 text-amber-400 border border-amber-500/50 outline-none"
                           />
-                          <button disabled={savingBonus} onClick={() => handleSaveBonus(team.id)}
-                            className="text-emerald-500 hover:text-emerald-700 transition-colors">
-                            <Check size={13} />
+                          <button disabled={savingBonus} onClick={() => handleSaveBonus(team.id)} className="text-emerald-400 hover:text-emerald-300">
+                            <Check size={12} />
                           </button>
-                          <button disabled={savingBonus} onClick={() => setEditingBonusId(null)}
-                            className="text-slate-400 hover:text-slate-600 transition-colors">
-                            <X size={13} />
+                          <button disabled={savingBonus} onClick={() => setEditingBonusId(null)} className="text-slate-400 hover:text-slate-300">
+                            <X size={12} />
                           </button>
                         </div>
                       ) : (
-                        <div
-                          className="flex items-center gap-1.5 group cursor-pointer w-fit px-2 py-1 rounded-lg transition-all"
+                        <button
                           onClick={() => { setEditingBonusId(team.id); setEditingBonusValue(team.bonusPoints || 0) }}
-                          style={{ border: '1px solid transparent' }}
-                          onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(245,158,11,0.2)')}
-                          onMouseLeave={e => (e.currentTarget.style.borderColor = 'transparent')}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all cursor-pointer"
+                          title="Click to edit bonus points"
                         >
-                          <Star size={11} className={team.bonusPoints ? "text-amber-500 fill-amber-500" : "text-slate-300"} />
-                          <span className={`text-sm font-bold ${team.bonusPoints ? 'text-amber-600' : 'text-slate-400'} group-hover:text-amber-600 transition-colors`}>
-                            {team.bonusPoints || 0}
-                          </span>
-                          {(team.followedInstagram || team.followedLinkedin) && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-pink-500 absolute ml-8 -mt-2 animate-pulse" title="Bonus Claimed!"></span>
-                          )}
-                        </div>
+                          <Star size={10} className="fill-amber-400 text-amber-400" />
+                          <span>+{team.bonusPoints || 0} Pts</span>
+                        </button>
                       )}
                     </div>
 
@@ -654,7 +668,7 @@ export function TeamsPage() {
                         <div className="space-y-1.5">
                           <div className="flex justify-between text-[10px] font-semibold text-slate-400">
                             <span>Judges</span>
-                            <span>{team.judgesAssigned}/{team.totalJudges}</span>
+                            <span>{team.judgesAssigned}/{requiredJudges}</span>
                           </div>
                           <Progress value={judgeProgress} variant={judgeProgress === 100 ? 'success' : 'primary'} size="sm" />
                         </div>
@@ -662,19 +676,27 @@ export function TeamsPage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {team.demoUrl && (
+                        <a
+                          href={team.demoUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="Open Presentation Drive URL"
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-[11px] font-bold rounded-lg shadow-sm hover:shadow transition-all whitespace-nowrap"
+                        >
+                          <ExternalLink size={11} /> Drive
+                        </a>
+                      )}
                       <button
                         onClick={() => setViewTarget(team)}
-                        className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition-all text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200"
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] font-bold rounded-lg transition-all whitespace-nowrap"
                       >
                         <Eye size={11} /> Details
                       </button>
                       <button
                         onClick={() => setAssignTarget(team)}
-                        className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition-all"
-                        style={{ color: '#E83C00', background: 'rgba(232,60,0,0.06)', border: '1px solid rgba(232,60,0,0.15)' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(232,60,0,0.12)')}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(232,60,0,0.06)')}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#E83C00]/10 text-[#E83C00] hover:bg-[#E83C00]/20 border border-[#E83C00]/20 text-[11px] font-bold rounded-lg transition-all whitespace-nowrap"
                       >
                         <UserPlus size={11} /> Assign
                       </button>
@@ -700,29 +722,42 @@ export function TeamsPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.28 }}
-              className="bg-white rounded-2xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl border border-slate-200 max-h-[85vh]"
+              className="bg-white rounded-3xl border border-slate-200 p-6 shadow-2xl max-w-xl w-full space-y-4 max-h-[85vh] overflow-y-auto"
             >
-              {/* Modal Header */}
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#E83C00]/10 border border-[#E83C00]/20 text-[#E83C00]">
-                    <Eye size={16} />
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-slate-900 text-base">{viewTarget.name}</h3>
-                    <p className="text-xs text-slate-500 font-semibold">{viewTarget.college} • Table {viewTarget.tableNumber || 'N/A'}</p>
-                  </div>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                  <span className="text-[10px] font-extrabold text-[#E83C00] uppercase tracking-wider block">Submission Details</span>
+                  <h3 className="text-lg font-black text-slate-900">{viewTarget.projectTitle || viewTarget.name}</h3>
                 </div>
                 <button
                   onClick={() => setViewTarget(null)}
-                  className="p-2 rounded-xl text-slate-400 hover:text-slate-600 transition-colors"
+                  className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
                 >
-                  <X size={16} />
+                  <X size={18} />
                 </button>
               </div>
 
               {/* Modal Content */}
-              <div className="p-5 overflow-y-auto space-y-4">
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Team Name</span>
+                    <span className="font-extrabold text-slate-900">{viewTarget.name}</span>
+                  </div>
+                  <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Track</span>
+                    <span className="font-extrabold text-slate-900">{viewTarget.track || 'General'}</span>
+                  </div>
+                  <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Agent Name</span>
+                    <span className="font-extrabold text-slate-900">{viewTarget.agentName || '—'}</span>
+                  </div>
+                  <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Live Call Number</span>
+                    <span className="font-extrabold text-[#E83C00]">{viewTarget.agentPhoneNumber || '—'}</span>
+                  </div>
+                </div>
+
                 {/* Project Overview Box */}
                 <div className="p-3.5 bg-slate-900 text-white rounded-xl space-y-2">
                   <div className="flex items-center justify-between">
@@ -806,33 +841,150 @@ export function TeamsPage() {
                   </div>
                 )}
 
+                {/* Social Verification Box */}
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">
+                      Team Social Verification
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400">
+                      Requirement: All Members Must Follow
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className={`p-2.5 rounded-lg border flex items-center justify-between ${
+                      viewTarget.followedInstagram
+                        ? 'bg-pink-50 border-pink-200 text-pink-900 font-bold'
+                        : 'bg-slate-100 border-slate-200 text-slate-600'
+                    }`}>
+                      <div className="flex items-center gap-1.5">
+                        <Instagram size={14} className={viewTarget.followedInstagram ? 'text-pink-600' : 'text-slate-400'} />
+                        <span>Instagram</span>
+                      </div>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-black uppercase ${
+                        viewTarget.followedInstagram ? 'bg-pink-200 text-pink-950' : 'bg-slate-200 text-slate-600'
+                      }`}>
+                        {viewTarget.followedInstagram ? 'All Followed ✓' : 'Pending ✗'}
+                      </span>
+                    </div>
+
+                    <div className={`p-2.5 rounded-lg border flex items-center justify-between ${
+                      viewTarget.followedLinkedin
+                        ? 'bg-blue-50 border-blue-200 text-blue-900 font-bold'
+                        : 'bg-slate-100 border-slate-200 text-slate-600'
+                    }`}>
+                      <div className="flex items-center gap-1.5">
+                        <Linkedin size={14} className={viewTarget.followedLinkedin ? 'text-blue-600' : 'text-slate-400'} />
+                        <span>LinkedIn</span>
+                      </div>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-black uppercase ${
+                        viewTarget.followedLinkedin ? 'bg-blue-200 text-blue-950' : 'bg-slate-200 text-slate-600'
+                      }`}>
+                        {viewTarget.followedLinkedin ? 'All Followed ✓' : 'Pending ✗'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── ADMIN BONUS / EXTRA POINTS CARD ── */}
+                <div className="p-3.5 bg-amber-500/10 border border-amber-300/80 rounded-xl space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-extrabold text-amber-800 uppercase tracking-wider block flex items-center gap-1">
+                      <Star size={12} className="fill-amber-500 text-amber-500" /> Admin Award Bonus Points
+                    </span>
+                    <span className="text-xs font-black text-amber-900 font-mono bg-amber-200/80 px-2 py-0.5 rounded">
+                      Current: +{viewTarget.bonusPoints || 0} Pts
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <p className="text-[11px] text-amber-900/80">Click to instantly award bonus points added directly to leaderboard total score:</p>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {[2, 4, 6, 8, 10].map((pts) => (
+                        <button
+                          key={pts}
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              await api.teams.updateBonus(viewTarget.id, pts)
+                              setViewTarget({ ...viewTarget, bonusPoints: pts })
+                              toast.success(`Awarded +${pts} Bonus Points to ${viewTarget.name}!`)
+                              fetchTeams()
+                            } catch (err) {
+                              toast.error('Failed to update bonus points')
+                            }
+                          }}
+                          className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
+                            (viewTarget.bonusPoints || 0) === pts
+                              ? 'bg-amber-500 text-white border-amber-600 shadow-xs ring-2 ring-amber-400/30'
+                              : 'bg-white text-slate-800 border-amber-200 hover:bg-amber-100 hover:border-amber-400'
+                          }`}
+                        >
+                          +{pts}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Member Roster List */}
                 <div className="space-y-2 pt-2 border-t border-slate-100">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                    Team Roster ({viewTarget.members.length} Members)
+                    Team Member Verification Roster ({viewTarget.members.length} Members)
                   </span>
                   <div className="space-y-1.5">
-                    {viewTarget.members.map((m, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">
-                        <div>
-                          <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                            <span>{m.name}</span>
-                            {idx === 0 && (
-                              <span className="px-1.5 py-0.2 rounded bg-[#E83C00]/10 text-[#E83C00] text-[9px] font-extrabold uppercase">
-                                Team Lead
+                    {viewTarget.members.map((m, idx) => {
+                      const igFollowed = m.followedInstagram ?? viewTarget.followedInstagram
+                      const liFollowed = m.followedLinkedin ?? viewTarget.followedLinkedin
+                      return (
+                        <div key={idx} className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                          <div>
+                            <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                              <span>{m.name}</span>
+                              {idx === 0 && (
+                                <span className="px-1.5 py-0.2 rounded bg-[#E83C00]/10 text-[#E83C00] text-[9px] font-extrabold uppercase">
+                                  Team Lead
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10.5px] text-slate-500 font-mono mt-0.5">{m.email}</div>
+                            
+                            {/* Member Verification Badges */}
+                            <div className="flex items-center gap-1.5 mt-1.5">
+                              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold ${
+                                igFollowed ? 'bg-pink-100 text-pink-800 border border-pink-200' : 'bg-slate-200/80 text-slate-500'
+                              }`}>
+                                <Instagram size={10} /> {igFollowed ? 'IG Followed ✓' : 'IG Pending ✗'}
                               </span>
+
+                              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9.5px] font-bold ${
+                                liFollowed ? 'bg-blue-100 text-blue-800 border border-blue-200' : 'bg-slate-200/80 text-slate-500'
+                              }`}>
+                                <Linkedin size={10} /> {liFollowed ? 'LI Followed ✓' : 'LI Pending ✗'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-right">
+                            {m.linkedin && (
+                              <a
+                                href={m.linkedin}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors text-[10px] font-bold"
+                                title="Open LinkedIn Profile"
+                              >
+                                <Linkedin size={11} /> Profile ↗
+                              </a>
+                            )}
+                            {m.phone && (
+                              <span className="text-[10px] font-mono text-slate-600 block">{m.phone}</span>
                             )}
                           </div>
-                          <div className="text-[10.5px] text-slate-500 font-mono mt-0.5">{m.email}</div>
                         </div>
-
-                        {m.phone && (
-                          <div className="text-right">
-                            <span className="text-[10px] font-mono text-slate-600 block">{m.phone}</span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               </div>

@@ -14,7 +14,6 @@ export function ParticipantPlaybook() {
 
   // Interactive Checklist State
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({
-    wallet: true,
     webcall: true,
     realphone: false,
     whatsapp: false,
@@ -59,6 +58,35 @@ export function ParticipantPlaybook() {
     { id: 'sec-13', label: '13. Glossary & Map', icon: <BookOpen size={14} /> },
   ]
 
+  // Auto-update active section in Table of Contents on scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id)
+          }
+        })
+      },
+      {
+        rootMargin: '-80px 0px -60% 0px',
+        threshold: 0.1
+      }
+    )
+
+    SECTIONS.forEach((s) => {
+      const el = document.getElementById(s.id)
+      if (el) observer.observe(el)
+    })
+
+    return () => {
+      SECTIONS.forEach((s) => {
+        const el = document.getElementById(s.id)
+        if (el) observer.unobserve(el)
+      })
+    }
+  }, [])
+
   return (
     <div className="space-y-6 text-slate-800" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
 
@@ -84,14 +112,6 @@ export function ParticipantPlaybook() {
           <p className="text-xs sm:text-sm text-slate-300 max-w-3xl leading-relaxed font-normal">
             Go from zero → working demo that can place/receive real calls, trigger from a website or Google Sheet, follow up on WhatsApp, and run multi-agent squads.
           </p>
-
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-3">
-            <Star className="text-amber-400 shrink-0 mt-0.5" size={16} />
-            <div className="leading-relaxed">
-              <span className="font-bold text-amber-300 block mb-0.5 uppercase tracking-wider text-[10px]">Rule of Thumb for Voiceathon:</span>
-              Use <b className="text-white font-semibold">Instant WhatsApp</b>, <b className="text-white font-semibold">Website lead webhook</b>, and <b className="text-white font-semibold">Google Sheets Automatic Calls</b>. Skip Meta Business / BYON / Zapier unless explicitly guided by a mentor.
-            </div>
-          </div>
 
           {/* Schedule Toggle */}
           <div className="pt-2">
@@ -123,15 +143,13 @@ export function ParticipantPlaybook() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {[
-                  { time: '09:00 AM', title: 'Check-in & Breakfast', icon: '☕' },
-                  { time: '10:00 AM', title: 'Opening Ceremony & Rules', icon: '🎤' },
-                  { time: '10:30 AM', title: 'Hacking Begins!', icon: '🚀', highlight: true },
-                  { time: '01:00 PM', title: 'Lunch Break', icon: '🍱' },
-                  { time: '04:00 PM', title: 'Mentor Check-ins', icon: '💡' },
-                  { time: '08:00 PM', title: 'Dinner', icon: '🍕' },
-                  { time: '10:00 PM', title: 'Hacking Ends / Submissions Close', icon: '🛑', highlight: true },
-                  { time: '10:30 PM', title: 'Judging (Round 1)', icon: '⚖️' },
-                  { time: '11:30 PM', title: 'Finals & Closing Ceremony', icon: '🏆' },
+                  { time: '9:30 AM', title: 'Registration & Check-in', icon: '📝' },
+                  { time: '11:00 AM', title: '🔔 Round 1 Begins (Table Evaluation)', icon: '🔔', highlight: true },
+                  { time: 'Lunch', title: 'Lunch & Networking Break', icon: '🍱' },
+                  { time: 'Post-Lunch', title: '🏆 Top 20 Announced & Stage Problem', icon: '🏆', highlight: true },
+                  { time: '+2 Hours', title: 'Finalist Sprint (Stage Challenge)', icon: '⚡' },
+                  { time: 'Final Round', title: 'Top 20 Live Stage Pitching', icon: '🎤', highlight: true },
+                  { time: 'Closing', title: '🏆 Winners Announced & Awards', icon: '🥇', highlight: true },
                 ].map((item, i) => (
                   <div key={i} className={`p-3 rounded-xl border flex items-center gap-3 ${item.highlight ? 'bg-orange-50/70 border-orange-200' : 'bg-slate-50/60 border-slate-100'}`}>
                     <span className="text-xl">{item.icon}</span>
@@ -174,12 +192,12 @@ export function ParticipantPlaybook() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
         {/* ── DESKTOP SIDEBAR NAVIGATION ONLY ── */}
-        <div className="hidden lg:block lg:col-span-3 lg:sticky lg:top-4 space-y-3">
+        <div className="hidden lg:block lg:col-span-3 lg:sticky lg:top-20 space-y-3 self-start">
           <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
             <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
               <Compass size={13} className="text-[#E83C00]" /> Table of Contents
             </p>
-            <nav className="space-y-1 max-h-[75vh] overflow-y-auto pr-1">
+            <nav className="space-y-1 max-h-[calc(100vh-8rem)] overflow-y-auto pr-1">
               {SECTIONS.map((sec) => (
                 <button
                   key={sec.id}
@@ -212,7 +230,7 @@ export function ParticipantPlaybook() {
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed">
-              SnapServe is a <b>voice-agent platform for India</b>. You design what the agent says and does; SnapServe handles telephony, real-time audio, STT/LLM/TTS, memory, and integrations.
+              SnapServe (powered by <b>Sarvam AI</b>) is a <b>voice-agent platform for India</b>. You design what the agent says and does; SnapServe handles telephony, real-time audio, STT/LLM/TTS, memory, and integrations.
             </p>
 
             <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800">
@@ -242,7 +260,7 @@ export function ParticipantPlaybook() {
                   </tr>
                   <tr>
                     <td className="px-4 py-2.5 font-semibold text-slate-900">Integrations (WA, Sheets, site)</td>
-                    <td className="px-4 py-2.5 text-slate-600">Wallet, TRAI-aware calling windows</td>
+                    <td className="px-4 py-2.5 text-slate-600">TRAI-aware calling windows</td>
                   </tr>
                 </tbody>
               </table>
@@ -547,8 +565,7 @@ export function ParticipantPlaybook() {
                 { step: '1', title: 'Sign in to Dashboard', desc: 'Sign in to the SnapServe dashboard portal.' },
                 { step: '2', title: 'Create Agent', desc: 'Agents → New agent — name it, paste a short system prompt.' },
                 { step: '3', title: 'Test Webcall', desc: 'Open the agent → Webcall → talk for 60 seconds; refine the prompt.' },
-                { step: '4', title: 'Assign Phone Number', desc: '(Optional) Phone Numbers — buy/assign a number to the agent for inbound, or use outbound from campaigns.' },
-                { step: '5', title: 'Top up Wallet', desc: 'Keep wallet topped up enough for demo calls.' },
+                { step: '4', title: 'Assign Phone Number', desc: 'Phone Numbers — assign a number to your agent for live inbound/outbound calls (Free trial credits included).' },
               ].map((s) => (
                 <div key={s.step} className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all">
                   <span className="w-6 h-6 rounded-lg bg-[#E83C00] text-white font-black text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
@@ -809,7 +826,6 @@ SnapServe.submit({
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {[
-                  { id: 'wallet', text: 'Wallet balance OK' },
                   { id: 'webcall', text: 'Agent Webcall verified' },
                   { id: 'realphone', text: 'Real phone call tested (inbound/outbound)' },
                   { id: 'whatsapp', text: 'Instant WhatsApp test message verified' },

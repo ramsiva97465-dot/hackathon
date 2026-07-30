@@ -25,6 +25,7 @@ const rolePermissions: Record<string, Permission[]> = {
     'LEADERBOARD_ADMIN',
   ],
   ADMIN: [
+    'SETTINGS_MANAGE', // Added so Admin can resolve help requests and update bonus points
     'APPLICATIONS_REVIEW',
     'JUDGES_EMAILS_MANAGE',
     'LEADERBOARD_ADMIN',

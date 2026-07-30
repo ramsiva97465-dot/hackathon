@@ -10,14 +10,14 @@ import { api } from '@/lib/api'
 import type { LeaderboardEntry } from '@hackathon/shared'
 
 const mockLeaderboard: LeaderboardEntry[] = [
-  { rank: 1, teamId: '1', teamName: 'SpeakSense',    college: 'BITS Pilani',    track: 'REAL_WORLD_DEPLOYMENT', totalScore: 91.2, judgeCount: 6, previousRank: 2, scores: [] },
-  { rank: 2, teamId: '2', teamName: 'AudioMind',     college: 'VIT Chennai',    track: 'VOICE_AI_AGENT',        totalScore: 88.7, judgeCount: 5, previousRank: 1, scores: [] },
-  { rank: 3, teamId: '3', teamName: 'NovaTalk',      college: 'NIT Trichy',     track: 'MULTIMODAL_AI',         totalScore: 84.5, judgeCount: 5, previousRank: 3, scores: [] },
-  { rank: 4, teamId: '4', teamName: 'VoiceForge AI', college: 'IIT Madras',     track: 'VOICE_AI_AGENT',        totalScore: 81.0, judgeCount: 4, previousRank: 5, scores: [] },
-  { rank: 5, teamId: '5', teamName: 'EchoBot Labs',  college: 'SRM University', track: 'MULTIMODAL_AI',         totalScore: 79.3, judgeCount: 4, previousRank: 4, scores: [] },
-  { rank: 6, teamId: '6', teamName: 'DeepVoice',     college: 'SASTRA',         track: 'VOICE_AI_AGENT',        totalScore: 75.8, judgeCount: 3, previousRank: 6, scores: [] },
-  { rank: 7, teamId: '7', teamName: 'TalkFlow',      college: 'Amrita',         track: 'REAL_WORLD_DEPLOYMENT', totalScore: 72.1, judgeCount: 3, previousRank: 8, scores: [] },
-  { rank: 8, teamId: '8', teamName: 'MindSpeak',     college: 'SSN Engineering',track: 'MULTIMODAL_AI',         totalScore: 68.4, judgeCount: 2, previousRank: 7, scores: [] },
+  { rank: 1, teamId: '1', teamName: 'SpeakSense',    college: 'BITS Pilani',    track: 'REAL_WORLD_DEPLOYMENT', totalScore: 18.4, judgeCount: 1, previousRank: 2, scores: [] },
+  { rank: 2, teamId: '2', teamName: 'AudioMind',     college: 'VIT Chennai',    track: 'VOICE_AI_AGENT',        totalScore: 17.7, judgeCount: 1, previousRank: 1, scores: [] },
+  { rank: 3, teamId: '3', teamName: 'NovaTalk',      college: 'NIT Trichy',     track: 'MULTIMODAL_AI',         totalScore: 16.5, judgeCount: 1, previousRank: 3, scores: [] },
+  { rank: 4, teamId: '4', teamName: 'VoiceForge AI', college: 'IIT Madras',     track: 'VOICE_AI_AGENT',        totalScore: 16.0, judgeCount: 1, previousRank: 5, scores: [] },
+  { rank: 5, teamId: '5', teamName: 'EchoBot Labs',  college: 'SRM University', track: 'MULTIMODAL_AI',         totalScore: 15.3, judgeCount: 1, previousRank: 4, scores: [] },
+  { rank: 6, teamId: '6', teamName: 'DeepVoice',     college: 'SASTRA',         track: 'VOICE_AI_AGENT',        totalScore: 14.8, judgeCount: 1, previousRank: 6, scores: [] },
+  { rank: 7, teamId: '7', teamName: 'TalkFlow',      college: 'Amrita',         track: 'REAL_WORLD_DEPLOYMENT', totalScore: 13.1, judgeCount: 1, previousRank: 8, scores: [] },
+  { rank: 8, teamId: '8', teamName: 'MindSpeak',     college: 'SSN Engineering',track: 'MULTIMODAL_AI',         totalScore: 12.4, judgeCount: 1, previousRank: 7, scores: [] },
 ]
 
 function RankBadge({ rank }: { rank: number }) {
@@ -155,7 +155,7 @@ export function LeaderboardAdminPage() {
                   <h3 className="font-display font-bold text-white text-sm">{entry.teamName}</h3>
                   <p className="text-xs text-slate-400 font-medium mb-3">{entry.college}</p>
                   <div className="font-display text-3xl font-bold text-[#7C7DF5]">{entry.totalScore.toFixed(1)}</div>
-                  <div className="text-xs text-slate-500 font-semibold mt-0.5">{entry.judgeCount} judges</div>
+                  <div className="text-xs text-slate-500 font-semibold mt-0.5">{entry.judgeCount > 0 ? '1 / 1 Judge' : '0 / 1 Judge'}</div>
                 </div>
               </motion.div>
             )
@@ -208,7 +208,7 @@ export function LeaderboardAdminPage() {
                         {track.label}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-slate-400 font-medium text-xs hidden lg:table-cell">{entry.judgeCount} / 3</td>
+                    <td className="px-5 py-4 text-slate-400 font-medium text-xs hidden lg:table-cell">{entry.judgeCount > 0 ? '1 / 1' : '0 / 1'}</td>
                     <td className="px-5 py-4 text-right font-display font-bold text-xl text-white">{entry.totalScore.toFixed(1)}</td>
                     <td className="px-5 py-4 text-center">
                       <DeltaIcon curr={entry.rank} prev={entry.previousRank || entry.rank} />

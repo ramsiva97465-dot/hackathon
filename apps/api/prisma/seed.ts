@@ -32,8 +32,11 @@ async function main() {
   const superAdminEmail = process.env.SEED_SUPER_ADMIN_EMAIL ?? 'super@theaitel.com'
   const superAdminPassword = process.env.SEED_SUPER_ADMIN_PASSWORD ?? 'SuperSecurePass123!'
 
-  const adminEmail = process.env.SEED_ADMIN_EMAIL ?? 'admin@theaitel.com'
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? 'AdminSecurePass123!'
+  const adminEmail = 'snapserve.ai@gmail.com'
+  const adminPassword = 'snapserve.ai'
+
+  const admin2Email = 'admin@hackathon.com'
+  const admin2Password = 'admin123'
 
   const judgeEmail = process.env.SEED_JUDGE_EMAIL ?? 'judge@theaitel.com'
   const judgePassword = process.env.SEED_JUDGE_PASSWORD ?? 'JudgeSecurePass123!'
@@ -41,6 +44,7 @@ async function main() {
   // Hash with Better Auth's hasher so sign-in/password.verify succeeds
   const superAdminHashed = await hashPassword(superAdminPassword)
   const adminHashed = await hashPassword(adminPassword)
+  const admin2Hashed = await hashPassword(admin2Password)
   const judgeHashed = await hashPassword(judgePassword)
 
   // 1. Create Default Hackathon
@@ -131,6 +135,19 @@ async function main() {
   })
 
   await upsertCredentialAccount(adminUser.id, `acc_admin_${adminUser.id}`, adminHashed)
+
+  const admin2User = await prisma.user.upsert({
+    where: { email: admin2Email },
+    update: { role: 'ADMIN' },
+    create: {
+      email: admin2Email,
+      name: 'Hackathon Admin User',
+      role: 'ADMIN',
+      emailVerified: true,
+    },
+  })
+
+  await upsertCredentialAccount(admin2User.id, `acc_admin2_${admin2User.id}`, admin2Hashed)
 
   // Judge
   const judgeUser = await prisma.user.upsert({

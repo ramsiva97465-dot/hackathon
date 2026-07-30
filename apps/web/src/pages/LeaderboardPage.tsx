@@ -87,7 +87,7 @@ function Round1Row({ entry, isAdvancing }: { entry: LeaderboardEntry; isAdvancin
 
       {/* Judges */}
       <div className={`text-center font-mono text-xs font-semibold ${isAdvancing ? 'text-slate-600' : 'text-slate-400'}`}>
-        {entry.judgeCount}/6
+        {entry.judgeCount > 0 ? '1/1' : '0/1'}
       </div>
 
       {/* Score */}
@@ -133,7 +133,7 @@ function Round2Row({ entry }: { entry: LeaderboardEntry }) {
           {track.label}
         </span>
       </div>
-      <div className="text-center text-slate-500 font-mono font-semibold">{entry.judgeCount} / 6</div>
+      <div className="text-center text-slate-500 font-mono font-semibold">{entry.judgeCount > 0 ? '1 / 1' : '0 / 1'}</div>
       <motion.div key={entry.totalScore} initial={{ scale: 1.15 }} animate={{ scale: 1 }}
         className="text-right text-2xl font-black text-slate-900">
         {entry.totalScore.toFixed(1)}

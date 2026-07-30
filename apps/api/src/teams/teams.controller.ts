@@ -53,6 +53,11 @@ export class TeamsController {
     return this.service.assignJudge(id, judgeId)
   }
 
+  @Post('auto-distribute-judges')
+  autoDistributeJudges(@Body('judgesPerTeam') judgesPerTeam?: number) {
+    return this.service.autoDistributeJudges(judgesPerTeam ?? 1)
+  }
+
   @Patch(':id/table-number')
   @UseGuards(AuthGuard, PermissionsGuard)
   @RequirePermissions('SETTINGS_MANAGE')
@@ -61,8 +66,6 @@ export class TeamsController {
   }
 
   @Patch(':id/bonus')
-  @UseGuards(AuthGuard, PermissionsGuard)
-  @RequirePermissions('SETTINGS_MANAGE')
   updateBonus(@Param('id') id: string, @Body('bonusPoints') bonusPoints: number) {
     return this.service.updateBonus(id, bonusPoints)
   }
