@@ -107,23 +107,32 @@ export class TeamsService {
         return { success: true, valid: false, error: 'URL must start with http:// or https://' }
       }
 
-      // We'll do a simple GET or HEAD request using global fetch
+      const isSocial = /linkedin\.com|twitter\.com|x\.com|instagram\.com|github\.com/i.test(url)
+
       const response = await fetch(url, { 
-        method: 'GET', // Many sites like GitHub block HEAD, GET is safer for public link validation
+        method: 'GET',
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
         }
       })
-      
-      // If it's 404, 401, 403, it's likely broken or private
-      if (!response.ok && response.status !== 405 && response.status !== 429) {
+
+      // LinkedIn (999), 403, 401, 429, 405 are anti-scraping/rate-limiting responses, not broken URLs
+      if (response.ok || response.status === 999 || response.status === 403 || response.status === 401 || response.status === 429 || response.status === 405) {
+        return { success: true, valid: true }
+      }
+
+      if (!response.ok) {
+        if (isSocial) {
+          return { success: true, valid: true }
+        }
         return { success: true, valid: false, error: `Link returned status ${response.status}` }
       }
-      
+
       return { success: true, valid: true }
     } catch (err: any) {
-      return { success: true, valid: false, error: 'Could not reach the URL' }
+      // Network/CORS/fetch errors shouldn't block user if URL is well-formed
+      return { success: true, valid: true }
     }
   }
 
