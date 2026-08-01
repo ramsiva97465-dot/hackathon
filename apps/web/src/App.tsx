@@ -172,8 +172,9 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <Routes>
-          {/* Public */}
-          <Route path="/" element={<LandingPage />} />
+          {/* Root → Participant Login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/landing" element={<LandingPage />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
 
           {/* Auth */}
