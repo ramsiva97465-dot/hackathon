@@ -287,7 +287,7 @@ export class TeamsService {
       }
 
       return { createdTeams, createdMembers }
-    })
+    }, { timeout: 60000 })
 
     return { success: true, data: results }
   }
