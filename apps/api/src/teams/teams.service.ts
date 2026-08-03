@@ -562,4 +562,16 @@ export class TeamsService {
 
     return { success: true }
   }
+
+  async removeTeam(teamId: string) {
+    try {
+      await this.prisma.team.delete({
+        where: { id: teamId }
+      })
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to remove team:', error)
+      return { success: false, message: 'Failed to remove team' }
+    }
+  }
 }

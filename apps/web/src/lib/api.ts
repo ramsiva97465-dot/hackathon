@@ -81,6 +81,8 @@ export const api = {
       apiClient.post('/teams/reset-rounds'),
     validateUrl: (url: string) =>
       apiClient.post('/teams/validate-url', { url }),
+    remove: (id: string) =>
+      apiClient.delete(`/teams/${id}`),
   },
 
   // Judges

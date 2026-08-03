@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch, UseGuards, Req } from '@nestjs/common'
+import { Controller, Get, Post, Body, Param, Patch, UseGuards, Req, Delete } from '@nestjs/common'
 import { TeamsService } from './teams.service'
 import { ParticipantGuard } from '../auth/participant.guard'
 import { AuthGuard, PermissionsGuard, RequirePermissions } from '../auth/guards'
@@ -109,5 +109,12 @@ export class TeamsController {
   @Post('import')
   importTeams(@Body('teams') teams: any[]) {
     return this.service.importTeams(teams)
+  }
+
+  @Delete(':id')
+  @UseGuards(AuthGuard, PermissionsGuard)
+  @RequirePermissions('SETTINGS_MANAGE')
+  removeTeam(@Param('id') id: string) {
+    return this.service.removeTeam(id)
   }
 }

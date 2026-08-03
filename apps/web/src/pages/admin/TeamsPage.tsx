@@ -7,7 +7,7 @@ import { containerVariants, itemVariants } from '@/lib/motion'
 import { getTrackConfig } from '@/lib/utils'
 import {
   Trophy, Users, Award, X, Check,
-  Search, Hash, Star, UserPlus, Download, Upload, AlertCircle, CheckCircle, Eye, ExternalLink, Github, Phone, Cpu, Layers, Instagram, Linkedin
+  Search, Hash, Star, UserPlus, Download, Upload, AlertCircle, CheckCircle, Eye, ExternalLink, Github, Phone, Cpu, Layers, Instagram, Linkedin, Trash2
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
@@ -729,12 +729,32 @@ export function TeamsPage() {
                   <span className="text-[10px] font-extrabold text-[#E83C00] uppercase tracking-wider block">Submission Details</span>
                   <h3 className="text-lg font-black text-slate-900">{viewTarget.projectTitle || viewTarget.name}</h3>
                 </div>
-                <button
-                  onClick={() => setViewTarget(null)}
-                  className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                  <X size={18} />
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={async () => {
+                      if (window.confirm(`Are you sure you want to completely remove "${viewTarget.name}"? This action cannot be undone.`)) {
+                        try {
+                          await api.teams.remove(viewTarget.id)
+                          toast.success('Team removed successfully')
+                          setViewTarget(null)
+                          fetchTeams()
+                        } catch (err) {
+                          toast.error('Failed to remove team')
+                        }
+                      }
+                    }}
+                    className="p-1.5 px-3 flex items-center gap-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors text-xs font-bold"
+                  >
+                    <Trash2 size={13} />
+                    Remove Team
+                  </button>
+                  <button
+                    onClick={() => setViewTarget(null)}
+                    className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
               </div>
 
               {/* Modal Content */}
