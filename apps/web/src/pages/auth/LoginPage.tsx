@@ -245,23 +245,16 @@ export function LoginPage() {
             />
 
             {/* Toggle Role Links */}
-            <div className="mt-4 text-center">
-              {isParticipantPath ? (
-                <Link
-                  to="/judge-login"
-                  className="text-[11px] font-bold text-slate-500 hover:text-slate-800 tracking-wide uppercase transition-colors"
-                >
-                  Are you an Organizer or Judge? <span className="text-[#E83C00] underline">Log in here</span>
-                </Link>
-              ) : (
+            {!isParticipantPath && (
+              <div className="mt-4 text-center">
                 <Link
                   to="/login"
                   className="text-[11px] font-bold text-slate-500 hover:text-slate-800 tracking-wide uppercase transition-colors"
                 >
                   Are you a Participant? <span className="text-[#E83C00] underline">Log in here</span>
                 </Link>
-              )}
-            </div>
+              </div>
+            )}
 
             <p className="mt-6 text-center text-[10px] sm:text-[11px] text-slate-400 font-normal leading-relaxed">
               Hosted by{' '}
