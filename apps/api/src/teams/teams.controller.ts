@@ -40,6 +40,19 @@ export class TeamsController {
     return this.service.findAll()
   }
 
+  @Post('nuke-dummy-data-now')
+  async nukeDummyData() {
+    const { PrismaClient } = require('@prisma/client')
+    const prisma = new PrismaClient()
+    
+    await prisma.teamMember.deleteMany({})
+    await prisma.score.deleteMany({})
+    await prisma.scoreSheet.deleteMany({})
+    await prisma.team.deleteMany({})
+    
+    return { success: true, message: 'Nuked all dummy data successfully!' }
+  }
+
   @Post('validate-url')
   validateUrl(@Body('url') url: string) {
     return this.service.validateUrl(url)
