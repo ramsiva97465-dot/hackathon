@@ -4,7 +4,7 @@ import { SnapServeMark, VobizMark } from '@/components/brand/BrandLogos'
 import { Avatar } from '@/components/ui/Avatar'
 import { getTrackConfig } from '@/lib/utils'
 import { useWebSocket } from '@/hooks/useWebSocket'
-import { TrendingUp, TrendingDown, Minus, Trophy, ChevronRight } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, Trophy, ChevronRight, Monitor } from 'lucide-react'
 import type { LeaderboardEntry } from '@hackathon/shared'
 
 const ROUND2_CUTOFF = 20 // Top 20 advance to round 2
@@ -149,6 +149,7 @@ export function LeaderboardPage() {
   const [clock, setClock] = useState(new Date())
   const [activeRound, setActiveRound] = useState<number>(1)
   const [manualOverride, setManualOverride] = useState(false)
+  const [tvMode, setTvMode] = useState(false)
 
   const { emit } = useWebSocket<LeaderboardEntry[]>('leaderboard:update', (data) => {
     setEntries(data)
@@ -159,6 +160,19 @@ export function LeaderboardPage() {
     const t = setInterval(() => setClock(new Date()), 1000)
     return () => clearInterval(t)
   }, [])
+
+  // TV Mode Auto-scroll logic
+  useEffect(() => {
+    if (!tvMode) return
+    const scrollSpeed = 1
+    const interval = setInterval(() => {
+      window.scrollBy({ top: scrollSpeed, left: 0, behavior: 'auto' })
+      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 2) {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+    }, 50)
+    return () => clearInterval(interval)
+  }, [tvMode])
 
   // Auto-detect current round from live data
   useEffect(() => {
@@ -220,6 +234,18 @@ export function LeaderboardPage() {
           </div>
         </div>
         <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setTvMode(!tvMode)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all shadow-sm ${
+              tvMode 
+                ? 'bg-emerald-100 border-emerald-300 text-emerald-700' 
+                : 'bg-white/50 border-black/10 text-slate-500 hover:bg-white'
+            }`}
+            title="Toggle TV Auto-Scroll Mode"
+          >
+            <Monitor size={14} />
+            <span className="text-[10px] font-bold uppercase tracking-wider">{tvMode ? 'TV Mode On' : 'TV Mode'}</span>
+          </button>
           <div className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-orange-500/30 bg-orange-500/10">
             <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
             <span className="text-xs font-bold text-orange-600 tracking-widest uppercase">Live</span>
