@@ -670,7 +670,7 @@ export function ParticipantDashboard() {
         {/* Main Content */}
         <main className="flex-1 min-w-0 pb-24 md:pb-0">
           <AnimatePresence mode="wait">
-            <motion.div
+            <motion.div 
               key={activeTab}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}

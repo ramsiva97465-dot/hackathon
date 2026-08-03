@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { motion } from 'framer-motion'
-import { LandingPage } from '@/pages/LandingPage'
 import { LeaderboardPage } from '@/pages/LeaderboardPage'
 import { AdminDashboard } from '@/pages/admin/AdminDashboard'
 import { ApplicationsPage } from '@/pages/admin/ApplicationsPage'
@@ -174,7 +173,6 @@ export default function App() {
         <Routes>
           {/* Root → Participant Login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/landing" element={<LandingPage />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
 
           {/* Auth */}
