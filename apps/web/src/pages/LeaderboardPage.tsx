@@ -163,12 +163,13 @@ export function LeaderboardPage() {
   // Auto-detect current round from live data
   useEffect(() => {
     if (manualOverride) return
-    const rawData = entries.length > 0 ? entries : mockLeaderboard
+    const rawData = entries
+    if (rawData.length === 0) return
     const maxRound = Math.max(...rawData.map(e => (e as any).round || 1))
     setActiveRound(maxRound)
   }, [entries, manualOverride])
 
-  const rawDisplay = entries.length > 0 ? entries : mockLeaderboard
+  const rawDisplay = entries
 
   // ── Round-based filtering ──────────────────────────────────────────────────
   // Round 1: ALL teams, sorted by score, top 20 highlighted
