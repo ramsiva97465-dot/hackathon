@@ -45,12 +45,25 @@ export class TeamsController {
     const { PrismaClient } = require('@prisma/client')
     const prisma = new PrismaClient()
     
+    // Delete Judges (except the main test judge)
+    const dummyJudges = await prisma.user.findMany({
+      where: { role: 'JUDGE', email: { not: 'judge@theaitel.com' } }
+    })
+    for (const dj of dummyJudges) {
+      await prisma.judge.deleteMany({ where: { id: dj.id } })
+      await prisma.user.delete({ where: { id: dj.id } })
+    }
+
+    // Wipe all team and score related data
+    await prisma.leaderboard.deleteMany({})
     await prisma.teamMember.deleteMany({})
     await prisma.score.deleteMany({})
     await prisma.scoreSheet.deleteMany({})
+    await prisma.judgeAssignment.deleteMany({})
     await prisma.team.deleteMany({})
+    await prisma.application.deleteMany({})
     
-    return { success: true, message: 'Nuked all dummy data successfully!' }
+    return { success: true, message: 'Nuked all dummy data successfully (including judges & leaderboard)!' }
   }
 
   @Post('validate-url')
