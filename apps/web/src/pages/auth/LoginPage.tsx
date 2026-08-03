@@ -269,7 +269,7 @@ export function LoginPage() {
                 snapserve.ai
               </a>
               {' · '}
-              Sponsored by{' '}
+              Powered by{' '}
               <a href="https://www.vobiz.ai" target="_blank" rel="noreferrer" className="font-semibold text-[#E83C00] hover:text-[#E83C00]/80">
                 vobiz.ai
               </a>

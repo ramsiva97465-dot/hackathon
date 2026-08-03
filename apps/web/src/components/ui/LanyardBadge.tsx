@@ -149,7 +149,7 @@ export function LanyardBadge({
       // Footer
       ctx.fillStyle = '#94A3B8'
       ctx.font = 'bold 14px sans-serif'
-      ctx.fillText('Hosted by SnapServe.ai • Sponsored by Vobiz.ai', 120, 830)
+      ctx.fillText('Hosted by SnapServe.ai • Powered by Vobiz.ai', 120, 830)
 
       // Download trigger
       const image = canvas.toDataURL('image/png')
@@ -415,7 +415,7 @@ export function LanyardBadge({
 
               {/* Footer Sponsor Lockup */}
               <div className="border-t border-[#EAE4D8] pt-2 text-center">
-                <span className="text-[7.5px] font-bold text-slate-500 uppercase tracking-widest block">Hosted by SnapServe.ai • Sponsored by Vobiz.ai</span>
+                <span className="text-[7.5px] font-bold text-slate-500 uppercase tracking-widest block">Hosted by SnapServe.ai • Powered by Vobiz.ai</span>
               </div>
             </div>
           </motion.div>
