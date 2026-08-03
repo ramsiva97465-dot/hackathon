@@ -1121,7 +1121,7 @@ export function TeamsPage() {
                   <div className="space-y-1">
                     <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">CSV Requirements</h4>
                     <p className="text-xs text-slate-500 leading-relaxed font-light">
-                      Must contain columns for <strong>Team Name</strong>, <strong>Name</strong>, and <strong>Email</strong>. 
+                      Must contain columns for <strong>Team Name</strong>, <strong>Name</strong>, <strong>Email</strong>, and <strong>Phone</strong>. 
                       Multiple rows with the same <strong>Team Name</strong> are grouped into one team automatically.
                     </p>
                   </div>
@@ -1188,8 +1188,8 @@ export function TeamsPage() {
                         <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 font-bold">
                           <tr>
                             <th className="px-4 py-2">Team Name</th>
-                            <th className="px-4 py-2">Track</th>
-                            <th className="px-4 py-2">College</th>
+                            <th className="px-4 py-2">Phone Number</th>
+                            <th className="px-4 py-2">Email</th>
                             <th className="px-4 py-2 text-right">Members</th>
                           </tr>
                         </thead>
@@ -1197,8 +1197,8 @@ export function TeamsPage() {
                           {parsedTeams.map((pt, idx) => (
                             <tr key={idx} className="hover:bg-slate-50/50">
                               <td className="px-4 py-2.5 font-bold">{pt.name}</td>
-                              <td className="px-4 py-2.5">{pt.track || 'Default'}</td>
-                              <td className="px-4 py-2.5">{pt.college || '—'}</td>
+                              <td className="px-4 py-2.5 text-slate-600">{pt.members[0]?.phone || '—'}</td>
+                              <td className="px-4 py-2.5 text-slate-600 truncate max-w-[150px]" title={pt.members[0]?.email}>{pt.members[0]?.email || '—'}</td>
                               <td className="px-4 py-2.5 text-right font-semibold text-[#E83C00]">{pt.members.length} members</td>
                             </tr>
                           ))}
