@@ -223,7 +223,10 @@ export class TeamsService {
 
       // 2. Find or Create Team
       let team = await this.prisma.team.findFirst({
-        where: { hackathonId: hackathon.id, name: teamInput.name }
+        where: { 
+          hackathonId: hackathon.id, 
+          name: { equals: teamInput.name, mode: 'insensitive' } 
+        }
       })
       if (!team) {
         team = await this.prisma.team.create({
