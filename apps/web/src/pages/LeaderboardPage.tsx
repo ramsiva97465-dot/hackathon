@@ -165,10 +165,16 @@ export function LeaderboardPage() {
   useEffect(() => {
     if (!tvMode) return
     const scrollSpeed = 1
+    let scrollingUp = false
     const interval = setInterval(() => {
+      if (scrollingUp) return
+
       window.scrollBy({ top: scrollSpeed, left: 0, behavior: 'auto' })
-      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 2) {
+      
+      if ((window.innerHeight + Math.ceil(window.scrollY)) >= document.body.offsetHeight - 50) {
+        scrollingUp = true
         window.scrollTo({ top: 0, behavior: 'smooth' })
+        setTimeout(() => { scrollingUp = false }, 2000)
       }
     }, 50)
     return () => clearInterval(interval)
