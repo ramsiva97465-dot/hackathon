@@ -13,6 +13,7 @@ export const auth = betterAuth({
     'http://127.0.0.1:3000',
     'http://localhost:3002',
     'http://localhost:5173',
+    'https://voiceathon.snapserve.ai',
     process.env.FRONTEND_URL ?? 'http://localhost:3000',
   ],
   emailAndPassword: {
