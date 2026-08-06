@@ -920,7 +920,28 @@ export function TeamsPage() {
 
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <p className="text-[11px] text-amber-900/80">Click to instantly award bonus points added directly to leaderboard total score:</p>
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            await api.teams.updateBonus(viewTarget.id, 0)
+                            setViewTarget({ ...viewTarget, bonusPoints: 0 })
+                            toast.success(`Cleared Bonus Points for ${viewTarget.name}`)
+                            fetchTeams()
+                          } catch (err) {
+                            toast.error('Failed to clear bonus points')
+                          }
+                        }}
+                        disabled={!viewTarget.bonusPoints}
+                        className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition-all ${
+                          !viewTarget.bonusPoints
+                            ? 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'
+                            : 'bg-white text-red-500 border-red-200 hover:bg-red-50 cursor-pointer shadow-sm'
+                        }`}
+                      >
+                        Clear
+                      </button>
                       {[2, 4, 6, 8, 10].map((pts) => (
                         <button
                           key={pts}
