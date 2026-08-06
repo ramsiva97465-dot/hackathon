@@ -68,12 +68,14 @@ export function LeaderboardAdminPage() {
   const handleEditScore = async (teamId: string, currentScore: number) => {
     const newVal = prompt(`Override score for this team (current: ${currentScore}):\nLeave blank or cancel to keep current score.\nEnter 'clear' to remove the override.`)
     if (newVal === null) return
+    const trimmed = newVal.trim()
+    if (trimmed === '') return
     
     let score: number | null = null
-    if (newVal.toLowerCase() === 'clear') {
+    if (trimmed.toLowerCase() === 'clear') {
       score = null
     } else {
-      const parsed = parseFloat(newVal)
+      const parsed = parseFloat(trimmed)
       if (isNaN(parsed)) return alert('Invalid score')
       score = parsed
     }
