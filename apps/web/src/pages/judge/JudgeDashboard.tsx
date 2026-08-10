@@ -711,16 +711,16 @@ export function JudgeDashboard() {
                           )}
                         </div>
                       ) : (
-                        <div className="flex gap-3">
+                        <div className="flex flex-col-reverse sm:flex-row gap-3">
                           <button
                             onClick={handleSkip}
-                            className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl bg-slate-100 text-slate-500 hover:text-slate-700 hover:bg-slate-200 transition-all font-bold text-sm shadow-sm"
+                            className="flex-1 flex items-center justify-center gap-2 py-3.5 sm:py-4 rounded-xl bg-slate-100 text-slate-500 hover:text-slate-700 hover:bg-slate-200 transition-all font-bold text-sm shadow-sm"
                           >
                             Skip for Now <FastForward size={16} />
                           </button>
                           <button
                             onClick={() => setIsEvaluating(true)}
-                            className="flex-[2] flex items-center justify-center gap-2 py-4 rounded-xl bg-[#E83C00] text-white hover:bg-[#FF4500] hover:shadow-[0_8px_25px_rgba(232,60,0,0.25)] transition-all font-bold text-sm transform hover:-translate-y-0.5"
+                            className="flex-[2] flex items-center justify-center gap-2 py-3.5 sm:py-4 rounded-xl bg-[#E83C00] text-white hover:bg-[#FF4500] hover:shadow-[0_8px_25px_rgba(232,60,0,0.25)] transition-all font-bold text-sm transform hover:-translate-y-0.5"
                           >
                             Start Evaluation <ArrowUpRight size={16} />
                           </button>
