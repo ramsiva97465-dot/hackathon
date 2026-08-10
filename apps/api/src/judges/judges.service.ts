@@ -154,9 +154,15 @@ export class JudgesService {
         let isLocked = scoreSheet?.isSubmitted || false
 
         if (team.adminScore !== null && team.adminScore !== undefined) {
-          totalScore = team.adminScore
-          isScored = true
-          isLocked = true
+          if (team.adminScore === 0) {
+            totalScore = null
+            isScored = false
+            isLocked = false
+          } else {
+            totalScore = team.adminScore
+            isScored = true
+            isLocked = true
+          }
         }
 
         return {
