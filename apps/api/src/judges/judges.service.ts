@@ -150,6 +150,15 @@ export class JudgesService {
           })
         }
 
+        let isScored = scoreSheet?.isSubmitted || false
+        let isLocked = scoreSheet?.isSubmitted || false
+
+        if (team.adminScore !== null && team.adminScore !== undefined) {
+          totalScore = team.adminScore
+          isScored = true
+          isLocked = true
+        }
+
         return {
           id: team.id,
           teamName: team.name,
@@ -166,8 +175,8 @@ export class JudgesService {
           techStack: team.techStack || [],
           tableNumber: team.tableNumber || 'TBA',
           members: team.members,
-          isScored: scoreSheet?.isSubmitted || false,
-          isLocked: scoreSheet?.isSubmitted || false,
+          isScored,
+          isLocked,
           totalScore,
           bonusPoints: team.bonusPoints || 0,
           notes: scoreSheet?.notes || null,
