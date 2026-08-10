@@ -107,10 +107,26 @@ export class LeaderboardService {
   }
 
   async updateAdminScore(teamId: string, score: number | null) {
-    await this.prisma.team.update({
-      where: { id: teamId },
-      data: { adminScore: score },
-    })
+    if (score === 0) {
+      // Complete wipe of evaluations
+      const scoreSheets = await this.prisma.scoreSheet.findMany({ where: { teamId } })
+      const sheetIds = scoreSheets.map(s => s.id)
+      
+      if (sheetIds.length > 0) {
+        await this.prisma.score.deleteMany({ where: { scoreSheetId: { in: sheetIds } } })
+        await this.prisma.scoreSheet.deleteMany({ where: { id: { in: sheetIds } } })
+      }
+      
+      await this.prisma.team.update({
+        where: { id: teamId },
+        data: { adminScore: null },
+      })
+    } else {
+      await this.prisma.team.update({
+        where: { id: teamId },
+        data: { adminScore: score },
+      })
+    }
     // Re-calculate the leaderboard entry for this team specifically
     // but the easiest way to keep ranks correct is to recalculate the whole leaderboard
     await this.getLeaderboard()
