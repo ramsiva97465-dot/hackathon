@@ -563,9 +563,17 @@ export function TeamsPage() {
                       <Avatar name={team.name} size="sm" />
                       <div className="min-w-0">
                         <p className="text-sm font-bold text-white truncate">{team.name}</p>
-                        <p className="text-[10px] text-slate-400 font-medium">
-                          {team.members.length === 1 ? 'Solo' : `${team.members.length} members`}
-                        </p>
+                        <div className="text-[10px] text-slate-400 font-medium flex items-center gap-1.5 mt-0.5">
+                          <span>{team.members.length === 1 ? 'Solo' : `${team.members.length} members`}</span>
+                          {team.members[0]?.phone && (
+                            <>
+                              <span className="text-slate-600">•</span>
+                              <span className="flex items-center gap-0.5 text-slate-300">
+                                <Phone size={8} /> {team.members[0].phone}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
 
