@@ -694,7 +694,7 @@ export function JudgeDashboard() {
                           <div className="flex justify-between items-center bg-orange-50/50 border border-orange-200 p-4 rounded-xl">
                             <div>
                               <span className="text-[10px] text-[#E83C00] uppercase tracking-wider block font-bold">Evaluated Score</span>
-                              <span className="text-xl font-mono font-bold text-[#E83C00]">{activeTeam.totalScore} / 10</span>
+                              <span className="text-xl font-mono font-bold text-[#E83C00]">{activeTeam.totalScore} / 20</span>
                               {activeTeam.notes && (
                                 <p className="text-xs text-slate-600 font-medium mt-1 font-sans italic">"{activeTeam.notes}"</p>
                               )}
@@ -706,7 +706,7 @@ export function JudgeDashboard() {
                               onClick={() => setIsEvaluating(true)}
                               className="w-full py-3.5 rounded-xl bg-[#E83C00] text-white hover:bg-[#FF4500] font-bold text-sm transition-all shadow-sm"
                             >
-                              Edit Evaluation ({activeTeam.totalScore} / 10)
+                              Edit Evaluation ({activeTeam.totalScore} / 20)
                             </button>
                           )}
                         </div>
