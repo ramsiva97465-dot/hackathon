@@ -9,11 +9,11 @@ import { Avatar } from '@/components/ui/Avatar'
 import { getTrackConfig } from '@/lib/utils'
 
 const SCORING_RUBRIC = {
-  latency: { max: 2, label: 'Latency & Speed', description: 'Response time and real-time conversational capability on the phone call' },
-  conversationalQuality: { max: 2, label: 'Conversational Flow', description: 'Natural turn-taking, handling interruptions and context' },
-  languageAccuracy: { max: 2, label: 'Language Accuracy', description: 'Fluency, grammar, and pronunciation in Tamil/regional languages' },
-  aiUsage: { max: 2, label: 'Voice Realism & Persona', description: 'Quality of TTS, emotion, and character consistency' },
-  technicalQuality: { max: 2, label: 'Technical Implementation', description: 'Code quality, architecture, and telephony integration' },
+  latency: { max: 2, label: 'Latency & Speed', description: 'response time, real-time performance, minimal pauses during calls' },
+  conversationalQuality: { max: 2, label: 'Conversational Flow', description: 'natural turn-taking, interruptions, context retention, handling unexpected responses' },
+  languageAccuracy: { max: 2, label: 'Language Accuracy', description: 'Tamil/regional fluency, pronunciation, grammar, understanding and response accuracy' },
+  aiUsage: { max: 2, label: 'Problem-Solving Ability', description: 'does the agent actually solve the intended problem, reason through edge cases, and take the right action' },
+  technicalQuality: { max: 2, label: 'Real-World Implementation & Viability', description: 'is the use case practical, can it run in a real business environment, quality of implementation, integrations, architecture and scalability' },
 } as const
 
 type Team = {
