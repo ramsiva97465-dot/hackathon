@@ -273,6 +273,70 @@ export function TeamsPage() {
     }
   }
 
+  const [exportMenuOpen, setExportMenuOpen] = useState(false)
+
+  const downloadCSV = (filename: string, headers: string[], rows: string[][]) => {
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    link.click()
+    toast.success(`Exported ${filename}`)
+  }
+
+  const handleExportTeamsOnlyCSV = () => {
+    const teamItems = teams.filter(t => t.members.length > 1)
+    if (teamItems.length === 0) return toast.error('No multi-member team entries found.')
+    const headers = ['Team ID', 'Team Name', 'Members Count', 'Track', 'Table Number', 'College', 'Project Title', 'Agent System', 'Hotline Number', 'Live Demo URL', 'GitHub URL', 'Bonus Points', 'Avg Score', 'Rank', 'Member Names', 'Member Emails']
+    const rows = teamItems.map(t => [
+      `"${t.id}"`, `"${t.name.replace(/"/g, '""')}"`, `"${t.members.length}"`, `"${t.track}"`, `"${t.tableNumber || ''}"`,
+      `"${(t.college || '').replace(/"/g, '""')}"`, `"${(t.projectTitle || '').replace(/"/g, '""')}"`, `"${(t.agentName || '').replace(/"/g, '""')}"`,
+      `"${(t.agentPhoneNumber || '').replace(/"/g, '""')}"`, `"${(t.demoUrl || '').replace(/"/g, '""')}"`, `"${(t.githubUrl || '').replace(/"/g, '""')}"`,
+      `"${t.bonusPoints || 0}"`, `"${t.avgScore !== null ? t.avgScore.toFixed(2) : ''}"`, `"${t.rank || ''}"`,
+      `"${t.members.map(m => m.name).join('; ').replace(/"/g, '""')}"`, `"${t.members.map(m => m.email || '').join('; ').replace(/"/g, '""')}"`
+    ])
+    downloadCSV(`SnapServe_Hackathon_Teams_Only_${new Date().toISOString().split('T')[0]}.csv`, headers, rows)
+  }
+
+  const handleExportSingleOnlyCSV = () => {
+    const singleItems = teams.filter(t => t.members.length === 1)
+    if (singleItems.length === 0) return toast.error('No single/solo entries found.')
+    const headers = ['Participant Name', 'Participant Email', 'Participant Phone', 'Team/Solo Name', 'Track', 'Table Number', 'College', 'Project Title', 'Agent System', 'Hotline Number', 'Live Demo URL', 'GitHub URL', 'Bonus Points', 'Avg Score', 'Rank']
+    const rows = singleItems.map(t => {
+      const m = t.members[0] || { name: '', email: '', phone: '' }
+      return [
+        `"${(m.name || '').replace(/"/g, '""')}"`, `"${(m.email || '').replace(/"/g, '""')}"`, `"${(m.phone || '').replace(/"/g, '""')}"`,
+        `"${t.name.replace(/"/g, '""')}"`, `"${t.track}"`, `"${t.tableNumber || ''}"`, `"${(t.college || '').replace(/"/g, '""')}"`,
+        `"${(t.projectTitle || '').replace(/"/g, '""')}"`, `"${(t.agentName || '').replace(/"/g, '""')}"`, `"${(t.agentPhoneNumber || '').replace(/"/g, '""')}"`,
+        `"${(t.demoUrl || '').replace(/"/g, '""')}"`, `"${(t.githubUrl || '').replace(/"/g, '""')}"`, `"${t.bonusPoints || 0}"`,
+        `"${t.avgScore !== null ? t.avgScore.toFixed(2) : ''}"`, `"${t.rank || ''}"`
+      ]
+    })
+    downloadCSV(`SnapServe_Hackathon_Single_Participants_${new Date().toISOString().split('T')[0]}.csv`, headers, rows)
+  }
+
+  const handleExportIndividualMembersCSV = () => {
+    if (!teams || teams.length === 0) return toast.error('No participants to export.')
+    const headers = ['Participant Name', 'Participant Email', 'Participant Phone', 'Role', 'Entry Type', 'Team/Solo Name', 'Track', 'Table Number', 'College', 'Project Title', 'Agent System', 'Hotline Number', 'Live Demo URL', 'GitHub URL', 'Bonus Points', 'Avg Score', 'Rank']
+    const rows: string[][] = []
+    teams.forEach(t => {
+      const entryType = t.members.length === 1 ? 'Single (Solo)' : 'Team'
+      t.members.forEach(m => {
+        rows.push([
+          `"${(m.name || '').replace(/"/g, '""')}"`, `"${(m.email || '').replace(/"/g, '""')}"`, `"${(m.phone || '').replace(/"/g, '""')}"`,
+          `"${(m.role || 'Member').replace(/"/g, '""')}"`, `"${entryType}"`, `"${t.name.replace(/"/g, '""')}"`, `"${t.track}"`,
+          `"${t.tableNumber || ''}"`, `"${(t.college || '').replace(/"/g, '""')}"`, `"${(t.projectTitle || '').replace(/"/g, '""')}"`,
+          `"${(t.agentName || '').replace(/"/g, '""')}"`, `"${(t.agentPhoneNumber || '').replace(/"/g, '""')}"`, `"${(t.demoUrl || '').replace(/"/g, '""')}"`,
+          `"${(t.githubUrl || '').replace(/"/g, '""')}"`, `"${t.bonusPoints || 0}"`, `"${t.avgScore !== null ? t.avgScore.toFixed(2) : ''}"`,
+          `"${t.rank || ''}"`
+        ])
+      })
+    })
+    downloadCSV(`SnapServe_Hackathon_All_Participants_${new Date().toISOString().split('T')[0]}.csv`, headers, rows)
+  }
+
   const handleExportAllTeamsCSV = () => {
     if (!teams || teams.length === 0) {
       toast.error('No teams to export.')
@@ -328,17 +392,10 @@ export function TeamsPage() {
         `"${t.rank || ''}"`,
         `"${memberNames.replace(/"/g, '""')}"`,
         `"${memberEmails.replace(/"/g, '""')}"`
-      ].join(',')
+      ]
     })
 
-    const csvContent = [headers.join(','), ...rows].join('\n')
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `SnapServe_Hackathon_Teams_Export_${new Date().toISOString().split('T')[0]}.csv`
-    link.click()
-    toast.success('Exported all teams data to CSV!')
+    downloadCSV(`SnapServe_Hackathon_All_Teams_${new Date().toISOString().split('T')[0]}.csv`, headers, rows)
   }
 
   useEffect(() => { fetchTeams(); fetchJudges() }, [])
@@ -470,13 +527,53 @@ export function TeamsPage() {
                   onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.background = '#111' }}
                 />
               </div>
-              <button
-                onClick={handleExportAllTeamsCSV}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-xl text-slate-200 transition-all bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-500"
-              >
-                <Download size={14} />
-                Export CSV
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setExportMenuOpen(!exportMenuOpen)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-xl text-slate-200 transition-all bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-500 cursor-pointer"
+                >
+                  <Download size={14} />
+                  Export CSV
+                </button>
+
+                {exportMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setExportMenuOpen(false)} />
+                    <div className="absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-700 rounded-xl shadow-xl z-50 p-1.5 space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => { setExportMenuOpen(false); handleExportTeamsOnlyCSV() }}
+                        className="w-full text-left px-3 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 rounded-lg flex items-center justify-between transition-colors cursor-pointer"
+                      >
+                        <span>👥 Export Teams Only (Multiple Members)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setExportMenuOpen(false); handleExportSingleOnlyCSV() }}
+                        className="w-full text-left px-3 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 rounded-lg flex items-center justify-between transition-colors cursor-pointer"
+                      >
+                        <span>👤 Export Single / Solo Participants</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setExportMenuOpen(false); handleExportIndividualMembersCSV() }}
+                        className="w-full text-left px-3 py-2 text-xs font-bold text-slate-200 hover:bg-slate-800 rounded-lg flex items-center justify-between transition-colors cursor-pointer"
+                      >
+                        <span>📋 Export All Participants (Single Rows)</span>
+                      </button>
+                      <div className="border-t border-slate-800 my-1" />
+                      <button
+                        type="button"
+                        onClick={() => { setExportMenuOpen(false); handleExportAllTeamsCSV() }}
+                        className="w-full text-left px-3 py-2 text-xs font-bold text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-lg flex items-center justify-between transition-colors cursor-pointer"
+                      >
+                        <span>📦 Export Combined Full Sheet</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
 
               <button
                 onClick={() => setCsvImportOpen(true)}
