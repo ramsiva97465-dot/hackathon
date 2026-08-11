@@ -252,120 +252,128 @@ export function LanyardBadge({
             {/* Subtle Metallic Gloss Reflective Overlay */}
             <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-transparent via-white/15 to-transparent pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity z-30 overflow-hidden" />
 
-            {/* ─── FRONT FACE (Dark Glassmorphic Obsidian) ────────────────────────── */}
+            {/* ─── FRONT FACE (Exact Screenshot 2 VIP AI Badge Design) ────────────────────────── */}
             <div
-              className="absolute inset-0 w-full h-full rounded-3xl p-5 flex flex-col justify-between overflow-hidden shadow-2xl border border-slate-800/80"
+              className="absolute inset-0 w-full h-full rounded-3xl p-5 flex flex-col justify-between overflow-hidden shadow-2xl border border-slate-800"
               style={{
-                backgroundColor: '#0B0F17',
-                backgroundImage: 'radial-gradient(#1E293B 1.2px, transparent 1.2px)',
+                backgroundColor: '#111319',
+                backgroundImage: 'radial-gradient(#1F2430 1.2px, transparent 1.2px)',
                 backgroundSize: '14px 14px',
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden'
               }}
             >
-              {/* Header: Logos & Pass Badge */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
-                  <BrandLockup tone="dark" />
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#E83C00] text-white text-[8px] font-black tracking-widest uppercase shadow-xs">
-                    <ShieldCheck size={10} /> VIP BUILDER PASS
-                  </span>
-                </div>
-
-                {/* Table & Agent Pills */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    {tableNumber && (
-                      <span className="px-2.5 py-0.5 rounded-md bg-slate-800 text-amber-400 font-mono font-bold text-[9.5px] uppercase border border-slate-700 shadow-2xs">
-                        {tableNumber.toUpperCase().startsWith('T-') ? tableNumber.toUpperCase() : `TABLE ${tableNumber}`}
-                      </span>
-                    )}
-                    <span className="px-2.5 py-0.5 rounded-md bg-[#E83C00]/20 text-[#E83C00] font-mono font-bold text-[9.5px] uppercase border border-[#E83C00]/40">
-                      AGENT {agentNumber}
-                    </span>
-                  </div>
-                  <span className="text-[9px] font-mono font-bold text-slate-500 uppercase tracking-wider">
-                    2026 EDITION
-                  </span>
-                </div>
+              {/* 1. Header Text */}
+              <div className="text-center space-y-0.5 border-b border-slate-800/80 pb-2.5">
+                <span className="text-[7.5px] font-black text-slate-300 uppercase tracking-widest block font-mono">
+                  SNAPSERVE AI x VOBIZ AI VOICE 2026
+                </span>
+                <span className="text-[8.5px] font-extrabold text-amber-400 uppercase tracking-widest block">
+                  TECH INNOVATION SUMMIT
+                </span>
               </div>
 
-              {/* Core Hero Section: Name & Team */}
-              <div className="my-auto py-2 text-left space-y-3">
-                {/* Team Name */}
-                <div>
-                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-0.5">TEAM</span>
-                  <h2 className="font-display font-black text-2xl text-[#E83C00] tracking-tight leading-tight truncate drop-shadow-xs">
-                    {teamName}
-                  </h2>
-                </div>
-
-                {/* Participant Lead */}
-                <div className="pt-2 border-t border-slate-800/80">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block">{memberRole}</span>
-                    <span className="px-2 py-0.5 rounded bg-[#E83C00]/20 text-[#E83C00] font-black text-[8px] uppercase tracking-wider border border-[#E83C00]/30">
-                      LEAD
-                    </span>
-                  </div>
-                  <h3 className="font-display font-black text-lg text-white leading-snug mt-0.5">
-                    {participantName}
-                  </h3>
-                </div>
-
-                {/* Teammates Roster */}
-                {members && members.length > 1 && (
-                  <div className="pt-1.5">
-                    <span className="text-[7.5px] font-black text-slate-500 uppercase tracking-widest block mb-1">
-                      TEAM MEMBERS ({members.length})
-                    </span>
-                    <div className="flex flex-wrap gap-1">
-                      {members.slice(1).map((m, idx) => (
-                        <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-[8.5px] font-bold text-slate-300 shadow-3xs">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#E83C00]" />
-                          {m.name || `Member ${idx + 2}`}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Agent & Hotline Specs Box (Frosted Glass Card) */}
-                {(projectTitle || agentName || agentPhoneNumber) && (
-                  <div className="bg-[#141C2E]/90 backdrop-blur-md text-white p-3 rounded-2xl space-y-1.5 shadow-md border border-slate-800 mt-2">
-                    {agentName && (
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="font-bold text-slate-400 uppercase text-[8px] tracking-wider flex items-center gap-1">
-                          <Cpu size={10} className="text-[#E83C00]" /> Agent System
-                        </span>
-                        <span className="font-black text-white">{agentName}</span>
-                      </div>
-                    )}
-
-                    {agentPhoneNumber && (
-                      <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-800/80">
-                        <span className="font-bold text-emerald-400 uppercase text-[8px] tracking-wider flex items-center gap-1">
-                          <Phone size={10} /> Hotline
-                        </span>
-                        <span className="font-mono font-black text-emerald-400">{agentPhoneNumber}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Bottom Barcode & Security Marker */}
-              <div className="border-t border-slate-800/80 pt-2.5 flex items-center justify-between">
+              {/* 2. Hero VIP & Glowing AI Processor Chip Section */}
+              <div className="flex items-center justify-between py-1 px-1">
+                {/* Big Gold VIP Text */}
                 <div className="flex flex-col text-left">
-                  <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">OFFICIAL ENTRY BARCODE</span>
-                  <span className="font-mono text-[8px] font-black text-slate-300 tracking-wider">★ VS-2026-AI ★</span>
+                  <span className="text-4xl font-black tracking-tight leading-none bg-gradient-to-br from-amber-100 via-amber-300 to-yellow-500 bg-clip-text text-transparent drop-shadow-sm">
+                    VIP
+                  </span>
+                  <span className="text-[8px] font-mono font-bold text-slate-400 tracking-widest uppercase mt-1">
+                    {tableNumber ? (tableNumber.toUpperCase().startsWith('T-') ? tableNumber.toUpperCase() : `TABLE ${tableNumber}`) : 'TABLE T-01'}
+                  </span>
                 </div>
 
-                {/* High-Resolution Clean Barcode */}
-                <div className="flex items-center gap-[2px] h-4.5 px-2 py-0.5 bg-slate-900 rounded-md border border-slate-800">
-                  {[2, 1, 3, 1, 4, 1, 2, 3, 1, 2, 4, 1, 3, 2, 1, 3].map((width, idx) => (
-                    <div key={idx} className="bg-white h-full" style={{ width: `${width}px` }} />
-                  ))}
+                {/* 3D Glowing AI Processor Microchip Graphic */}
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 via-slate-900 to-orange-950/40 border border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.25)] flex items-center justify-center relative overflow-hidden group">
+                  {/* Circuit Grid Lines */}
+                  <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#F59E0B_1px,transparent_1px)] [background-size:6px_6px]" />
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-300 via-amber-500 to-orange-600 border border-amber-200 shadow-md flex items-center justify-center relative z-10">
+                    <span className="font-mono font-black text-slate-950 text-xs tracking-wider">AI</span>
+                  </div>
+                  {/* Outer Glowing Pins */}
+                  <div className="absolute inset-x-2 top-1 h-[1px] bg-amber-400/60" />
+                  <div className="absolute inset-x-2 bottom-1 h-[1px] bg-amber-400/60" />
+                  <div className="absolute inset-y-2 left-1 w-[1px] bg-amber-400/60" />
+                  <div className="absolute inset-y-2 right-1 w-[1px] bg-amber-400/60" />
+                </div>
+              </div>
+
+              {/* 3. Participant Credentials & Team Details */}
+              <div className="text-left space-y-1.5 my-auto">
+                {/* Big Participant Name */}
+                <div>
+                  <h2 className="font-display font-black text-xl text-white tracking-tight uppercase leading-tight drop-shadow-xs">
+                    {participantName}
+                  </h2>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[9px] font-black text-amber-400 uppercase tracking-widest">
+                      {memberRole.toUpperCase()}
+                    </span>
+                    <span className="w-1 h-1 rounded-full bg-slate-600" />
+                    <span className="text-[10px] font-black text-[#E83C00] uppercase tracking-wide">
+                      {teamName}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Orange Horizontal Accent Line */}
+                <div className="h-[2px] w-full bg-gradient-to-r from-[#E83C00] via-orange-500 to-amber-500 rounded-full my-1.5" />
+
+                {/* Team Members Roster Badges */}
+                {members && members.length > 1 && (
+                  <div className="flex flex-wrap gap-1">
+                    {members.slice(1).map((m, idx) => (
+                      <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-[8px] font-bold text-slate-300">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#E83C00]" />
+                        {m.name || `Member ${idx + 2}`}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Agent & Hotline Specs Box */}
+                {(agentName || agentPhoneNumber) && (
+                  <div className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl space-y-1 text-[10.5px]">
+                    {agentName && (
+                      <div className="flex items-center justify-between text-slate-300 font-bold">
+                        <span className="text-[7.5px] uppercase font-bold text-slate-500 tracking-wider flex items-center gap-1">
+                          <Cpu size={9} className="text-[#E83C00]" /> AGENT SYSTEM
+                        </span>
+                        <span className="text-white font-black">{agentName}</span>
+                      </div>
+                    )}
+                    {agentPhoneNumber && (
+                      <div className="flex items-center justify-between text-emerald-400 font-mono font-black pt-0.5 border-t border-slate-800">
+                        <span className="text-[7.5px] uppercase font-bold text-emerald-500 tracking-wider flex items-center gap-1 font-sans">
+                          <Phone size={9} /> HOTLINE
+                        </span>
+                        <span>{agentPhoneNumber}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* 4. White Barcode Container Box (Exact Screenshot 2 Style) */}
+              <div className="space-y-1 pt-1">
+                <div className="bg-white rounded-xl p-2 flex flex-col items-center justify-center shadow-md">
+                  {/* Barcode SVG lines */}
+                  <div className="flex items-center gap-[2px] h-6 w-full justify-center px-2">
+                    {[3, 1, 2, 4, 1, 3, 2, 1, 4, 2, 1, 3, 1, 2, 4, 1, 3, 2, 1, 3, 2, 1, 4].map((width, idx) => (
+                      <div key={idx} className="bg-black h-full" style={{ width: `${width}px` }} />
+                    ))}
+                  </div>
+                  <span className="font-mono text-[8.5px] font-bold text-black tracking-widest mt-0.5">
+                    9 781234 567897
+                  </span>
+                </div>
+
+                <div className="text-center">
+                  <span className="text-[7.5px] font-mono font-bold text-slate-400 uppercase tracking-widest">
+                    ACCESS | VIP PASSHOLDER | [{agentNumber || '#01'}]
+                  </span>
                 </div>
               </div>
             </div>
