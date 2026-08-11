@@ -504,10 +504,21 @@ export function TeamsPage() {
     }
   }
 
-  const filtered = teams.filter(t =>
-    t.name.toLowerCase().includes(search.toLowerCase()) ||
-    t.college?.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = teams.filter(t => {
+    const q = search.toLowerCase().trim()
+    if (!q) return true
+    return (
+      t.name.toLowerCase().includes(q) ||
+      (t.college && t.college.toLowerCase().includes(q)) ||
+      (t.projectTitle && t.projectTitle.toLowerCase().includes(q)) ||
+      (t.tableNumber && t.tableNumber.toLowerCase().includes(q)) ||
+      t.members.some(m =>
+        (m.email && m.email.toLowerCase().includes(q)) ||
+        (m.name && m.name.toLowerCase().includes(q)) ||
+        (m.phone && m.phone.toLowerCase().includes(q))
+      )
+    )
+  })
 
   const stats = [
     { label: 'Total Teams',      value: teams.length,                                       icon: Users,  color: '#E83C00', bg: 'rgba(232,60,0,0.07)',    border: 'rgba(232,60,0,0.15)'    },
@@ -550,8 +561,8 @@ export function TeamsPage() {
                 <input
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  placeholder="Search teams or college…"
-                  className="pl-9 pr-4 py-2 text-sm rounded-xl outline-none transition-all w-64 text-white placeholder:text-slate-500"
+                  placeholder="Search by team, Gmail/email, name, phone, table…"
+                  className="pl-9 pr-4 py-2 text-sm rounded-xl outline-none transition-all w-72 sm:w-80 text-white placeholder:text-slate-500"
                   style={{ border: '1px solid rgba(255,255,255,0.1)', background: '#111' }}
                   onFocus={e => { e.currentTarget.style.borderColor = 'rgba(232,60,0,0.5)'; e.currentTarget.style.background = '#1a1a1a' }}
                   onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.background = '#111' }}
@@ -701,6 +712,24 @@ export function TeamsPage() {
                             </>
                           )}
                         </div>
+                        {search.trim() !== '' && (
+                          (() => {
+                            const q = search.toLowerCase().trim()
+                            const matchedMember = team.members.find(m =>
+                              (m.email && m.email.toLowerCase().includes(q)) ||
+                              (m.name && m.name.toLowerCase().includes(q))
+                            )
+                            if (matchedMember) {
+                              return (
+                                <div className="text-[10px] text-amber-400 font-medium flex items-center gap-1 mt-0.5 truncate">
+                                  <span className="opacity-75">Matched:</span>
+                                  <span className="font-bold">{matchedMember.name} ({matchedMember.email})</span>
+                                </div>
+                              )
+                            }
+                            return null
+                          })()
+                        )}
                       </div>
                     </div>
 
