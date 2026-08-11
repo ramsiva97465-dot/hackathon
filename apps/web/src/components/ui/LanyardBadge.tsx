@@ -84,11 +84,7 @@ export function LanyardBadge({
           ctx.rotate(-0.066)
           ctx.translate(-512 * scaleX, -512 * scaleY)
 
-          // 3. WIPE OUT hardcoded template text ("ALEX CHEN", "SPEAKER", "SAN FRANCISCO") with solid card matte black
-          ctx.fillStyle = '#12141A'
-          ctx.fillRect(360 * scaleX, 570 * scaleY, 340 * scaleX, 235 * scaleY)
-
-          // 4. Render Dynamic Participant Information in Exact Card Alignment
+          // 3. Render Dynamic Participant Information in Exact 3D Card Alignment
           ctx.textAlign = 'left'
 
           // Participant Name
