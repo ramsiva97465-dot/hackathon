@@ -227,14 +227,14 @@ export function LanyardBadge({
       ctx.roundRect(165, 580, 420, 6, 3)
       ctx.fill()
 
-      // Date & Location Section (Exact Screenshot 2)
+      // Date & Venue Location Section
       ctx.fillStyle = '#FFFFFF'
-      ctx.font = '900 22px sans-serif'
-      ctx.fillText('JUNE 15-18, 2026', 165, 620)
+      ctx.font = '900 20px sans-serif'
+      ctx.fillText('SATURDAY, 5 SEP 2026', 165, 620)
 
       ctx.fillStyle = '#D4AF37'
-      ctx.font = '900 15px sans-serif'
-      ctx.fillText('SAN FRANCISCO, CA', 165, 645)
+      ctx.font = '900 14px sans-serif'
+      ctx.fillText('OLIVE PUBLIC SCHOOL, CHENNAI', 165, 645)
 
       // 9. White Barcode Container Box
       const barX = 165
@@ -447,13 +447,13 @@ export function LanyardBadge({
                 {/* Solid Orange Horizontal Accent Bar (Exact Screenshot 2) */}
                 <div className="h-[3px] w-full bg-[#E83C00] rounded-full my-1.5" />
 
-                {/* Date & Location Section (Exact Screenshot 2) */}
+                {/* Date & Venue Location Section */}
                 <div className="space-y-0.5 pt-1">
-                  <p className="text-sm font-black text-white uppercase tracking-widest leading-none">
-                    JUNE 15-18, 2026
+                  <p className="text-[12px] font-black text-white uppercase tracking-widest leading-none">
+                    SATURDAY, 5 SEP 2026
                   </p>
-                  <p className="text-[9.5px] font-extrabold text-[#D4AF37] uppercase tracking-wider">
-                    SAN FRANCISCO, CA
+                  <p className="text-[8.5px] font-extrabold text-[#D4AF37] uppercase tracking-wider truncate">
+                    OLIVE PUBLIC SCHOOL, CHENNAI
                   </p>
                 </div>
               </div>
