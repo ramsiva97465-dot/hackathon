@@ -53,181 +53,179 @@ export function LanyardBadge({
   const rotateY = useTransform(springX, [-120, 120], [-25, 25])
   const rotateX = useTransform(springY, [-120, 120], [20, -20])
 
-  const handleDownloadPass = () => {
+  const handleDownloadPass = async () => {
     try {
+      toast.loading('Generating HD VIP Pass PNG...')
       const canvas = document.createElement('canvas')
-      canvas.width = 750
-      canvas.height = 1150
+      canvas.width = 1200
+      canvas.height = 1600
       const ctx = canvas.getContext('2d')
       if (!ctx) return
 
-      // Smooth rendering
       ctx.imageSmoothingEnabled = true
+      ctx.imageSmoothingQuality = 'high'
 
-      // 1. Transparent / Warm Background
-      ctx.fillStyle = '#F4ECE1'
-      ctx.fillRect(0, 0, 750, 1150)
+      // 1. Warm Studio Studio Backdrop (Matching reference photo background)
+      const bgGrad = ctx.createRadialGradient(600, 500, 50, 600, 800, 900)
+      bgGrad.addColorStop(0, '#FAF5EE')
+      bgGrad.addColorStop(0.5, '#E8DDD0')
+      bgGrad.addColorStop(1, '#D5C4B0')
+      ctx.fillStyle = bgGrad
+      ctx.fillRect(0, 0, 1200, 1600)
 
-      // 2. Lanyard Fabric Strap (Top center)
+      // Add subtle texture noise / vignette overlay
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.04)'
+      ctx.fillRect(0, 0, 1200, 1600)
+
+      // 2. Lanyard Black Woven Strap (Hanging from top center)
       ctx.fillStyle = '#12141A'
-      ctx.fillRect(350, 0, 50, 120)
+      ctx.fillRect(555, 0, 90, 200)
       ctx.fillStyle = '#E83C00'
-      ctx.fillRect(374, 0, 2, 120) // Stitching line
+      ctx.fillRect(598, 0, 4, 200) // Brand Orange stitching line
 
-      // 3. Plain Black Metallic Clamp & Swivel Snap Hook
+      // 3. Black Matte Clamp Sleeve
       ctx.fillStyle = '#1A1A1D'
-      ctx.fillRect(335, 90, 80, 20)
-      ctx.strokeStyle = '#334155'
-      ctx.lineWidth = 1.5
-      ctx.strokeRect(335, 90, 80, 20)
-
-      // Swivel ring & snap hook
-      ctx.strokeStyle = '#475569'
-      ctx.lineWidth = 4
       ctx.beginPath()
-      ctx.arc(375, 128, 10, 0, Math.PI * 2)
+      ctx.roundRect(535, 150, 130, 40, 6)
+      ctx.fill()
+      ctx.strokeStyle = '#334155'
+      ctx.lineWidth = 2
+      ctx.stroke()
+
+      // Clamp Brand Text
+      ctx.fillStyle = '#D4AF37'
+      ctx.font = '900 16px sans-serif'
+      ctx.textAlign = 'center'
+      ctx.fillText('SNAPSERVE', 600, 176)
+
+      // 4. Black Metallic Swivel Hook Assembly
+      ctx.strokeStyle = '#475569'
+      ctx.lineWidth = 7
+      ctx.beginPath()
+      ctx.arc(600, 215, 18, 0, Math.PI * 2)
       ctx.stroke()
 
       ctx.fillStyle = '#1E293B'
-      ctx.fillRect(370, 138, 10, 25)
-      ctx.strokeRect(370, 138, 10, 25)
+      ctx.beginPath()
+      ctx.roundRect(592, 228, 16, 40, 4)
+      ctx.fill()
 
-      // 4. Card Body (Solid Dark Matte #12141A)
-      const cardX = 125
-      const cardY = 150
-      const cardW = 500
-      const cardH = 920
-      const cardR = 36
+      // 5. Main Card Container (Solid Dark Matte #12141A)
+      const cardX = 200
+      const cardY = 250
+      const cardW = 800
+      const cardH = 1250
+      const cardR = 56
+
+      ctx.save()
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.55)'
+      ctx.shadowBlur = 60
+      ctx.shadowOffsetY = 30
 
       ctx.fillStyle = '#12141A'
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.45)'
-      ctx.shadowBlur = 40
-      ctx.shadowOffsetY = 20
-
-      // Rounded rectangle card path
       ctx.beginPath()
       ctx.roundRect(cardX, cardY, cardW, cardH, cardR)
       ctx.fill()
+      ctx.restore()
 
-      // Reset shadow for internal drawings
-      ctx.shadowColor = 'transparent'
       ctx.strokeStyle = '#1E293B'
-      ctx.lineWidth = 2
-      ctx.stroke()
-
-      // 5. Punch Hole at Top Center of Card
-      ctx.fillStyle = '#0B0F17'
+      ctx.lineWidth = 3
       ctx.beginPath()
-      ctx.arc(375, 178, 10, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.strokeStyle = '#334155'
-      ctx.lineWidth = 2
+      ctx.roundRect(cardX, cardY, cardW, cardH, cardR)
       ctx.stroke()
 
-      // 6. Card Header Text (Exact Screenshot 2 Sans-Serif Typography)
+      // 6. Card Punch Hole at Top Center
+      ctx.fillStyle = '#FAF8F5'
+      ctx.beginPath()
+      ctx.arc(600, 298, 16, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.strokeStyle = '#0F1117'
+      ctx.lineWidth = 3
+      ctx.stroke()
+
+      // 7. Card Header Text (Exact Reference Photo Typography)
       ctx.textAlign = 'left'
       ctx.fillStyle = '#FFFFFF'
-      ctx.font = '900 16px sans-serif'
-      ctx.fillText('SNAPSERVE AI x VOBIZ AI VOICE 2026', 165, 225)
+      ctx.font = '900 24px sans-serif'
+      ctx.fillText('SNAPSERVE AI x VOBIZ AI VOICE 2026', 265, 360)
 
       ctx.fillStyle = '#D4AF37'
-      ctx.font = '900 15px sans-serif'
-      ctx.fillText('TECH INNOVATION SUMMIT', 165, 248)
+      ctx.font = '900 22px sans-serif'
+      ctx.fillText('TECH INNOVATION SUMMIT', 265, 395)
 
-      // Divider line under header
-      ctx.strokeStyle = '#1E293B'
-      ctx.lineWidth = 1.5
-      ctx.beginPath()
-      ctx.moveTo(155, 265)
-      ctx.lineTo(595, 265)
-      ctx.stroke()
-
-      // 7. Hero VIP & AI Microchip Graphic
-      // Big Metallic Gold VIP
-      ctx.textAlign = 'left'
+      // 8. Hero VIP & SnapServe Logo Mark
       ctx.fillStyle = '#D4AF37'
-      ctx.font = '900 84px sans-serif'
-      ctx.fillText('VIP', 165, 360)
+      ctx.font = '900 135px sans-serif'
+      ctx.fillText('VIP', 265, 545)
 
       ctx.fillStyle = '#94A3B8'
-      ctx.font = 'bold 14px monospace'
+      ctx.font = 'bold 20px monospace'
       const formattedTable = tableNumber ? (tableNumber.toUpperCase().startsWith('T-') ? tableNumber.toUpperCase() : `TABLE ${tableNumber}`) : 'TABLE T-01'
-      ctx.fillText(formattedTable, 170, 390)
+      ctx.fillText(formattedTable, 270, 590)
 
-      // AI Microchip Graphic (Right)
-      const chipX = 460
-      const chipY = 295
-      const chipW = 100
-      const chipH = 100
+      // Load & Draw Exact SnapServe Logo Mark Image
+      await new Promise<void>((resolve) => {
+        const logoImg = new Image()
+        logoImg.src = '/logos/snapserve-mark.svg'
+        logoImg.onload = () => {
+          ctx.drawImage(logoImg, 760, 450, 100, 100)
+          resolve()
+        }
+        logoImg.onerror = () => {
+          // Fallback if image fails to load
+          ctx.fillStyle = '#FFFFFF'
+          ctx.fillRect(760, 450, 100, 24)
+          ctx.fillStyle = '#94A3B8'
+          ctx.fillRect(780, 485, 100, 24)
+          ctx.fillStyle = '#64748B'
+          ctx.fillRect(800, 520, 80, 24)
+          resolve()
+        }
+      })
 
-      // Glowing rays background
-      const grad = ctx.createRadialGradient(chipX + 50, chipY + 50, 5, chipX + 50, chipY + 50, 60)
-      // 7. Clean Frameless SnapServe Brand Mark (No yellow borders or boxes)
-      const markX = 485
-      const markY = 295
-
-      // Top Pill
-      ctx.fillStyle = '#F8FAFC'
-      ctx.beginPath()
-      ctx.roundRect(markX, markY, 70, 18, 9)
-      ctx.fill()
-
-      // Middle Pill
-      ctx.fillStyle = '#94A3B8'
-      ctx.beginPath()
-      ctx.roundRect(markX + 12, markY + 25, 70, 18, 9)
-      ctx.fill()
-
-      // Bottom Pill
-      ctx.fillStyle = '#64748B'
-      ctx.beginPath()
-      ctx.roundRect(markX + 24, markY + 50, 58, 18, 9)
-      ctx.fill()
-
-      // 8. Participant Info Section
+      // 9. Participant Info Stack (Exact Reference Photo Mapping)
+      // Participant Name
       ctx.textAlign = 'left'
-
-      // Name
       ctx.fillStyle = '#FFFFFF'
-      ctx.font = '900 38px sans-serif'
-      ctx.fillText(participantName.toUpperCase(), 165, 475)
+      ctx.font = '900 62px sans-serif'
+      ctx.fillText(participantName.toUpperCase(), 265, 720)
 
-      // Speaker / Role
+      // Speaker / Member Role
       ctx.fillStyle = '#D4AF37'
-      ctx.font = '900 17px sans-serif'
-      ctx.fillText((memberRole || 'TEAM LEAD').toUpperCase(), 165, 510)
+      ctx.font = '900 26px sans-serif'
+      ctx.fillText((memberRole || 'TEAM LEAD').toUpperCase(), 265, 768)
 
       // Subtitle / Track
       ctx.fillStyle = '#CBD5E1'
-      ctx.font = '700 15px sans-serif'
-      ctx.fillText('AI குரல் • VOICE FOR TAMIL NADU', 165, 535)
+      ctx.font = '700 22px sans-serif'
+      ctx.fillText('AI குரல் • VOICE FOR TAMIL NADU', 265, 805)
 
       // Team Name
       ctx.fillStyle = '#E83C00'
-      ctx.font = '900 16px sans-serif'
-      ctx.fillText(teamName.toUpperCase(), 165, 560)
+      ctx.font = '900 24px sans-serif'
+      ctx.fillText(teamName.toUpperCase(), 265, 842)
 
-      // Solid Orange Horizontal Accent Bar
+      // Solid Brand Orange Horizontal Accent Bar
       ctx.fillStyle = '#E83C00'
       ctx.beginPath()
-      ctx.roundRect(165, 580, 420, 6, 3)
+      ctx.roundRect(265, 875, 670, 8, 4)
       ctx.fill()
 
-      // Date & Venue Location Section
+      // 10. Date & Venue Location Section
       ctx.fillStyle = '#FFFFFF'
-      ctx.font = '900 20px sans-serif'
-      ctx.fillText('SATURDAY, 5 SEP 2026', 165, 620)
+      ctx.font = '900 32px sans-serif'
+      ctx.fillText('SATURDAY, 5 SEP 2026', 265, 940)
 
       ctx.fillStyle = '#D4AF37'
-      ctx.font = '900 14px sans-serif'
-      ctx.fillText('OLIVE PUBLIC SCHOOL, CHENNAI', 165, 645)
+      ctx.font = '900 22px sans-serif'
+      ctx.fillText('OLIVE PUBLIC SCHOOL, CHENNAI', 265, 980)
 
-      // 9. White Barcode Container Box
-      const barX = 165
-      const barY = 740
-      const barW = 420
-      const barH = 140
-      const barR = 24
+      // 11. White Barcode Container Box
+      const barX = 265
+      const barY = 1040
+      const barW = 670
+      const barH = 200
+      const barR = 36
 
       ctx.fillStyle = '#FFFFFF'
       ctx.beginPath()
@@ -235,37 +233,39 @@ export function LanyardBadge({
       ctx.fill()
 
       // Barcode lines
-      const lineXStart = 205
-      const lineYStart = 760
-      const barHeights = 75
-      const widths = [4, 2, 5, 2, 6, 2, 4, 5, 2, 3, 6, 2, 4, 3, 2, 5, 2, 4, 6, 2, 5, 2, 4, 6]
+      const lineXStart = 330
+      const lineYStart = 1070
+      const barHeights = 100
+      const widths = [6, 3, 7, 3, 9, 3, 6, 8, 3, 4, 9, 3, 6, 4, 3, 8, 3, 6, 9, 3, 8, 3, 6, 9]
 
       ctx.fillStyle = '#000000'
       let currentX = lineXStart
       widths.forEach((w) => {
         ctx.fillRect(currentX, lineYStart, w, barHeights)
-        currentX += w + 6
+        currentX += w + 9
       })
 
       // Barcode numeric string
       ctx.textAlign = 'center'
-      ctx.font = 'bold 18px monospace'
-      ctx.fillText('9  781234  567897', 375, 862)
+      ctx.font = 'bold 26px monospace'
+      ctx.fillText('9  781234  567897', 600, 1210)
 
       // Footer Access Marker
       ctx.fillStyle = '#94A3B8'
-      ctx.font = 'bold 13px monospace'
-      ctx.fillText(`ACCESS | VIP PASSHOLDER | [${agentNumber || '#0117'}]`, 375, 915)
+      ctx.font = 'bold 18px monospace'
+      ctx.fillText(`ACCESS | VIP PASSHOLDER | [${agentNumber || '#0117'}]`, 600, 1430)
 
-      // Download PNG trigger
+      // 12. Trigger Download PNG
       const image = canvas.toDataURL('image/png')
       const link = document.createElement('a')
       link.href = image
-      link.download = `SnapServe_VIP_Pass_${teamName.replace(/\s+/g, '_')}.png`
+      link.download = `SnapServe_VIP_Pass_${participantName.replace(/\s+/g, '_')}.png`
       link.click()
-      toast.success('Downloaded HD Screenshot 2 VIP Pass PNG!')
+      toast.dismiss()
+      toast.success('Downloaded Ultra-HD VIP Pass PNG!')
     } catch (err) {
       console.error(err)
+      toast.dismiss()
       toast.error('Could not download pass image.')
     }
   }
