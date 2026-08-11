@@ -74,17 +74,12 @@ export function LanyardBadge({
       ctx.fillStyle = '#E83C00'
       ctx.fillRect(374, 0, 2, 120) // Stitching line
 
-      // 3. Black Clamp & Swivel Snap Hook
-      // Clamp tag
-      ctx.fillStyle = '#121212'
-      ctx.fillRect(330, 90, 90, 25)
-      ctx.strokeStyle = '#D4AF37'
+      // 3. Plain Black Metallic Clamp & Swivel Snap Hook
+      ctx.fillStyle = '#1A1A1D'
+      ctx.fillRect(335, 90, 80, 20)
+      ctx.strokeStyle = '#334155'
       ctx.lineWidth = 1.5
-      ctx.strokeRect(330, 90, 90, 25)
-      ctx.fillStyle = '#D4AF37'
-      ctx.font = 'black 11px monospace'
-      ctx.textAlign = 'center'
-      ctx.fillText('SNAPSERVE', 375, 107)
+      ctx.strokeRect(335, 90, 80, 20)
 
       // Swivel ring & snap hook
       ctx.strokeStyle = '#475569'
@@ -338,12 +333,8 @@ export function LanyardBadge({
       >
         {/* ─── METALLIC CLAMP & SWIVEL HOOK ASSEMBLY (Exact Screenshot 2) ─── */}
         <div className="flex flex-col items-center relative z-20 shrink-0">
-          {/* Black Matte Clamp Sleeve with Gold SNAPSERVE Brand */}
-          <div className="w-10 h-7 bg-[#1A1A1D] border border-slate-700/80 rounded-sm shadow-md flex items-center justify-center p-1 z-20">
-            <span className="text-[7.5px] font-mono font-black text-[#D4AF37] tracking-widest uppercase block leading-none">
-              SNAPSERVE
-            </span>
-          </div>
+          {/* Black Matte Metallic Clamp Sleeve */}
+          <div className="w-8 h-4 bg-[#1A1A1D] border border-slate-700/80 rounded-xs shadow-md z-20" />
 
           {/* Lower Fabric Strap Section */}
           <div className="w-7 h-3 bg-gradient-to-b from-[#1A1A1D] to-slate-900 border-x border-slate-700/50 shadow-inner mt-[-1px]" />
