@@ -72,87 +72,63 @@ export function LanyardBadge({
           ctx.imageSmoothingEnabled = true
           ctx.imageSmoothingQuality = 'high'
 
-          // 1. Draw Realistic Studio Photograph Base Template
+          // 1. Draw Base Studio Photograph Reference Template
           ctx.drawImage(templateImg, 0, 0, w, h)
 
           const scaleX = w / 1024
           const scaleY = h / 1024
 
-          // 2. Dynamic Participant Data Overlay (Clean & Crisp - No Ghosting)
+          // 2. Rotate coordinate system matching exact 3D tilt angle of card (~ -3.8 degrees CCW)
+          ctx.save()
+          ctx.translate(512 * scaleX, 512 * scaleY)
+          ctx.rotate(-0.066)
+          ctx.translate(-512 * scaleX, -512 * scaleY)
+
+          // 3. WIPE OUT hardcoded template text ("ALEX CHEN", "SPEAKER", "SAN FRANCISCO") with solid card matte black
+          ctx.fillStyle = '#12141A'
+          ctx.fillRect(360 * scaleX, 570 * scaleY, 340 * scaleX, 235 * scaleY)
+
+          // 4. Render Dynamic Participant Information in Exact Card Alignment
           ctx.textAlign = 'left'
 
           // Participant Name
           ctx.fillStyle = '#FFFFFF'
-          ctx.font = '900 48px sans-serif'
-          ctx.fillText(participantName.toUpperCase(), 245 * scaleX, 585 * scaleY)
+          ctx.font = '900 36px sans-serif'
+          ctx.fillText(participantName.toUpperCase(), 375 * scaleX, 615 * scaleY)
 
           // Speaker / Member Role
           ctx.fillStyle = '#D4AF37'
-          ctx.font = '900 22px sans-serif'
-          ctx.fillText((memberRole || 'TEAM LEAD').toUpperCase(), 245 * scaleX, 622 * scaleY)
+          ctx.font = '900 17px sans-serif'
+          ctx.fillText((memberRole || 'TEAM LEAD').toUpperCase(), 375 * scaleX, 645 * scaleY)
 
-          // Track Subtitle: AI குரல் • VOICE FOR TAMIL NADU
+          // Subtitle Track: AI குரல் • VOICE FOR TAMIL NADU
           ctx.fillStyle = '#CBD5E1'
-          ctx.font = '700 17px sans-serif'
-          ctx.fillText('AI குரல் • VOICE FOR TAMIL NADU', 245 * scaleX, 652 * scaleY)
+          ctx.font = '700 14px sans-serif'
+          ctx.fillText('AI குரல் • VOICE FOR TAMIL NADU', 375 * scaleX, 670 * scaleY)
 
           // Team Name
           ctx.fillStyle = '#E83C00'
-          ctx.font = '900 18px sans-serif'
-          ctx.fillText(teamName.toUpperCase(), 245 * scaleX, 680 * scaleY)
+          ctx.font = '900 15px sans-serif'
+          ctx.fillText(teamName.toUpperCase(), 375 * scaleX, 692 * scaleY)
 
-          // Solid Brand Orange Accent Line
+          // Solid Brand Orange Horizontal Accent Line
           ctx.fillStyle = '#E83C00'
           ctx.beginPath()
-          ctx.roundRect(245 * scaleX, 700 * scaleY, 530 * scaleX, 6 * scaleY, 3)
+          ctx.roundRect(375 * scaleX, 705 * scaleY, 320 * scaleX, 5 * scaleY, 2.5)
           ctx.fill()
 
           // Date & Venue Location
           ctx.fillStyle = '#FFFFFF'
-          ctx.font = '900 24px sans-serif'
-          ctx.fillText('SATURDAY, 5 SEP 2026', 245 * scaleX, 745 * scaleY)
+          ctx.font = '900 18px sans-serif'
+          ctx.fillText('SATURDAY, 5 SEP 2026', 375 * scaleX, 740 * scaleY)
 
           ctx.fillStyle = '#D4AF37'
-          ctx.font = '900 17px sans-serif'
-          ctx.fillText('OLIVE PUBLIC SCHOOL, CHENNAI', 245 * scaleX, 775 * scaleY)
+          ctx.font = '900 13px sans-serif'
+          ctx.fillText('OLIVE PUBLIC SCHOOL, CHENNAI', 375 * scaleX, 762 * scaleY)
 
-          // White Barcode Container Box
-          const barX = 245 * scaleX
-          const barY = 810 * scaleY
-          const barW = 530 * scaleX
-          const barH = 145 * scaleY
-          const barR = 24 * scaleX
+          ctx.restore()
 
-          ctx.fillStyle = '#FFFFFF'
-          ctx.beginPath()
-          ctx.roundRect(barX, barY, barW, barH, barR)
-          ctx.fill()
-
-          // Barcode lines
-          const lineXStart = 295 * scaleX
-          const lineYStart = 830 * scaleY
-          const barHeights = 75 * scaleY
-          const widths = [5, 2, 6, 2, 7, 2, 5, 6, 2, 3, 7, 2, 5, 3, 2, 6, 2, 5, 7, 2, 6, 2, 5, 7]
-
-          ctx.fillStyle = '#000000'
-          let currentX = lineXStart
-          widths.forEach((widthVal) => {
-            const wScaled = widthVal * scaleX
-            ctx.fillRect(currentX, lineYStart, wScaled, barHeights)
-            currentX += wScaled + 7 * scaleX
-          })
-
-          // Barcode numeric string
-          ctx.textAlign = 'center'
-          ctx.font = 'bold 20px monospace'
-          ctx.fillText('9  781234  567897', 510 * scaleX, 938 * scaleY)
-
-          // Footer Access Marker
-          ctx.fillStyle = '#94A3B8'
-          ctx.font = 'bold 13px monospace'
-          ctx.fillText(`ACCESS | VIP PASSHOLDER | [${agentNumber || '#0117'}]`, 510 * scaleX, 980 * scaleY)
-
-          // 3. Trigger Download PNG
+          // 5. Trigger Download PNG
           const image = canvas.toDataURL('image/png')
           const link = document.createElement('a')
           link.href = image
