@@ -257,8 +257,6 @@ export function LanyardBadge({
               className="absolute inset-0 w-full h-full rounded-3xl p-5 flex flex-col justify-between overflow-hidden shadow-2xl border border-slate-800"
               style={{
                 backgroundColor: '#111319',
-                backgroundImage: 'radial-gradient(#1F2430 1.2px, transparent 1.2px)',
-                backgroundSize: '14px 14px',
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden'
               }}
@@ -287,8 +285,6 @@ export function LanyardBadge({
 
                 {/* 3D Glowing AI Processor Microchip Graphic */}
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 via-slate-900 to-orange-950/40 border border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.25)] flex items-center justify-center relative overflow-hidden group">
-                  {/* Circuit Grid Lines */}
-                  <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#F59E0B_1px,transparent_1px)] [background-size:6px_6px]" />
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-300 via-amber-500 to-orange-600 border border-amber-200 shadow-md flex items-center justify-center relative z-10">
                     <span className="font-mono font-black text-slate-950 text-xs tracking-wider">AI</span>
                   </div>
@@ -382,9 +378,7 @@ export function LanyardBadge({
             <div
               className="absolute inset-0 w-full h-full rounded-3xl p-5 flex flex-col justify-between overflow-hidden shadow-2xl border border-slate-800/80"
               style={{
-                backgroundColor: '#0B0F17',
-                backgroundImage: 'radial-gradient(#1E293B 1.2px, transparent 1.2px)',
-                backgroundSize: '14px 14px',
+                backgroundColor: '#111319',
                 transform: 'rotateY(180deg)',
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden'
