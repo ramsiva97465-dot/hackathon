@@ -495,26 +495,8 @@ export function LanyardBadge({
                 </span>
               </div>
 
-              {/* Tech Stack & Wi-Fi Details */}
-              <div className="space-y-2.5 my-auto text-left relative z-10">
-                {/* Tech Stack */}
-                {techStack && techStack.length > 0 && (
-                  <div className="bg-slate-900/80 p-2.5 rounded-2xl border border-slate-800/90 space-y-1.5 shadow-2xs backdrop-blur-md">
-                    <div className="flex items-center justify-between text-[10.5px] font-extrabold text-white font-sans">
-                      <div className="flex items-center gap-1.5">
-                        <Layers size={12} className="text-[#D4AF37]" /> Submitted Tech Stack
-                      </div>
-                      <span className="text-[8px] font-mono font-bold text-slate-500">VOICE AI</span>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 pt-0.5">
-                      {techStack.map((tech, i) => (
-                        <span key={i} className="px-2.5 py-1 rounded-lg bg-slate-950/90 border border-slate-700/70 text-[9px] font-sans font-bold text-white shadow-2xs">
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
+              {/* Wi-Fi Details & Check-In */}
+              <div className="space-y-3.5 my-auto text-left relative z-10">
 
                 {/* Wi-Fi Credentials Card */}
                 <div className="bg-slate-900/80 p-2.5 rounded-2xl border border-slate-800/90 space-y-1.5 shadow-2xs backdrop-blur-md">
