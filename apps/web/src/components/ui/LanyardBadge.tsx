@@ -172,7 +172,7 @@ export function LanyardBadge({
       ctx.fillStyle = grad
       ctx.fillRect(chipX - 20, chipY - 20, 140, 140)
 
-      // Outer Chip Box
+      // Clean SnapServe Logo Container
       ctx.fillStyle = '#0F172A'
       ctx.beginPath()
       ctx.roundRect(chipX, chipY, chipW, chipH, 20)
@@ -181,22 +181,12 @@ export function LanyardBadge({
       ctx.lineWidth = 2
       ctx.stroke()
 
-      // Inner Gold AI Core
-      ctx.fillStyle = '#D4AF37'
-      ctx.beginPath()
-      ctx.roundRect(chipX + 20, chipY + 20, 60, 60, 14)
-      ctx.fill()
-
-      // Draw SnapServe Logo image inside chip
+      // Draw SnapServe Logo image inside container
       const logoImg = new Image()
       logoImg.src = '/logos/snapserve-mark.svg'
       logoImg.onload = () => {
-        ctx.drawImage(logoImg, chipX + 30, chipY + 30, 40, 40)
+        ctx.drawImage(logoImg, chipX + 15, chipY + 15, 70, 70)
       }
-      ctx.fillStyle = '#0F172A'
-      ctx.font = '900 20px monospace'
-      ctx.textAlign = 'center'
-      ctx.fillText('SNAP', chipX + 50, chipY + 56)
 
       // 8. Participant Info Section
       ctx.textAlign = 'left'
@@ -414,15 +404,9 @@ export function LanyardBadge({
                   </span>
                 </div>
 
-                {/* 3D AI Microchip with Radiating Circuit Rays (Exact Screenshot 2 Graphic) */}
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 via-slate-950 to-orange-950/60 border border-amber-500/50 shadow-[0_0_25px_rgba(212,175,55,0.3)] flex items-center justify-center relative overflow-hidden group">
-                  {/* Circuit Radiating Rays */}
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.25)_0%,transparent_70%)]" />
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-300 via-amber-500 to-amber-700 border border-amber-200 shadow-md flex items-center justify-center p-1 relative z-10">
-                    <SnapServeMark className="w-7 h-7 object-contain drop-shadow-xs" />
-                  </div>
-                  {/* Circuit Rays Corner Markers */}
-                  <div className="absolute inset-1 border border-dashed border-amber-400/40 rounded-xl" />
+                {/* Clean SnapServe Logo Container */}
+                <div className="w-14 h-14 rounded-2xl bg-[#0F172A] border border-amber-500/50 shadow-[0_0_20px_rgba(212,175,55,0.25)] flex items-center justify-center p-2.5 relative group">
+                  <SnapServeMark className="w-9 h-9 object-contain drop-shadow-sm" />
                 </div>
               </div>
 
