@@ -56,108 +56,245 @@ export function LanyardBadge({
   const handleDownloadPass = () => {
     try {
       const canvas = document.createElement('canvas')
-      canvas.width = 600
-      canvas.height = 900
+      canvas.width = 750
+      canvas.height = 1150
       const ctx = canvas.getContext('2d')
       if (!ctx) return
 
-      // Card background
+      // Smooth rendering
+      ctx.imageSmoothingEnabled = true
+
+      // 1. Transparent / Warm Background
       ctx.fillStyle = '#F4ECE1'
-      ctx.fillRect(0, 0, 600, 900)
+      ctx.fillRect(0, 0, 750, 1150)
 
-      // Outer border
-      ctx.strokeStyle = '#EAE4D8'
-      ctx.lineWidth = 12
-      ctx.strokeRect(20, 20, 560, 860)
-
-      // Header
+      // 2. Lanyard Fabric Strap (Top center)
+      ctx.fillStyle = '#12141A'
+      ctx.fillRect(350, 0, 50, 120)
       ctx.fillStyle = '#E83C00'
-      ctx.font = 'bold 22px sans-serif'
-      ctx.fillText('SNAPSERVE ★ VOBIZ AI VOICE 2026', 45, 75)
+      ctx.fillRect(374, 0, 2, 120) // Stitching line
 
-      ctx.fillStyle = '#64748B'
-      ctx.font = 'bold 15px sans-serif'
-      ctx.fillText('OFFICIAL PARTICIPANT PASS', 45, 105)
+      // 3. Black Clamp & Swivel Snap Hook
+      // Clamp tag
+      ctx.fillStyle = '#121212'
+      ctx.fillRect(330, 90, 90, 25)
+      ctx.strokeStyle = '#D4AF37'
+      ctx.lineWidth = 1.5
+      ctx.strokeRect(330, 90, 90, 25)
+      ctx.fillStyle = '#D4AF37'
+      ctx.font = 'black 11px monospace'
+      ctx.textAlign = 'center'
+      ctx.fillText('SNAPSERVE', 375, 107)
 
-      // Table & Agent Pills
-      ctx.fillStyle = '#0F172A'
-      ctx.fillRect(45, 135, 130, 36)
-      ctx.fillStyle = '#FFFFFF'
-      ctx.font = 'bold 15px monospace'
-      ctx.fillText(`TABLE ${tableNumber || '01'}`, 58, 158)
+      // Swivel ring & snap hook
+      ctx.strokeStyle = '#475569'
+      ctx.lineWidth = 4
+      ctx.beginPath()
+      ctx.arc(375, 128, 10, 0, Math.PI * 2)
+      ctx.stroke()
 
-      ctx.fillStyle = '#E83C00'
-      ctx.fillRect(190, 135, 130, 36)
-      ctx.fillStyle = '#FFFFFF'
-      ctx.font = 'bold 15px monospace'
-      ctx.fillText(`AGENT ${agentNumber || '#01'}`, 202, 158)
+      ctx.fillStyle = '#1E293B'
+      ctx.fillRect(370, 138, 10, 25)
+      ctx.strokeRect(370, 138, 10, 25)
 
-      // Member & Team Details
-      ctx.fillStyle = '#94A3B8'
-      ctx.font = 'bold 14px sans-serif'
-      ctx.fillText('TEAM NAME', 45, 225)
-      ctx.fillStyle = '#E83C00'
-      ctx.font = 'bold 36px sans-serif'
-      ctx.fillText(teamName, 45, 268)
+      // 4. Card Body (Solid Dark Matte #12141A)
+      const cardX = 125
+      const cardY = 150
+      const cardW = 500
+      const cardH = 920
+      const cardR = 36
 
-      ctx.fillStyle = '#94A3B8'
-      ctx.font = 'bold 14px sans-serif'
-      ctx.fillText('TEAM LEADER', 45, 325)
-      ctx.fillStyle = '#0F172A'
-      ctx.font = 'bold 28px sans-serif'
-      ctx.fillText(participantName, 45, 362)
+      ctx.fillStyle = '#12141A'
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.45)'
+      ctx.shadowBlur = 40
+      ctx.shadowOffsetY = 20
 
-      ctx.fillStyle = '#64748B'
-      ctx.font = 'bold 18px sans-serif'
-      ctx.fillText(trackName, 45, 395)
+      // Rounded rectangle card path
+      ctx.beginPath()
+      ctx.roundRect(cardX, cardY, cardW, cardH, cardR)
+      ctx.fill()
 
-      // Project Details Box
-      ctx.fillStyle = '#FFFFFF'
-      ctx.fillRect(45, 430, 510, 260)
-      ctx.strokeStyle = '#EAE4D8'
+      // Reset shadow for internal drawings
+      ctx.shadowColor = 'transparent'
+      ctx.strokeStyle = '#1E293B'
       ctx.lineWidth = 2
-      ctx.strokeRect(45, 430, 510, 260)
+      ctx.stroke()
+
+      // 5. Punch Hole at Top Center of Card
+      ctx.fillStyle = '#0B0F17'
+      ctx.beginPath()
+      ctx.arc(375, 178, 10, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.strokeStyle = '#334155'
+      ctx.lineWidth = 2
+      ctx.stroke()
+
+      // 6. Card Header Text
+      ctx.textAlign = 'center'
+      ctx.fillStyle = '#E2E8F0'
+      ctx.font = '900 13px monospace'
+      ctx.fillText('SNAPSERVE AI x VOBIZ AI VOICE 2026', 375, 220)
+
+      ctx.fillStyle = '#D4AF37'
+      ctx.font = '900 15px sans-serif'
+      ctx.fillText('TECH INNOVATION SUMMIT', 375, 245)
+
+      // Divider line under header
+      ctx.strokeStyle = '#1E293B'
+      ctx.lineWidth = 1.5
+      ctx.beginPath()
+      ctx.moveTo(155, 265)
+      ctx.lineTo(595, 265)
+      ctx.stroke()
+
+      // 7. Hero VIP & AI Microchip Graphic
+      // Big Metallic Gold VIP
+      ctx.textAlign = 'left'
+      ctx.fillStyle = '#D4AF37'
+      ctx.font = '900 84px sans-serif'
+      ctx.fillText('VIP', 165, 360)
 
       ctx.fillStyle = '#94A3B8'
-      ctx.font = 'bold 14px sans-serif'
-      ctx.fillText('PROJECT TITLE', 70, 465)
-      ctx.fillStyle = '#0F172A'
-      ctx.font = 'bold 22px sans-serif'
-      ctx.fillText(projectTitle || 'AI Agent Project', 70, 500)
+      ctx.font = 'bold 14px monospace'
+      const formattedTable = tableNumber ? (tableNumber.toUpperCase().startsWith('T-') ? tableNumber.toUpperCase() : `TABLE ${tableNumber}`) : 'TABLE T-01'
+      ctx.fillText(formattedTable, 170, 390)
 
-      ctx.fillStyle = '#94A3B8'
-      ctx.font = 'bold 14px sans-serif'
-      ctx.fillText('AGENT SYSTEM NAME', 70, 550)
-      ctx.fillStyle = '#0F172A'
-      ctx.font = 'bold 22px sans-serif'
-      ctx.fillText(agentName || 'Agent Pro', 70, 585)
+      // AI Microchip Graphic (Right)
+      const chipX = 460
+      const chipY = 295
+      const chipW = 100
+      const chipH = 100
 
-      if (agentPhoneNumber) {
-        ctx.fillStyle = '#059669'
-        ctx.font = 'bold 14px sans-serif'
-        ctx.fillText('HOTLINE NUMBER', 70, 635)
-        ctx.fillStyle = '#047857'
-        ctx.font = 'bold 20px monospace'
-        ctx.fillText(agentPhoneNumber, 70, 665)
+      // Glowing rays background
+      const grad = ctx.createRadialGradient(chipX + 50, chipY + 50, 5, chipX + 50, chipY + 50, 60)
+      grad.addColorStop(0, 'rgba(245, 158, 11, 0.35)')
+      grad.addColorStop(1, 'transparent')
+      ctx.fillStyle = grad
+      ctx.fillRect(chipX - 20, chipY - 20, 140, 140)
+
+      // Outer Chip Box
+      ctx.fillStyle = '#0F172A'
+      ctx.beginPath()
+      ctx.roundRect(chipX, chipY, chipW, chipH, 20)
+      ctx.fill()
+      ctx.strokeStyle = '#D4AF37'
+      ctx.lineWidth = 2
+      ctx.stroke()
+
+      // Inner Gold AI Core
+      ctx.fillStyle = '#D4AF37'
+      ctx.beginPath()
+      ctx.roundRect(chipX + 20, chipY + 20, 60, 60, 14)
+      ctx.fill()
+
+      ctx.fillStyle = '#0F172A'
+      ctx.font = '900 22px monospace'
+      ctx.textAlign = 'center'
+      ctx.fillText('AI', chipX + 50, chipY + 57)
+
+      // 8. Participant Info Section
+      ctx.textAlign = 'left'
+
+      // Name
+      ctx.fillStyle = '#FFFFFF'
+      ctx.font = '900 38px sans-serif'
+      ctx.fillText(participantName.toUpperCase(), 165, 475)
+
+      // Speaker / Role
+      ctx.fillStyle = '#D4AF37'
+      ctx.font = '900 17px sans-serif'
+      ctx.fillText((memberRole || 'SPEAKER').toUpperCase(), 165, 510)
+
+      // Subtitle / Track
+      ctx.fillStyle = '#CBD5E1'
+      ctx.font = '700 15px sans-serif'
+      ctx.fillText((trackName || 'PRODUCT DESIGN LEAD').toUpperCase(), 165, 535)
+
+      // Team Name
+      ctx.fillStyle = '#E83C00'
+      ctx.font = '900 16px sans-serif'
+      ctx.fillText(teamName.toUpperCase(), 165, 560)
+
+      // Solid Orange Horizontal Accent Bar
+      ctx.fillStyle = '#E83C00'
+      ctx.beginPath()
+      ctx.roundRect(165, 580, 420, 6, 3)
+      ctx.fill()
+
+      // Agent Specs Box (If present)
+      if (agentName || agentPhoneNumber) {
+        ctx.fillStyle = '#0B0F17'
+        ctx.beginPath()
+        ctx.roundRect(165, 610, 420, 100, 16)
+        ctx.fill()
+        ctx.strokeStyle = '#1E293B'
+        ctx.lineWidth = 1.5
+        ctx.stroke()
+
+        if (agentName) {
+          ctx.fillStyle = '#64748B'
+          ctx.font = '700 12px sans-serif'
+          ctx.fillText('AGENT SYSTEM', 185, 645)
+          ctx.fillStyle = '#FFFFFF'
+          ctx.font = '900 16px sans-serif'
+          ctx.textAlign = 'right'
+          ctx.fillText(agentName, 565, 645)
+        }
+
+        if (agentPhoneNumber) {
+          ctx.textAlign = 'left'
+          ctx.fillStyle = '#10B981'
+          ctx.font = '700 12px sans-serif'
+          ctx.fillText('HOTLINE', 185, 685)
+          ctx.fillStyle = '#34D399'
+          ctx.font = '900 16px monospace'
+          ctx.textAlign = 'right'
+          ctx.fillText(agentPhoneNumber, 565, 685)
+        }
       }
 
-      // Barcode Section
-      ctx.fillStyle = '#64748B'
-      ctx.font = 'bold 14px monospace'
-      ctx.fillText('★ 2026-AI-VOICE ★ SNAPSERVE HACKATHON PASS ★', 45, 750)
+      // 9. White Barcode Container Box
+      const barX = 165
+      const barY = 740
+      const barW = 420
+      const barH = 140
+      const barR = 24
 
-      // Footer
+      ctx.fillStyle = '#FFFFFF'
+      ctx.beginPath()
+      ctx.roundRect(barX, barY, barW, barH, barR)
+      ctx.fill()
+
+      // Barcode lines
+      const lineXStart = 205
+      const lineYStart = 760
+      const barHeights = 75
+      const widths = [4, 2, 5, 2, 6, 2, 4, 5, 2, 3, 6, 2, 4, 3, 2, 5, 2, 4, 6, 2, 5, 2, 4, 6]
+
+      ctx.fillStyle = '#000000'
+      let currentX = lineXStart
+      widths.forEach((w) => {
+        ctx.fillRect(currentX, lineYStart, w, barHeights)
+        currentX += w + 6
+      })
+
+      // Barcode numeric string
+      ctx.textAlign = 'center'
+      ctx.font = 'bold 18px monospace'
+      ctx.fillText('9  781234  567897', 375, 862)
+
+      // Footer Access Marker
       ctx.fillStyle = '#94A3B8'
-      ctx.font = 'bold 14px sans-serif'
-      ctx.fillText('Hosted by SnapServe.ai • Powered by Vobiz.ai', 120, 830)
+      ctx.font = 'bold 13px monospace'
+      ctx.fillText(`ACCESS | VIP PASSHOLDER | [${agentNumber || '#0117'}]`, 375, 915)
 
-      // Download trigger
+      // Download PNG trigger
       const image = canvas.toDataURL('image/png')
       const link = document.createElement('a')
       link.href = image
-      link.download = `SnapServe_Pass_${teamName.replace(/\s+/g, '_')}.png`
+      link.download = `SnapServe_VIP_Pass_${teamName.replace(/\s+/g, '_')}.png`
       link.click()
-      toast.success('Official Pass image downloaded!')
+      toast.success('Downloaded HD Screenshot 2 VIP Pass PNG!')
     } catch (err) {
       console.error(err)
       toast.error('Could not download pass image.')
