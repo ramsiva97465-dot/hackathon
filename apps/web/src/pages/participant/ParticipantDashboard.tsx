@@ -10,6 +10,7 @@ import {
 import { BrandLockup } from '@/components/brand/BrandLogos'
 import { LanyardBadge } from '@/components/ui/LanyardBadge'
 import { ParticipantPlaybook } from '@/components/participant/ParticipantPlaybook'
+import { ParticipantCertificate } from '@/components/participant/ParticipantCertificate'
 
 // ─── Types ──────────────────────────────────────────────────────────────
 // ────
@@ -56,7 +57,7 @@ type LeaderboardEntry = {
 
 // ─── Tab Config ──────────────────────────────────────────────────────────────
 
-type Tab = 'home' | 'playbook' | 'submission' | 'bonus' | 'leaderboard'
+type Tab = 'home' | 'playbook' | 'submission' | 'bonus' | 'leaderboard' | 'certificate'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'home', label: 'Home', icon: <Home size={16} /> },
@@ -64,6 +65,7 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'submission', label: 'Submission', icon: <FileText size={16} /> },
   { id: 'bonus', label: 'Bonus Pts', icon: <Star size={16} /> },
   { id: 'leaderboard', label: 'Leaderboard', icon: <Trophy size={16} /> },
+  { id: 'certificate', label: 'Certificate', icon: <Award size={16} /> },
 ]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -399,7 +401,7 @@ export function ParticipantDashboard() {
 
     const agentDigits = agentPhoneNumber.replace(/\D/g, '')
     if (agentDigits.length < 10) {
-      toast.error('Please enter a valid 10-digit phone number (e.g. +91987654321).')
+      toast.error('Please enter a valid 10-digit phone number (e.g. +91 9876543210).')
       return
     }
 
@@ -407,7 +409,7 @@ export function ParticipantDashboard() {
 
     try {
       setSaving(true)
-      const techStack = [
+      const techStack = [ 
         `STT: ${sttProvider}`,
         `LLM: ${llmProvider}`,
         `TTS: ${ttsProvider}`
@@ -705,7 +707,7 @@ export function ParticipantDashboard() {
         {/* Main Content */}
         <main className="flex-1 min-w-0 pb-24 md:pb-0">
           <AnimatePresence mode="wait">
-            <motion.div 
+            <motion.div
               key={activeTab}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1569,6 +1571,17 @@ export function ParticipantDashboard() {
                 </div>
               )}
 
+              {/* ── CERTIFICATE TAB ── */}
+              {activeTab === 'certificate' && (
+                <ParticipantCertificate
+                  participantName={data.members?.[0]?.name || 'Participant Name'}
+                  teamName={data.name}
+                  trackName={data.track?.name || 'Voice AI Track'}
+                  certificateId={`CERT-2026-${data.id ? data.id.substring(0, 6).toUpperCase() : 'SS-8891'}`}
+                  issueDate="September 5, 2026"
+                />
+              )}
+
             </motion.div>
           </AnimatePresence>
         </main>
@@ -1822,11 +1835,10 @@ function SocialCard({
   }
 
   return (
-    <div className={`p-4 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 ${
-      followed
-        ? 'bg-emerald-50/70 border-emerald-300 shadow-xs'
-        : 'bg-white border-[#EAE4D8] hover:border-orange-300 hover:shadow-sm'
-    }`}>
+    <div className={`p-4 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 ${followed
+      ? 'bg-emerald-50/70 border-emerald-300 shadow-xs'
+      : 'bg-white border-[#EAE4D8] hover:border-orange-300 hover:shadow-sm'
+      }`}>
       <div className="flex items-center gap-3 min-w-0 flex-1">
         {/* Brand Icon Box */}
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${brandIconBg[color]}`}>
@@ -1836,11 +1848,10 @@ function SocialCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <h4 className="text-xs font-black text-slate-900">{platform}</h4>
-            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border font-mono ${
-              followed
-                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                : 'bg-orange-50 text-[#E83C00] border-orange-200'
-            }`}>
+            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border font-mono ${followed
+              ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+              : 'bg-orange-50 text-[#E83C00] border-orange-200'
+              }`}>
               +{pts} Pts
             </span>
           </div>
@@ -1868,11 +1879,10 @@ function SocialCard({
             if (!disabled) onToggle(!followed)
           }}
           disabled={disabled}
-          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-50 ${
-            followed
-              ? 'bg-emerald-600 text-white shadow-xs hover:bg-emerald-700'
-              : 'bg-[#E83C00] text-white shadow-xs hover:bg-[#FF4500]'
-          }`}
+          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-50 ${followed
+            ? 'bg-emerald-600 text-white shadow-xs hover:bg-emerald-700'
+            : 'bg-[#E83C00] text-white shadow-xs hover:bg-[#FF4500]'
+            }`}
         >
           {followed ? (
             <><CheckCircle2 size={13} /> Completed (+{pts})</>
