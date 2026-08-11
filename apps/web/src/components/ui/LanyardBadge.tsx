@@ -55,214 +55,120 @@ export function LanyardBadge({
 
   const handleDownloadPass = async () => {
     try {
-      toast.loading('Generating HD VIP Pass PNG...')
+      toast.loading('Generating Official HD VIP Pass PNG...')
       const canvas = document.createElement('canvas')
-      canvas.width = 1200
-      canvas.height = 1600
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return
 
-      ctx.imageSmoothingEnabled = true
-      ctx.imageSmoothingQuality = 'high'
+      await new Promise<void>((resolve, reject) => {
+        const templateImg = new Image()
+        templateImg.src = '/images/id-card-template.png'
+        templateImg.onload = () => {
+          const w = templateImg.width || 1024
+          const h = templateImg.height || 1024
+          canvas.width = w
+          canvas.height = h
+          const ctx = canvas.getContext('2d')
+          if (!ctx) return resolve()
 
-      // 1. Warm Studio Studio Backdrop (Matching reference photo background)
-      const bgGrad = ctx.createRadialGradient(600, 500, 50, 600, 800, 900)
-      bgGrad.addColorStop(0, '#FAF5EE')
-      bgGrad.addColorStop(0.5, '#E8DDD0')
-      bgGrad.addColorStop(1, '#D5C4B0')
-      ctx.fillStyle = bgGrad
-      ctx.fillRect(0, 0, 1200, 1600)
+          ctx.imageSmoothingEnabled = true
+          ctx.imageSmoothingQuality = 'high'
 
-      // Add subtle texture noise / vignette overlay
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.04)'
-      ctx.fillRect(0, 0, 1200, 1600)
+          // 1. Draw Base Reference Template Photo (Studio background, lanyard strap, metal clip, 3D card pose, glowing AI processor chip)
+          ctx.drawImage(templateImg, 0, 0, w, h)
 
-      // 2. Lanyard Black Woven Strap (Hanging from top center)
-      ctx.fillStyle = '#12141A'
-      ctx.fillRect(555, 0, 90, 200)
-      ctx.fillStyle = '#E83C00'
-      ctx.fillRect(598, 0, 4, 200) // Brand Orange stitching line
+          const scaleX = w / 1024
+          const scaleY = h / 1024
 
-      // 3. Black Matte Clamp Sleeve
-      ctx.fillStyle = '#1A1A1D'
-      ctx.beginPath()
-      ctx.roundRect(535, 150, 130, 40, 6)
-      ctx.fill()
-      ctx.strokeStyle = '#334155'
-      ctx.lineWidth = 2
-      ctx.stroke()
+          ctx.save()
+          // Perspective rotate transform matching card tilt (~-3.8deg)
+          ctx.translate(512 * scaleX, 512 * scaleY)
+          ctx.rotate(-0.065)
+          ctx.translate(-512 * scaleX, -512 * scaleY)
 
-      // Clamp Brand Text
-      ctx.fillStyle = '#D4AF37'
-      ctx.font = '900 16px sans-serif'
-      ctx.textAlign = 'center'
-      ctx.fillText('SNAPSERVE', 600, 176)
-
-      // 4. Black Metallic Swivel Hook Assembly
-      ctx.strokeStyle = '#475569'
-      ctx.lineWidth = 7
-      ctx.beginPath()
-      ctx.arc(600, 215, 18, 0, Math.PI * 2)
-      ctx.stroke()
-
-      ctx.fillStyle = '#1E293B'
-      ctx.beginPath()
-      ctx.roundRect(592, 228, 16, 40, 4)
-      ctx.fill()
-
-      // 5. Main Card Container (Solid Dark Matte #12141A)
-      const cardX = 200
-      const cardY = 250
-      const cardW = 800
-      const cardH = 1250
-      const cardR = 56
-
-      ctx.save()
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.55)'
-      ctx.shadowBlur = 60
-      ctx.shadowOffsetY = 30
-
-      ctx.fillStyle = '#12141A'
-      ctx.beginPath()
-      ctx.roundRect(cardX, cardY, cardW, cardH, cardR)
-      ctx.fill()
-      ctx.restore()
-
-      ctx.strokeStyle = '#1E293B'
-      ctx.lineWidth = 3
-      ctx.beginPath()
-      ctx.roundRect(cardX, cardY, cardW, cardH, cardR)
-      ctx.stroke()
-
-      // 6. Card Punch Hole at Top Center
-      ctx.fillStyle = '#FAF8F5'
-      ctx.beginPath()
-      ctx.arc(600, 298, 16, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.strokeStyle = '#0F1117'
-      ctx.lineWidth = 3
-      ctx.stroke()
-
-      // 7. Card Header Text (Exact Reference Photo Typography)
-      ctx.textAlign = 'left'
-      ctx.fillStyle = '#FFFFFF'
-      ctx.font = '900 24px sans-serif'
-      ctx.fillText('SNAPSERVE AI x VOBIZ AI VOICE 2026', 265, 360)
-
-      ctx.fillStyle = '#D4AF37'
-      ctx.font = '900 22px sans-serif'
-      ctx.fillText('TECH INNOVATION SUMMIT', 265, 395)
-
-      // 8. Hero VIP & SnapServe Logo Mark
-      ctx.fillStyle = '#D4AF37'
-      ctx.font = '900 135px sans-serif'
-      ctx.fillText('VIP', 265, 545)
-
-      ctx.fillStyle = '#94A3B8'
-      ctx.font = 'bold 20px monospace'
-      const formattedTable = tableNumber ? (tableNumber.toUpperCase().startsWith('T-') ? tableNumber.toUpperCase() : `TABLE ${tableNumber}`) : 'TABLE T-01'
-      ctx.fillText(formattedTable, 270, 590)
-
-      // Load & Draw Exact SnapServe Logo Mark Image
-      await new Promise<void>((resolve) => {
-        const logoImg = new Image()
-        logoImg.src = '/logos/snapserve-mark.svg'
-        logoImg.onload = () => {
-          ctx.drawImage(logoImg, 760, 450, 100, 100)
-          resolve()
-        }
-        logoImg.onerror = () => {
-          // Fallback if image fails to load
+          // 2. Dynamic Overlays for Participant Data
+          // Header Text: SNAPSERVE AI x VOBIZ AI VOICE 2026
+          ctx.textAlign = 'left'
           ctx.fillStyle = '#FFFFFF'
-          ctx.fillRect(760, 450, 100, 24)
+          ctx.font = '900 20px sans-serif'
+          ctx.fillText('SNAPSERVE AI x VOBIZ AI VOICE 2026', 368 * scaleX, 395 * scaleY)
+
+          ctx.fillStyle = '#D4AF37'
+          ctx.font = '900 18px sans-serif'
+          ctx.fillText('TECH INNOVATION SUMMIT', 368 * scaleX, 422 * scaleY)
+
+          // Table Number
           ctx.fillStyle = '#94A3B8'
-          ctx.fillRect(780, 485, 100, 24)
-          ctx.fillStyle = '#64748B'
-          ctx.fillRect(800, 520, 80, 24)
+          ctx.font = 'bold 15px monospace'
+          const formattedTable = tableNumber ? (tableNumber.toUpperCase().startsWith('T-') ? tableNumber.toUpperCase() : `TABLE ${tableNumber}`) : 'TABLE T-01'
+          ctx.fillText(formattedTable, 370 * scaleX, 555 * scaleY)
+
+          // Clear previous text area on template matte card
+          ctx.fillStyle = '#12141A'
+          ctx.fillRect(360 * scaleX, 580 * scaleY, 320 * scaleX, 150 * scaleY)
+
+          // Participant Name
+          ctx.fillStyle = '#FFFFFF'
+          ctx.font = '900 38px sans-serif'
+          ctx.fillText(participantName.toUpperCase(), 368 * scaleX, 625 * scaleY)
+
+          // Speaker / Member Role
+          ctx.fillStyle = '#D4AF37'
+          ctx.font = '900 18px sans-serif'
+          ctx.fillText((memberRole || 'TEAM LEAD').toUpperCase(), 368 * scaleX, 658 * scaleY)
+
+          // Track Subtitle: AI குரல் • VOICE FOR TAMIL NADU
+          ctx.fillStyle = '#CBD5E1'
+          ctx.font = '700 15px sans-serif'
+          ctx.fillText('AI குரல் • VOICE FOR TAMIL NADU', 368 * scaleX, 686 * scaleY)
+
+          // Team Name
+          ctx.fillStyle = '#E83C00'
+          ctx.font = '900 16px sans-serif'
+          ctx.fillText(teamName.toUpperCase(), 368 * scaleX, 712 * scaleY)
+
+          // Solid Brand Orange Horizontal Accent Line
+          ctx.fillStyle = '#E83C00'
+          ctx.beginPath()
+          ctx.roundRect(368 * scaleX, 725 * scaleY, 320 * scaleX, 5 * scaleY, 2.5)
+          ctx.fill()
+
+          // Clear previous date & location area
+          ctx.fillStyle = '#12141A'
+          ctx.fillRect(360 * scaleX, 735 * scaleY, 320 * scaleX, 65 * scaleY)
+
+          // Date & Venue Location
+          ctx.fillStyle = '#FFFFFF'
+          ctx.font = '900 20px sans-serif'
+          ctx.fillText('SATURDAY, 5 SEP 2026', 368 * scaleX, 765 * scaleY)
+
+          ctx.fillStyle = '#D4AF37'
+          ctx.font = '900 14px sans-serif'
+          ctx.fillText('OLIVE PUBLIC SCHOOL, CHENNAI', 368 * scaleX, 788 * scaleY)
+
+          // Clear previous access marker line
+          ctx.fillStyle = '#12141A'
+          ctx.fillRect(360 * scaleX, 915 * scaleY, 350 * scaleX, 25 * scaleY)
+
+          ctx.fillStyle = '#94A3B8'
+          ctx.font = 'bold 12px monospace'
+          ctx.fillText(`ACCESS | VIP PASSHOLDER | [${agentNumber || '#0117'}]`, 375 * scaleX, 930 * scaleY)
+
+          ctx.restore()
+
+          // 3. Trigger Download PNG
+          const image = canvas.toDataURL('image/png')
+          const link = document.createElement('a')
+          link.href = image
+          link.download = `SnapServe_VIP_Pass_${participantName.replace(/\s+/g, '_')}.png`
+          link.click()
+          toast.dismiss()
+          toast.success('Downloaded Ultra-HD VIP Pass PNG!')
           resolve()
         }
+
+        templateImg.onerror = () => {
+          reject(new Error('Could not load template image'))
+        }
       })
-
-      // 9. Participant Info Stack (Exact Reference Photo Mapping)
-      // Participant Name
-      ctx.textAlign = 'left'
-      ctx.fillStyle = '#FFFFFF'
-      ctx.font = '900 62px sans-serif'
-      ctx.fillText(participantName.toUpperCase(), 265, 720)
-
-      // Speaker / Member Role
-      ctx.fillStyle = '#D4AF37'
-      ctx.font = '900 26px sans-serif'
-      ctx.fillText((memberRole || 'TEAM LEAD').toUpperCase(), 265, 768)
-
-      // Subtitle / Track
-      ctx.fillStyle = '#CBD5E1'
-      ctx.font = '700 22px sans-serif'
-      ctx.fillText('AI குரல் • VOICE FOR TAMIL NADU', 265, 805)
-
-      // Team Name
-      ctx.fillStyle = '#E83C00'
-      ctx.font = '900 24px sans-serif'
-      ctx.fillText(teamName.toUpperCase(), 265, 842)
-
-      // Solid Brand Orange Horizontal Accent Bar
-      ctx.fillStyle = '#E83C00'
-      ctx.beginPath()
-      ctx.roundRect(265, 875, 670, 8, 4)
-      ctx.fill()
-
-      // 10. Date & Venue Location Section
-      ctx.fillStyle = '#FFFFFF'
-      ctx.font = '900 32px sans-serif'
-      ctx.fillText('SATURDAY, 5 SEP 2026', 265, 940)
-
-      ctx.fillStyle = '#D4AF37'
-      ctx.font = '900 22px sans-serif'
-      ctx.fillText('OLIVE PUBLIC SCHOOL, CHENNAI', 265, 980)
-
-      // 11. White Barcode Container Box
-      const barX = 265
-      const barY = 1040
-      const barW = 670
-      const barH = 200
-      const barR = 36
-
-      ctx.fillStyle = '#FFFFFF'
-      ctx.beginPath()
-      ctx.roundRect(barX, barY, barW, barH, barR)
-      ctx.fill()
-
-      // Barcode lines
-      const lineXStart = 330
-      const lineYStart = 1070
-      const barHeights = 100
-      const widths = [6, 3, 7, 3, 9, 3, 6, 8, 3, 4, 9, 3, 6, 4, 3, 8, 3, 6, 9, 3, 8, 3, 6, 9]
-
-      ctx.fillStyle = '#000000'
-      let currentX = lineXStart
-      widths.forEach((w) => {
-        ctx.fillRect(currentX, lineYStart, w, barHeights)
-        currentX += w + 9
-      })
-
-      // Barcode numeric string
-      ctx.textAlign = 'center'
-      ctx.font = 'bold 26px monospace'
-      ctx.fillText('9  781234  567897', 600, 1210)
-
-      // Footer Access Marker
-      ctx.fillStyle = '#94A3B8'
-      ctx.font = 'bold 18px monospace'
-      ctx.fillText(`ACCESS | VIP PASSHOLDER | [${agentNumber || '#0117'}]`, 600, 1430)
-
-      // 12. Trigger Download PNG
-      const image = canvas.toDataURL('image/png')
-      const link = document.createElement('a')
-      link.href = image
-      link.download = `SnapServe_VIP_Pass_${participantName.replace(/\s+/g, '_')}.png`
-      link.click()
-      toast.dismiss()
-      toast.success('Downloaded Ultra-HD VIP Pass PNG!')
     } catch (err) {
       console.error(err)
       toast.dismiss()
