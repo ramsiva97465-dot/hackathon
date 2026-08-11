@@ -221,37 +221,14 @@ export function LanyardBadge({
       ctx.roundRect(165, 580, 420, 6, 3)
       ctx.fill()
 
-      // Agent Specs Box (If present)
-      if (agentName || agentPhoneNumber) {
-        ctx.fillStyle = '#0B0F17'
-        ctx.beginPath()
-        ctx.roundRect(165, 610, 420, 100, 16)
-        ctx.fill()
-        ctx.strokeStyle = '#1E293B'
-        ctx.lineWidth = 1.5
-        ctx.stroke()
+      // Date & Location Section (Exact Screenshot 2)
+      ctx.fillStyle = '#FFFFFF'
+      ctx.font = '900 22px sans-serif'
+      ctx.fillText('JUNE 15-18, 2026', 165, 620)
 
-        if (agentName) {
-          ctx.fillStyle = '#64748B'
-          ctx.font = '700 12px sans-serif'
-          ctx.fillText('AGENT SYSTEM', 185, 645)
-          ctx.fillStyle = '#FFFFFF'
-          ctx.font = '900 16px sans-serif'
-          ctx.textAlign = 'right'
-          ctx.fillText(agentName, 565, 645)
-        }
-
-        if (agentPhoneNumber) {
-          ctx.textAlign = 'left'
-          ctx.fillStyle = '#10B981'
-          ctx.font = '700 12px sans-serif'
-          ctx.fillText('HOTLINE', 185, 685)
-          ctx.fillStyle = '#34D399'
-          ctx.font = '900 16px monospace'
-          ctx.textAlign = 'right'
-          ctx.fillText(agentPhoneNumber, 565, 685)
-        }
-      }
+      ctx.fillStyle = '#D4AF37'
+      ctx.font = '900 15px sans-serif'
+      ctx.fillText('SAN FRANCISCO, CA', 165, 645)
 
       // 9. White Barcode Container Box
       const barX = 165
@@ -464,27 +441,15 @@ export function LanyardBadge({
                 {/* Solid Orange Horizontal Accent Bar (Exact Screenshot 2) */}
                 <div className="h-[3px] w-full bg-[#E83C00] rounded-full my-1.5" />
 
-                {/* Agent & Hotline Specs Box */}
-                {(agentName || agentPhoneNumber) && (
-                  <div className="bg-slate-950 border border-slate-800 p-2 rounded-xl space-y-1 text-[10px]">
-                    {agentName && (
-                      <div className="flex items-center justify-between text-slate-300 font-bold">
-                        <span className="text-[7.5px] uppercase font-bold text-slate-500 tracking-wider flex items-center gap-1">
-                          <Cpu size={9} className="text-[#E83C00]" /> AGENT SYSTEM
-                        </span>
-                        <span className="text-white font-black">{agentName}</span>
-                      </div>
-                    )}
-                    {agentPhoneNumber && (
-                      <div className="flex items-center justify-between text-emerald-400 font-mono font-black pt-0.5 border-t border-slate-800">
-                        <span className="text-[7.5px] uppercase font-bold text-emerald-500 tracking-wider flex items-center gap-1 font-sans">
-                          <Phone size={9} /> HOTLINE
-                        </span>
-                        <span>{agentPhoneNumber}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
+                {/* Date & Location Section (Exact Screenshot 2) */}
+                <div className="space-y-0.5 pt-1">
+                  <p className="text-sm font-black text-white uppercase tracking-widest leading-none">
+                    JUNE 15-18, 2026
+                  </p>
+                  <p className="text-[9.5px] font-extrabold text-[#D4AF37] uppercase tracking-wider">
+                    SAN FRANCISCO, CA
+                  </p>
+                </div>
               </div>
 
               {/* 4. White Barcode Container Box (Exact Screenshot 2 Style) */}
