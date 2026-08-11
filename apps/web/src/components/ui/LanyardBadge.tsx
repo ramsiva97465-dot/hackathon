@@ -403,13 +403,14 @@ export function LanyardBadge({
                   </span>
                 </div>
 
-                {/* Clean Frameless SnapServe Brand Mark (No yellow borders or boxes) */}
-                <div className="flex items-center justify-center p-1 shrink-0">
-                  <svg viewBox="0 0 100 100" className="w-12 h-12 drop-shadow-md" style={{ width: '48px', height: '48px' }} fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="5" y="15" width="75" height="20" rx="10" fill="#FFFFFF" />
-                    <rect x="18" y="42" width="75" height="20" rx="10" fill="#94A3B8" />
-                    <rect x="31" y="69" width="64" height="20" rx="10" fill="#64748B" />
-                  </svg>
+                {/* Exact SnapServe Logo Mark Alone */}
+                <div className="flex items-center justify-center shrink-0 p-1">
+                  <img
+                    src="/logos/snapserve-mark.svg"
+                    alt="SnapServe Logo"
+                    className="w-11 h-11 object-contain drop-shadow-sm"
+                    style={{ width: '44px', height: '44px' }}
+                  />
                 </div>
               </div>
 
