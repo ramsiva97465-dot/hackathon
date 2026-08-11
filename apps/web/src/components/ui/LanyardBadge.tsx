@@ -226,10 +226,16 @@ export function LanyardBadge({
         }}
         className="relative flex flex-col items-center justify-center cursor-grab active:cursor-grabbing origin-top z-10 w-full mt-[-1px]"
       >
-        {/* Metallic Clip & Clamp Assembly */}
+        {/* Metallic Clip & Clamp Assembly with SNAPSERVE Tag */}
         <div className="flex flex-col items-center relative z-20 shrink-0">
+          {/* Lanyard Clip Tag Badge */}
+          <div className="px-2.5 py-0.5 bg-slate-950 border border-amber-500/60 rounded-t-md shadow-xs text-center z-10">
+            <span className="text-[6.5px] font-mono font-black text-amber-400 tracking-widest uppercase block leading-none py-0.5">
+              SNAPSERVE
+            </span>
+          </div>
           {/* Silver Clip Ring */}
-          <div className="w-5 h-5 rounded-full border-3 border-slate-300 bg-gradient-to-tr from-slate-400 via-slate-200 to-slate-50 shadow-md flex items-center justify-center">
+          <div className="w-5 h-5 rounded-full border-3 border-slate-300 bg-gradient-to-tr from-slate-400 via-slate-200 to-slate-50 shadow-md flex items-center justify-center mt-[-2px]">
             <div className="w-1.5 h-1.5 rounded-full bg-slate-700" />
           </div>
           {/* Metal Clamp Holder */}
@@ -296,26 +302,26 @@ export function LanyardBadge({
                 </div>
               </div>
 
-              {/* 3. Participant Credentials & Team Details */}
-              <div className="text-left space-y-1.5 my-auto">
+              {/* 3. Participant Credentials & Team Details (Exact Screenshot 2 Typography) */}
+              <div className="text-left space-y-2 my-auto">
                 {/* Big Participant Name */}
-                <div>
-                  <h2 className="font-display font-black text-xl text-white tracking-tight uppercase leading-tight drop-shadow-xs">
+                <div className="space-y-0.5">
+                  <h2 className="font-display font-black text-2xl text-white tracking-tight uppercase leading-none">
                     {participantName}
                   </h2>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[9px] font-black text-amber-400 uppercase tracking-widest">
-                      {memberRole.toUpperCase()}
-                    </span>
-                    <span className="w-1 h-1 rounded-full bg-slate-600" />
-                    <span className="text-[10px] font-black text-[#E83C00] uppercase tracking-wide">
-                      {teamName}
-                    </span>
-                  </div>
+                  <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest pt-0.5">
+                    {memberRole}
+                  </p>
+                  <p className="text-[9.5px] font-bold text-slate-300 uppercase tracking-wider">
+                    {trackName}
+                  </p>
+                  <p className="text-[10px] font-black text-[#E83C00] uppercase tracking-wide">
+                    {teamName}
+                  </p>
                 </div>
 
-                {/* Orange Horizontal Accent Line */}
-                <div className="h-[2px] w-full bg-gradient-to-r from-[#E83C00] via-orange-500 to-amber-500 rounded-full my-1.5" />
+                {/* Solid Orange Accent Bar (Exact Screenshot 2) */}
+                <div className="h-[3px] w-full bg-[#E83C00] rounded-full my-2" />
 
                 {/* Team Members Roster Badges */}
                 {members && members.length > 1 && (
