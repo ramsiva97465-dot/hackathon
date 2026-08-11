@@ -117,12 +117,23 @@ function processCsvData(text: string) {
       }
     }
 
-    teamsMap[teamName].members.push({
-      name,
-      email,
-      phone,
-      role: role || (teamsMap[teamName].members.length === 0 ? 'Leader' : 'Member')
-    })
+    const existingMemberIdx = teamsMap[teamName].members.findIndex(
+      (m: any) => m.email.toLowerCase() === email.toLowerCase()
+    )
+
+    if (existingMemberIdx === -1) {
+      teamsMap[teamName].members.push({
+        name,
+        email,
+        phone,
+        role: role || (teamsMap[teamName].members.length === 0 ? 'Leader' : 'Member')
+      })
+    } else {
+      // Update phone or role if missing
+      const existing = teamsMap[teamName].members[existingMemberIdx]
+      if (!existing.phone && phone) existing.phone = phone
+      if (role && role !== 'Member') existing.role = role
+    }
   }
 
   return {
