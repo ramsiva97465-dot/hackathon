@@ -29,6 +29,7 @@ export function JudgesPage() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [formData, setFormData] = useState({ name: '', email: '', password: '', company: '', designation: '' })
   const [submitting, setSubmitting] = useState(false)
+  const [createdCreds, setCreatedCreds] = useState<{ name: string; email: string; password: string } | null>(null)
 
   useEffect(() => {
     fetchJudges()
@@ -76,6 +77,11 @@ export function JudgesPage() {
         return
       }
       toast.success('Judge created successfully!')
+      setCreatedCreds({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password || 'Judge@123'
+      })
       setShowAddModal(false)
       setFormData({ name: '', email: '', password: '', company: '', designation: '' })
       fetchJudges()
@@ -178,7 +184,23 @@ export function JudgesPage() {
                       <Progress value={progress} variant={progress === 100 ? 'success' : 'primary'} size="sm" className="bg-white/10" />
                     </div>
 
-                    <p className="text-[11px] text-slate-500 font-bold font-mono bg-[#111] px-2 py-1 rounded w-max border border-white/10">{judge.email}</p>
+                    <div className="flex items-center justify-between gap-2 bg-[#111] px-3 py-1.5 rounded-xl border border-white/10 text-xs">
+                      <div className="min-w-0">
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Login Email</span>
+                        <span className="text-[11px] text-slate-300 font-bold font-mono truncate block">{judge.email}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const text = `Judge Login Credentials:\nURL: https://voiceathon.snapserve.ai/judge/login\nEmail: ${judge.email}`
+                          navigator.clipboard.writeText(text)
+                          toast.success(`Copied login email for ${judge.name}!`)
+                        }}
+                        className="px-2 py-1 bg-white/10 hover:bg-white/20 text-white text-[10px] font-bold rounded-lg transition-colors shrink-0"
+                      >
+                        Copy Login
+                      </button>
+                    </div>
 
                     {/* Actions */}
                     <div className="flex gap-2 mt-auto pt-2">
@@ -240,6 +262,69 @@ export function JudgesPage() {
                   <Button type="submit" loading={submitting} className="bg-[#E83C00] hover:bg-[#c93400] text-white shadow-lg shadow-orange-900/10 rounded-xl px-6">Create Judge</Button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Credentials Created Popup Modal */}
+        {createdCreds && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-emerald-500/30"
+              style={{ backgroundColor: '#0A0A0A' }}
+            >
+              <div className="flex items-center justify-between p-6 border-b border-white/10 bg-emerald-500/10">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="text-emerald-400" size={20} />
+                  <h3 className="font-black text-lg text-white">Judge Credentials Created</h3>
+                </div>
+                <button onClick={() => setCreatedCreds(null)} className="p-1 rounded-xl text-slate-400 hover:bg-white/10 hover:text-white"><X size={20} /></button>
+              </div>
+              <div className="p-6 space-y-4">
+                <p className="text-xs text-slate-300">
+                  Share these login credentials with <strong className="text-white">{createdCreds.name}</strong> so they can log in to the Judge Panel.
+                </p>
+                <div className="p-4 bg-[#111] rounded-2xl border border-white/10 space-y-3 font-mono text-xs">
+                  <div>
+                    <span className="text-slate-500 block text-[10px] uppercase tracking-wider font-sans font-bold">Judge Login URL</span>
+                    <span className="text-emerald-400 font-bold select-all">https://voiceathon.snapserve.ai/judge/login</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[10px] uppercase tracking-wider font-sans font-bold">Email / Username</span>
+                    <span className="text-white font-bold select-all">{createdCreds.email}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[10px] uppercase tracking-wider font-sans font-bold">Password</span>
+                    <span className="text-amber-400 font-bold select-all">{createdCreds.password}</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    type="button"
+                    fullWidth
+                    onClick={() => {
+                      const text = `Judge Login Credentials:\nURL: https://voiceathon.snapserve.ai/judge/login\nEmail: ${createdCreds.email}\nPassword: ${createdCreds.password}`
+                      navigator.clipboard.writeText(text)
+                      toast.success('Credentials copied to clipboard!')
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl py-2.5 font-bold"
+                  >
+                    Copy Credentials
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setCreatedCreds(null)}
+                    className="hover:bg-white/10 text-slate-400 hover:text-white rounded-xl"
+                  >
+                    Close
+                  </Button>
+                </div>
+              </div>
             </motion.div>
           </div>
         )}
