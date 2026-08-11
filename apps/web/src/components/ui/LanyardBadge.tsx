@@ -84,43 +84,44 @@ export function LanyardBadge({
           ctx.rotate(-0.066)
           ctx.translate(-512 * scaleX, -512 * scaleY)
 
-          // 3. Render Dynamic Participant Information in Exact 3D Card Alignment
+          // 3. Render Dynamic Participant Information in Exact 3D Reference Slots
           ctx.textAlign = 'left'
 
-          // Participant Name
+          // Participant Name (Replaces ALEX CHEN slot)
           ctx.fillStyle = '#FFFFFF'
-          ctx.font = '900 36px sans-serif'
-          ctx.fillText(participantName.toUpperCase(), 375 * scaleX, 615 * scaleY)
+          ctx.font = '900 38px sans-serif'
+          ctx.fillText(participantName.toUpperCase(), 375 * scaleX, 525 * scaleY)
 
-          // Speaker / Member Role
+          // Speaker / Member Role (Replaces SPEAKER slot)
           ctx.fillStyle = '#D4AF37'
-          ctx.font = '900 17px sans-serif'
-          ctx.fillText((memberRole || 'TEAM LEAD').toUpperCase(), 375 * scaleX, 645 * scaleY)
+          ctx.font = '900 18px sans-serif'
+          ctx.fillText((memberRole || 'TEAM LEAD').toUpperCase(), 375 * scaleX, 565 * scaleY)
 
-          // Subtitle Track: AI குரல் • VOICE FOR TAMIL NADU
+          // Subtitle Track (Replaces PRODUCT DESIGN LEAD slot)
           ctx.fillStyle = '#CBD5E1'
-          ctx.font = '700 14px sans-serif'
-          ctx.fillText('AI குரல் • VOICE FOR TAMIL NADU', 375 * scaleX, 670 * scaleY)
+          ctx.font = '700 15px sans-serif'
+          ctx.fillText('AI குரல் • VOICE FOR TAMIL NADU', 375 * scaleX, 595 * scaleY)
 
-          // Team Name
+          // Team Name (Replaces SNAPSERVE AI slot)
           ctx.fillStyle = '#E83C00'
-          ctx.font = '900 15px sans-serif'
-          ctx.fillText(teamName.toUpperCase(), 375 * scaleX, 692 * scaleY)
+          ctx.font = '900 16px sans-serif'
+          ctx.fillText(teamName.toUpperCase(), 375 * scaleX, 625 * scaleY)
 
-          // Solid Brand Orange Horizontal Accent Line
+          // Solid Brand Orange Horizontal Accent Line (Replaces reference orange bar)
           ctx.fillStyle = '#E83C00'
           ctx.beginPath()
-          ctx.roundRect(375 * scaleX, 705 * scaleY, 320 * scaleX, 5 * scaleY, 2.5)
+          ctx.roundRect(375 * scaleX, 645 * scaleY, 320 * scaleX, 5 * scaleY, 2.5)
           ctx.fill()
 
-          // Date & Venue Location
+          // Date (Replaces JUNE 15-18, 2026 slot)
           ctx.fillStyle = '#FFFFFF'
-          ctx.font = '900 18px sans-serif'
-          ctx.fillText('SATURDAY, 5 SEP 2026', 375 * scaleX, 740 * scaleY)
+          ctx.font = '900 20px sans-serif'
+          ctx.fillText('SATURDAY, 5 SEP 2026', 375 * scaleX, 690 * scaleY)
 
+          // Venue Location (Replaces SAN FRANCISCO, CA slot)
           ctx.fillStyle = '#D4AF37'
-          ctx.font = '900 13px sans-serif'
-          ctx.fillText('OLIVE PUBLIC SCHOOL, CHENNAI', 375 * scaleX, 762 * scaleY)
+          ctx.font = '900 14px sans-serif'
+          ctx.fillText('OLIVE PUBLIC SCHOOL, CHENNAI', 375 * scaleX, 720 * scaleY)
 
           ctx.restore()
 
