@@ -239,7 +239,7 @@ export function LanyardBadge({
         </div>
 
         {/* ─── 3D Flippable Card Container ──────────────────────────────────── */}
-        <div className="w-full max-w-[285px] h-[430px] relative mt-[-4px]">
+        <div className="w-full max-w-[285px] h-[435px] relative mt-[-4px]">
           <motion.div
             style={{
               rotateX,
@@ -247,17 +247,17 @@ export function LanyardBadge({
               transformStyle: 'preserve-3d',
             }}
             transition={{ duration: 0.5, type: 'spring', stiffness: 350, damping: 18 }}
-            className="w-full h-full relative rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.18)] border border-slate-300/80 group"
+            className="w-full h-full relative rounded-3xl shadow-[0_25px_60px_rgba(238,60,0,0.22)] border border-slate-800/90 group"
           >
             {/* Subtle Metallic Gloss Reflective Overlay */}
-            <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-transparent via-white/35 to-transparent pointer-events-none opacity-40 group-hover:opacity-100 transition-opacity z-30 overflow-hidden" />
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-transparent via-white/15 to-transparent pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity z-30 overflow-hidden" />
 
-            {/* ─── FRONT FACE (Clean Modern Senior Design) ────────────────────────── */}
+            {/* ─── FRONT FACE (Dark Glassmorphic Obsidian) ────────────────────────── */}
             <div
-              className="absolute inset-0 w-full h-full rounded-3xl p-5 flex flex-col justify-between overflow-hidden shadow-2xl"
+              className="absolute inset-0 w-full h-full rounded-3xl p-5 flex flex-col justify-between overflow-hidden shadow-2xl border border-slate-800/80"
               style={{
-                backgroundColor: '#FAF8F5',
-                backgroundImage: 'radial-gradient(#E5DFD5 1.2px, transparent 1.2px)',
+                backgroundColor: '#0B0F17',
+                backgroundImage: 'radial-gradient(#1E293B 1.2px, transparent 1.2px)',
                 backgroundSize: '14px 14px',
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden'
@@ -265,10 +265,10 @@ export function LanyardBadge({
             >
               {/* Header: Logos & Pass Badge */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
-                  <BrandLockup />
+                <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                  <BrandLockup tone="dark" />
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#E83C00] text-white text-[8px] font-black tracking-widest uppercase shadow-xs">
-                    <ShieldCheck size={10} /> BUILDER PASS
+                    <ShieldCheck size={10} /> VIP BUILDER PASS
                   </span>
                 </div>
 
@@ -276,52 +276,52 @@ export function LanyardBadge({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     {tableNumber && (
-                      <span className="px-2.5 py-0.5 rounded-md bg-slate-900 text-white font-mono font-bold text-[9.5px] uppercase shadow-2xs">
+                      <span className="px-2.5 py-0.5 rounded-md bg-slate-800 text-amber-400 font-mono font-bold text-[9.5px] uppercase border border-slate-700 shadow-2xs">
                         {tableNumber.toUpperCase().startsWith('T-') ? tableNumber.toUpperCase() : `TABLE ${tableNumber}`}
                       </span>
                     )}
-                    <span className="px-2.5 py-0.5 rounded-md bg-[#E83C00]/10 text-[#E83C00] font-mono font-bold text-[9.5px] uppercase border border-[#E83C00]/20">
+                    <span className="px-2.5 py-0.5 rounded-md bg-[#E83C00]/20 text-[#E83C00] font-mono font-bold text-[9.5px] uppercase border border-[#E83C00]/40">
                       AGENT {agentNumber}
                     </span>
                   </div>
-                  <span className="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+                  <span className="text-[9px] font-mono font-bold text-slate-500 uppercase tracking-wider">
                     2026 EDITION
                   </span>
                 </div>
               </div>
 
-              {/* Core Hero Section: Name & Team (Clean, Unboxed Typography) */}
+              {/* Core Hero Section: Name & Team */}
               <div className="my-auto py-2 text-left space-y-3">
                 {/* Team Name */}
                 <div>
-                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">TEAM</span>
-                  <h2 className="font-display font-black text-2xl text-[#E83C00] tracking-tight leading-tight truncate">
+                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block mb-0.5">TEAM</span>
+                  <h2 className="font-display font-black text-2xl text-[#E83C00] tracking-tight leading-tight truncate drop-shadow-xs">
                     {teamName}
                   </h2>
                 </div>
 
                 {/* Participant Lead */}
-                <div className="pt-2 border-t border-slate-200/70">
+                <div className="pt-2 border-t border-slate-800/80">
                   <div className="flex items-center justify-between">
-                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">{memberRole}</span>
-                    <span className="px-2 py-0.5 rounded bg-orange-100 text-[#E83C00] font-black text-[8px] uppercase tracking-wider">
+                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest block">{memberRole}</span>
+                    <span className="px-2 py-0.5 rounded bg-[#E83C00]/20 text-[#E83C00] font-black text-[8px] uppercase tracking-wider border border-[#E83C00]/30">
                       LEAD
                     </span>
                   </div>
-                  <h3 className="font-display font-black text-lg text-slate-900 leading-snug mt-0.5">
+                  <h3 className="font-display font-black text-lg text-white leading-snug mt-0.5">
                     {participantName}
                   </h3>
                 </div>
 
-                {/* Teammates Roster (Clean Avatars) */}
+                {/* Teammates Roster */}
                 {members && members.length > 1 && (
                   <div className="pt-1.5">
-                    <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest block mb-1">
+                    <span className="text-[7.5px] font-black text-slate-500 uppercase tracking-widest block mb-1">
                       TEAM MEMBERS ({members.length})
                     </span>
                     <div className="flex flex-wrap gap-1">
                       {members.slice(1).map((m, idx) => (
-                        <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white border border-slate-200/80 text-[8.5px] font-bold text-slate-800 shadow-3xs">
+                        <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-[8.5px] font-bold text-slate-300 shadow-3xs">
                           <span className="w-1.5 h-1.5 rounded-full bg-[#E83C00]" />
                           {m.name || `Member ${idx + 2}`}
                         </span>
@@ -330,9 +330,9 @@ export function LanyardBadge({
                   </div>
                 )}
 
-                {/* Agent & Hotline Specs Box (Single Integrated Card) */}
+                {/* Agent & Hotline Specs Box (Frosted Glass Card) */}
                 {(projectTitle || agentName || agentPhoneNumber) && (
-                  <div className="bg-slate-900 text-white p-3 rounded-2xl space-y-1.5 shadow-md border border-slate-800 mt-2">
+                  <div className="bg-[#141C2E]/90 backdrop-blur-md text-white p-3 rounded-2xl space-y-1.5 shadow-md border border-slate-800 mt-2">
                     {agentName && (
                       <div className="flex items-center justify-between text-[11px]">
                         <span className="font-bold text-slate-400 uppercase text-[8px] tracking-wider flex items-center gap-1">
@@ -343,7 +343,7 @@ export function LanyardBadge({
                     )}
 
                     {agentPhoneNumber && (
-                      <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-800">
+                      <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-800/80">
                         <span className="font-bold text-emerald-400 uppercase text-[8px] tracking-wider flex items-center gap-1">
                           <Phone size={10} /> Hotline
                         </span>
@@ -355,27 +355,27 @@ export function LanyardBadge({
               </div>
 
               {/* Bottom Barcode & Security Marker */}
-              <div className="border-t border-slate-200/80 pt-2.5 flex items-center justify-between">
+              <div className="border-t border-slate-800/80 pt-2.5 flex items-center justify-between">
                 <div className="flex flex-col text-left">
-                  <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">OFFICIAL ENTRY BARCODE</span>
-                  <span className="font-mono text-[8px] font-black text-slate-700 tracking-wider">★ VS-2026-AI ★</span>
+                  <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">OFFICIAL ENTRY BARCODE</span>
+                  <span className="font-mono text-[8px] font-black text-slate-300 tracking-wider">★ VS-2026-AI ★</span>
                 </div>
 
                 {/* High-Resolution Clean Barcode */}
-                <div className="flex items-center gap-[2px] h-4.5 px-2 py-0.5 bg-white rounded-md border border-slate-200">
+                <div className="flex items-center gap-[2px] h-4.5 px-2 py-0.5 bg-slate-900 rounded-md border border-slate-800">
                   {[2, 1, 3, 1, 4, 1, 2, 3, 1, 2, 4, 1, 3, 2, 1, 3].map((width, idx) => (
-                    <div key={idx} className="bg-slate-900 h-full" style={{ width: `${width}px` }} />
+                    <div key={idx} className="bg-white h-full" style={{ width: `${width}px` }} />
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* ─── BACK FACE ─────────────────────────────────────────────────────── */}
+            {/* ─── BACK FACE (Dark Glassmorphic Obsidian) ────────────────────────── */}
             <div
-              className="absolute inset-0 w-full h-full rounded-3xl p-5 flex flex-col justify-between overflow-hidden shadow-2xl border border-slate-200/80"
+              className="absolute inset-0 w-full h-full rounded-3xl p-5 flex flex-col justify-between overflow-hidden shadow-2xl border border-slate-800/80"
               style={{
-                backgroundColor: '#FAF8F5',
-                backgroundImage: 'radial-gradient(#E5DFD5 1.2px, transparent 1.2px)',
+                backgroundColor: '#0B0F17',
+                backgroundImage: 'radial-gradient(#1E293B 1.2px, transparent 1.2px)',
                 backgroundSize: '14px 14px',
                 transform: 'rotateY(180deg)',
                 backfaceVisibility: 'hidden',
@@ -383,11 +383,11 @@ export function LanyardBadge({
               }}
             >
               {/* Top Header */}
-              <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
+              <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
                 <span className="text-[10px] font-black text-[#E83C00] uppercase tracking-widest flex items-center gap-1.5">
                   <Sparkles size={13} /> VIP HACKATHON ACCESS
                 </span>
-                <span className="text-[8.5px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-mono font-bold border border-emerald-200">
+                <span className="text-[8.5px] text-emerald-400 bg-emerald-950/80 px-2.5 py-0.5 rounded-full font-mono font-bold border border-emerald-800/80">
                   VERIFIED PASS
                 </span>
               </div>
@@ -396,13 +396,13 @@ export function LanyardBadge({
               <div className="space-y-3 my-auto text-left">
                 {/* Tech Stack */}
                 {techStack && techStack.length > 0 && (
-                  <div className="bg-white p-3 rounded-2xl border border-slate-200/80 space-y-1.5 shadow-3xs">
-                    <div className="flex items-center gap-1.5 text-[11px] font-black text-slate-800">
+                  <div className="bg-[#141C2E]/90 p-3 rounded-2xl border border-slate-800 space-y-1.5 shadow-3xs">
+                    <div className="flex items-center gap-1.5 text-[11px] font-black text-white">
                       <Layers size={12} className="text-[#E83C00]" /> Submitted Tech Stack
                     </div>
                     <div className="flex flex-wrap gap-1 pt-0.5">
                       {techStack.map((tech, i) => (
-                        <span key={i} className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-[9px] font-mono font-bold text-slate-800">
+                        <span key={i} className="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-700/80 text-[9px] font-mono font-bold text-amber-400">
                           {tech}
                         </span>
                       ))}
@@ -411,34 +411,34 @@ export function LanyardBadge({
                 )}
 
                 {/* Wi-Fi Credentials */}
-                <div className="bg-white p-3 rounded-2xl border border-slate-200/80 space-y-1 shadow-3xs">
-                  <div className="flex items-center gap-1.5 text-[11px] font-black text-slate-800">
+                <div className="bg-[#141C2E]/90 p-3 rounded-2xl border border-slate-800 space-y-1 shadow-3xs">
+                  <div className="flex items-center gap-1.5 text-[11px] font-black text-white">
                     <Wifi size={12} className="text-[#E83C00]" /> Venue Wi-Fi Access
                   </div>
                   <div className="space-y-1 text-[11px] font-mono pt-1">
-                    <div className="flex justify-between text-slate-500">
-                      <span>SSID:</span> <span className="text-slate-900 font-bold">Aitel_Hackathon_5G</span>
+                    <div className="flex justify-between text-slate-400">
+                      <span>SSID:</span> <span className="text-white font-bold">Aitel_Hackathon_5G</span>
                     </div>
-                    <div className="flex justify-between text-slate-500">
+                    <div className="flex justify-between text-slate-400">
                       <span>Pass:</span> <span className="text-[#E83C00] font-black">voiceai2026</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Check-in QR Code */}
-                <div className="flex items-center justify-between bg-slate-900 p-3 rounded-2xl text-white shadow-sm border border-slate-800">
+                <div className="flex items-center justify-between bg-slate-950 p-3 rounded-2xl text-white shadow-sm border border-slate-800">
                   <div>
                     <span className="text-[8px] font-black text-amber-400 uppercase tracking-widest block">VENUE CHECK-IN</span>
                     <span className="text-[11px] font-extrabold text-white">Scan at Admin Desk</span>
                   </div>
                   <div className="p-1.5 bg-white rounded-xl">
-                    <QrCode size={26} className="text-slate-900" />
+                    <QrCode size={26} className="text-slate-950" />
                   </div>
                 </div>
               </div>
 
               {/* Footer Sponsor Lockup */}
-              <div className="border-t border-slate-200/80 pt-2.5 text-center">
+              <div className="border-t border-slate-800/80 pt-2.5 text-center">
                 <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest block">
                   Hosted by SnapServe.ai • Powered by Vobiz.ai
                 </span>
