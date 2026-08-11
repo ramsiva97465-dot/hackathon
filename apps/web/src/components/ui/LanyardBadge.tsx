@@ -139,10 +139,10 @@ export function LanyardBadge({
     ctx.font = '900 20px sans-serif'
     ctx.fillText('TECH INNOVATION SUMMIT', 205, 335)
 
-    // 5. Hero VIP Title & SnapServe Logo Mark
+    // 5. Hero Title & SnapServe Logo Mark
     ctx.fillStyle = '#D4AF37'
-    ctx.font = '900 115px sans-serif'
-    ctx.fillText('VIP', 205, 465)
+    ctx.font = '900 48px sans-serif'
+    ctx.fillText('VOICE AI BUILDER', 205, 450)
 
     ctx.fillStyle = '#94A3B8'
     ctx.font = 'bold 17px monospace'
@@ -244,7 +244,7 @@ export function LanyardBadge({
     // Footer Access Marker
     ctx.fillStyle = '#94A3B8'
     ctx.font = 'bold 15px monospace'
-    ctx.fillText(`ACCESS | VIP PASSHOLDER | [${agentNumber || '#0117'}]`, 500, 1220)
+    ctx.fillText(`ACCESS | VOICE AI BUILDER | [${agentNumber || '#0117'}]`, 500, 1220)
 
     // Trigger Download PNG
     const image = canvas.toDataURL('image/png')
@@ -407,12 +407,12 @@ export function LanyardBadge({
                 </span>
               </div>
 
-              {/* 2. Hero VIP & Glowing AI Processor Chip Section */}
+              {/* 2. Hero Title & Glowing AI Processor Chip Section */}
               <div className="flex items-center justify-between py-1 px-1">
-                {/* Big Metallic Gold VIP Text */}
+                {/* Big Metallic Gold Title Text */}
                 <div className="flex flex-col text-left">
-                  <span className="text-4xl font-black tracking-tight leading-none text-[#D4AF37] drop-shadow-md font-display">
-                    VIP
+                  <span className="text-xl font-black tracking-tight leading-none text-[#D4AF37] drop-shadow-md font-display">
+                    VOICE AI BUILDER
                   </span>
                   <span className="text-[7.5px] font-mono font-bold text-slate-400 tracking-widest uppercase mt-1">
                     {tableNumber ? (tableNumber.toUpperCase().startsWith('T-') ? tableNumber.toUpperCase() : `TABLE ${tableNumber}`) : 'TABLE T-01'}
@@ -515,7 +515,7 @@ export function LanyardBadge({
                 <div className="flex items-center justify-between border-b border-slate-800/90 pb-2">
                   <div>
                     <span className="text-[8.5px] font-extrabold text-[#D4AF37] uppercase tracking-widest block font-sans">PASS CATEGORY</span>
-                    <span className="text-xl font-black text-white uppercase tracking-tight font-display">VIP BUILDER</span>
+                    <span className="text-xl font-black text-white uppercase tracking-tight font-display">VOICE AI BUILDER</span>
                   </div>
                   <span className="text-[8px] font-extrabold text-emerald-400 bg-emerald-950/80 px-2.5 py-1 rounded-full border border-emerald-800/80 tracking-wider flex items-center gap-1">
                     VERIFIED PASS ✓
@@ -569,7 +569,7 @@ export function LanyardBadge({
 
                 <div className="text-center pt-1">
                   <span className="text-[7.5px] font-mono font-bold text-slate-400 uppercase tracking-widest block">
-                    ACCESS | VIP PASSHOLDER | [{agentNumber || '#0117'}]
+                    ACCESS | VOICE AI BUILDER | [{agentNumber || '#0117'}]
                   </span>
                 </div>
               </div>
