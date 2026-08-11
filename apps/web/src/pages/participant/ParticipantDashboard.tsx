@@ -57,7 +57,7 @@ type LeaderboardEntry = {
 
 // ─── Tab Config ──────────────────────────────────────────────────────────────
 
-type Tab = 'home' | 'playbook' | 'submission' | 'bonus' | 'leaderboard' | 'certificate'
+type Tab = 'home' | 'playbook' | 'submission' | 'bonus' | 'leaderboard'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'home', label: 'Home', icon: <Home size={16} /> },
@@ -65,7 +65,6 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'submission', label: 'Submission', icon: <FileText size={16} /> },
   { id: 'bonus', label: 'Bonus Pts', icon: <Star size={16} /> },
   { id: 'leaderboard', label: 'Leaderboard', icon: <Trophy size={16} /> },
-  { id: 'certificate', label: 'Certificate', icon: <Award size={16} /> },
 ]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -1569,17 +1568,6 @@ export function ParticipantDashboard() {
                     )}
                   </div>
                 </div>
-              )}
-
-              {/* ── CERTIFICATE TAB ── */}
-              {activeTab === 'certificate' && (
-                <ParticipantCertificate
-                  participantName={data.members?.[0]?.name || 'Participant Name'}
-                  teamName={data.name}
-                  trackName={data.track?.name || 'Voice AI Track'}
-                  certificateId={`CERT-2026-${data.id ? data.id.substring(0, 6).toUpperCase() : 'SS-8891'}`}
-                  issueDate="September 5, 2026"
-                />
               )}
 
             </motion.div>
