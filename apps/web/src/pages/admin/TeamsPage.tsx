@@ -12,6 +12,25 @@ import {
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
 
+export function formatPhoneNumber(phone?: string | null): string {
+  if (!phone) return ''
+  let str = String(phone).trim()
+  if (!str) return ''
+
+  if (/e\+/i.test(str) || /^[\d.]+[eE][+-]?\d+$/.test(str)) {
+    try {
+      const num = Number(str)
+      if (!isNaN(num)) {
+        str = BigInt(Math.round(num)).toString()
+      }
+    } catch {
+      // fallback
+    }
+  }
+
+  return str.replace(/\.0+$/, '')
+}
+
 function parseCSV(text: string): string[][] {
   const lines: string[][] = []
   let row: string[] = []
@@ -85,7 +104,7 @@ function processCsvData(text: string) {
     const college = collegeIdx !== -1 ? row[collegeIdx]?.trim() : undefined
     const name = row[nameIdx]?.trim()
     const email = row[emailIdx]?.trim()
-    const phone = phoneIdx !== -1 ? row[phoneIdx]?.trim() : undefined
+    const phone = formatPhoneNumber(phoneIdx !== -1 ? row[phoneIdx] : undefined)
     const role = roleIdx !== -1 ? row[roleIdx]?.trim() : undefined
 
     const rowNum = i + 1
@@ -677,7 +696,7 @@ export function TeamsPage() {
                             <>
                               <span className="text-slate-600">•</span>
                               <span className="flex items-center gap-0.5 text-slate-300">
-                                <Phone size={8} /> {team.members[0].phone}
+                                <Phone size={8} /> {formatPhoneNumber(team.members[0].phone)}
                               </span>
                             </>
                           )}
@@ -1136,7 +1155,7 @@ export function TeamsPage() {
                               </a>
                             )}
                             {m.phone && (
-                              <span className="text-[10px] font-mono text-slate-600 block">{m.phone}</span>
+                              <span className="text-[10px] font-mono text-slate-600 block">{formatPhoneNumber(m.phone)}</span>
                             )}
                           </div>
                         </div>

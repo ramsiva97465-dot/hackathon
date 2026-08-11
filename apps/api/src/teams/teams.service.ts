@@ -3,6 +3,25 @@ import { PrismaService } from '../prisma/prisma.service'
 import { LeaderboardGateway } from '../leaderboard/leaderboard.gateway'
 import { LeaderboardService } from '../leaderboard/leaderboard.service'
 
+function formatPhoneNumber(phone?: string | null): string | null {
+  if (!phone) return null
+  let str = String(phone).trim()
+  if (!str) return null
+
+  if (/e\+/i.test(str) || /^[\d.]+[eE][+-]?\d+$/.test(str)) {
+    try {
+      const num = Number(str)
+      if (!isNaN(num)) {
+        str = BigInt(Math.round(num)).toString()
+      }
+    } catch {
+      // fallback
+    }
+  }
+
+  return str.replace(/\.0+$/, '') || null
+}
+
 @Injectable()
 export class TeamsService {
   constructor(
@@ -35,7 +54,7 @@ export class TeamsService {
         id: m.id,
         name: m.name,
         email: m.email,
-        phone: m.phone,
+        phone: formatPhoneNumber(m.phone),
         role: m.role,
         linkedin: m.linkedin,
         github: m.github
@@ -252,6 +271,7 @@ export class TeamsService {
       // 3. Create or Update Members
       if (Array.isArray(teamInput.members)) {
         await Promise.all(teamInput.members.map(async (member) => {
+          const cleanPhone = formatPhoneNumber(member.phone)
           const existingMember = await this.prisma.teamMember.findFirst({
             where: { teamId: team.id, email: member.email }
           })
@@ -261,7 +281,7 @@ export class TeamsService {
                 teamId: team.id,
                 name: member.name,
                 email: member.email,
-                phone: member.phone || null,
+                phone: cleanPhone,
                 role: member.role || 'Member',
               }
             })
@@ -271,7 +291,7 @@ export class TeamsService {
               where: { id: existingMember.id },
               data: {
                 name: member.name || existingMember.name,
-                phone: member.phone || existingMember.phone,
+                phone: cleanPhone || existingMember.phone,
                 role: member.role || existingMember.role,
               }
             })
