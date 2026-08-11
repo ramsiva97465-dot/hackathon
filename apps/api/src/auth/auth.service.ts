@@ -13,10 +13,23 @@ export class AuthService {
 
     try {
       const trimmedEmail = email.trim()
-      const member = await this.prisma.teamMember.findFirst({
+      const allMembers = await this.prisma.teamMember.findMany({
         where: { email: { equals: trimmedEmail, mode: 'insensitive' } },
-        include: { team: { include: { track: true } } }
+        include: { team: { include: { track: true, members: true } } }
       })
+
+      if (!allMembers || allMembers.length === 0) {
+        throw new UnauthorizedException('Email is not registered in any team.')
+      }
+
+      // Sort so multi-member teams take priority over old abandoned 1-member teams
+      allMembers.sort((a, b) => {
+        const countA = a.team?.members?.length || 0
+        const countB = b.team?.members?.length || 0
+        return countB - countA
+      })
+
+      const member = allMembers[0]
 
       if (!member || !member.team) {
         throw new UnauthorizedException('Email is not registered in any team.')

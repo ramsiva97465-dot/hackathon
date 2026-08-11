@@ -455,6 +455,25 @@ export class TeamsService {
             }
           })
         } else {
+          // Clean up old solo team if this member was previously a 1-member solo team
+          try {
+            const existingOtherMembers = await this.prisma.teamMember.findMany({
+              where: { email: { equals: member.email.trim(), mode: 'insensitive' }, teamId: { not: teamId } },
+              include: { team: { include: { members: true } } }
+            })
+            for (const oldM of existingOtherMembers) {
+              if (oldM.team && oldM.team.members.length <= 1) {
+                const oldTeamId = oldM.team.id
+                await this.prisma.teamMember.deleteMany({ where: { teamId: oldTeamId } })
+                await this.prisma.leaderboard.deleteMany({ where: { teamId: oldTeamId } })
+                await this.prisma.judgeAssignment.deleteMany({ where: { teamId: oldTeamId } })
+                await this.prisma.team.delete({ where: { id: oldTeamId } }).catch(() => {})
+              }
+            }
+          } catch (e) {
+            console.error('Failed to cleanup old solo team:', e)
+          }
+
           await this.prisma.teamMember.create({
             data: {
               teamId,
