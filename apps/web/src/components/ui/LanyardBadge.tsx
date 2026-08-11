@@ -53,213 +53,236 @@ export function LanyardBadge({
   const rotateY = useTransform(springX, [-120, 120], [-25, 25])
   const rotateX = useTransform(springY, [-120, 120], [20, -20])
 
+  const generatePassCanvas = async (pName: string, pRole: string) => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 1000
+    canvas.height = 1500
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    ctx.imageSmoothingEnabled = true
+    ctx.imageSmoothingQuality = 'high'
+
+    // 1. Transparent / Warm Canvas Background
+    const bgGrad = ctx.createLinearGradient(0, 0, 1000, 1500)
+    bgGrad.addColorStop(0, '#FAF6F0')
+    bgGrad.addColorStop(1, '#EAE0D2')
+    ctx.fillStyle = bgGrad
+    ctx.fillRect(0, 0, 1000, 1500)
+
+    // 2. Lanyard Fabric Strap (Top Center)
+    ctx.fillStyle = '#12141A'
+    ctx.fillRect(460, 0, 80, 160)
+    ctx.fillStyle = '#E83C00'
+    ctx.fillRect(498, 0, 4, 160) // Orange stitching line
+
+    // Lanyard Clamp & Swivel Ring
+    ctx.fillStyle = '#18191E'
+    ctx.beginPath()
+    ctx.roundRect(440, 120, 120, 35, 6)
+    ctx.fill()
+    ctx.strokeStyle = '#334155'
+    ctx.lineWidth = 2
+    ctx.stroke()
+
+    ctx.fillStyle = '#D4AF37'
+    ctx.font = '900 13px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('SNAPSERVE', 500, 142)
+
+    ctx.strokeStyle = '#475569'
+    ctx.lineWidth = 6
+    ctx.beginPath()
+    ctx.arc(500, 175, 15, 0, Math.PI * 2)
+    ctx.stroke()
+
+    // 3. Card Body Container (Solid Dark Matte #12141A - Exact On-Screen Card)
+    const cardX = 150
+    const cardY = 200
+    const cardW = 700
+    const cardH = 1180
+    const cardR = 48
+
+    ctx.save()
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.45)'
+    ctx.shadowBlur = 50
+    ctx.shadowOffsetY = 25
+
+    ctx.fillStyle = '#12141A'
+    ctx.beginPath()
+    ctx.roundRect(cardX, cardY, cardW, cardH, cardR)
+    ctx.fill()
+    ctx.restore()
+
+    ctx.strokeStyle = '#1E293B'
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.roundRect(cardX, cardY, cardW, cardH, cardR)
+    ctx.stroke()
+
+    // Punch Hole
+    ctx.fillStyle = '#FAF8F5'
+    ctx.beginPath()
+    ctx.arc(500, 245, 14, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.strokeStyle = '#0F1117'
+    ctx.lineWidth = 2.5
+    ctx.stroke()
+
+    // 4. Header Text (Exact On-Screen Typography)
+    ctx.textAlign = 'left'
+    ctx.fillStyle = '#FFFFFF'
+    ctx.font = '900 22px sans-serif'
+    ctx.fillText('SNAPSERVE AI x VOBIZ AI VOICE 2026', 205, 305)
+
+    ctx.fillStyle = '#D4AF37'
+    ctx.font = '900 20px sans-serif'
+    ctx.fillText('TECH INNOVATION SUMMIT', 205, 335)
+
+    // 5. Hero VIP Title & SnapServe Logo Mark
+    ctx.fillStyle = '#D4AF37'
+    ctx.font = '900 115px sans-serif'
+    ctx.fillText('VIP', 205, 465)
+
+    ctx.fillStyle = '#94A3B8'
+    ctx.font = 'bold 17px monospace'
+    const formattedTable = tableNumber ? (tableNumber.toUpperCase().startsWith('T-') ? tableNumber.toUpperCase() : `TABLE ${tableNumber}`) : 'TABLE T-01'
+    ctx.fillText(formattedTable, 210, 505)
+
+    // Load & Draw Exact SnapServe Logo Mark Image
+    await new Promise<void>((resolve) => {
+      const logoImg = new Image()
+      logoImg.src = '/logos/snapserve-mark.svg'
+      logoImg.onload = () => {
+        ctx.drawImage(logoImg, 700, 390, 110, 110)
+        resolve()
+      }
+      logoImg.onerror = () => {
+        ctx.fillStyle = '#FFFFFF'
+        ctx.beginPath()
+        ctx.roundRect(700, 400, 100, 24, 12)
+        ctx.fill()
+        ctx.fillStyle = '#94A3B8'
+        ctx.beginPath()
+        ctx.roundRect(720, 435, 100, 24, 12)
+        ctx.fill()
+        ctx.fillStyle = '#64748B'
+        ctx.beginPath()
+        ctx.roundRect(740, 470, 80, 24, 12)
+        ctx.fill()
+        resolve()
+      }
+    })
+
+    // 6. Participant Info Stack (Exact On-Screen Layout)
+    // Name
+    ctx.textAlign = 'left'
+    ctx.fillStyle = '#FFFFFF'
+    ctx.font = '900 54px sans-serif'
+    ctx.fillText(pName.toUpperCase(), 205, 615)
+
+    // Speaker / Member Role
+    ctx.fillStyle = '#D4AF37'
+    ctx.font = '900 22px sans-serif'
+    ctx.fillText((pRole || 'TEAM LEAD').toUpperCase(), 205, 658)
+
+    // Track Subtitle
+    ctx.fillStyle = '#CBD5E1'
+    ctx.font = '700 18px sans-serif'
+    ctx.fillText('AI குரல் • VOICE FOR TAMIL NADU', 205, 692)
+
+    // Team Name
+    ctx.fillStyle = '#E83C00'
+    ctx.font = '900 20px sans-serif'
+    ctx.fillText(teamName.toUpperCase(), 205, 725)
+
+    // Solid Brand Orange Horizontal Accent Bar
+    ctx.fillStyle = '#E83C00'
+    ctx.beginPath()
+    ctx.roundRect(205, 755, 590, 7, 3.5)
+    ctx.fill()
+
+    // Date & Venue Location
+    ctx.fillStyle = '#FFFFFF'
+    ctx.font = '900 26px sans-serif'
+    ctx.fillText('SATURDAY, 5 SEP 2026', 205, 810)
+
+    ctx.fillStyle = '#D4AF37'
+    ctx.font = '900 18px sans-serif'
+    ctx.fillText('OLIVE PUBLIC SCHOOL, CHENNAI', 205, 845)
+
+    // 7. White Barcode Container Box (Exact On-Screen Design)
+    const barX = 205
+    const barY = 900
+    const barW = 590
+    const barH = 175
+    const barR = 28
+
+    ctx.fillStyle = '#FFFFFF'
+    ctx.beginPath()
+    ctx.roundRect(barX, barY, barW, barH, barR)
+    ctx.fill()
+
+    // Barcode lines
+    const lineXStart = 255
+    const lineYStart = 925
+    const barHeights = 85
+    const widths = [5, 2, 6, 2, 7, 2, 5, 6, 2, 3, 7, 2, 5, 3, 2, 6, 2, 5, 7, 2, 6, 2, 5, 7]
+
+    ctx.fillStyle = '#000000'
+    let currentX = lineXStart
+    widths.forEach((w) => {
+      ctx.fillRect(currentX, lineYStart, w, barHeights)
+      currentX += w + 8
+    })
+
+    // Barcode numeric string
+    ctx.textAlign = 'center'
+    ctx.font = 'bold 22px monospace'
+    ctx.fillText('9  781234  567897', 500, 1045)
+
+    // Footer Access Marker
+    ctx.fillStyle = '#94A3B8'
+    ctx.font = 'bold 15px monospace'
+    ctx.fillText(`ACCESS | VIP PASSHOLDER | [${agentNumber || '#0117'}]`, 500, 1220)
+
+    // Trigger Download PNG
+    const image = canvas.toDataURL('image/png')
+    const link = document.createElement('a')
+    link.href = image
+    link.download = `SnapServe_VIP_Pass_${pName.replace(/\s+/g, '_')}.png`
+    link.click()
+  }
+
   const handleDownloadPass = async () => {
     try {
-      toast.loading('Generating Official HD Pass PNG...')
-      const canvas = document.createElement('canvas')
-      canvas.width = 1000
-      canvas.height = 1500
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return
-
-      ctx.imageSmoothingEnabled = true
-      ctx.imageSmoothingQuality = 'high'
-
-      // 1. Transparent / Warm Canvas Background
-      const bgGrad = ctx.createLinearGradient(0, 0, 1000, 1500)
-      bgGrad.addColorStop(0, '#FAF6F0')
-      bgGrad.addColorStop(1, '#EAE0D2')
-      ctx.fillStyle = bgGrad
-      ctx.fillRect(0, 0, 1000, 1500)
-
-      // 2. Lanyard Fabric Strap (Top Center)
-      ctx.fillStyle = '#12141A'
-      ctx.fillRect(460, 0, 80, 160)
-      ctx.fillStyle = '#E83C00'
-      ctx.fillRect(498, 0, 4, 160) // Orange stitching line
-
-      // Lanyard Clamp & Swivel Ring
-      ctx.fillStyle = '#18191E'
-      ctx.beginPath()
-      ctx.roundRect(440, 120, 120, 35, 6)
-      ctx.fill()
-      ctx.strokeStyle = '#334155'
-      ctx.lineWidth = 2
-      ctx.stroke()
-
-      ctx.fillStyle = '#D4AF37'
-      ctx.font = '900 13px sans-serif'
-      ctx.textAlign = 'center'
-      ctx.fillText('SNAPSERVE', 500, 142)
-
-      ctx.strokeStyle = '#475569'
-      ctx.lineWidth = 6
-      ctx.beginPath()
-      ctx.arc(500, 175, 15, 0, Math.PI * 2)
-      ctx.stroke()
-
-      // 3. Card Body Container (Solid Dark Matte #12141A - Exact On-Screen Card)
-      const cardX = 150
-      const cardY = 200
-      const cardW = 700
-      const cardH = 1180
-      const cardR = 48
-
-      ctx.save()
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.45)'
-      ctx.shadowBlur = 50
-      ctx.shadowOffsetY = 25
-
-      ctx.fillStyle = '#12141A'
-      ctx.beginPath()
-      ctx.roundRect(cardX, cardY, cardW, cardH, cardR)
-      ctx.fill()
-      ctx.restore()
-
-      ctx.strokeStyle = '#1E293B'
-      ctx.lineWidth = 2
-      ctx.beginPath()
-      ctx.roundRect(cardX, cardY, cardW, cardH, cardR)
-      ctx.stroke()
-
-      // Punch Hole
-      ctx.fillStyle = '#FAF8F5'
-      ctx.beginPath()
-      ctx.arc(500, 245, 14, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.strokeStyle = '#0F1117'
-      ctx.lineWidth = 2.5
-      ctx.stroke()
-
-      // 4. Header Text (Exact On-Screen Typography)
-      ctx.textAlign = 'left'
-      ctx.fillStyle = '#FFFFFF'
-      ctx.font = '900 22px sans-serif'
-      ctx.fillText('SNAPSERVE AI x VOBIZ AI VOICE 2026', 205, 305)
-
-      ctx.fillStyle = '#D4AF37'
-      ctx.font = '900 20px sans-serif'
-      ctx.fillText('TECH INNOVATION SUMMIT', 205, 335)
-
-      // 5. Hero VIP Title & SnapServe Logo Mark
-      ctx.fillStyle = '#D4AF37'
-      ctx.font = '900 115px sans-serif'
-      ctx.fillText('VIP', 205, 465)
-
-      ctx.fillStyle = '#94A3B8'
-      ctx.font = 'bold 17px monospace'
-      const formattedTable = tableNumber ? (tableNumber.toUpperCase().startsWith('T-') ? tableNumber.toUpperCase() : `TABLE ${tableNumber}`) : 'TABLE T-01'
-      ctx.fillText(formattedTable, 210, 505)
-
-      // Load & Draw Exact SnapServe Logo Mark Image
-      await new Promise<void>((resolve) => {
-        const logoImg = new Image()
-        logoImg.src = '/logos/snapserve-mark.svg'
-        logoImg.onload = () => {
-          ctx.drawImage(logoImg, 700, 390, 110, 110)
-          resolve()
-        }
-        logoImg.onerror = () => {
-          ctx.fillStyle = '#FFFFFF'
-          ctx.beginPath()
-          ctx.roundRect(700, 400, 100, 24, 12)
-          ctx.fill()
-          ctx.fillStyle = '#94A3B8'
-          ctx.beginPath()
-          ctx.roundRect(720, 435, 100, 24, 12)
-          ctx.fill()
-          ctx.fillStyle = '#64748B'
-          ctx.beginPath()
-          ctx.roundRect(740, 470, 80, 24, 12)
-          ctx.fill()
-          resolve()
-        }
-      })
-
-      // 6. Participant Info Stack (Exact On-Screen Layout)
-      // Name
-      ctx.textAlign = 'left'
-      ctx.fillStyle = '#FFFFFF'
-      ctx.font = '900 54px sans-serif'
-      ctx.fillText(participantName.toUpperCase(), 205, 615)
-
-      // Speaker / Member Role
-      ctx.fillStyle = '#D4AF37'
-      ctx.font = '900 22px sans-serif'
-      ctx.fillText((memberRole || 'TEAM LEAD').toUpperCase(), 205, 658)
-
-      // Track Subtitle
-      ctx.fillStyle = '#CBD5E1'
-      ctx.font = '700 18px sans-serif'
-      ctx.fillText('AI குரல் • VOICE FOR TAMIL NADU', 205, 692)
-
-      // Team Name
-      ctx.fillStyle = '#E83C00'
-      ctx.font = '900 20px sans-serif'
-      ctx.fillText(teamName.toUpperCase(), 205, 725)
-
-      // Solid Brand Orange Horizontal Accent Bar
-      ctx.fillStyle = '#E83C00'
-      ctx.beginPath()
-      ctx.roundRect(205, 755, 590, 7, 3.5)
-      ctx.fill()
-
-      // Date & Venue Location
-      ctx.fillStyle = '#FFFFFF'
-      ctx.font = '900 26px sans-serif'
-      ctx.fillText('SATURDAY, 5 SEP 2026', 205, 810)
-
-      ctx.fillStyle = '#D4AF37'
-      ctx.font = '900 18px sans-serif'
-      ctx.fillText('OLIVE PUBLIC SCHOOL, CHENNAI', 205, 845)
-
-      // 7. White Barcode Container Box (Exact On-Screen Design)
-      const barX = 205
-      const barY = 900
-      const barW = 590
-      const barH = 175
-      const barR = 28
-
-      ctx.fillStyle = '#FFFFFF'
-      ctx.beginPath()
-      ctx.roundRect(barX, barY, barW, barH, barR)
-      ctx.fill()
-
-      // Barcode lines
-      const lineXStart = 255
-      const lineYStart = 925
-      const barHeights = 85
-      const widths = [5, 2, 6, 2, 7, 2, 5, 6, 2, 3, 7, 2, 5, 3, 2, 6, 2, 5, 7, 2, 6, 2, 5, 7]
-
-      ctx.fillStyle = '#000000'
-      let currentX = lineXStart
-      widths.forEach((w) => {
-        ctx.fillRect(currentX, lineYStart, w, barHeights)
-        currentX += w + 8
-      })
-
-      // Barcode numeric string
-      ctx.textAlign = 'center'
-      ctx.font = 'bold 22px monospace'
-      ctx.fillText('9  781234  567897', 500, 1045)
-
-      // Footer Access Marker
-      ctx.fillStyle = '#94A3B8'
-      ctx.font = 'bold 15px monospace'
-      ctx.fillText(`ACCESS | VIP PASSHOLDER | [${agentNumber || '#0117'}]`, 500, 1220)
-
-      // 8. Trigger Download PNG
-      const image = canvas.toDataURL('image/png')
-      const link = document.createElement('a')
-      link.href = image
-      link.download = `SnapServe_VIP_Pass_${participantName.replace(/\s+/g, '_')}.png`
-      link.click()
+      toast.loading(`Generating Official Pass for ${participantName}...`)
+      await generatePassCanvas(participantName, memberRole)
       toast.dismiss()
-      toast.success('Downloaded Official VIP Pass PNG!')
+      toast.success(`Downloaded VIP Pass for ${participantName}!`)
     } catch (err) {
       console.error(err)
       toast.dismiss()
       toast.error('Could not download pass image.')
+    }
+  }
+
+  const handleDownloadAllPasses = async () => {
+    const teamMemberList = members && members.length > 0 ? members : [{ name: participantName, role: memberRole }]
+    try {
+      toast.loading(`Downloading all ${teamMemberList.length} Team Passes...`)
+      for (let i = 0; i < teamMemberList.length; i++) {
+        const m = teamMemberList[i]
+        const role = i === 0 ? 'Team Lead' : (m.role || 'Team Member')
+        await generatePassCanvas(m.name, role)
+        await new Promise(r => setTimeout(r, 300))
+      }
+      toast.dismiss()
+      toast.success(`Successfully downloaded all ${teamMemberList.length} team passes!`)
+    } catch (err) {
+      console.error(err)
+      toast.dismiss()
+      toast.error('Could not download team passes.')
     }
   }
 
@@ -572,8 +595,19 @@ export function LanyardBadge({
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#E83C00] text-white text-[11px] font-bold shadow-xs hover:bg-[#c93400] transition-all active:scale-95"
         >
           <Download size={12} />
-          Download PNG
+          Download {participantName} PNG
         </button>
+
+        {members && members.length > 1 && (
+          <button
+            type="button"
+            onClick={handleDownloadAllPasses}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-amber-400 border border-amber-500/40 text-[11px] font-bold shadow-xs hover:bg-slate-800 transition-all active:scale-95"
+          >
+            <Download size={12} />
+            Download All {members.length} Passes
+          </button>
+        )}
 
         <button
           type="button"

@@ -142,6 +142,7 @@ export function ParticipantDashboard() {
   const [data, setData] = useState<TeamDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<Tab>('home')
+  const [selectedMemberIndex, setSelectedMemberIndex] = useState(0)
 
   // Form state
   const [projectTitle, setProjectTitle] = useState('')
@@ -678,19 +679,36 @@ export function ParticipantDashboard() {
             </div>
 
             <div>
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Team Members ({data.members.length})</p>
-              <div className="space-y-2">
-                {data.members.map((m, i) => (
-                  <div key={i} className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#E83C00] to-orange-400 flex items-center justify-center font-black text-white text-[10px] shrink-0">
-                      {m.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-bold text-slate-800 truncate">{m.name}</p>
-                      <p className="text-[9px] text-slate-400 truncate">{i === 0 ? 'Team Lead' : 'Member'}</p>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Team Members ({data.members.length})</p>
+                <span className="text-[8.5px] font-bold text-[#E83C00] uppercase">Click to view pass</span>
+              </div>
+              <div className="space-y-1.5">
+                {data.members.map((m, i) => {
+                  const isSelected = selectedMemberIndex === i
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => {
+                        setSelectedMemberIndex(i)
+                      }}
+                      className={`w-full flex items-center gap-2 p-2 rounded-xl border text-left transition-all cursor-pointer ${isSelected
+                        ? 'bg-orange-50/90 border-[#E83C00] shadow-2xs ring-2 ring-[#E83C00]/20'
+                        : 'bg-slate-50 border-slate-100 hover:bg-slate-100'
+                        }`}
+                    >
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#E83C00] to-orange-400 flex items-center justify-center font-black text-white text-[10px] shrink-0">
+                        {m.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-[11px] font-bold truncate ${isSelected ? 'text-[#E83C00]' : 'text-slate-800'}`}>{m.name}</p>
+                        <p className="text-[9px] text-slate-400 truncate">{i === 0 ? 'Team Lead' : (m.role || 'Member')}</p>
+                      </div>
+                      {isSelected && <CheckCircle2 size={12} className="text-[#E83C00] shrink-0" />}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -982,20 +1000,26 @@ export function ParticipantDashboard() {
                           </button>
                         </div>
 
-                        <LanyardBadge
-                          participantName={data.members[0]?.name || 'Participant'}
-                          memberRole="Team Lead"
-                          teamName={data.name}
-                          trackName={data.track.name}
-                          tableNumber={data.tableNumber}
-                          agentName={data.agentName}
-                          agentPhoneNumber={data.agentPhoneNumber}
-                          agentNumber={data.tableNumber ? `#${data.tableNumber.replace(/[^0-9]/g, '') || '01'}` : '#01'}
-                          projectTitle={data.projectTitle}
-                          agentSolution={data.agentSolution}
-                          techStack={data.techStack}
-                          members={data.members}
-                        />
+                        {(() => {
+                          const activeMember = data.members[selectedMemberIndex] || data.members[0] || { name: 'Participant', role: 'Team Member' }
+                          const activeRole = selectedMemberIndex === 0 ? 'Team Lead' : (activeMember.role || 'Team Member')
+                          return (
+                            <LanyardBadge
+                              participantName={activeMember.name}
+                              memberRole={activeRole}
+                              teamName={data.name}
+                              trackName={data.track.name}
+                              tableNumber={data.tableNumber}
+                              agentName={data.agentName}
+                              agentPhoneNumber={data.agentPhoneNumber}
+                              agentNumber={data.tableNumber ? `#${data.tableNumber.replace(/[^0-9]/g, '') || '01'}` : '#01'}
+                              projectTitle={data.projectTitle}
+                              agentSolution={data.agentSolution}
+                              techStack={data.techStack}
+                              members={data.members}
+                            />
+                          )
+                        })()}
                       </div>
                     </div>
                   ) : (
