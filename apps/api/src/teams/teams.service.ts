@@ -441,12 +441,14 @@ export class TeamsService {
 
       // Upsert incoming members
       for (const member of body.members) {
+        const cleanPhone = formatPhoneNumber(member.phone)
         if (member.id) {
           await this.prisma.teamMember.update({
             where: { id: member.id },
             data: {
               name: member.name,
               email: member.email,
+              phone: cleanPhone,
               role: member.role,
               linkedin: member.linkedin,
               github: member.github,
@@ -458,6 +460,7 @@ export class TeamsService {
               teamId,
               name: member.name,
               email: member.email,
+              phone: cleanPhone,
               role: member.role,
               linkedin: member.linkedin,
               github: member.github,

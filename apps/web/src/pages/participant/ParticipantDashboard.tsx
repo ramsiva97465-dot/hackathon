@@ -31,7 +31,7 @@ type TeamDetails = {
   followedLinkedin: boolean
   bonusPoints: number
   round: number
-  members: { id?: string; name: string; email: string; role: string; linkedin?: string; github?: string }[]
+  members: { id?: string; name: string; email: string; phone?: string; role: string; linkedin?: string; github?: string }[]
   evaluation: {
     submittedSheetsCount: number
     overallScore: number | null
@@ -159,7 +159,7 @@ export function ParticipantDashboard() {
   const [llmProvider, setLlmProvider] = useState('OpenAI (GPT-4o)')
   const [ttsProvider, setTtsProvider] = useState('ElevenLabs')
   const [saving, setSaving] = useState(false)
-  const [membersForm, setMembersForm] = useState<{ id?: string; name: string; email: string; role?: string; linkedin?: string; github?: string }[]>([])
+  const [membersForm, setMembersForm] = useState<{ id?: string; name: string; email: string; phone?: string; role?: string; linkedin?: string; github?: string }[]>([])
 
   // Bonus state
   const [followedInstagram, setFollowedInstagram] = useState(false)
@@ -258,12 +258,13 @@ export function ParticipantDashboard() {
               id: m.id,
               name: m.name,
               email: m.email,
+              phone: m.phone || '',
               role: m.role || '',
               linkedin: m.linkedin || '',
               github: m.github || ''
             })))
           } else {
-            setMembersForm([{ name: '', email: '', linkedin: '', github: '' }])
+            setMembersForm([{ name: '', email: '', phone: '', linkedin: '', github: '' }])
           }
         }
       }
@@ -1186,7 +1187,7 @@ export function ParticipantDashboard() {
                             {membersForm.length < 3 && (
                               <button
                                 type="button"
-                                onClick={() => setMembersForm([...membersForm, { name: '', email: '', linkedin: '', github: '' }])}
+                                onClick={() => setMembersForm([...membersForm, { name: '', email: '', phone: '', linkedin: '', github: '' }])}
                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold rounded-lg transition-all"
                               >
                                 <Plus size={12} /> Add Member
@@ -1201,13 +1202,16 @@ export function ParticipantDashboard() {
                                   <User size={14} />
                                 </div>
                                 <div className="flex-1 space-y-3">
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <Field label="Full Name *" placeholder="John Doe" value={member.name} onChange={(v) => {
                                       const newM = [...membersForm]; newM[idx].name = v; setMembersForm(newM);
                                     }} required />
                                     <Field label="Email Address *" type="email" placeholder="john@example.com" value={member.email} onChange={(v) => {
                                       const newM = [...membersForm]; newM[idx].email = v; setMembersForm(newM);
                                     }} required />
+                                    <Field label="Phone Number" type="tel" placeholder="9876543210" value={member.phone || ''} onChange={(v) => {
+                                      const newM = [...membersForm]; newM[idx].phone = v; setMembersForm(newM);
+                                    }} />
                                   </div>
                                 </div>
                                 {membersForm.length > 1 && (

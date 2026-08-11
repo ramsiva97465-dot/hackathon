@@ -28,7 +28,7 @@ export class TeamsController {
       techStack?: string[]
       followedInstagram?: boolean
       followedLinkedin?: boolean
-      members?: { id?: string; name: string; email: string; role?: string; linkedin?: string; github?: string }[]
+      members?: { id?: string; name: string; email: string; phone?: string; role?: string; linkedin?: string; github?: string }[]
     }
   ) {
     const teamId = req.participant.teamId
