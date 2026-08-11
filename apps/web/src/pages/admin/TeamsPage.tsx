@@ -936,9 +936,15 @@ export function TeamsPage() {
                     <span className="text-slate-400 block text-[10px] uppercase font-bold">Agent Name</span>
                     <span className="font-extrabold text-slate-900">{viewTarget.agentName || '—'}</span>
                   </div>
-                  <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
-                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Live Call Number</span>
-                    <span className="font-extrabold text-[#E83C00]">{viewTarget.agentPhoneNumber || '—'}</span>
+                  <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl col-span-2 sm:col-span-1">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Presentation Drive URL</span>
+                    {viewTarget.demoUrl ? (
+                      <a href={viewTarget.demoUrl} target="_blank" rel="noreferrer" className="text-xs font-bold text-[#E83C00] hover:underline flex items-center gap-1 truncate mt-0.5">
+                        <ExternalLink size={11} /> Open Drive Deck
+                      </a>
+                    ) : (
+                      <span className="text-xs text-amber-600 font-bold block mt-0.5">Pending Submission</span>
+                    )}
                   </div>
                 </div>
 
@@ -982,18 +988,26 @@ export function TeamsPage() {
                   </div>
                 )}
 
-                {/* Links Row */}
-                {(viewTarget.githubUrl || viewTarget.demoUrl) && (
-                  <div className="flex items-center gap-2 flex-wrap pt-1">
-                    {viewTarget.demoUrl && (
+                {/* Presentation Drive & GitHub Submission Links */}
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                    Submission Links &amp; Drive Assets
+                  </span>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {viewTarget.demoUrl ? (
                       <a
                         href={viewTarget.demoUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#E83C00] text-white text-xs font-bold rounded-xl shadow-xs hover:bg-[#c93400] transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#E83C00] text-white text-xs font-bold rounded-xl shadow-xs hover:bg-[#c93400] transition-colors"
                       >
-                        <ExternalLink size={12} /> Live Demo URL
+                        <ExternalLink size={13} /> Open Presentation Drive URL
                       </a>
+                    ) : (
+                      <div className="px-3 py-1.5 bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold rounded-xl flex items-center gap-1">
+                        <span>⚠️ Presentation Drive URL: Not Submitted Yet</span>
+                      </div>
                     )}
 
                     {viewTarget.githubUrl && (
@@ -1001,13 +1015,13 @@ export function TeamsPage() {
                         href={viewTarget.githubUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-xs hover:bg-slate-800 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl shadow-xs hover:bg-slate-800 transition-colors"
                       >
-                        <Github size={12} /> GitHub Code Repo
+                        <Github size={13} /> Open GitHub Code Repo
                       </a>
                     )}
                   </div>
-                )}
+                </div>
 
                 {/* Tech Stack */}
                 {viewTarget.techStack && viewTarget.techStack.length > 0 && (
