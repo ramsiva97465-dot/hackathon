@@ -336,28 +336,33 @@ export function LanyardBadge({
         }}
         className="relative flex flex-col items-center justify-center cursor-grab active:cursor-grabbing origin-top z-10 w-full mt-[-1px]"
       >
-        {/* Metallic Clip Assembly with SNAPSERVE Tag & Swivel Hook */}
+        {/* ─── METALLIC CLAMP & SWIVEL HOOK ASSEMBLY (Exact Screenshot 2) ─── */}
         <div className="flex flex-col items-center relative z-20 shrink-0">
-          {/* Lanyard Fabric Clamp Tag Badge */}
-          <div className="px-3 py-1 bg-[#121212] border border-amber-500/70 rounded-md shadow-md text-center z-10">
-            <span className="text-[7px] font-mono font-black text-amber-400 tracking-widest uppercase block leading-none">
+          {/* Black Matte Clamp Sleeve with Gold SNAPSERVE Brand */}
+          <div className="w-10 h-7 bg-[#1A1A1D] border border-slate-700/80 rounded-sm shadow-md flex items-center justify-center p-1 z-20">
+            <span className="text-[7.5px] font-mono font-black text-[#D4AF37] tracking-widest uppercase block leading-none">
               SNAPSERVE
             </span>
           </div>
 
-          {/* Black Metallic Swivel Hook Assembly */}
-          <div className="flex flex-col items-center mt-[-1px]">
-            {/* Swivel Ring */}
-            <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-600 bg-slate-900 shadow-sm flex items-center justify-center">
-              <div className="w-1 h-1 rounded-full bg-slate-950" />
+          {/* Lower Fabric Strap Section */}
+          <div className="w-7 h-3 bg-gradient-to-b from-[#1A1A1D] to-slate-900 border-x border-slate-700/50 shadow-inner mt-[-1px]" />
+
+          {/* Black Metallic Swivel D-Ring & Snap Hook */}
+          <div className="flex flex-col items-center mt-[-1px] relative z-20">
+            {/* Black Metallic D-Ring */}
+            <div className="w-6 h-3 rounded-t-full border-t-2 border-x-2 border-slate-700 bg-slate-900 shadow-sm" />
+
+            {/* Black Metallic Swivel Joint & Snap Hook Claw */}
+            <div className="w-2.5 h-5 bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 rounded-b-sm border border-slate-700 shadow-md mt-[-2px] relative">
+              {/* Hook Trigger Pin */}
+              <div className="absolute right-[-2px] top-1 w-1 h-2 bg-slate-600 rounded-r-xs" />
             </div>
-            {/* Black Metallic Carabiner Snap Hook */}
-            <div className="w-2.5 h-4 bg-gradient-to-b from-slate-700 via-slate-900 to-slate-950 rounded-b-sm border-x border-b border-slate-600 shadow-sm mt-[-2px]" />
           </div>
         </div>
 
         {/* ─── 3D Flippable Card Container ──────────────────────────────────── */}
-        <div className="w-full max-w-[285px] h-[440px] relative mt-[-6px]">
+        <div className="w-full max-w-[285px] h-[440px] relative mt-[-10px]">
           <motion.div
             style={{
               rotateX,
@@ -365,22 +370,24 @@ export function LanyardBadge({
               transformStyle: 'preserve-3d',
             }}
             transition={{ duration: 0.5, type: 'spring', stiffness: 350, damping: 18 }}
-            className="w-full h-full relative rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.4)] border border-slate-800 group"
+            className="w-full h-full relative rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.5)] border border-slate-800 group"
           >
-            {/* Subtle Metallic Reflective Gloss Overlay */}
+            {/* Subtle Reflective Gloss Overlay */}
             <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none opacity-40 group-hover:opacity-100 transition-opacity z-30 overflow-hidden" />
 
             {/* ─── FRONT FACE (Exact Screenshot 2 VIP Pass) ────────────────────────── */}
             <div
-              className="absolute inset-0 w-full h-full rounded-3xl p-5 pt-3.5 flex flex-col justify-between overflow-hidden shadow-2xl border border-slate-800/90"
+              className="absolute inset-0 w-full h-full rounded-3xl p-5 pt-3 flex flex-col justify-between overflow-hidden shadow-2xl border border-slate-800/90"
               style={{
                 backgroundColor: '#12141A',
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden'
               }}
             >
-              {/* Card Punch Hole at Top Center */}
-              <div className="w-3.5 h-3.5 rounded-full bg-slate-950 border-2 border-slate-700 mx-auto shadow-inner mb-1 shrink-0" />
+              {/* Physical Card Punch Hole (Cutout revealing background) */}
+              <div className="w-4.5 h-4.5 rounded-full bg-[#FAF8F5] border border-slate-900 mx-auto shadow-inner mb-1 shrink-0 relative z-10 flex items-center justify-center">
+                <div className="w-3.5 h-3.5 rounded-full bg-[#12141A]/10 border border-slate-400/40" />
+              </div>
 
               {/* 1. Header Text (Exact Screenshot 2 Sans-Serif Typography & Style) */}
               <div className="text-left space-y-0.5 pb-1">
