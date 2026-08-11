@@ -481,59 +481,86 @@ export function LanyardBadge({
               {/* Subtle Radial Glow in Background */}
               <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent rounded-full blur-2xl pointer-events-none" />
 
-              {/* Card Punch Hole at Top Center */}
-              <div className="w-4.5 h-4.5 rounded-full bg-[#FAF8F5] border border-slate-900 mx-auto shadow-inner mb-1 shrink-0 relative z-10 flex items-center justify-center">
-                <div className="w-3.5 h-3.5 rounded-full bg-[#0F1117]/10 border border-slate-400/40" />
+              {/* Top Section: Card Hole + Header */}
+              <div className="space-y-2 shrink-0 relative z-10">
+                {/* Card Punch Hole */}
+                <div className="w-4.5 h-4.5 rounded-full bg-[#FAF8F5] border border-slate-900 mx-auto shadow-inner mb-0.5 shrink-0 flex items-center justify-center">
+                  <div className="w-3.5 h-3.5 rounded-full bg-[#0F1117]/10 border border-slate-400/40" />
+                </div>
+
+                {/* Top Header */}
+                <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                  <span className="text-[10px] font-black text-[#D4AF37] uppercase tracking-widest flex items-center gap-1.5 font-sans">
+                    <Sparkles size={12} className="text-[#D4AF37]" /> VIP BUILDER ACCESS
+                  </span>
+                  <span className="text-[8px] text-emerald-400 bg-emerald-500/15 px-2.5 py-0.5 rounded-full font-sans font-extrabold border border-emerald-500/40 tracking-wider flex items-center gap-1">
+                    VERIFIED PASS ✓
+                  </span>
+                </div>
               </div>
 
-              {/* Top Header */}
-              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5 relative z-10">
-                <span className="text-[10px] font-black text-[#D4AF37] uppercase tracking-widest flex items-center gap-1.5 font-sans">
-                  <Sparkles size={12} className="text-[#D4AF37]" /> VIP BUILDER ACCESS
-                </span>
-                <span className="text-[8px] text-emerald-400 bg-emerald-500/15 px-2.5 py-0.5 rounded-full font-sans font-extrabold border border-emerald-500/40 tracking-wider flex items-center gap-1">
-                  VERIFIED PASS ✓
-                </span>
-              </div>
-
-              {/* Wi-Fi Details & Check-In */}
-              <div className="space-y-3.5 my-auto text-left relative z-10">
-
-                {/* Wi-Fi Credentials Card */}
-                <div className="bg-slate-900/80 p-2.5 rounded-2xl border border-slate-800/90 space-y-1.5 shadow-2xs backdrop-blur-md">
-                  <div className="flex items-center justify-between text-[10.5px] font-extrabold text-white font-sans">
-                    <div className="flex items-center gap-1.5">
-                      <Wifi size={12} className="text-[#D4AF37]" /> Venue Wi-Fi Access
-                    </div>
-                    <span className="text-[8px] font-mono font-bold text-emerald-400">5GHz ULTRA</span>
+              {/* Middle Section: Evenly Spaced Event Access & Wi-Fi & QR */}
+              <div className="space-y-2.5 my-auto text-left relative z-10 flex-1 flex flex-col justify-center py-1">
+                {/* 1. Gate & Venue Access Badge */}
+                <div className="bg-slate-900/80 p-2.5 rounded-2xl border border-slate-800/90 backdrop-blur-md">
+                  <div className="flex items-center justify-between text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5 font-sans">
+                    <span>EVENT GATE ACCESS</span>
+                    <span className="text-[#D4AF37] font-mono font-bold">ALL-ACCESS</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-[10px] font-sans pt-0.5">
-                    <div className="bg-slate-950/90 p-1.5 px-2 rounded-xl border border-slate-800 flex flex-col">
-                      <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider">SSID NETWORK</span>
-                      <span className="text-white font-black truncate">VoiceAI_Guest_5G</span>
+                  <div className="grid grid-cols-2 gap-2 text-[9.5px] font-sans">
+                    <div className="bg-slate-950/90 p-1.5 px-2 rounded-xl border border-slate-800/80">
+                      <span className="text-[7px] font-extrabold text-slate-500 block uppercase">VENUE LOCATION</span>
+                      <span className="text-white font-bold block truncate">MAIN HALL A</span>
                     </div>
-                    <div className="bg-slate-950/90 p-1.5 px-2 rounded-xl border border-slate-800 flex flex-col">
-                      <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider">PASSWORD</span>
-                      <span className="text-[#D4AF37] font-black truncate">voiceai2026</span>
+                    <div className="bg-slate-950/90 p-1.5 px-2 rounded-xl border border-slate-800/80">
+                      <span className="text-[7px] font-extrabold text-slate-500 block uppercase">ASSIGNED DESK</span>
+                      <span className="text-[#D4AF37] font-bold block truncate">
+                        {tableNumber ? (tableNumber.toUpperCase().startsWith('T-') ? tableNumber.toUpperCase() : `TABLE ${tableNumber}`) : 'TABLE T-01'}
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Check-in QR Code Card */}
-                <div className="flex items-center justify-between bg-slate-950/95 p-2.5 rounded-2xl text-white shadow-md border border-slate-800">
-                  <div className="space-y-0.5">
-                    <span className="text-[7.5px] font-extrabold text-[#D4AF37] uppercase tracking-widest block font-sans">OFFICIAL CHECK-IN</span>
-                    <span className="text-[11px] font-black text-white block leading-tight font-sans">Scan at Admin Desk</span>
-                    <span className="text-[7.5px] font-mono font-bold text-slate-500 block">ID: PASS-VIP-2026</span>
+                {/* 2. Wi-Fi Credentials Card */}
+                <div className="bg-slate-900/80 p-2.5 rounded-2xl border border-slate-800/90 backdrop-blur-md">
+                  <div className="flex items-center justify-between text-[10.5px] font-extrabold text-white font-sans mb-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <Wifi size={12} className="text-[#D4AF37]" /> Venue Wi-Fi Access
+                    </div>
+                    <span className="text-[7.5px] font-mono font-bold text-emerald-400 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-800/50">5GHz FAST</span>
                   </div>
-                  <div className="p-1.5 bg-white rounded-xl shadow-xs shrink-0">
-                    <QrCode size={28} className="text-slate-950" />
+                  <div className="grid grid-cols-2 gap-2 text-[9.5px] font-sans">
+                    <div className="bg-slate-950/90 p-1.5 px-2 rounded-xl border border-slate-800/80">
+                      <span className="text-[7px] font-extrabold text-slate-500 uppercase tracking-wider block">SSID</span>
+                      <span className="text-white font-bold block truncate">VoiceAI_Guest_5G</span>
+                    </div>
+                    <div className="bg-slate-950/90 p-1.5 px-2 rounded-xl border border-slate-800/80">
+                      <span className="text-[7px] font-extrabold text-slate-500 uppercase tracking-wider block">PASSWORD</span>
+                      <span className="text-[#D4AF37] font-bold block truncate">voiceai2026</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Admin Attendance Check-In QR Card */}
+                <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 p-2.5 rounded-2xl text-white shadow-md border border-slate-800 flex items-center justify-between">
+                  <div className="space-y-0.5 text-left">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="text-[7.5px] font-extrabold text-[#D4AF37] uppercase tracking-widest font-sans">ADMIN ATTENDANCE SCAN</span>
+                    </div>
+                    <span className="text-[11px] font-black text-white block leading-tight font-sans">Scan at Desk to Check-In</span>
+                    <span className="text-[7.5px] font-mono font-bold text-slate-400 block pt-0.5">
+                      PASS: {agentNumber ? `PASS-${agentNumber.toUpperCase()}` : 'PASS-VIP-0117'}
+                    </span>
+                  </div>
+                  <div className="p-1.5 bg-white rounded-xl shadow-xs shrink-0 border border-slate-200">
+                    <QrCode size={30} className="text-slate-950" />
                   </div>
                 </div>
               </div>
 
               {/* Footer Sponsor Lockup */}
-              <div className="border-t border-slate-800/80 pt-2 text-center relative z-10">
+              <div className="border-t border-slate-800/80 pt-2 text-center shrink-0 relative z-10">
                 <span className="text-[8px] font-extrabold text-slate-400 uppercase tracking-widest block font-sans">
                   SNAPSERVE AI x VOBIZ AI VOICE 2026
                 </span>
