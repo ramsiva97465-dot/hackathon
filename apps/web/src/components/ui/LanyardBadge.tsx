@@ -133,7 +133,7 @@ export function LanyardBadge({
       ctx.textAlign = 'center'
       ctx.fillStyle = '#E2E8F0'
       ctx.font = '900 13px monospace'
-      ctx.fillText('SNAPSERVE AI x VOBIZ AI VOICE 2026', 375, 220)
+      ctx.fillText('SNAPSERVE AI VOICE 2026', 375, 220)
 
       ctx.fillStyle = '#D4AF37'
       ctx.font = '900 15px sans-serif'
@@ -412,7 +412,7 @@ export function LanyardBadge({
               {/* 1. Header Text */}
               <div className="text-center space-y-0.5 border-b border-slate-800/80 pb-2">
                 <span className="text-[7.5px] font-black text-slate-200 uppercase tracking-widest block font-mono">
-                  SNAPSERVE AI x VOBIZ AI VOICE 2026
+                  SNAPSERVE AI VOICE 2026
                 </span>
                 <span className="text-[8.5px] font-extrabold text-[#D4AF37] uppercase tracking-widest block">
                   TECH INNOVATION SUMMIT
