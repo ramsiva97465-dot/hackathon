@@ -19,7 +19,16 @@ function formatPhoneNumber(phone?: string | null): string | null {
     }
   }
 
-  return str.replace(/\.0+$/, '') || null
+  str = str.replace(/\.0+$/, '')
+  const digitsOnly = str.replace(/\D/g, '')
+
+  if (digitsOnly.length === 10) {
+    return `+91${digitsOnly}`
+  } else if (digitsOnly.length === 12 && digitsOnly.startsWith('91')) {
+    return `+${digitsOnly}`
+  }
+
+  return str || null
 }
 
 @Injectable()

@@ -364,6 +364,15 @@ export function ParticipantDashboard() {
     certWindow.document.close()
   }
 
+  const formatPhone = (p?: string | null) => {
+    if (!p) return ''
+    const trimmed = p.trim()
+    const digits = trimmed.replace(/\D/g, '')
+    if (digits.length === 10) return `+91${digits}`
+    if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`
+    return trimmed
+  }
+
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
     if (!data) return
@@ -372,6 +381,14 @@ export function ParticipantDashboard() {
       toast.error('Agent Phone Number is required for the Voice-a-thon live demo.')
       return
     }
+
+    const agentDigits = agentPhoneNumber.replace(/\D/g, '')
+    if (agentDigits.length < 10) {
+      toast.error('Please enter a valid 10-digit phone number (e.g. +91 93420 42401).')
+      return
+    }
+
+    const cleanAgentPhone = formatPhone(agentPhoneNumber)
 
     try {
       setSaving(true)
@@ -390,11 +407,13 @@ export function ParticipantDashboard() {
       }
 
       const res = await api.teams.submitProject({
-        projectTitle, projectDescription, agentName, agentSolution, agentPhoneNumber,
+        projectTitle, projectDescription, agentName, agentSolution,
+        agentPhoneNumber: cleanAgentPhone,
         githubUrl, demoUrl, techStack,
         followedInstagram, followedLinkedin,
         members: validMembers.map((m, idx) => ({
           ...m,
+          phone: formatPhone(m.phone),
           role: idx === 0 ? 'TEAM_LEAD' : 'TEAM_MEMBER'
         })),
       })
@@ -1066,10 +1085,10 @@ export function ParticipantDashboard() {
                           />
                           <Field
                             label={agentType === 'MULTI_AGENT' ? "Master Hotline Phone Number *" : "Agent Phone Number *"}
-                            placeholder="+1 (555) 000-0000"
+                            placeholder="+91 93420 42401"
                             value={agentPhoneNumber}
                             onChange={setAgentPhoneNumber}
-                            hint="For live demo verification"
+                            hint="10-digit Indian phone number for live demo verification"
                             required
                           />
                         </div>
