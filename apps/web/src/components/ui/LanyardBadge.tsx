@@ -404,9 +404,9 @@ export function LanyardBadge({
                 </div>
 
                 {/* Clean Frameless SnapServe Brand Mark (No yellow borders or boxes) */}
-                <div className="flex items-center justify-center p-1">
-                  <svg viewBox="0 0 100 100" className="w-13 h-13 drop-shadow-md" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="5" y="15" width="75" height="20" rx="10" fill="#F8FAFC" />
+                <div className="flex items-center justify-center p-1 shrink-0">
+                  <svg viewBox="0 0 100 100" className="w-12 h-12 drop-shadow-md" style={{ width: '48px', height: '48px' }} fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="5" y="15" width="75" height="20" rx="10" fill="#FFFFFF" />
                     <rect x="18" y="42" width="75" height="20" rx="10" fill="#94A3B8" />
                     <rect x="31" y="69" width="64" height="20" rx="10" fill="#64748B" />
                   </svg>
