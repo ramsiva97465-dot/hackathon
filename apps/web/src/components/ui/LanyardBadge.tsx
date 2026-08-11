@@ -199,12 +199,12 @@ export function LanyardBadge({
       // Speaker / Role
       ctx.fillStyle = '#D4AF37'
       ctx.font = '900 17px sans-serif'
-      ctx.fillText((memberRole || 'SPEAKER').toUpperCase(), 165, 510)
+      ctx.fillText((memberRole || 'TEAM LEAD').toUpperCase(), 165, 510)
 
       // Subtitle / Track
       ctx.fillStyle = '#CBD5E1'
       ctx.font = '700 15px sans-serif'
-      ctx.fillText((trackName || 'PRODUCT DESIGN LEAD').toUpperCase(), 165, 535)
+      ctx.fillText('AI குரல் • VOICE FOR TAMIL NADU', 165, 535)
 
       // Team Name
       ctx.fillStyle = '#E83C00'
@@ -418,10 +418,10 @@ export function LanyardBadge({
                     {participantName}
                   </h2>
                   <p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-widest pt-0.5">
-                    {memberRole || 'SPEAKER'}
+                    {memberRole || 'TEAM LEAD'}
                   </p>
                   <p className="text-[9px] font-extrabold text-slate-300 uppercase tracking-wider">
-                    {trackName || 'PRODUCT DESIGN LEAD'}
+                    AI குரல் • VOICE FOR TAMIL NADU
                   </p>
                   <p className="text-[9.5px] font-black text-[#E83C00] uppercase tracking-wide">
                     {teamName}
