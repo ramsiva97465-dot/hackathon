@@ -129,15 +129,15 @@ export function LanyardBadge({
       ctx.lineWidth = 2
       ctx.stroke()
 
-      // 6. Card Header Text
-      ctx.textAlign = 'center'
-      ctx.fillStyle = '#E2E8F0'
-      ctx.font = '900 13px monospace'
-      ctx.fillText('SNAPSERVE AI VOICE 2026', 375, 220)
+      // 6. Card Header Text (Exact Screenshot 2 Sans-Serif Typography)
+      ctx.textAlign = 'left'
+      ctx.fillStyle = '#FFFFFF'
+      ctx.font = '900 16px sans-serif'
+      ctx.fillText('SNAPSERVE AI x VOBIZ AI VOICE 2026', 165, 225)
 
       ctx.fillStyle = '#D4AF37'
       ctx.font = '900 15px sans-serif'
-      ctx.fillText('TECH INNOVATION SUMMIT', 375, 245)
+      ctx.fillText('TECH INNOVATION SUMMIT', 165, 248)
 
       // Divider line under header
       ctx.strokeStyle = '#1E293B'
@@ -382,12 +382,12 @@ export function LanyardBadge({
               {/* Card Punch Hole at Top Center */}
               <div className="w-3.5 h-3.5 rounded-full bg-slate-950 border-2 border-slate-700 mx-auto shadow-inner mb-1 shrink-0" />
 
-              {/* 1. Header Text */}
-              <div className="text-center space-y-0.5 border-b border-slate-800/80 pb-2">
-                <span className="text-[7.5px] font-black text-slate-200 uppercase tracking-widest block font-mono">
-                  SNAPSERVE AI VOICE 2026
+              {/* 1. Header Text (Exact Screenshot 2 Sans-Serif Typography & Style) */}
+              <div className="text-left space-y-0.5 pb-1">
+                <span className="text-[10px] font-extrabold text-white tracking-wide uppercase block font-sans drop-shadow-xs">
+                  SNAPSERVE AI x VOBIZ AI VOICE 2026
                 </span>
-                <span className="text-[8.5px] font-extrabold text-[#D4AF37] uppercase tracking-widest block">
+                <span className="text-[9.5px] font-extrabold text-[#D4AF37] tracking-widest uppercase block font-sans">
                   TECH INNOVATION SUMMIT
                 </span>
               </div>
