@@ -226,26 +226,28 @@ export function LanyardBadge({
         }}
         className="relative flex flex-col items-center justify-center cursor-grab active:cursor-grabbing origin-top z-10 w-full mt-[-1px]"
       >
-        {/* Metallic Clip & Clamp Assembly with SNAPSERVE Tag */}
+        {/* Metallic Clip Assembly with SNAPSERVE Tag & Swivel Hook */}
         <div className="flex flex-col items-center relative z-20 shrink-0">
-          {/* Lanyard Clip Tag Badge */}
-          <div className="px-2.5 py-0.5 bg-slate-950 border border-amber-500/60 rounded-t-md shadow-xs text-center z-10">
-            <span className="text-[6.5px] font-mono font-black text-amber-400 tracking-widest uppercase block leading-none py-0.5">
+          {/* Lanyard Fabric Clamp Tag Badge */}
+          <div className="px-3 py-1 bg-[#121212] border border-amber-500/70 rounded-md shadow-md text-center z-10">
+            <span className="text-[7px] font-mono font-black text-amber-400 tracking-widest uppercase block leading-none">
               SNAPSERVE
             </span>
           </div>
-          {/* Silver Clip Ring */}
-          <div className="w-5 h-5 rounded-full border-3 border-slate-300 bg-gradient-to-tr from-slate-400 via-slate-200 to-slate-50 shadow-md flex items-center justify-center mt-[-2px]">
-            <div className="w-1.5 h-1.5 rounded-full bg-slate-700" />
-          </div>
-          {/* Metal Clamp Holder */}
-          <div className="w-7 h-3 bg-gradient-to-r from-slate-400 via-slate-100 to-slate-400 rounded-b-md shadow-sm border-t border-slate-500 flex items-center justify-center">
-            <div className="w-5 h-0.5 bg-slate-600 rounded-full" />
+
+          {/* Black Metallic Swivel Hook Assembly */}
+          <div className="flex flex-col items-center mt-[-1px]">
+            {/* Swivel Ring */}
+            <div className="w-3.5 h-3.5 rounded-full border-2 border-slate-600 bg-slate-900 shadow-sm flex items-center justify-center">
+              <div className="w-1 h-1 rounded-full bg-slate-950" />
+            </div>
+            {/* Black Metallic Carabiner Snap Hook */}
+            <div className="w-2.5 h-4 bg-gradient-to-b from-slate-700 via-slate-900 to-slate-950 rounded-b-sm border-x border-b border-slate-600 shadow-sm mt-[-2px]" />
           </div>
         </div>
 
         {/* ─── 3D Flippable Card Container ──────────────────────────────────── */}
-        <div className="w-full max-w-[285px] h-[435px] relative mt-[-4px]">
+        <div className="w-full max-w-[285px] h-[440px] relative mt-[-6px]">
           <motion.div
             style={{
               rotateX,
@@ -253,91 +255,81 @@ export function LanyardBadge({
               transformStyle: 'preserve-3d',
             }}
             transition={{ duration: 0.5, type: 'spring', stiffness: 350, damping: 18 }}
-            className="w-full h-full relative rounded-3xl shadow-[0_25px_60px_rgba(238,60,0,0.22)] border border-slate-800/90 group"
+            className="w-full h-full relative rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.4)] border border-slate-800 group"
           >
-            {/* Subtle Metallic Gloss Reflective Overlay */}
-            <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-transparent via-white/15 to-transparent pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity z-30 overflow-hidden" />
+            {/* Subtle Metallic Reflective Gloss Overlay */}
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none opacity-40 group-hover:opacity-100 transition-opacity z-30 overflow-hidden" />
 
-            {/* ─── FRONT FACE (Exact Screenshot 2 VIP AI Badge Design) ────────────────────────── */}
+            {/* ─── FRONT FACE (Exact Screenshot 2 VIP Pass) ────────────────────────── */}
             <div
-              className="absolute inset-0 w-full h-full rounded-3xl p-5 flex flex-col justify-between overflow-hidden shadow-2xl border border-slate-800"
+              className="absolute inset-0 w-full h-full rounded-3xl p-5 pt-3.5 flex flex-col justify-between overflow-hidden shadow-2xl border border-slate-800/90"
               style={{
-                backgroundColor: '#111319',
+                backgroundColor: '#12141A',
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden'
               }}
             >
+              {/* Card Punch Hole at Top Center */}
+              <div className="w-3.5 h-3.5 rounded-full bg-slate-950 border-2 border-slate-700 mx-auto shadow-inner mb-1 shrink-0" />
+
               {/* 1. Header Text */}
-              <div className="text-center space-y-0.5 border-b border-slate-800/80 pb-2.5">
-                <span className="text-[7.5px] font-black text-slate-300 uppercase tracking-widest block font-mono">
+              <div className="text-center space-y-0.5 border-b border-slate-800/80 pb-2">
+                <span className="text-[7.5px] font-black text-slate-200 uppercase tracking-widest block font-mono">
                   SNAPSERVE AI x VOBIZ AI VOICE 2026
                 </span>
-                <span className="text-[8.5px] font-extrabold text-amber-400 uppercase tracking-widest block">
+                <span className="text-[8.5px] font-extrabold text-[#D4AF37] uppercase tracking-widest block">
                   TECH INNOVATION SUMMIT
                 </span>
               </div>
 
               {/* 2. Hero VIP & Glowing AI Processor Chip Section */}
               <div className="flex items-center justify-between py-1 px-1">
-                {/* Big Gold VIP Text */}
+                {/* Big Metallic Gold VIP Text */}
                 <div className="flex flex-col text-left">
-                  <span className="text-4xl font-black tracking-tight leading-none bg-gradient-to-br from-amber-100 via-amber-300 to-yellow-500 bg-clip-text text-transparent drop-shadow-sm">
+                  <span className="text-4xl font-black tracking-tight leading-none text-[#D4AF37] drop-shadow-md font-display">
                     VIP
                   </span>
-                  <span className="text-[8px] font-mono font-bold text-slate-400 tracking-widest uppercase mt-1">
+                  <span className="text-[7.5px] font-mono font-bold text-slate-400 tracking-widest uppercase mt-1">
                     {tableNumber ? (tableNumber.toUpperCase().startsWith('T-') ? tableNumber.toUpperCase() : `TABLE ${tableNumber}`) : 'TABLE T-01'}
                   </span>
                 </div>
 
-                {/* 3D Glowing AI Processor Microchip Graphic */}
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 via-slate-900 to-orange-950/40 border border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.25)] flex items-center justify-center relative overflow-hidden group">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-300 via-amber-500 to-orange-600 border border-amber-200 shadow-md flex items-center justify-center relative z-10">
-                    <span className="font-mono font-black text-slate-950 text-xs tracking-wider">AI</span>
+                {/* 3D AI Microchip with Radiating Circuit Rays (Exact Screenshot 2 Graphic) */}
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 via-slate-950 to-orange-950/60 border border-amber-500/50 shadow-[0_0_25px_rgba(212,175,55,0.3)] flex items-center justify-center relative overflow-hidden group">
+                  {/* Circuit Radiating Rays */}
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.25)_0%,transparent_70%)]" />
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-300 via-amber-500 to-amber-700 border border-amber-200 shadow-md flex items-center justify-center relative z-10">
+                    <span className="font-mono font-black text-slate-950 text-[11px] tracking-wider">AI</span>
                   </div>
-                  {/* Outer Glowing Pins */}
-                  <div className="absolute inset-x-2 top-1 h-[1px] bg-amber-400/60" />
-                  <div className="absolute inset-x-2 bottom-1 h-[1px] bg-amber-400/60" />
-                  <div className="absolute inset-y-2 left-1 w-[1px] bg-amber-400/60" />
-                  <div className="absolute inset-y-2 right-1 w-[1px] bg-amber-400/60" />
+                  {/* Circuit Rays Corner Markers */}
+                  <div className="absolute inset-1 border border-dashed border-amber-400/40 rounded-xl" />
                 </div>
               </div>
 
-              {/* 3. Participant Credentials & Team Details (Exact Screenshot 2 Typography) */}
-              <div className="text-left space-y-2 my-auto">
+              {/* 3. Participant Credentials & Stack (Exact Screenshot 2 Typography) */}
+              <div className="text-left space-y-1.5 my-auto">
                 {/* Big Participant Name */}
                 <div className="space-y-0.5">
-                  <h2 className="font-display font-black text-2xl text-white tracking-tight uppercase leading-none">
+                  <h2 className="font-display font-black text-2xl text-white tracking-tight uppercase leading-none truncate">
                     {participantName}
                   </h2>
-                  <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest pt-0.5">
-                    {memberRole}
+                  <p className="text-[10px] font-black text-[#D4AF37] uppercase tracking-widest pt-0.5">
+                    {memberRole || 'SPEAKER'}
                   </p>
-                  <p className="text-[9.5px] font-bold text-slate-300 uppercase tracking-wider">
-                    {trackName}
+                  <p className="text-[9px] font-extrabold text-slate-300 uppercase tracking-wider">
+                    {trackName || 'PRODUCT DESIGN LEAD'}
                   </p>
-                  <p className="text-[10px] font-black text-[#E83C00] uppercase tracking-wide">
+                  <p className="text-[9.5px] font-black text-[#E83C00] uppercase tracking-wide">
                     {teamName}
                   </p>
                 </div>
 
-                {/* Solid Orange Accent Bar (Exact Screenshot 2) */}
-                <div className="h-[3px] w-full bg-[#E83C00] rounded-full my-2" />
-
-                {/* Team Members Roster Badges */}
-                {members && members.length > 1 && (
-                  <div className="flex flex-wrap gap-1">
-                    {members.slice(1).map((m, idx) => (
-                      <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-[8px] font-bold text-slate-300">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#E83C00]" />
-                        {m.name || `Member ${idx + 2}`}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                {/* Solid Orange Horizontal Accent Bar (Exact Screenshot 2) */}
+                <div className="h-[3px] w-full bg-[#E83C00] rounded-full my-1.5" />
 
                 {/* Agent & Hotline Specs Box */}
                 {(agentName || agentPhoneNumber) && (
-                  <div className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl space-y-1 text-[10.5px]">
+                  <div className="bg-slate-950 border border-slate-800 p-2 rounded-xl space-y-1 text-[10px]">
                     {agentName && (
                       <div className="flex items-center justify-between text-slate-300 font-bold">
                         <span className="text-[7.5px] uppercase font-bold text-slate-500 tracking-wider flex items-center gap-1">
@@ -374,7 +366,7 @@ export function LanyardBadge({
 
                 <div className="text-center">
                   <span className="text-[7.5px] font-mono font-bold text-slate-400 uppercase tracking-widest">
-                    ACCESS | VIP PASSHOLDER | [{agentNumber || '#01'}]
+                    ACCESS | VIP PASSHOLDER | [{agentNumber || '#0117'}]
                   </span>
                 </div>
               </div>
