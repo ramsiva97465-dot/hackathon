@@ -229,7 +229,7 @@ export function ParticipantDashboard() {
           setProjectDescription(team.projectDescription || '')
           setAgentName(team.agentName || '')
           setAgentSolution(team.agentSolution || '')
-          setAgentPhoneNumber(team.agentPhoneNumber || '')
+          setAgentPhoneNumber(formatPhone(team.agentPhoneNumber))
           setGithubUrl(team.githubUrl || '')
           setDemoUrl(team.demoUrl || '')
           if (team.techStack && team.techStack.length > 0) {
@@ -258,7 +258,7 @@ export function ParticipantDashboard() {
               id: m.id,
               name: m.name,
               email: m.email,
-              phone: m.phone || '',
+              phone: formatPhone(m.phone),
               role: m.role || '',
               linkedin: m.linkedin || '',
               github: m.github || ''
@@ -366,11 +366,26 @@ export function ParticipantDashboard() {
 
   const formatPhone = (p?: string | null) => {
     if (!p) return ''
-    const trimmed = p.trim()
-    const digits = trimmed.replace(/\D/g, '')
+    let str = p.trim()
+    if (!str) return ''
+
+    if (/e\+/i.test(str) || /^[\d.]+[eE][+-]?\d+$/.test(str)) {
+      try {
+        const num = Number(str)
+        if (!isNaN(num)) {
+          str = BigInt(Math.round(num)).toString()
+        }
+      } catch {
+        // fallback
+      }
+    }
+
+    str = str.replace(/\.0+$/, '')
+    const digits = str.replace(/\D/g, '')
+
     if (digits.length === 10) return `+91${digits}`
     if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`
-    return trimmed
+    return digits || str
   }
 
   const handleSave = async (e?: React.FormEvent) => {
@@ -384,7 +399,7 @@ export function ParticipantDashboard() {
 
     const agentDigits = agentPhoneNumber.replace(/\D/g, '')
     if (agentDigits.length < 10) {
-      toast.error('Please enter a valid 10-digit phone number (e.g. +91 93420 42401).')
+      toast.error('Please enter a valid 10-digit phone number (e.g. +91987654321).')
       return
     }
 
