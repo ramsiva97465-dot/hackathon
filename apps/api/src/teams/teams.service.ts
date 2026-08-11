@@ -42,9 +42,38 @@ export class TeamsService {
       orderBy: { createdAt: 'desc' }
     })
 
+    // Collect emails of participants who belong to a multi-member team (>1 members)
+    const multiMemberEmails = new Set<string>()
+    teams.forEach(t => {
+      if (t.members.length > 1) {
+        t.members.forEach(m => {
+          if (m.email) multiMemberEmails.add(m.email.toLowerCase().trim())
+        })
+      }
+    })
+
+    // Filter out 1-member solo teams whose member is already in a multi-member team
+    const validTeams = teams.filter(t => {
+      if (t.members.length === 1 && t.members[0]?.email) {
+        const email = t.members[0].email.toLowerCase().trim()
+        if (multiMemberEmails.has(email)) {
+          // Cleanup abandoned solo team in background
+          this.prisma.teamMember.deleteMany({ where: { teamId: t.id } }).then(() => {
+            this.prisma.leaderboard.deleteMany({ where: { teamId: t.id } }).then(() => {
+              this.prisma.judgeAssignment.deleteMany({ where: { teamId: t.id } }).then(() => {
+                this.prisma.team.delete({ where: { id: t.id } }).catch(() => {})
+              }).catch(() => {})
+            }).catch(() => {})
+          }).catch(() => {})
+          return false
+        }
+      }
+      return true
+    })
+
     const totalJudges = await this.prisma.judge.count()
 
-    const mapped = teams.map(t => ({
+    const mapped = validTeams.map(t => ({
       id: t.id,
       name: t.name,
       college: t.application?.college || 'Unknown',
