@@ -247,18 +247,20 @@ export function LanyardBadge({
               transformStyle: 'preserve-3d',
             }}
             transition={{ duration: 0.5, type: 'spring', stiffness: 350, damping: 18 }}
-            className="w-full h-full relative rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.18)] border border-slate-300/80 group overflow-hidden"
+            className="w-full h-full relative rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.18)] border border-slate-300/80 group"
           >
             {/* Subtle Metallic Gloss Reflective Overlay */}
-            <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-transparent via-white/35 to-transparent pointer-events-none opacity-40 group-hover:opacity-100 transition-opacity z-30" />
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-transparent via-white/35 to-transparent pointer-events-none opacity-40 group-hover:opacity-100 transition-opacity z-30 overflow-hidden" />
 
             {/* ─── FRONT FACE (Clean Modern Senior Design) ────────────────────────── */}
             <div
-              className="absolute inset-0 w-full h-full rounded-3xl p-5 flex flex-col justify-between overflow-hidden shadow-2xl [backface-visibility:hidden]"
+              className="absolute inset-0 w-full h-full rounded-3xl p-5 flex flex-col justify-between overflow-hidden shadow-2xl"
               style={{
                 backgroundColor: '#FAF8F5',
                 backgroundImage: 'radial-gradient(#E5DFD5 1.2px, transparent 1.2px)',
-                backgroundSize: '14px 14px'
+                backgroundSize: '14px 14px',
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden'
               }}
             >
               {/* Header: Logos & Pass Badge */}
@@ -370,11 +372,14 @@ export function LanyardBadge({
 
             {/* ─── BACK FACE ─────────────────────────────────────────────────────── */}
             <div
-              className="absolute inset-0 w-full h-full rounded-3xl p-5 flex flex-col justify-between overflow-hidden shadow-2xl border border-slate-200/80 [transform:rotateY(180deg)] [backface-visibility:hidden]"
+              className="absolute inset-0 w-full h-full rounded-3xl p-5 flex flex-col justify-between overflow-hidden shadow-2xl border border-slate-200/80"
               style={{
                 backgroundColor: '#FAF8F5',
                 backgroundImage: 'radial-gradient(#E5DFD5 1.2px, transparent 1.2px)',
-                backgroundSize: '14px 14px'
+                backgroundSize: '14px 14px',
+                transform: 'rotateY(180deg)',
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden'
               }}
             >
               {/* Top Header */}
