@@ -162,26 +162,27 @@ export function LanyardBadge({
 
       // Glowing rays background
       const grad = ctx.createRadialGradient(chipX + 50, chipY + 50, 5, chipX + 50, chipY + 50, 60)
-      grad.addColorStop(0, 'rgba(245, 158, 11, 0.35)')
-      grad.addColorStop(1, 'transparent')
-      ctx.fillStyle = grad
-      ctx.fillRect(chipX - 20, chipY - 20, 140, 140)
+      // 7. Clean Frameless SnapServe Brand Mark (No yellow borders or boxes)
+      const markX = 485
+      const markY = 295
 
-      // Clean SnapServe Logo Container
-      ctx.fillStyle = '#0F172A'
+      // Top Pill
+      ctx.fillStyle = '#F8FAFC'
       ctx.beginPath()
-      ctx.roundRect(chipX, chipY, chipW, chipH, 20)
+      ctx.roundRect(markX, markY, 70, 18, 9)
       ctx.fill()
-      ctx.strokeStyle = '#D4AF37'
-      ctx.lineWidth = 2
-      ctx.stroke()
 
-      // Draw SnapServe Logo image inside container
-      const logoImg = new Image()
-      logoImg.src = '/logos/snapserve-mark.svg'
-      logoImg.onload = () => {
-        ctx.drawImage(logoImg, chipX + 15, chipY + 15, 70, 70)
-      }
+      // Middle Pill
+      ctx.fillStyle = '#94A3B8'
+      ctx.beginPath()
+      ctx.roundRect(markX + 12, markY + 25, 70, 18, 9)
+      ctx.fill()
+
+      // Bottom Pill
+      ctx.fillStyle = '#64748B'
+      ctx.beginPath()
+      ctx.roundRect(markX + 24, markY + 50, 58, 18, 9)
+      ctx.fill()
 
       // 8. Participant Info Section
       ctx.textAlign = 'left'
@@ -402,9 +403,13 @@ export function LanyardBadge({
                   </span>
                 </div>
 
-                {/* Clean SnapServe Logo Container */}
-                <div className="w-14 h-14 rounded-2xl bg-[#0F172A] border border-amber-500/50 shadow-[0_0_20px_rgba(212,175,55,0.25)] flex items-center justify-center p-2.5 relative group">
-                  <SnapServeMark className="w-9 h-9 object-contain drop-shadow-sm" />
+                {/* Clean Frameless SnapServe Brand Mark (No yellow borders or boxes) */}
+                <div className="flex items-center justify-center p-1">
+                  <svg viewBox="0 0 100 100" className="w-13 h-13 drop-shadow-md" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="5" y="15" width="75" height="20" rx="10" fill="#F8FAFC" />
+                    <rect x="18" y="42" width="75" height="20" rx="10" fill="#94A3B8" />
+                    <rect x="31" y="69" width="64" height="20" rx="10" fill="#64748B" />
+                  </svg>
                 </div>
               </div>
 
