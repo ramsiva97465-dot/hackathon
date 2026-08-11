@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { Sparkles, Phone, MapPin, Wifi, ShieldCheck, QrCode, RotateCw, Cpu, Layers, Download, Share2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { BrandLockup } from '@/components/brand/BrandLogos'
+import { BrandLockup, SnapServeMark } from '@/components/brand/BrandLogos'
 
 interface LanyardBadgeProps {
   participantName?: string
@@ -187,10 +187,16 @@ export function LanyardBadge({
       ctx.roundRect(chipX + 20, chipY + 20, 60, 60, 14)
       ctx.fill()
 
+      // Draw SnapServe Logo image inside chip
+      const logoImg = new Image()
+      logoImg.src = '/logos/snapserve-mark.svg'
+      logoImg.onload = () => {
+        ctx.drawImage(logoImg, chipX + 30, chipY + 30, 40, 40)
+      }
       ctx.fillStyle = '#0F172A'
-      ctx.font = '900 22px monospace'
+      ctx.font = '900 20px monospace'
       ctx.textAlign = 'center'
-      ctx.fillText('AI', chipX + 50, chipY + 57)
+      ctx.fillText('SNAP', chipX + 50, chipY + 56)
 
       // 8. Participant Info Section
       ctx.textAlign = 'left'
@@ -412,8 +418,8 @@ export function LanyardBadge({
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/20 via-slate-950 to-orange-950/60 border border-amber-500/50 shadow-[0_0_25px_rgba(212,175,55,0.3)] flex items-center justify-center relative overflow-hidden group">
                   {/* Circuit Radiating Rays */}
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.25)_0%,transparent_70%)]" />
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-300 via-amber-500 to-amber-700 border border-amber-200 shadow-md flex items-center justify-center relative z-10">
-                    <span className="font-mono font-black text-slate-950 text-[11px] tracking-wider">AI</span>
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-300 via-amber-500 to-amber-700 border border-amber-200 shadow-md flex items-center justify-center p-1 relative z-10">
+                    <SnapServeMark className="w-7 h-7 object-contain drop-shadow-xs" />
                   </div>
                   {/* Circuit Rays Corner Markers */}
                   <div className="absolute inset-1 border border-dashed border-amber-400/40 rounded-xl" />
