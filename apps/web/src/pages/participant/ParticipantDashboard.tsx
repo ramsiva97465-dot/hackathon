@@ -1868,7 +1868,15 @@ function SelectField({
 // ─── Social Card Component ────────────────────────────────────────────────────
 
 function SocialCard({
-  platform, handle, url, icon, color, followed, onToggle, disabled, pts = 2
+  platform,
+  handle,
+  url,
+  icon,
+  color,
+  followed,
+  onToggle,
+  disabled,
+  pts = 2,
 }: {
   platform: string
   handle: string
@@ -1876,7 +1884,7 @@ function SocialCard({
   icon: React.ReactNode
   color: 'pink' | 'blue' | 'purple'
   followed: boolean
-  onToggle: (v: boolean) => void
+  onToggle: (val: boolean) => void
   disabled?: boolean
   pts?: number
 }) {
@@ -1887,19 +1895,19 @@ function SocialCard({
   }
 
   return (
-    <div className={`p-4 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-3 ${followed
+    <div className={`p-4 sm:p-4.5 rounded-2xl border transition-all duration-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5 ${followed
       ? 'bg-emerald-50/70 border-emerald-300 shadow-xs'
       : 'bg-white border-[#EAE4D8] hover:border-orange-300 hover:shadow-sm'
       }`}>
       <div className="flex items-center gap-3 min-w-0 flex-1">
         {/* Brand Icon Box */}
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${brandIconBg[color]}`}>
+        <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${brandIconBg[color]}`}>
           {icon}
         </div>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <h4 className="text-xs font-black text-slate-900">{platform}</h4>
+            <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-tight">{platform}</h4>
             <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border font-mono ${followed
               ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
               : 'bg-orange-50 text-[#E83C00] border-orange-200'
@@ -1907,23 +1915,22 @@ function SocialCard({
               +{pts} Pts
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 font-medium truncate mt-0.5">{handle}</p>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] text-slate-500 font-medium hover:text-[#E83C00] transition-colors inline-flex items-center gap-1 mt-0.5 group"
+          >
+            <span>{handle}</span>
+            <ExternalLink size={10} className="opacity-60 group-hover:opacity-100 shrink-0" />
+          </a>
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex items-center gap-2 shrink-0">
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200"
-          title="Open Channel Link"
-        >
-          <ExternalLink size={14} />
-        </a>
-
+      {/* Action Button */}
+      <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
         <button
+          type="button"
           onClick={() => {
             if (!followed) {
               window.open(url, '_blank', 'noopener,noreferrer')
@@ -1931,15 +1938,15 @@ function SocialCard({
             if (!disabled) onToggle(!followed)
           }}
           disabled={disabled}
-          className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-50 ${followed
+          className={`w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-50 ${followed
             ? 'bg-emerald-600 text-white shadow-xs hover:bg-emerald-700'
             : 'bg-[#E83C00] text-white shadow-xs hover:bg-[#FF4500]'
             }`}
         >
           {followed ? (
-            <><CheckCircle2 size={13} /> Completed (+{pts})</>
+            <><CheckCircle2 size={14} /> Completed (+{pts} Pts)</>
           ) : (
-            <><ExternalLink size={12} /> Follow &amp; Claim (+{pts})</>
+            <><ExternalLink size={13} /> Follow &amp; Claim (+{pts} Pts)</>
           )}
         </button>
       </div>
