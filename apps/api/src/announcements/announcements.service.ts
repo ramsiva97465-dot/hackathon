@@ -30,7 +30,7 @@ export class AnnouncementsService {
     }
 
     return this.prisma.announcement.create({
-      data: { message, title, hackathonId },
+      data: { message, title, hackathonId, isPublished: true, publishedAt: new Date() },
     })
   }
 
