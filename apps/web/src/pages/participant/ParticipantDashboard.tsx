@@ -57,12 +57,13 @@ type LeaderboardEntry = {
 
 // ─── Tab Config ──────────────────────────────────────────────────────────────
 
-type Tab = 'home' | 'playbook' | 'submission' | 'bonus' | 'leaderboard'
+type Tab = 'home' | 'playbook' | 'submission' | 'bonus' | 'leaderboard' | 'certificate'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'home', label: 'Home', icon: <Home size={16} /> },
   { id: 'playbook', label: 'Playbook', icon: <BookOpen size={16} /> },
   { id: 'submission', label: 'Submission', icon: <FileText size={16} /> },
+  { id: 'certificate', label: 'Certificate Preview 👑', icon: <Award size={16} /> },
   { id: 'bonus', label: 'Bonus Pts', icon: <Star size={16} /> },
   { id: 'leaderboard', label: 'Leaderboard', icon: <Trophy size={16} /> },
 ]
@@ -980,6 +981,27 @@ export function ParticipantDashboard() {
               {/* ── PLAYBOOK TAB ── */}
               {activeTab === 'playbook' && (
                 <ParticipantPlaybook />
+              )}
+
+              {/* ── CERTIFICATE PREVIEW TAB (FOR USER REVIEW) ── */}
+              {activeTab === 'certificate' && (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Award className="text-amber-600" size={20} />
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-wider">Admin Review &amp; Approval Preview</p>
+                        <p className="text-[11px] text-amber-700">Previewing official participation certificate design before enabling for participants.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <ParticipantCertificate
+                    participantName={data.members[selectedMemberIndex]?.name || data.members[0]?.name || 'Participant'}
+                    teamName={data.name}
+                    trackName={data.track.name}
+                  />
+                </div>
               )}
 
               {/* ── SUBMISSION TAB ── */}
