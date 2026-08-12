@@ -3,9 +3,20 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
 import { Save, Calendar, MapPin, Link, Users, Clock } from 'lucide-react'
+import { toast } from 'sonner'
 
 export function SettingsPage() {
   const [saving, setSaving] = useState(false)
+  const [certificatesReleased, setCertificatesReleased] = useState(() => {
+    return localStorage.getItem('snapserve_certificates_released') === 'true'
+  })
+
+  const handleToggleCertificates = (val: boolean) => {
+    setCertificatesReleased(val)
+    localStorage.setItem('snapserve_certificates_released', val ? 'true' : 'false')
+    window.dispatchEvent(new Event('certificates_toggled'))
+    toast.success(val ? 'Certificates RELEASED to participants!' : 'Certificates LOCKED from participants!')
+  }
 
   const handleSave = async () => {
     setSaving(true)
@@ -40,9 +51,32 @@ export function SettingsPage() {
           </div>
         </div>
 
-        {/* Registration Control (SnapServe Rules) */}
+        {/* Registration & Release Control */}
         <div className="bg-[#0A0A0A] p-6 rounded-2xl border border-white/10 shadow-2xl space-y-4">
-          <h3 className="font-display font-bold text-white border-b border-white/10 pb-2">Registration Controls</h3>
+          <h3 className="font-display font-bold text-white border-b border-white/10 pb-2">Release Controls</h3>
+          
+          {/* Certificate Release Toggle */}
+          <div className="flex items-center justify-between p-4 rounded-xl bg-[#111] border border-amber-500/30">
+            <div>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-bold text-white">Release Participation Certificates</p>
+                <span className={`px-2 py-0.5 text-[10px] font-black uppercase rounded-full ${certificatesReleased ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'}`}>
+                  {certificatesReleased ? 'VISIBLE TO PARTICIPANTS' : 'LOCKED'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">Toggle ON to enable Certificate download tab on participant dashboards</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={certificatesReleased}
+                onChange={(e) => handleToggleCertificates(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-amber-500 transition-all peer-checked:after:translate-x-5 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
+            </label>
+          </div>
+
           <div className="flex items-center justify-between p-4 rounded-xl bg-[#111] border border-white/5">
             <div>
               <p className="text-sm font-semibold text-white">Registration Open</p>

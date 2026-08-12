@@ -145,6 +145,23 @@ export function ParticipantDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>('home')
   const [selectedMemberIndex, setSelectedMemberIndex] = useState(0)
 
+  // Certificate release toggle state controlled by Admin
+  const [certificatesReleased, setCertificatesReleased] = useState(() => {
+    return localStorage.getItem('snapserve_certificates_released') === 'true'
+  })
+
+  useEffect(() => {
+    const handleCertToggle = () => {
+      setCertificatesReleased(localStorage.getItem('snapserve_certificates_released') === 'true')
+    }
+    window.addEventListener('storage', handleCertToggle)
+    window.addEventListener('certificates_toggled', handleCertToggle)
+    return () => {
+      window.removeEventListener('storage', handleCertToggle)
+      window.removeEventListener('certificates_toggled', handleCertToggle)
+    }
+  }, [])
+
   // Form state
   const [projectTitle, setProjectTitle] = useState('')
   const [projectDescription, setProjectDescription] = useState('')
@@ -661,7 +678,7 @@ export function ParticipantDashboard() {
         <aside className="hidden md:flex flex-col gap-4 w-56 shrink-0 pt-1 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto pr-1">
           <div className="space-y-1">
             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">Menu</p>
-            {TABS.map(tab => (
+            {TABS.filter(t => t.id !== 'certificate' || certificatesReleased).map(tab => (
               <TabButton key={tab.id} tab={tab} active={activeTab === tab.id} onClick={() => setActiveTab(tab.id)} />
             ))}
           </div>
@@ -948,30 +965,31 @@ export function ParticipantDashboard() {
                     </div>
                   </div>
 
-                  {/* 6. CERTIFICATE CARD */}
-                  {data.demoUrl ? (
+                  {/* 6. CERTIFICATE CARD (Controlled by Admin Release Toggle) */}
+                  {certificatesReleased ? (
                     <button
-                      onClick={generateCertificate}
-                      className="w-full flex items-center justify-between p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl hover:bg-emerald-100 transition-all shadow-sm"
+                      onClick={() => setActiveTab('certificate')}
+                      className="w-full flex items-center justify-between p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl hover:bg-emerald-100 transition-all shadow-sm cursor-pointer"
                     >
                       <div className="flex items-center gap-3">
-                        <Award size={16} className="text-emerald-500" />
+                        <Award size={18} className="text-emerald-600" />
                         <div className="text-left">
-                          <p className="text-xs font-black">Download Certificate</p>
-                          <p className="text-[10px] opacity-80 font-medium">Your participation certificate is ready!</p>
+                          <p className="text-xs font-black">Download Official Certificate</p>
+                          <p className="text-[10px] opacity-80 font-medium">Released by Admin! Your participation certificate is ready.</p>
                         </div>
                       </div>
                       <ChevronRight size={16} className="opacity-70" />
                     </button>
                   ) : (
-                    <div className="w-full flex items-center justify-between p-4 bg-slate-50 border border-slate-200 text-slate-400 rounded-2xl opacity-75">
+                    <div className="w-full flex items-center justify-between p-4 bg-slate-50 border border-slate-200 text-slate-400 rounded-2xl opacity-80">
                       <div className="flex items-center gap-3">
-                        <Award size={16} />
+                        <Award size={18} className="text-amber-500" />
                         <div className="text-left">
-                          <p className="text-xs font-black">Download Certificate</p>
-                          <p className="text-[10px] font-medium">Submit your project demo to unlock</p>
+                          <p className="text-xs font-black text-slate-700">Official Participation Certificates</p>
+                          <p className="text-[10px] font-medium text-slate-400">Certificates will be unlocked by Admin after judging concludes 🔒</p>
                         </div>
                       </div>
+                      <span className="text-[10px] font-extrabold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200 uppercase">LOCKED BY ADMIN</span>
                     </div>
                   )}
 
@@ -1624,7 +1642,7 @@ export function ParticipantDashboard() {
       {/* ── Mobile Bottom Nav ── */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white/90 backdrop-blur-md border-t border-slate-200 px-2 py-2 safe-area-pb">
         <div className="flex gap-1">
-          {TABS.map(tab => (
+          {TABS.filter(t => t.id !== 'certificate' || certificatesReleased).map(tab => (
             <TabButton key={tab.id} tab={tab} active={activeTab === tab.id} onClick={() => setActiveTab(tab.id)} />
           ))}
         </div>
