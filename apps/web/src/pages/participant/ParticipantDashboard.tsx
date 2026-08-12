@@ -739,6 +739,49 @@ export function ParticipantDashboard() {
 
         </aside>
 
+        {/* Mobile Team Info & Pass Switcher Bar (Visible on mobile screens md:hidden) */}
+        <div className="md:hidden w-full bg-white rounded-2xl border border-slate-200 p-3.5 shadow-xs space-y-2.5 mb-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <span className="text-[9px] font-bold text-[#E83C00] uppercase tracking-wider block truncate">{data.track.name}</span>
+              <h3 className="text-sm font-black text-slate-900 truncate">{data.name}</h3>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-800 text-[10px] font-black rounded-full">
+                ⭐ {bonusPoints}/10
+              </span>
+              <span className="px-2 py-0.5 bg-slate-900 text-amber-400 text-[10px] font-black rounded-full font-mono">
+                {data.tableNumber || 'TABLE T-01'}
+              </span>
+            </div>
+          </div>
+
+          {/* Horizontal scrollable member pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+            {data.members.map((m, i) => {
+              const isSelected = selectedMemberIndex === i
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setSelectedMemberIndex(i)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold shrink-0 border transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-[#E83C00] text-white border-[#E83C00] shadow-2xs'
+                      : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  <div className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[9px] font-black shrink-0">
+                    {m.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="truncate max-w-[110px]">{m.name}</span>
+                  {isSelected && <CheckCircle2 size={11} className="shrink-0 text-white" />}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
         {/* Main Content */}
         <main className="flex-1 min-w-0 pb-24 md:pb-0">
           <AnimatePresence mode="wait">
