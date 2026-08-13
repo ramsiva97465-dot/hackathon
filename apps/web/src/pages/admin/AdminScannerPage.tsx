@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
-import { QrCode, Search, CheckCircle2, User, Users, MapPin, Award, RefreshCw, AlertCircle, ShieldCheck, Sparkles } from 'lucide-react'
+import { QrCode, Search, CheckCircle2, User, Users, MapPin, Award, RefreshCw, AlertCircle, ShieldCheck, Sparkles, Camera, CameraOff, X } from 'lucide-react'
 import { toast } from 'sonner'
 import api from '@/lib/api'
 
@@ -28,6 +28,12 @@ export function AdminScannerPage() {
   const [teamData, setTeamData] = useState<TeamData | null>(null)
   const [scannedMemberId, setScannedMemberId] = useState<string | null>(null)
   
+  // Camera State
+  const [isCameraActive, setIsCameraActive] = useState(false)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const scanIntervalRef = useRef<any>(null)
+
   // Bonus point task states for on-spot verification
   const [socialTasks, setSocialTasks] = useState({
     instaSnapserve: true,
@@ -38,6 +44,68 @@ export function AdminScannerPage() {
   })
   const [updatingBonus, setUpdatingBonus] = useState(false)
   const [checkingInId, setCheckingInId] = useState<string | null>(null)
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop())
+      streamRef.current = null
+    }
+    if (scanIntervalRef.current) {
+      clearInterval(scanIntervalRef.current)
+      scanIntervalRef.current = null
+    }
+    setIsCameraActive(false)
+  }
+
+  const startCamera = async () => {
+    try {
+      stopCamera()
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+      })
+      streamRef.current = stream
+      setIsCameraActive(true)
+      toast.info('Camera started! Point camera at participant Lanyard Pass QR Code')
+
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream
+          videoRef.current.play()
+        }
+      }, 300)
+
+      // Start detection loop using BarcodeDetector if available
+      if ('BarcodeDetector' in window) {
+        const barcodeDetector = new (window as any).BarcodeDetector({ formats: ['qr_code', 'code_128'] })
+        scanIntervalRef.current = setInterval(async () => {
+          if (videoRef.current && videoRef.current.readyState === 4) {
+            try {
+              const barcodes = await barcodeDetector.detect(videoRef.current)
+              if (barcodes.length > 0) {
+                const qrValue = barcodes[0].rawValue
+                toast.success(`QR Detected: ${qrValue}`)
+                stopCamera()
+                setSearchQuery(qrValue)
+                handleLookup(qrValue)
+              }
+            } catch (e) {
+              // Ignore frame scan errors
+            }
+          }
+        }, 500)
+      }
+    } catch (err) {
+      console.error('Camera error:', err)
+      toast.error('Unable to access camera. Please check camera permissions or use manual lookup.')
+      stopCamera()
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      stopCamera()
+    }
+  }, [])
 
   const handleLookup = async (query: string) => {
     if (!query.trim()) return
@@ -135,9 +203,56 @@ export function AdminScannerPage() {
 
         {/* ── Scanner / Search Input Box ── */}
         <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-          <label className="block text-xs font-black text-slate-800 uppercase tracking-wider">
-            Scan QR Code or Search Team / Participant
-          </label>
+          <div className="flex items-center justify-between gap-3">
+            <label className="block text-xs font-black text-slate-800 uppercase tracking-wider">
+              Scan QR Code or Search Team / Participant
+            </label>
+
+            <button
+              type="button"
+              onClick={isCameraActive ? stopCamera : startCamera}
+              className={`px-4 py-2 text-xs font-black rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-2xs ${
+                isCameraActive
+                  ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
+                  : 'bg-[#12141A] hover:bg-slate-800 text-[#D4AF37] border border-slate-700'
+              }`}
+            >
+              {isCameraActive ? <CameraOff size={15} /> : <Camera size={15} />}
+              <span>{isCameraActive ? 'Close Camera' : '📷 Open Camera Scanner'}</span>
+            </button>
+          </div>
+
+          {/* ── Live Camera Viewfinder Overlay (When Active) ── */}
+          {isCameraActive && (
+            <div className="relative w-full max-w-lg mx-auto bg-black rounded-3xl overflow-hidden border-2 border-[#E83C00] shadow-2xl space-y-0">
+              <video
+                ref={videoRef}
+                playsInline
+                muted
+                className="w-full aspect-video object-cover"
+              />
+
+              {/* Viewfinder Target Reticle Overlay */}
+              <div className="absolute inset-0 border-[40px] border-black/60 pointer-events-none flex items-center justify-center">
+                <div className="w-48 h-48 border-2 border-[#E83C00] rounded-2xl relative shadow-[0_0_20px_rgba(232,60,0,0.6)]">
+                  {/* Laser Scan Line Animation */}
+                  <div className="w-full h-0.5 bg-[#E83C00] shadow-[0_0_12px_#E83C00] absolute top-0 animate-[ping_2s_infinite]" />
+                  <p className="text-[10px] font-black text-white bg-black/80 px-2 py-0.5 rounded-full absolute bottom-2 left-1/2 -translate-x-1/2 uppercase tracking-widest whitespace-nowrap">
+                    Align QR inside box
+                  </p>
+                </div>
+              </div>
+
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={stopCamera}
+                className="absolute top-3 right-3 p-2 bg-black/80 text-white hover:text-red-400 rounded-full border border-white/20 transition-all cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )}
 
           <form
             onSubmit={(e) => {
