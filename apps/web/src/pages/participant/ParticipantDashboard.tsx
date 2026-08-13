@@ -168,8 +168,7 @@ export function ParticipantDashboard() {
   const [agentName, setAgentName] = useState('')
   const [agentType, setAgentType] = useState<'SINGLE_AGENT' | 'MULTI_AGENT'>('SINGLE_AGENT')
   const [squadAgents, setSquadAgents] = useState<{ name: string; role: string; phone?: string }[]>([
-    { name: 'Router / Master Agent', role: 'Initial caller greeting & intent classification' },
-    { name: 'Specialized Sub-Agent', role: 'Executes specific workflow action (booking / triage)' }
+    { name: '', role: '', phone: '' }
   ])
   const [agentSolution, setAgentSolution] = useState('')
   const [agentPhoneNumber, setAgentPhoneNumber] = useState('')
