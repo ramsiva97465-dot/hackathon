@@ -54,8 +54,10 @@ export class LeaderboardService {
         totalScore = total / submittedSheets.length
       }
 
-      // Add bonus points
-      totalScore += team.bonusPoints || 0
+      // Add bonus points ONLY IF verified by Admin via QR scanner
+      if ((team as any).bonusVerifiedAt || (team as any).bonusVerifiedBy) {
+        totalScore += team.bonusPoints || 0
+      }
 
       return {
         teamId: team.id,
