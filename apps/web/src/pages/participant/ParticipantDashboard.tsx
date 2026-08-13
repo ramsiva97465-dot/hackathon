@@ -1179,14 +1179,20 @@ export function ParticipantDashboard() {
                             hint={agentType === 'MULTI_AGENT' ? "Primary agent receiving incoming calls" : "Name of your AI agent"}
                             required
                           />
-                          <Field
-                            label={agentType === 'MULTI_AGENT' ? "Master Hotline Phone Number *" : "Agent Phone Number *"}
-                            placeholder="+91 93420 42401"
-                            value={agentPhoneNumber}
-                            onChange={setAgentPhoneNumber}
-                            hint="10-digit Indian phone number for live demo verification"
-                            required
-                          />
+                          <div className="space-y-1.5">
+                            <Field
+                              label={agentType === 'MULTI_AGENT' ? "Master Hotline Phone Number *" : "Agent Phone Number *"}
+                              placeholder="+91 93420 42401"
+                              value={agentPhoneNumber}
+                              onChange={setAgentPhoneNumber}
+                              hint="10-digit Vobiz AI hotline number for live demo"
+                              required
+                            />
+                            <div className="p-2 bg-red-50 border border-red-200/80 rounded-xl flex items-center gap-1.5 text-[10.5px] font-bold text-red-600">
+                              <AlertCircle size={13} className="shrink-0 text-red-500" />
+                              <span>⚠️ <strong>Mandatory Rule:</strong> If this is not a Vobiz number, your submission will be rejected!</span>
+                            </div>
+                          </div>
                         </div>
 
                         {/* ── MULTI-AGENT SQUAD BREAKDOWN ── */}
