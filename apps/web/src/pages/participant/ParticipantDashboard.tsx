@@ -436,11 +436,18 @@ export function ParticipantDashboard() {
 
     try {
       setSaving(true)
-      const techStack = [ 
+      let techStack = [ 
         `STT: ${sttProvider}`,
         `LLM: ${llmProvider}`,
         `TTS: ${ttsProvider}`
       ]
+
+      if (agentType === 'MULTI_AGENT' && squadAgents.length > 0) {
+        const squadSummary = squadAgents
+          .map(sq => `${sq.name} (${sq.role})${sq.phone ? `: ${formatPhone(sq.phone)}` : ''}`)
+          .join(' | ')
+        techStack.push(`Squad Hotlines: ${squadSummary}`)
+      }
 
       // Basic validation for members
       const validMembers = membersForm.filter(m => m.name.trim() !== '' && m.email.trim() !== '')
@@ -1185,22 +1192,22 @@ export function ParticipantDashboard() {
                         {/* ── MULTI-AGENT SQUAD BREAKDOWN ── */}
                         {agentType === 'MULTI_AGENT' && (
                           <div className="p-4 bg-orange-50/40 border border-orange-200/80 rounded-2xl space-y-3">
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between gap-2">
                               <div className="flex items-center gap-2">
                                 <div className="w-7 h-7 rounded-lg bg-[#E83C00] text-white flex items-center justify-center font-bold">
                                   <Layers size={15} />
                                 </div>
                                 <div>
-                                  <h4 className="text-xs font-black text-slate-900">Squad Sub-Agents Roster</h4>
-                                  <p className="text-[10px] text-slate-500">Detail each sub-agent &amp; its specialized task</p>
+                                  <h4 className="text-xs font-black text-slate-900">Squad Sub-Agents &amp; Hotlines Roster</h4>
+                                  <p className="text-[10px] text-slate-500">Detail each sub-agent &amp; its dedicated phone number</p>
                                 </div>
                               </div>
 
                               {squadAgents.length < 5 && (
                                 <button
                                   type="button"
-                                  onClick={() => setSquadAgents([...squadAgents, { name: `Sub-Agent ${squadAgents.length + 1}`, role: '' }])}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#E83C00] hover:bg-[#d03500] text-white text-[10px] font-bold rounded-lg transition-all shadow-xs"
+                                  onClick={() => setSquadAgents([...squadAgents, { name: `Sub-Agent ${squadAgents.length + 1}`, role: '', phone: '' }])}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#E83C00] hover:bg-[#d03500] text-white text-[10px] font-bold rounded-lg transition-all shadow-xs cursor-pointer"
                                 >
                                   <Plus size={12} /> Add Sub-Agent
                                 </button>
@@ -1209,8 +1216,8 @@ export function ParticipantDashboard() {
 
                             <div className="space-y-2.5">
                               {squadAgents.map((sq, sIdx) => (
-                                <div key={sIdx} className="p-3 bg-white border border-slate-200/80 rounded-xl space-y-2 relative group shadow-2xs">
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div key={sIdx} className="p-3.5 bg-white border border-slate-200/80 rounded-xl space-y-2.5 relative group shadow-2xs">
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                                     <Field
                                       label={`Sub-Agent #${sIdx + 1} Name`}
                                       placeholder="e.g. Booking Agent"
@@ -1221,13 +1228,22 @@ export function ParticipantDashboard() {
                                       required
                                     />
                                     <Field
-                                      label="Specialized Role / Function"
-                                      placeholder="e.g. Integrates with Calendar API & sends SMS"
+                                      label="Specialized Role"
+                                      placeholder="e.g. Calendar & Booking"
                                       value={sq.role}
                                       onChange={(v) => {
                                         const newS = [...squadAgents]; newS[sIdx].role = v; setSquadAgents(newS);
                                       }}
                                       required
+                                    />
+                                    <Field
+                                      label="Sub-Agent Phone Number"
+                                      placeholder="+91 98765 43210"
+                                      value={sq.phone || ''}
+                                      onChange={(v) => {
+                                        const newS = [...squadAgents]; newS[sIdx].phone = v; setSquadAgents(newS);
+                                      }}
+                                      hint="Dedicated agent hotline number"
                                     />
                                   </div>
                                   {squadAgents.length > 1 && (
@@ -1238,9 +1254,9 @@ export function ParticipantDashboard() {
                                         newS.splice(sIdx, 1);
                                         setSquadAgents(newS);
                                       }}
-                                      className="absolute -top-2 -right-2 w-5 h-5 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100 shadow-2xs"
+                                      className="absolute -top-2 -right-2 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 transition-all opacity-90 sm:opacity-0 group-hover:opacity-100 shadow-xs cursor-pointer"
                                     >
-                                      <Trash2 size={10} />
+                                      <Trash2 size={12} />
                                     </button>
                                   )}
                                 </div>
