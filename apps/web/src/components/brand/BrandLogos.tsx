@@ -9,22 +9,14 @@ interface LogoProps {
 }
 
 /** Official SnapServe mark (snapserve.ai) */
-export function SnapServeMark({ className, tone = 'dark', title = 'SnapServe' }: LogoProps) {
-  const topColor = tone === 'light' ? '#FFFFFF' : '#12141A'
-  const midColor = tone === 'light' ? '#A1A1AA' : '#64748B'
-  const botColor = tone === 'light' ? '#64748B' : '#94A3B8'
-
+export function SnapServeMark({ className, title = 'SnapServe' }: LogoProps) {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 100 100"
-      className={cn('shrink-0', className)}
-      aria-label={title}
-    >
-      <rect x="10" y="8" width="72" height="24" rx="12" fill={topColor} />
-      <rect x="20" y="38" width="72" height="24" rx="12" fill={midColor} />
-      <rect x="30" y="68" width="72" height="24" rx="12" fill={botColor} />
-    </svg>
+    <img
+      src="/logos/Snaplogo.png.png"
+      alt={title}
+      className={cn('object-contain shrink-0', className)}
+      draggable={false}
+    />
   )
 }
 
