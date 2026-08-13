@@ -1085,67 +1085,7 @@ export function TeamsPage() {
                   </div>
                 </div>
 
-                {/* ── ADMIN BONUS / EXTRA POINTS CARD ── */}
-                <div className="p-3.5 bg-amber-500/10 border border-amber-300/80 rounded-xl space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-extrabold text-amber-800 uppercase tracking-wider block flex items-center gap-1">
-                      <Star size={12} className="fill-amber-500 text-amber-500" /> Admin Award Bonus Points
-                    </span>
-                    <span className="text-xs font-black text-amber-900 font-mono bg-amber-200/80 px-2 py-0.5 rounded">
-                      Current: +{viewTarget.bonusPoints || 0} Pts
-                    </span>
-                  </div>
 
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <p className="text-[11px] text-amber-900/80">Click to instantly award bonus points added directly to leaderboard total score:</p>
-                    <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          try {
-                            await api.teams.updateBonus(viewTarget.id, 0)
-                            setViewTarget({ ...viewTarget, bonusPoints: 0 })
-                            toast.success(`Cleared Bonus Points for ${viewTarget.name}`)
-                            fetchTeams()
-                          } catch (err) {
-                            toast.error('Failed to clear bonus points')
-                          }
-                        }}
-                        disabled={!viewTarget.bonusPoints}
-                        className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition-all ${
-                          !viewTarget.bonusPoints
-                            ? 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'
-                            : 'bg-white text-red-500 border-red-200 hover:bg-red-50 cursor-pointer shadow-sm'
-                        }`}
-                      >
-                        Clear
-                      </button>
-                      {[2, 4, 6, 8, 10].map((pts) => (
-                        <button
-                          key={pts}
-                          type="button"
-                          onClick={async () => {
-                            try {
-                              await api.teams.updateBonus(viewTarget.id, pts)
-                              setViewTarget({ ...viewTarget, bonusPoints: pts })
-                              toast.success(`Awarded +${pts} Bonus Points to ${viewTarget.name}!`)
-                              fetchTeams()
-                            } catch (err) {
-                              toast.error('Failed to update bonus points')
-                            }
-                          }}
-                          className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
-                            (viewTarget.bonusPoints || 0) === pts
-                              ? 'bg-amber-500 text-white border-amber-600 shadow-xs ring-2 ring-amber-400/30'
-                              : 'bg-white text-slate-800 border-amber-200 hover:bg-amber-100 hover:border-amber-400'
-                          }`}
-                        >
-                          +{pts}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
 
                 {/* Member Roster List */}
                 <div className="space-y-2 pt-2 border-t border-slate-100">

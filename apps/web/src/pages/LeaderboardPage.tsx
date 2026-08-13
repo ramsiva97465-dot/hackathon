@@ -6,6 +6,7 @@ import { getTrackConfig } from '@/lib/utils'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { TrendingUp, TrendingDown, Minus, Trophy, ChevronRight, Monitor } from 'lucide-react'
 import type { LeaderboardEntry } from '@hackathon/shared'
+import api from '@/lib/api'
 
 const ROUND2_CUTOFF = 20 // Top 20 advance to round 2
 
@@ -155,7 +156,37 @@ export function LeaderboardPage() {
     setEntries(data)
   })
 
+  const fetchLiveLeaderboard = async () => {
+    try {
+      const res = await api.leaderboard.get({ round: activeRound })
+      if (Array.isArray(res.data)) {
+        setEntries(res.data)
+      }
+    } catch (err) {
+      // Ignore poll error
+    }
+  }
+
   useEffect(() => { emit('leaderboard:subscribe') }, [emit])
+
+  useEffect(() => {
+    fetchLiveLeaderboard()
+    const pollTimer = setInterval(fetchLiveLeaderboard, 3000)
+
+    const handleUpdateEvent = () => {
+      fetchLiveLeaderboard()
+    }
+
+    window.addEventListener('leaderboard_updated', handleUpdateEvent)
+    window.addEventListener('storage', handleUpdateEvent)
+
+    return () => {
+      clearInterval(pollTimer)
+      window.removeEventListener('leaderboard_updated', handleUpdateEvent)
+      window.removeEventListener('storage', handleUpdateEvent)
+    }
+  }, [activeRound])
+
   useEffect(() => {
     const t = setInterval(() => setClock(new Date()), 1000)
     return () => clearInterval(t)

@@ -170,6 +170,8 @@ export function AdminScannerPage() {
       setUpdatingBonus(true)
       await api.attendance.verifyBonus(teamData.id, calculatedBonusPts)
       setTeamData({ ...teamData, bonusPoints: calculatedBonusPts })
+      localStorage.setItem('snapserve_leaderboard_updated', Date.now().toString())
+      window.dispatchEvent(new Event('leaderboard_updated'))
       toast.success(`Awarded +${calculatedBonusPts} Bonus Points! Leaderboard updated 🏆`)
     } catch (err) {
       console.error(err)
