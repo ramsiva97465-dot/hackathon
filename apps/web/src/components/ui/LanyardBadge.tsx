@@ -236,10 +236,26 @@ export function LanyardBadge({
       currentX += w + 8
     })
 
+    // Draw Real Scannable QR Code Box on HD Canvas
+    const qrImg = new Image()
+    qrImg.crossOrigin = 'anonymous'
+    const qrDataStr = encodeURIComponent(teamName || pName || 'SnapServe AI')
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${qrDataStr}&color=000000&bgcolor=ffffff`
+    
+    await new Promise((resolve) => {
+      qrImg.onload = resolve
+      qrImg.onerror = resolve
+    })
+
+    if (qrImg.complete && qrImg.naturalWidth > 0) {
+      // Draw QR image inside barcode box
+      ctx.drawImage(qrImg, 680, 920, 110, 110)
+    }
+
     // Barcode numeric string
     ctx.textAlign = 'center'
     ctx.font = 'bold 22px monospace'
-    ctx.fillText('9  781234  567897', 500, 1045)
+    ctx.fillText('9  781234  567897', 440, 1045)
 
     // Footer Access Marker
     ctx.fillStyle = '#94A3B8'
@@ -552,18 +568,23 @@ export function LanyardBadge({
                 <div className="h-[2.5px] w-full bg-[#E83C00] rounded-full my-1" />
               </div>
 
-              {/* 3. Admin Attendance Check-In QR Code Section (Clean White Container like Front Barcode) */}
+              {/* 3. Admin Attendance Check-In QR Code Section (100% Real Scannable QR Code) */}
               <div className="space-y-1 pt-1">
-                <div className="bg-white rounded-2xl p-2.5 flex items-center justify-between shadow-md">
-                  <div className="text-left space-y-0.5">
+                <div className="bg-white rounded-2xl p-2.5 flex items-center justify-between shadow-md border border-slate-200">
+                  <div className="text-left space-y-0.5 min-w-0 flex-1 pr-2">
                     <span className="text-[8px] font-black text-[#E83C00] uppercase tracking-widest block font-sans">ADMIN ATTENDANCE SCAN</span>
-                    <span className="text-[11px] font-black text-black block font-sans">Scan at Desk to Check-In</span>
+                    <span className="text-[11px] font-black text-black block font-sans truncate">{participantName}</span>
                     <span className="text-[8px] font-mono font-bold text-slate-600 block">
-                      PASS ID: {agentNumber ? `PASS-${agentNumber.toUpperCase()}` : '#0117'}
+                      PASS ID: {agentNumber ? `PASS-${agentNumber.replace('#','')}` : 'T-01'}
                     </span>
                   </div>
-                  <div className="p-1 bg-black rounded-xl shrink-0">
-                    <QrCode size={32} className="text-white" />
+                  <div className="p-1.5 bg-white rounded-xl shrink-0 border border-slate-300 shadow-2xs">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(teamName || participantName || 'SnapServe AI')}&color=000000&bgcolor=ffffff`}
+                      alt="Pass QR Code"
+                      className="w-10 h-10 object-contain rounded-md"
+                      crossOrigin="anonymous"
+                    />
                   </div>
                 </div>
 
