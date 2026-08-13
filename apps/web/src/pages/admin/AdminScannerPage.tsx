@@ -183,24 +183,6 @@ export function AdminScannerPage() {
     <DashboardLayout role="admin">
       <div className="max-w-4xl mx-auto space-y-6">
 
-        {/* ── Page Header ── */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 bg-orange-100 text-[#E83C00] text-[10px] font-black uppercase tracking-wider rounded-md">
-                Fast-Pass Attendance Scanner
-              </span>
-              <span className="text-[10px] font-bold text-slate-400">QR &amp; On-Spot Verifier</span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900">Desk Check-In &amp; Bonus Scanner</h1>
-            <p className="text-xs text-slate-500 mt-1">Scan participant Lanyard Pass QR or lookup by Team Name / Table Number to verify attendance and award bonus points on the spot!</p>
-          </div>
-
-          <div className="w-12 h-12 rounded-2xl bg-[#12141A] text-[#D4AF37] flex items-center justify-center shrink-0 border border-slate-800 shadow-md">
-            <QrCode size={24} />
-          </div>
-        </div>
-
         {/* ── Scanner / Search Input Box ── */}
         <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
