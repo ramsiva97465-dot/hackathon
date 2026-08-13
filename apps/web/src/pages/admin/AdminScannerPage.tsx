@@ -202,8 +202,8 @@ export function AdminScannerPage() {
         </div>
 
         {/* ── Scanner / Search Input Box ── */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-          <div className="flex items-center justify-between gap-3">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <label className="block text-xs font-black text-slate-800 uppercase tracking-wider">
               Scan QR Code or Search Team / Participant
             </label>
@@ -211,7 +211,7 @@ export function AdminScannerPage() {
             <button
               type="button"
               onClick={isCameraActive ? stopCamera : startCamera}
-              className={`px-4 py-2 text-xs font-black rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-2xs ${
+              className={`w-full sm:w-auto px-4 py-2.5 text-xs font-black rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs ${
                 isCameraActive
                   ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
                   : 'bg-[#12141A] hover:bg-slate-800 text-[#D4AF37] border border-slate-700'
@@ -224,20 +224,20 @@ export function AdminScannerPage() {
 
           {/* ── Live Camera Viewfinder Overlay (When Active) ── */}
           {isCameraActive && (
-            <div className="relative w-full max-w-lg mx-auto bg-black rounded-3xl overflow-hidden border-2 border-[#E83C00] shadow-2xl space-y-0">
+            <div className="relative w-full max-w-lg mx-auto bg-black rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-[#E83C00] shadow-2xl space-y-0">
               <video
                 ref={videoRef}
                 playsInline
                 muted
-                className="w-full aspect-video object-cover"
+                className="w-full aspect-[4/3] sm:aspect-video object-cover"
               />
 
               {/* Viewfinder Target Reticle Overlay */}
-              <div className="absolute inset-0 border-[40px] border-black/60 pointer-events-none flex items-center justify-center">
-                <div className="w-48 h-48 border-2 border-[#E83C00] rounded-2xl relative shadow-[0_0_20px_rgba(232,60,0,0.6)]">
+              <div className="absolute inset-0 border-[24px] sm:border-[40px] border-black/60 pointer-events-none flex items-center justify-center">
+                <div className="w-40 h-40 sm:w-48 sm:h-48 border-2 border-[#E83C00] rounded-2xl relative shadow-[0_0_20px_rgba(232,60,0,0.6)]">
                   {/* Laser Scan Line Animation */}
                   <div className="w-full h-0.5 bg-[#E83C00] shadow-[0_0_12px_#E83C00] absolute top-0 animate-[ping_2s_infinite]" />
-                  <p className="text-[10px] font-black text-white bg-black/80 px-2 py-0.5 rounded-full absolute bottom-2 left-1/2 -translate-x-1/2 uppercase tracking-widest whitespace-nowrap">
+                  <p className="text-[9px] sm:text-[10px] font-black text-white bg-black/80 px-2 py-0.5 rounded-full absolute bottom-2 left-1/2 -translate-x-1/2 uppercase tracking-widest whitespace-nowrap">
                     Align QR inside box
                   </p>
                 </div>
@@ -275,7 +275,7 @@ export function AdminScannerPage() {
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-3 bg-[#E83C00] hover:bg-[#FF4500] text-white text-xs font-black rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+              className="w-full sm:w-auto px-6 py-3 bg-[#E83C00] hover:bg-[#FF4500] text-white text-xs font-black rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {loading ? <RefreshCw size={15} className="animate-spin" /> : <Search size={15} />}
               <span>Verify &amp; Lookup</span>
