@@ -36,11 +36,11 @@ export function AdminScannerPage() {
 
   // Bonus point task states for on-spot verification
   const [socialTasks, setSocialTasks] = useState({
-    instaSnapserve: true,
-    instaVobiz: true,
-    linkedinVobiz: true,
-    linkedinSnapserve: true,
-    linkedinVoiceBuilder: true
+    instaSnapserve: false,
+    instaVobiz: false,
+    linkedinVobiz: false,
+    linkedinSnapserve: false,
+    linkedinVoiceBuilder: false
   })
   const [updatingBonus, setUpdatingBonus] = useState(false)
   const [checkingInId, setCheckingInId] = useState<string | null>(null)

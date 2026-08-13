@@ -58,12 +58,33 @@ export function LeaderboardAdminPage() {
     setEntries(data)
   })
 
+  const fetchLeaderboard = async () => {
+    try {
+      const res = await api.leaderboard.get({ round: activeRound })
+      if (Array.isArray(res.data)) {
+        setEntries(res.data)
+      }
+    } catch (err) {
+      // Ignore
+    }
+  }
+
   useEffect(() => {
     emit('leaderboard:subscribe')
-    api.leaderboard.get().then(res => {
-      if (res.data) setEntries(res.data)
-    })
-  }, [emit])
+    fetchLeaderboard()
+
+    const interval = setInterval(fetchLeaderboard, 3000)
+    const handleUpdate = () => fetchLeaderboard()
+
+    window.addEventListener('leaderboard_updated', handleUpdate)
+    window.addEventListener('storage', handleUpdate)
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('leaderboard_updated', handleUpdate)
+      window.removeEventListener('storage', handleUpdate)
+    }
+  }, [emit, activeRound])
 
   const handleEditScore = async (teamId: string, currentScore: number) => {
     const newVal = prompt(`Override score for this team (current: ${currentScore}):\nLeave blank or cancel to keep current score.\nEnter 'clear' to remove the override.`)
@@ -82,13 +103,14 @@ export function LeaderboardAdminPage() {
 
     try {
       await api.leaderboard.adminScore(teamId, score)
+      fetchLeaderboard()
     } catch (err) {
       console.error(err)
       alert('Failed to override score')
     }
   }
 
-  const rawDisplay = entries.length > 0 ? entries : mockLeaderboard
+  const rawDisplay = entries
   const display = rawDisplay
     .filter(e => {
       const teamRound = (e as any).round || 1
