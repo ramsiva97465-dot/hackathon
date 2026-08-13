@@ -1276,7 +1276,20 @@ export function ParticipantDashboard() {
                         <Field label="What are you building?" placeholder="Describe what your project does in 1-2 sentences..." value={projectDescription} onChange={setProjectDescription} textarea rows={3} />
                         <Field label="What problem does your agent solving?" placeholder="Explain the specific problem your agent solves, and how it uses voice AI..." value={agentSolution} onChange={setAgentSolution} textarea rows={4} />
 
-                        <Field label="Presentation Drive URL" placeholder="https://drive.google.com/... or Presentation Link" value={demoUrl} onChange={setDemoUrl} type="url" />
+                        <div className="space-y-1.5">
+                          <Field
+                            label="Presentation Drive URL *"
+                            placeholder="https://drive.google.com/file/d/... or Presentation Link"
+                            value={demoUrl}
+                            onChange={setDemoUrl}
+                            type="url"
+                            hint="Google Drive link or public presentation URL for judges review"
+                          />
+                          <div className="p-2 bg-amber-50/80 border border-amber-200/80 rounded-xl flex items-center gap-1.5 text-[10.5px] font-bold text-amber-800">
+                            <ExternalLink size={13} className="shrink-0 text-amber-600" />
+                            <span>💡 <strong>Important:</strong> Please set Google Drive link access permission to <u>Public ("Anyone with the link")</u> so judges can view your presentation slides!</span>
+                          </div>
+                        </div>
 
                         <div className="pt-2">
                           <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
