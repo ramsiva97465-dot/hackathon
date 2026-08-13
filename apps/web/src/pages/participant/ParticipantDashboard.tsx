@@ -1222,9 +1222,9 @@ export function ParticipantDashboard() {
                             <div className="space-y-2.5">
                               {squadAgents.map((sq, sIdx) => (
                                 <div key={sIdx} className="p-3.5 bg-white border border-slate-200/80 rounded-xl space-y-2.5 relative group shadow-2xs">
-                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <Field
-                                      label={`Sub-Agent #${sIdx + 1} Name`}
+                                      label={`Sub-Agent #${sIdx + 1} Name *`}
                                       placeholder="e.g. Booking Agent"
                                       value={sq.name}
                                       onChange={(v) => {
@@ -1234,12 +1234,12 @@ export function ParticipantDashboard() {
                                     />
                                     <Field
                                       label="Sub-Agent Phone Number"
-                                      placeholder="+91 98765 43210"
+                                      placeholder="e.g. +91 98765 43210"
                                       value={sq.phone || ''}
                                       onChange={(v) => {
                                         const newS = [...squadAgents]; newS[sIdx].phone = v; setSquadAgents(newS);
                                       }}
-                                      hint="Dedicated agent hotline number"
+                                      hint="Dedicated Vobiz agent hotline number"
                                     />
                                   </div>
                                   {squadAgents.length > 1 && (
