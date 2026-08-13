@@ -1181,7 +1181,7 @@ export function ParticipantDashboard() {
                           <div className="space-y-1.5">
                             <Field
                               label={agentType === 'MULTI_AGENT' ? "Master Hotline Phone Number *" : "Agent Phone Number *"}
-                              placeholder="+91 93420 42401"
+                              placeholder="e.g. +91 98765 43210"
                               value={agentPhoneNumber}
                               onChange={setAgentPhoneNumber}
                               hint="10-digit Vobiz AI hotline number for live demo"
