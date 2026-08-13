@@ -435,7 +435,7 @@ export function ParticipantDashboard() {
 
     try {
       setSaving(true)
-      let techStack = [ 
+      let techStack = [
         `STT: ${sttProvider}`,
         `LLM: ${llmProvider}`,
         `TTS: ${ttsProvider}`
@@ -1203,7 +1203,7 @@ export function ParticipantDashboard() {
                                   <Layers size={15} />
                                 </div>
                                 <div>
-                                  <h4 className="text-xs font-black text-slate-900">Squad Sub-Agents &amp; Hotlines Roster</h4>
+                                  <h4 className="text-xs font-black text-slate-900">Sub-Agents &amp; Hotlines Roster</h4>
                                   <p className="text-[10px] text-slate-500">Detail each sub-agent &amp; its dedicated phone number</p>
                                 </div>
                               </div>
@@ -1229,15 +1229,6 @@ export function ParticipantDashboard() {
                                       value={sq.name}
                                       onChange={(v) => {
                                         const newS = [...squadAgents]; newS[sIdx].name = v; setSquadAgents(newS);
-                                      }}
-                                      required
-                                    />
-                                    <Field
-                                      label="Specialized Role"
-                                      placeholder="e.g. Calendar & Booking"
-                                      value={sq.role}
-                                      onChange={(v) => {
-                                        const newS = [...squadAgents]; newS[sIdx].role = v; setSquadAgents(newS);
                                       }}
                                       required
                                     />
