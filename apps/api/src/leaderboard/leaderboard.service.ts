@@ -16,7 +16,8 @@ export class LeaderboardService {
     const targetRound = params?.round ? Number(params.round) : 1
     const whereCondition: any = {
       hackathonId: hackathon.id,
-      status: 'COMPETING'
+      status: 'COMPETING',
+      attendanceStatus: 'CHECKED_IN'
     }
 
     if (targetRound === 3) {
