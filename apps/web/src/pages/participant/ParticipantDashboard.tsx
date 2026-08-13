@@ -1177,6 +1177,7 @@ export function ParticipantDashboard() {
                             onChange={setAgentName}
                             hint={agentType === 'MULTI_AGENT' ? "Primary agent receiving incoming calls" : "Name of your AI agent"}
                             required
+                            uppercase
                           />
                           <div className="space-y-1.5">
                             <Field
@@ -1231,6 +1232,7 @@ export function ParticipantDashboard() {
                                         const newS = [...squadAgents]; newS[sIdx].name = v; setSquadAgents(newS);
                                       }}
                                       required
+                                      uppercase
                                     />
                                     <Field
                                       label="Sub-Agent Phone Number"
@@ -1338,7 +1340,7 @@ export function ParticipantDashboard() {
                                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <Field label="Full Name *" placeholder="John Doe" value={member.name} onChange={(v) => {
                                       const newM = [...membersForm]; newM[idx].name = v; setMembersForm(newM);
-                                    }} required />
+                                    }} required uppercase />
                                     <Field label="Email Address *" type="email" placeholder="john@example.com" value={member.email} onChange={(v) => {
                                       const newM = [...membersForm]; newM[idx].email = v; setMembersForm(newM);
                                     }} required />
@@ -1827,7 +1829,7 @@ export function ParticipantDashboard() {
 // ─── Field Component ──────────────────────────────────────────────────────────
 
 function Field({
-  label, placeholder, value, onChange, textarea, rows, type, hint, required
+  label, placeholder, value, onChange, textarea, rows, type, hint, required, uppercase
 }: {
   label: string
   placeholder?: string
@@ -1838,8 +1840,9 @@ function Field({
   type?: string
   hint?: string
   required?: boolean
+  uppercase?: boolean
 }) {
-  const cls = "w-full text-xs font-bold text-slate-900 px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/80 outline-none focus:border-[#E83C00] focus:ring-2 focus:ring-[#E83C00]/15 focus:bg-white transition-all placeholder:text-slate-400 placeholder:font-medium"
+  const cls = `w-full text-xs font-bold text-slate-900 px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50/80 outline-none focus:border-[#E83C00] focus:ring-2 focus:ring-[#E83C00]/15 focus:bg-white transition-all placeholder:text-slate-400 placeholder:font-medium ${uppercase ? 'uppercase' : ''}`
   return (
     <div className="space-y-1.5">
       <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
@@ -1849,7 +1852,7 @@ function Field({
       {textarea ? (
         <textarea
           value={value}
-          onChange={e => onChange(e.target.value)}
+          onChange={e => onChange(uppercase ? e.target.value.toUpperCase() : e.target.value)}
           placeholder={placeholder}
           rows={rows || 3}
           className={`${cls} resize-none`}
@@ -1858,7 +1861,7 @@ function Field({
         <input
           type={type || 'text'}
           value={value}
-          onChange={e => onChange(e.target.value)}
+          onChange={e => onChange(uppercase ? e.target.value.toUpperCase() : e.target.value)}
           placeholder={placeholder}
           className={cls}
           required={required}
