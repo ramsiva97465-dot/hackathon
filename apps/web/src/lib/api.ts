@@ -168,6 +168,13 @@ export const api = {
     toggleActive: (id: string, isActive: boolean) => apiClient.patch(`/announcements/${id}/toggle`, { isActive }),
     delete: (id: string) => apiClient.delete(`/announcements/${id}`),
   },
+
+  // Attendance & QR Scanner
+  attendance: {
+    lookup: (q: string) => apiClient.get('/attendance/lookup', { params: { q } }),
+    checkIn: (memberId: string, isPresent: boolean) => apiClient.post('/attendance/check-in', { memberId, isPresent }),
+    verifyBonus: (teamId: string, bonusPoints: number) => apiClient.post('/attendance/verify-bonus', { teamId, bonusPoints }),
+  },
 }
 
 export default api

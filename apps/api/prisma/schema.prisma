@@ -234,6 +234,9 @@ model Team {
   followedInstagram  Boolean    @default(false)
   followedLinkedin   Boolean    @default(false)
   bonusPoints        Int        @default(0)
+  attendanceStatus   String     @default("PENDING")
+  bonusVerifiedBy    String?
+  bonusVerifiedAt    DateTime?
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
@@ -252,7 +255,7 @@ model Team {
 }
 
 model TeamMember {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   teamId        String?
   applicationId String?
   name          String
@@ -262,8 +265,11 @@ model TeamMember {
   github        String?
   role          String?
   resumeUrl     String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  isPresent     Boolean   @default(false)
+  checkedInAt   DateTime?
+  checkedInBy   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   team        Team?        @relation(fields: [teamId], references: [id], onDelete: Cascade)
   application Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)

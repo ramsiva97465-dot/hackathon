@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Users, FileText, Award, Mail, Trophy,
   Settings, ScrollText, Mic, ChevronLeft, ChevronRight,
-  Bell, LogOut, Gavel, Zap, Radio
+  Bell, LogOut, Gavel, Zap, Radio, QrCode
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store/app.store'
@@ -28,6 +28,7 @@ interface DashboardLayoutProps {
 const adminRoutes: SidebarRoute[] = [
   { href: '/admin', label: 'Dashboard', icon: <LayoutDashboard size={17} />, section: 'main' },
   { href: '/admin/teams', label: 'Teams', icon: <Users size={17} />, section: 'main' },
+  { href: '/admin/scanner', label: 'QR Desk Scanner', icon: <QrCode size={17} />, section: 'main' },
   { href: '/admin/judges', label: 'Judges', icon: <Award size={17} />, section: 'main' },
   { href: '/admin/leaderboard', label: 'Leaderboard', icon: <Trophy size={17} />, section: 'main' },
   { href: '/admin/rounds', label: 'Rounds Management', icon: <Zap size={17} />, section: 'main' },

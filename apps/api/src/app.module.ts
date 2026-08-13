@@ -19,6 +19,7 @@ import { SettingsModule } from './settings/settings.module'
 import { AnalyticsModule } from './analytics/analytics.module'
 import { AnnouncementsModule } from './announcements/announcements.module'
 import { HelpRequestsModule } from './help-requests/help-requests.module'
+import { AttendanceModule } from './attendance/attendance.module'
 import { HealthController } from './health/health.controller'
 
 function getWebDistPath(): string {
@@ -82,6 +83,7 @@ function getWebDistPath(): string {
     AnalyticsModule,
     AnnouncementsModule,
     HelpRequestsModule,
+    AttendanceModule,
   ],
   controllers: [HealthController],
 })

@@ -12,6 +12,7 @@ import { LeaderboardAdminPage } from '@/pages/admin/LeaderboardAdminPage'
 import { SettingsPage } from '@/pages/admin/SettingsPage'
 import { RoundsManagement } from '@/pages/admin/RoundsManagement'
 import { CommandCenterPage } from '@/pages/admin/CommandCenterPage'
+import { AdminScannerPage } from '@/pages/admin/AdminScannerPage'
 import { AuditPage } from '@/pages/admin/AuditPage'
 import { ParticipantDashboard } from '@/pages/participant/ParticipantDashboard'
 import { JudgeDashboard } from '@/pages/judge/JudgeDashboard'
@@ -244,6 +245,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}>
                 <CommandCenterPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/scanner"
+            element={
+              <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}>
+                <AdminScannerPage />
               </ProtectedRoute>
             }
           />
