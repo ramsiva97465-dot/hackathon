@@ -31,6 +31,30 @@ export function JudgesPage() {
   const [submitting, setSubmitting] = useState(false)
   const [createdCreds, setCreatedCreds] = useState<{ name: string; email: string; password: string } | null>(null)
 
+  // Allocated Teams modal state
+  const [selectedJudgeForTeams, setSelectedJudgeForTeams] = useState<Judge | null>(null)
+  const [assignedTeamsList, setAssignedTeamsList] = useState<any[]>([])
+  const [loadingAssignedTeams, setLoadingAssignedTeams] = useState(false)
+
+  const handleOpenTeamsModal = async (judge: Judge) => {
+    setSelectedJudgeForTeams(judge)
+    setLoadingAssignedTeams(true)
+    setAssignedTeamsList([])
+    try {
+      const res = await api.judges.assignedTeams(judge.id)
+      if (res.data?.success) {
+        setAssignedTeamsList(res.data.data || [])
+      } else {
+        toast.error('Failed to fetch assigned teams')
+      }
+    } catch (err) {
+      console.error('Failed to load assigned teams', err)
+      toast.error('Failed to load allotted teams')
+    } finally {
+      setLoadingAssignedTeams(false)
+    }
+  }
+
   useEffect(() => {
     fetchJudges()
   }, [])
@@ -204,7 +228,16 @@ export function JudgesPage() {
 
                     {/* Actions */}
                     <div className="flex gap-2 mt-auto pt-2">
-                      <Button size="xs" variant="outline" fullWidth leftIcon={<Users size={13} />} className="border-white/10 text-slate-300 hover:bg-white/5 hover:text-white bg-transparent">Teams</Button>
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        fullWidth
+                        leftIcon={<Users size={13} />}
+                        onClick={() => handleOpenTeamsModal(judge)}
+                        className="border-white/10 text-slate-300 hover:bg-white/5 hover:text-white bg-transparent cursor-pointer"
+                      >
+                        Teams ({judge.assignedTeams || 0})
+                      </Button>
                       {progress === 100
                         ? <Button size="xs" variant="ghost" fullWidth leftIcon={<Lock size={13} />} className="text-slate-500 hover:bg-white/5 hover:text-white">Locked</Button>
                         : <Button size="xs" variant="ghost" fullWidth leftIcon={<Unlock size={13} />} className="text-[#E83C00] hover:bg-[#E83C00]/10">Unlock</Button>
@@ -218,6 +251,92 @@ export function JudgesPage() {
           )}
         </div>
       </div>
+
+      <AnimatePresence>
+        {selectedJudgeForTeams && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col border border-white/10 max-h-[85vh]"
+              style={{ backgroundColor: '#0A0A0A' }}
+            >
+              {/* Modal Header */}
+              <div className="p-6 border-b border-white/10 flex items-center justify-between bg-white/5">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-black text-xl text-white">{selectedJudgeForTeams.name}'s Allotted Teams</h3>
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#E83C00]/20 text-[#E83C00] font-bold text-xs border border-[#E83C00]/30">
+                      {assignedTeamsList.length} Teams
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {selectedJudgeForTeams.company ? `${selectedJudgeForTeams.company} • ` : ''}{selectedJudgeForTeams.email}
+                  </p>
+                </div>
+                <button onClick={() => setSelectedJudgeForTeams(null)} className="p-2 rounded-xl text-slate-400 hover:bg-white/10 hover:text-white transition-all cursor-pointer">
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Teams List */}
+              <div className="p-6 overflow-y-auto space-y-3 flex-1 custom-scrollbar">
+                {loadingAssignedTeams ? (
+                  <div className="py-12 text-center text-slate-400 font-bold text-sm">Fetching allotted teams...</div>
+                ) : assignedTeamsList.length === 0 ? (
+                  <div className="py-12 text-center text-slate-500 font-medium text-sm border border-dashed border-white/10 rounded-2xl">
+                    No teams allotted to this judge yet.
+                  </div>
+                ) : (
+                  assignedTeamsList.map((team, idx) => (
+                    <div key={team.id || idx} className="p-4 rounded-2xl bg-[#141414] border border-white/10 space-y-2 hover:border-white/20 transition-all">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="w-7 h-7 rounded-lg bg-white/10 text-white font-mono text-xs font-bold flex items-center justify-center shrink-0">
+                            #{idx + 1}
+                          </span>
+                          <div>
+                            <h4 className="text-sm font-black text-white truncate">{team.teamName}</h4>
+                            {team.tableNumber && (
+                              <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-md border border-amber-400/20 font-mono">
+                                Table: {team.tableNumber}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${team.isScored
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                        }`}>
+                          {team.isScored ? `✅ Evaluated (${team.totalScore || 0} pts)` : '⏳ Pending'}
+                        </span>
+                      </div>
+
+                      <div className="text-xs text-slate-400 pt-1 space-y-1">
+                        <p><strong className="text-slate-300">Project:</strong> {team.projectTitle}</p>
+                        {team.agentPhoneNumber && (
+                          <p><strong className="text-slate-300">Agent Hotline:</strong> <span className="font-mono text-emerald-400 font-bold">{team.agentPhoneNumber}</span></p>
+                        )}
+                        {team.track && (
+                          <p><strong className="text-slate-300">Track:</strong> {team.track}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="p-4 border-t border-white/10 bg-white/5 flex justify-end">
+                <Button variant="ghost" onClick={() => setSelectedJudgeForTeams(null)} className="hover:bg-white/10 text-slate-300 hover:text-white rounded-xl">
+                  Close
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {showAddModal && (
