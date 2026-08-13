@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import {
   Trophy, Users, BookOpen, FileText, Star, LogOut, Save,
   Instagram, Linkedin, CheckCircle2, Clock, RefreshCw,
-  ChevronRight, ChevronDown, Home, Award, ExternalLink, Medal, Bell, Megaphone, Plus, Trash2, User, Bot, Layers
+  ChevronRight, ChevronDown, Home, Award, ExternalLink, Medal, Bell, Megaphone, Plus, Trash2, User, Bot, Layers, AlertCircle
 } from 'lucide-react'
 import { BrandLockup } from '@/components/brand/BrandLogos'
 import { LanyardBadge } from '@/components/ui/LanyardBadge'
