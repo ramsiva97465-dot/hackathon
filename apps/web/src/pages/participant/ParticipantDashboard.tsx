@@ -338,8 +338,17 @@ export function ParticipantDashboard() {
   useEffect(() => {
     if (activeTab === 'leaderboard') {
       fetchLeaderboard(lbRound)
-      const interval = setInterval(() => fetchLeaderboard(lbRound), 5_000)
-      return () => clearInterval(interval)
+      const interval = setInterval(() => fetchLeaderboard(lbRound), 3_000)
+
+      const handleUpdateEvent = () => fetchLeaderboard(lbRound)
+      window.addEventListener('leaderboard_updated', handleUpdateEvent)
+      window.addEventListener('storage', handleUpdateEvent)
+
+      return () => {
+        clearInterval(interval)
+        window.removeEventListener('leaderboard_updated', handleUpdateEvent)
+        window.removeEventListener('storage', handleUpdateEvent)
+      }
     }
   }, [activeTab, lbRound, fetchLeaderboard])
 

@@ -99,7 +99,7 @@ function Round1Row({ entry, isAdvancing }: { entry: LeaderboardEntry; isAdvancin
         transition={{ duration: 0.3 }}
         className={`text-right font-black ${isAdvancing ? 'text-xl text-[#1A1A1A]' : 'text-base text-slate-400'}`}
       >
-        {entry.totalScore > 0 ? entry.totalScore.toFixed(1) : '—'}
+        {entry.totalScore > 0 ? entry.totalScore.toFixed(1) : '0.0'}
       </motion.div>
 
       {/* Delta */}
