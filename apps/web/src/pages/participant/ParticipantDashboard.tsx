@@ -1316,14 +1316,25 @@ export function ParticipantDashboard() {
                         <div className="pt-4 border-t border-slate-100">
                           <div className="flex items-center justify-between mb-4">
                             <div>
-                              <h3 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider">Team Members</h3>
-                              <p className="text-[10px] text-slate-500 mt-0.5">Add up to 3 members</p>
+                              <div className="flex items-center gap-2">
+                                <h3 className="text-[11px] font-bold text-slate-800 uppercase tracking-wider">Team Members</h3>
+                                {membersForm.length === 1 ? (
+                                  <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-[9px] font-bold">
+                                    👤 Solo Hacker
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 rounded-full bg-orange-50 text-[#E83C00] border border-orange-200 text-[9px] font-bold">
+                                    👥 Team ({membersForm.length} Members)
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-slate-500 mt-0.5">Add up to 3 members per project</p>
                             </div>
                             {membersForm.length < 3 && (
                               <button
                                 type="button"
                                 onClick={() => setMembersForm([...membersForm, { name: '', email: '', phone: '', linkedin: '', github: '' }])}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold rounded-lg transition-all"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold rounded-lg transition-all cursor-pointer"
                               >
                                 <Plus size={12} /> Add Member
                               </button>
