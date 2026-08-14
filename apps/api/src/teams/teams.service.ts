@@ -263,80 +263,93 @@ export class TeamsService {
     let createdTeams = 0
     let createdMembers = 0
 
-    await Promise.all(teamsData.map(async (teamInput) => {
-      // 1. Resolve Track
-      let trackId: string
-      const match = tracks.find(
-        t => t.name.toLowerCase() === teamInput.track?.toLowerCase() ||
-             t.slug.toLowerCase() === teamInput.track?.toLowerCase()
-      )
-      if (match) {
-        trackId = match.id
-      } else if (tracks.length > 0) {
-        trackId = tracks[0].id
-      } else {
-        trackId = 'default-track' // Fallback if no tracks exist, though unlikely
-      }
+    if (!Array.isArray(teamsData) || teamsData.length === 0) {
+      return { success: false, error: 'No teams data provided for import.' }
+    }
 
-      // 2. Find or Create Team
-      let team = await this.prisma.team.findFirst({
-        where: { 
-          hackathonId: hackathon.id, 
-          name: { equals: teamInput.name, mode: 'insensitive' } 
+    for (const teamInput of teamsData) {
+      if (!teamInput || !teamInput.name) continue
+
+      try {
+        // 1. Resolve Track
+        let trackId: string
+        const match = tracks.find(
+          t => t.name?.toLowerCase() === teamInput.track?.toLowerCase() ||
+               t.slug?.toLowerCase() === teamInput.track?.toLowerCase()
+        )
+        if (match) {
+          trackId = match.id
+        } else if (tracks.length > 0) {
+          trackId = tracks[0].id
+        } else {
+          trackId = 'default-track'
         }
-      })
-      if (!team) {
-        team = await this.prisma.team.create({
-          data: {
-            hackathonId: hackathon.id,
-            name: teamInput.name,
-            trackId,
-            tableNumber: teamInput.tableNumber || null,
-            status: 'COMPETING',
-          }
-        })
-        createdTeams++
-      } else {
-        team = await this.prisma.team.update({
-          where: { id: team.id },
-          data: {
-            tableNumber: teamInput.tableNumber || team.tableNumber,
-            trackId,
-          }
-        })
-      }
 
-      // 3. Create or Update Members
-      if (Array.isArray(teamInput.members)) {
-        await Promise.all(teamInput.members.map(async (member) => {
-          const cleanPhone = formatPhoneNumber(member.phone)
-          const existingMember = await this.prisma.teamMember.findFirst({
-            where: { teamId: team.id, email: member.email }
-          })
-          if (!existingMember) {
-            await this.prisma.teamMember.create({
-              data: {
-                teamId: team.id,
-                name: member.name,
-                email: member.email,
-                phone: cleanPhone,
-                role: member.role || 'Member',
-              }
-            })
-            createdMembers++
-          } else {
-            await this.prisma.teamMember.update({
-              where: { id: existingMember.id },
-              data: {
-                name: member.name || existingMember.name,
-                phone: cleanPhone || existingMember.phone,
-                role: member.role || existingMember.role,
-              }
-            })
+        // 2. Find or Create Team
+        let team = await this.prisma.team.findFirst({
+          where: { 
+            hackathonId: hackathon.id, 
+            name: { equals: teamInput.name.trim(), mode: 'insensitive' } 
           }
-        }))
+        })
+        if (!team) {
+          team = await this.prisma.team.create({
+            data: {
+              hackathonId: hackathon.id,
+              name: teamInput.name.trim(),
+              trackId,
+              tableNumber: teamInput.tableNumber || null,
+              status: 'COMPETING',
+            }
+          })
+          createdTeams++
+        } else {
+          team = await this.prisma.team.update({
+            where: { id: team.id },
+            data: {
+              tableNumber: teamInput.tableNumber || team.tableNumber,
+              trackId,
+            }
+          })
+        }
+
+        // 3. Create or Update Members
+        if (Array.isArray(teamInput.members)) {
+          for (const member of teamInput.members) {
+            if (!member || !member.name) continue
+            const cleanPhone = formatPhoneNumber(member.phone)
+            const cleanEmail = member.email ? member.email.trim().toLowerCase() : `${teamInput.name.toLowerCase().replace(/\s+/g, '')}_${createdMembers}@placeholder.com`
+
+            const existingMember = await this.prisma.teamMember.findFirst({
+              where: { teamId: team.id, email: cleanEmail }
+            })
+            if (!existingMember) {
+              await this.prisma.teamMember.create({
+                data: {
+                  teamId: team.id,
+                  name: member.name.trim(),
+                  email: cleanEmail,
+                  phone: cleanPhone,
+                  role: member.role || 'Member',
+                }
+              })
+              createdMembers++
+            } else {
+              await this.prisma.teamMember.update({
+                where: { id: existingMember.id },
+                data: {
+                  name: member.name.trim() || existingMember.name,
+                  phone: cleanPhone || existingMember.phone,
+                  role: member.role || existingMember.role,
+                }
+              })
+            }
+          }
+        }
+      } catch (teamErr) {
+        console.error(`Error importing team ${teamInput.name}:`, teamErr)
       }
-    }))
+    }
 
     return { success: true, data: { createdTeams, createdMembers } }
   }

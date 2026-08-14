@@ -107,7 +107,8 @@ export class TeamsController {
   }
 
   @Post('import')
-  importTeams(@Body('teams') teams: any[]) {
+  importTeams(@Body('teams') teamsPayload: any[], @Body() body: any) {
+    const teams = Array.isArray(teamsPayload) ? teamsPayload : (Array.isArray(body) ? body : (body?.teams || []))
     return this.service.importTeams(teams)
   }
 

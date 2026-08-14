@@ -285,16 +285,35 @@ export function TeamsPage() {
     if (parsedTeams.length === 0) return
     try {
       setImportingCsv(true)
-      const res = await api.teams.import(parsedTeams)
-      if (res.data?.success) {
-        toast.success(`Successfully imported ${res.data.data.createdTeams} teams and ${res.data.data.createdMembers} members!`)
-        await fetchTeams()
-        setCsvImportOpen(false)
-        setParsedTeams([])
-        setParseErrors([])
-      } else {
-        toast.error(res.data?.error || 'Failed to import teams.')
+      const CHUNK_SIZE = 25
+      let totalCreatedTeams = 0
+      let totalCreatedMembers = 0
+
+      const totalChunks = Math.ceil(parsedTeams.length / CHUNK_SIZE)
+      const toastId = toast.loading(`Importing ${parsedTeams.length} teams...`)
+
+      for (let i = 0; i < parsedTeams.length; i += CHUNK_SIZE) {
+        const chunk = parsedTeams.slice(i, i + CHUNK_SIZE)
+        const currentBatch = Math.floor(i / CHUNK_SIZE) + 1
+        const processedCount = Math.min(i + CHUNK_SIZE, parsedTeams.length)
+
+        toast.loading(`Importing batch ${currentBatch}/${totalChunks} (${processedCount}/${parsedTeams.length} teams)...`, { id: toastId })
+
+        const res = await api.teams.import(chunk)
+        if (res.data?.success) {
+          totalCreatedTeams += res.data.data?.createdTeams || 0
+          totalCreatedMembers += res.data.data?.createdMembers || 0
+        } else {
+          toast.error(res.data?.error || `Error importing batch ${currentBatch}`)
+        }
       }
+
+      toast.dismiss(toastId)
+      toast.success(`Successfully imported ${totalCreatedTeams} teams and ${totalCreatedMembers} members!`)
+      await fetchTeams()
+      setCsvImportOpen(false)
+      setParsedTeams([])
+      setParseErrors([])
     } catch (err: any) {
       console.error(err)
       toast.error(err.response?.data?.message || 'Failed to import teams.')
