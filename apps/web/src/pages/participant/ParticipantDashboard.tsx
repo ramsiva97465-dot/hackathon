@@ -1185,12 +1185,12 @@ export function ParticipantDashboard() {
                               placeholder="e.g. +91 98765 43210"
                               value={agentPhoneNumber}
                               onChange={setAgentPhoneNumber}
-                              hint="10-digit Vobiz AI hotline number for live demo"
+                              hint="Enter the AI hotline number purchased on Vobiz"
                               required
                             />
-                            <div className="p-2 bg-red-50 border border-red-200/80 rounded-xl flex items-center gap-1.5 text-[10.5px] font-bold text-red-600">
-                              <AlertCircle size={13} className="shrink-0 text-red-500" />
-                              <span>⚠️ <strong>Mandatory Rule:</strong> If this is not a Vobiz number, your submission will be rejected!</span>
+                            <div className="p-2.5 bg-red-50 border border-red-200/80 rounded-xl flex items-center gap-2 text-[10.5px] font-bold text-red-600 leading-snug">
+                              <AlertCircle size={14} className="shrink-0 text-red-500" />
+                              <span>⚠️ <strong>Mandatory Rule:</strong> Enter the AI hotline number you <u>purchased on Vobiz</u>. If this is not a number purchased via Vobiz, your submission will be rejected!</span>
                             </div>
                           </div>
                         </div>
