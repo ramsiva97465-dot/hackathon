@@ -479,65 +479,96 @@ export class TeamsService {
     })
 
     if (body.members) {
-      // Upsert members or create new ones, and remove deleted ones
-      const incomingIds = body.members.map(m => m.id).filter(id => !!id)
-      
-      // Delete members that are not in the incoming list
+      for (const member of body.members) {
+        if (!member.email || !member.name) continue
+        const cleanEmail = member.email.trim().toLowerCase()
+        const cleanPhone = formatPhoneNumber(member.phone)
+
+        // 1. Check if this email exists on any OTHER team
+        const existingOtherMember = await this.prisma.teamMember.findFirst({
+          where: {
+            email: { equals: cleanEmail, mode: 'insensitive' },
+            teamId: { not: teamId }
+          },
+          include: { team: { include: { members: true } } }
+        })
+
+        if (existingOtherMember) {
+          const oldTeam = existingOtherMember.team
+          const oldTeamId = oldTeam?.id
+
+          // Re-assign member to current team
+          await this.prisma.teamMember.update({
+            where: { id: existingOtherMember.id },
+            data: {
+              teamId,
+              name: member.name.trim(),
+              phone: cleanPhone || existingOtherMember.phone,
+              role: member.role || existingOtherMember.role,
+              linkedin: member.linkedin || existingOtherMember.linkedin,
+              github: member.github || existingOtherMember.github,
+            }
+          })
+
+          // Clean up old team if it has no members left or was a 1-member solo team
+          if (oldTeamId && oldTeam && oldTeam.members.length <= 1) {
+            try {
+              await this.prisma.teamMember.deleteMany({ where: { teamId: oldTeamId } })
+              await this.prisma.leaderboard.deleteMany({ where: { teamId: oldTeamId } })
+              await this.prisma.judgeAssignment.deleteMany({ where: { teamId: oldTeamId } })
+              await this.prisma.team.delete({ where: { id: oldTeamId } }).catch(() => {})
+            } catch (e) {
+              console.error('Failed to cleanup old team:', e)
+            }
+          }
+        } else {
+          // 2. Check if member already exists on THIS team
+          const existingThisMember = await this.prisma.teamMember.findFirst({
+            where: {
+              teamId,
+              OR: [
+                ...(member.id ? [{ id: member.id }] : []),
+                { email: { equals: cleanEmail, mode: 'insensitive' } }
+              ]
+            }
+          })
+
+          if (existingThisMember) {
+            await this.prisma.teamMember.update({
+              where: { id: existingThisMember.id },
+              data: {
+                name: member.name.trim(),
+                email: cleanEmail,
+                phone: cleanPhone || existingThisMember.phone,
+                role: member.role || existingThisMember.role,
+                linkedin: member.linkedin || existingThisMember.linkedin,
+                github: member.github || existingThisMember.github,
+              }
+            })
+          } else {
+            await this.prisma.teamMember.create({
+              data: {
+                teamId,
+                name: member.name.trim(),
+                email: cleanEmail,
+                phone: cleanPhone,
+                role: member.role || 'Member',
+                linkedin: member.linkedin,
+                github: member.github,
+              }
+            })
+          }
+        }
+      }
+
+      // Remove any members on THIS team that were removed from submission form
+      const activeEmailList = body.members.map(m => m.email?.trim().toLowerCase()).filter(Boolean)
       await this.prisma.teamMember.deleteMany({
         where: {
           teamId,
-          id: { notIn: incomingIds }
+          email: { notIn: activeEmailList }
         }
       })
-
-      // Upsert incoming members
-      for (const member of body.members) {
-        const cleanPhone = formatPhoneNumber(member.phone)
-        if (member.id) {
-          await this.prisma.teamMember.update({
-            where: { id: member.id },
-            data: {
-              name: member.name,
-              email: member.email,
-              phone: cleanPhone,
-              role: member.role,
-              linkedin: member.linkedin,
-              github: member.github,
-            }
-          })
-        } else {
-          // Clean up old solo team if this member was previously a 1-member solo team
-          try {
-            const existingOtherMembers = await this.prisma.teamMember.findMany({
-              where: { email: { equals: member.email.trim(), mode: 'insensitive' }, teamId: { not: teamId } },
-              include: { team: { include: { members: true } } }
-            })
-            for (const oldM of existingOtherMembers) {
-              if (oldM.team && oldM.team.members.length <= 1) {
-                const oldTeamId = oldM.team.id
-                await this.prisma.teamMember.deleteMany({ where: { teamId: oldTeamId } })
-                await this.prisma.leaderboard.deleteMany({ where: { teamId: oldTeamId } })
-                await this.prisma.judgeAssignment.deleteMany({ where: { teamId: oldTeamId } })
-                await this.prisma.team.delete({ where: { id: oldTeamId } }).catch(() => {})
-              }
-            }
-          } catch (e) {
-            console.error('Failed to cleanup old solo team:', e)
-          }
-
-          await this.prisma.teamMember.create({
-            data: {
-              teamId,
-              name: member.name,
-              email: member.email,
-              phone: cleanPhone,
-              role: member.role,
-              linkedin: member.linkedin,
-              github: member.github,
-            }
-          })
-        }
-      }
     }
 
     // Re-fetch to return complete team
