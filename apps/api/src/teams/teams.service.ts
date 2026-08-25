@@ -447,6 +447,7 @@ export class TeamsService {
   }
 
   async submitProject(teamId: string, body: {
+    teamName?: string
     projectTitle?: string
     projectDescription?: string
     agentName?: string
@@ -465,6 +466,7 @@ export class TeamsService {
     const team = await this.prisma.team.update({
       where: { id: teamId },
       data: {
+        ...(body.teamName?.trim() ? { name: body.teamName.trim() } : {}),
         projectTitle: body.projectTitle,
         projectDescription: body.projectDescription,
         agentName: body.agentName,

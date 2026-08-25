@@ -163,6 +163,7 @@ export function ParticipantDashboard() {
   }, [])
 
   // Form state
+  const [teamName, setTeamName] = useState('')
   const [projectTitle, setProjectTitle] = useState('')
   const [projectDescription, setProjectDescription] = useState('')
   const [agentName, setAgentName] = useState('')
@@ -244,6 +245,7 @@ export function ParticipantDashboard() {
 
         // Only populate form fields on initial load / explicit refresh, NEVER during background polling
         if (!silent) {
+          setTeamName(team.name || '')
           setProjectTitle(team.projectTitle || '')
           setProjectDescription(team.projectDescription || '')
           setAgentName(team.agentName || '')
@@ -457,7 +459,7 @@ export function ParticipantDashboard() {
       }
 
       const res = await api.teams.submitProject({
-        projectTitle, projectDescription, agentName, agentSolution,
+        teamName, projectTitle, projectDescription, agentName, agentSolution,
         agentPhoneNumber: cleanAgentPhone,
         githubUrl, demoUrl, techStack,
         followedInstagram, followedLinkedin,
@@ -1160,14 +1162,16 @@ export function ParticipantDashboard() {
                           </div>
                         </div>
 
-                        {/* Team name (readonly) */}
-                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-3">
-                          <Users size={14} className="text-slate-400 shrink-0" />
-                          <div>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Team Name</p>
-                            <p className="text-sm font-black text-slate-800">{data.name}</p>
-                          </div>
-                        </div>
+                        {/* Team Name (Editable) */}
+                        <Field
+                          label="Team Name *"
+                          placeholder="e.g. ALPHA SQUAD"
+                          value={teamName}
+                          onChange={setTeamName}
+                          hint="Your official registered team name (converts to UPPERCASE automatically)"
+                          required
+                          uppercase
+                        />
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <Field
