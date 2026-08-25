@@ -1332,9 +1332,9 @@ export function ParticipantDashboard() {
                                   </span>
                                 )}
                               </div>
-                              <p className="text-[10px] text-slate-500 mt-0.5">Add up to 3 members per project</p>
+                              <p className="text-[10px] text-slate-500 mt-0.5">Add up to 4 members per project</p>
                             </div>
-                            {membersForm.length < 3 && (
+                            {membersForm.length < 4 && (
                               <button
                                 type="button"
                                 onClick={() => setMembersForm([...membersForm, { name: '', email: '', phone: '', linkedin: '', github: '' }])}
