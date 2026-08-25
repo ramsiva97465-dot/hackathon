@@ -57,7 +57,7 @@ type LeaderboardEntry = {
 
 // ─── Tab Config ──────────────────────────────────────────────────────────────
 
-type Tab = 'home' | 'playbook' | 'submission' | 'bonus' | 'leaderboard' | 'certificate'
+type Tab = 'home' | 'playbook' | 'submission' | 'bonus' | 'certificate'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'home', label: 'Home', icon: <Home size={16} /> },
@@ -65,7 +65,6 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'submission', label: 'Submission', icon: <FileText size={16} /> },
   { id: 'certificate', label: 'Certificate Preview 👑', icon: <Award size={16} /> },
   { id: 'bonus', label: 'Bonus Pts', icon: <Star size={16} /> },
-  { id: 'leaderboard', label: 'Leaderboard', icon: <Trophy size={16} /> },
 ]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -336,22 +335,7 @@ export function ParticipantDashboard() {
     return () => clearInterval(interval)
   }, [fetchAnnouncements])
 
-  useEffect(() => {
-    if (activeTab === 'leaderboard') {
-      fetchLeaderboard(lbRound)
-      const interval = setInterval(() => fetchLeaderboard(lbRound), 3_000)
 
-      const handleUpdateEvent = () => fetchLeaderboard(lbRound)
-      window.addEventListener('leaderboard_updated', handleUpdateEvent)
-      window.addEventListener('storage', handleUpdateEvent)
-
-      return () => {
-        clearInterval(interval)
-        window.removeEventListener('leaderboard_updated', handleUpdateEvent)
-        window.removeEventListener('storage', handleUpdateEvent)
-      }
-    }
-  }, [activeTab, lbRound, fetchLeaderboard])
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
@@ -1576,113 +1560,6 @@ export function ParticipantDashboard() {
                     </div>
                   </div>
                 </>
-              )}
-
-              {/* ── LEADERBOARD TAB ── */}
-              {activeTab === 'leaderboard' && (
-                <div className="space-y-4">
-                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div className="px-5 pt-5 pb-4 border-b border-slate-100 flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2.5">
-                        <Trophy className="text-amber-500" size={16} />
-                        <h2 className="text-sm font-black text-slate-900">Live Leaderboard</h2>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {lastRefresh && (
-                          <p className="text-[9px] text-slate-400 hidden sm:block">
-                            Updated {lastRefresh.toLocaleTimeString()}
-                          </p>
-                        )}
-                        <button
-                          onClick={() => fetchLeaderboard(lbRound)}
-                          disabled={lbLoading}
-                          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all"
-                        >
-                          <RefreshCw size={12} className={lbLoading ? 'animate-spin' : ''} />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Round tabs */}
-                    <div className="flex border-b border-slate-100">
-                      {[1, 2, 3].map(r => (
-                        <button
-                          key={r}
-                          onClick={() => setLbRound(r)}
-                          className={`flex-1 py-2.5 text-[11px] font-bold transition-all ${lbRound === r
-                            ? 'text-[#E83C00] border-b-2 border-[#E83C00]'
-                            : 'text-slate-400 hover:text-slate-600'
-                            }`}
-                        >
-                          {r === 3 ? 'Finals' : `Round ${r}`}
-                        </button>
-                      ))}
-                    </div>
-
-                    {lbLoading && leaderboard.length === 0 ? (
-                      <div className="py-12 flex items-center justify-center gap-2 text-slate-400">
-                        <RefreshCw size={14} className="animate-spin" />
-                        <span className="text-xs font-medium">Loading…</span>
-                      </div>
-                    ) : leaderboard.length === 0 ? (
-                      <div className="py-12 text-center">
-                        <Medal size={36} className="mx-auto text-slate-200 mb-2" />
-                        <p className="text-xs text-slate-400 font-medium">No scores yet for this round</p>
-                      </div>
-                    ) : (
-                      <>
-                        {/* Podium top-3 */}
-                        {leaderboard.slice(0, 3).length === 3 && (
-                          <div className="px-5 py-5 grid grid-cols-3 gap-3 border-b border-slate-100">
-                            {[leaderboard[1], leaderboard[0], leaderboard[2]].map((entry, i) => {
-                              const pos = i === 0 ? 2 : i === 1 ? 1 : 3
-                              const heights = ['h-20', 'h-28', 'h-16']
-                              const colors = ['bg-slate-100 text-slate-600', 'bg-amber-50 text-amber-600 border border-amber-200', 'bg-orange-50 text-orange-600']
-                              const medals = ['🥈', '🥇', '🥉']
-                              return (
-                                <div key={entry.teamId} className={`flex flex-col items-center gap-1 ${i === 1 ? 'order-2' : i === 0 ? 'order-1' : 'order-3'}`}>
-                                  <span className="text-lg">{medals[i]}</span>
-                                  <div className={`w-full ${heights[i]} rounded-xl ${colors[i]} flex flex-col items-center justify-end pb-2`}>
-                                    <p className="text-xs font-black leading-tight text-center px-1">{entry.teamName.split(' ').slice(0, 2).join(' ')}</p>
-                                    <p className="text-[10px] font-bold opacity-70">{entry.overallScore.toFixed(2)}</p>
-                                  </div>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        )}
-
-                        {/* Full table */}
-                        <div className="divide-y divide-slate-50">
-                          {leaderboard.map(entry => {
-                            const isMyTeam = entry.teamId === data?.id
-                            return (
-                              <div
-                                key={entry.teamId}
-                                className={`flex items-center gap-3 px-5 py-3 transition-colors ${isMyTeam ? 'bg-[#E83C00]/5' : 'hover:bg-slate-50'}`}
-                              >
-                                <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${entry.rank === 1 ? 'bg-amber-100 text-amber-700' :
-                                  entry.rank === 2 ? 'bg-slate-100 text-slate-600' :
-                                    entry.rank === 3 ? 'bg-orange-100 text-orange-700' :
-                                      'bg-slate-50 text-slate-400'
-                                  }`}>
-                                  {entry.rank}
-                                </span>
-                                <div className="flex-1 min-w-0">
-                                  <p className={`text-xs font-bold truncate ${isMyTeam ? 'text-[#E83C00]' : 'text-slate-800'}`}>
-                                    {entry.teamName} {isMyTeam && <span className="text-[9px] opacity-60">(You)</span>}
-                                  </p>
-                                  <p className="text-[10px] text-slate-400 truncate">{entry.track} · {entry.judgeCount} judge{entry.judgeCount !== 1 ? 's' : ''}</p>
-                                </div>
-                                <p className="text-sm font-black text-slate-800 shrink-0">{entry.overallScore.toFixed(2)}</p>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
               )}
 
             </motion.div>
