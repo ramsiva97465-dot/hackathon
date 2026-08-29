@@ -197,7 +197,9 @@ export function LeaderboardPage() {
   const [clock, setClock] = useState(new Date())
   const [activeRound, setActiveRound] = useState<number>(1)
   const [manualOverride, setManualOverride] = useState(false)
-  const [tvMode, setTvMode] = useState(false)
+  const [tvMode, setTvMode] = useState(() => {
+    return localStorage.getItem('snapserve_tv_mode') === 'true'
+  })
 
   // ── Grand Reveal State ─────────────────────────────────────────────────────
   // revealedStep goes from 0 up to 20.
@@ -219,6 +221,14 @@ export function LeaderboardPage() {
     }
   })
 
+  // Listen for broadcasted TV Mode toggles from admin panel
+  useWebSocket<{ tvMode: boolean }>('leaderboard:tv_mode', (data) => {
+    if (typeof data?.tvMode === 'boolean') {
+      setTvMode(data.tvMode)
+      localStorage.setItem('snapserve_tv_mode', data.tvMode ? 'true' : 'false')
+    }
+  })
+
   const fetchLiveLeaderboard = async () => {
     try {
       const res = await api.leaderboard.get({ round: activeRound })
@@ -230,22 +240,42 @@ export function LeaderboardPage() {
     }
   }
 
+  const fetchTvModeState = async () => {
+    try {
+      const res = await api.leaderboard.getTvMode()
+      if (typeof res.data?.tvMode === 'boolean') {
+        setTvMode(res.data.tvMode)
+        localStorage.setItem('snapserve_tv_mode', res.data.tvMode ? 'true' : 'false')
+      }
+    } catch (err) {
+      // Ignore
+    }
+  }
+
   useEffect(() => { emit('leaderboard:subscribe') }, [emit])
 
   useEffect(() => {
     fetchLiveLeaderboard()
-    const pollTimer = setInterval(fetchLiveLeaderboard, 3000)
+    fetchTvModeState()
+    const pollTimer = setInterval(() => {
+      fetchLiveLeaderboard()
+      fetchTvModeState()
+    }, 4000)
 
     const handleUpdateEvent = () => {
       fetchLiveLeaderboard()
+      const stored = localStorage.getItem('snapserve_tv_mode') === 'true'
+      setTvMode(stored)
     }
 
     window.addEventListener('leaderboard_updated', handleUpdateEvent)
+    window.addEventListener('tv_mode_toggled', handleUpdateEvent)
     window.addEventListener('storage', handleUpdateEvent)
 
     return () => {
       clearInterval(pollTimer)
       window.removeEventListener('leaderboard_updated', handleUpdateEvent)
+      window.removeEventListener('tv_mode_toggled', handleUpdateEvent)
       window.removeEventListener('storage', handleUpdateEvent)
     }
   }, [activeRound])
@@ -422,19 +452,12 @@ export function LeaderboardPage() {
             <span>{isRevealing ? 'Exit Grand Reveal' : '🎭 Top 20 Grand Reveal (20 ➔ 1)'}</span>
           </button>
 
-          {!isRevealing && (
-            <button 
-              onClick={() => setTvMode(!tvMode)}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-bold transition-all shadow-sm cursor-pointer ${
-                tvMode 
-                  ? 'bg-emerald-100 border-emerald-300 text-emerald-700' 
-                  : 'bg-white/50 border-black/10 text-slate-600 hover:bg-white'
-              }`}
-              title="Toggle TV Auto-Scroll Mode"
-            >
-              <Monitor size={14} />
-              <span className="hidden sm:inline">{tvMode ? 'TV Mode On' : 'TV Mode'}</span>
-            </button>
+          {/* Active TV Mode Indicator (Controlled by Admin Panel) */}
+          {!isRevealing && tvMode && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 shadow-sm animate-pulse">
+              <Monitor size={13} className="text-emerald-600" />
+              <span className="text-[10px] font-black uppercase tracking-wider hidden sm:inline">TV Auto-Scroll</span>
+            </div>
           )}
 
           <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-orange-500/30 bg-orange-500/10">

@@ -12,6 +12,10 @@ class AdminScoreDto {
   score: number | null
 }
 
+class TvModeDto {
+  enabled: boolean
+}
+
 @Controller('leaderboard')
 export class LeaderboardController {
   constructor(
@@ -28,6 +32,18 @@ export class LeaderboardController {
       hackathonId,
       round: round ? Number(round) : undefined
     })
+  }
+
+  @Get('tv-mode')
+  getTvMode() {
+    return { tvMode: this.gateway.getTvMode() }
+  }
+
+  @Post('tv-mode')
+  async setTvMode(@Body() dto: TvModeDto) {
+    const isEnabled = Boolean(dto.enabled)
+    await this.gateway.broadcastTvMode(isEnabled)
+    return { success: true, tvMode: isEnabled }
   }
 
   @Post('admin-score')

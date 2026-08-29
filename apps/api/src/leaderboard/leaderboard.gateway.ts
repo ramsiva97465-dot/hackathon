@@ -19,6 +19,8 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
   @WebSocketServer()
   server: Server
 
+  private isTvMode = false
+
   constructor(private readonly leaderboardService: LeaderboardService) {}
 
   handleConnection(client: Socket) {
@@ -34,6 +36,11 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
   async handleSubscribe(client: Socket) {
     const leaderboard = await this.leaderboardService.getLeaderboard()
     client.emit('leaderboard:update', leaderboard)
+    client.emit('leaderboard:tv_mode', { tvMode: this.isTvMode })
+  }
+
+  getTvMode(): boolean {
+    return this.isTvMode
   }
 
   // Called by ScoresService after score submission
@@ -45,6 +52,18 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
       console.log('[WS] Leaderboard broadcast sent')
     } catch (err) {
       console.error('[WS] Leaderboard broadcast failed:', err)
+    }
+  }
+
+  // Called when Admin toggles TV Mode ON/OFF
+  async broadcastTvMode(enabled: boolean) {
+    this.isTvMode = enabled
+    try {
+      if (!this.server) return
+      this.server.to('leaderboard').emit('leaderboard:tv_mode', { tvMode: enabled })
+      console.log('[WS] TV Mode broadcast sent:', enabled)
+    } catch (err) {
+      console.error('[WS] TV Mode broadcast failed:', err)
     }
   }
 

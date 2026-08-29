@@ -1,16 +1,18 @@
-import { ReactNode, useEffect } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Users, FileText, Award, Mail, Trophy,
   Settings, ScrollText, Mic, ChevronLeft, ChevronRight,
-  Bell, LogOut, Gavel, Zap, Radio, QrCode
+  Bell, LogOut, Gavel, Zap, Radio, QrCode, Monitor
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/store/app.store'
 import { useAuthStore } from '@/store/auth.store'
 import { signOut } from '@/lib/auth-client'
 import { Avatar } from '@/components/ui/Avatar'
+import { api } from '@/lib/api'
+import { toast } from 'sonner'
 
 interface SidebarRoute {
   href: string
@@ -45,6 +47,36 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const { user, logout } = useAuthStore()
   const location = useLocation()
   const routes = role === 'admin' ? adminRoutes : judgeRoutes
+
+  const [tvMode, setTvMode] = useState(() => {
+    return localStorage.getItem('snapserve_tv_mode') === 'true'
+  })
+
+  useEffect(() => {
+    if (role === 'admin') {
+      api.leaderboard.getTvMode()
+        .then(res => {
+          if (typeof res.data?.tvMode === 'boolean') {
+            setTvMode(res.data.tvMode)
+            localStorage.setItem('snapserve_tv_mode', res.data.tvMode ? 'true' : 'false')
+          }
+        })
+        .catch(() => {})
+    }
+  }, [role])
+
+  const handleToggleTvMode = async () => {
+    const nextVal = !tvMode
+    setTvMode(nextVal)
+    localStorage.setItem('snapserve_tv_mode', nextVal ? 'true' : 'false')
+    window.dispatchEvent(new Event('tv_mode_toggled'))
+    try {
+      await api.leaderboard.setTvMode(nextVal)
+      toast.success(nextVal ? '📺 TV Mode ENABLED for Leaderboard!' : '📺 TV Mode DISABLED for Leaderboard!')
+    } catch (err) {
+      toast.success(nextVal ? '📺 TV Mode ENABLED locally!' : '📺 TV Mode DISABLED locally!')
+    }
+  }
 
   const handleSignOut = async () => {
     logout() // clear local store
@@ -167,15 +199,30 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
             </span>
           </div>
           <div className="flex items-center gap-3">
+            {role === 'admin' && (
+              <button
+                onClick={handleToggleTvMode}
+                className={cn(
+                  "flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border shadow-md cursor-pointer select-none",
+                  tvMode
+                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-emerald-950/40 ring-1 ring-emerald-500/30"
+                    : "bg-white/5 text-slate-300 border-white/10 hover:bg-white/10 hover:text-white"
+                )}
+                title={tvMode ? "TV Mode is ACTIVE on Leaderboard (Auto-Scroll)" : "Turn ON TV Mode on Leaderboard"}
+              >
+                <Monitor size={14} className={tvMode ? "text-emerald-400 animate-pulse" : "text-slate-400"} />
+                <span>{tvMode ? "TV Mode: ON" : "TV Mode: OFF"}</span>
+              </button>
+            )}
             <Link to="/" className="text-xs text-slate-300 hover:text-white font-semibold transition-colors px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
               View Website
             </Link>
-            <button className="p-2 rounded-xl text-slate-400 hover:text-white bg-white/5 border border-white/10 transition-all">
+            <button className="p-2 rounded-xl text-slate-400 hover:text-white bg-white/5 border border-white/10 transition-all cursor-pointer">
               <Bell size={16} />
             </button>
             <button
               onClick={handleSignOut}
-              className="p-2 rounded-xl text-[#E83C00] hover:bg-[#E83C00]/10 border border-[#E83C00]/20 transition-all"
+              className="p-2 rounded-xl text-[#E83C00] hover:bg-[#E83C00]/10 border border-[#E83C00]/20 transition-all cursor-pointer"
             >
               <LogOut size={16} />
             </button>

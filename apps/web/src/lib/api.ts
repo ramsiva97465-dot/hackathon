@@ -114,6 +114,9 @@ export const api = {
       apiClient.get('/leaderboard', { params }),
     adminScore: (teamId: string, score: number | null) =>
       apiClient.post('/leaderboard/admin-score', { teamId, score }),
+    getTvMode: () => apiClient.get('/leaderboard/tv-mode'),
+    setTvMode: (enabled: boolean) =>
+      apiClient.post('/leaderboard/tv-mode', { enabled }),
   },
 
   // Emails
