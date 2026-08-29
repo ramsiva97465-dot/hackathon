@@ -83,74 +83,73 @@ function Delta({ curr, prev }: { curr: number; prev?: number }) {
   )
 }
 
-// ── Round 1 Row ───────────────────────────────────────────────────────────────
-function Round1Row({ entry, isAdvancing }: { entry: LeaderboardEntry; isAdvancing: boolean }) {
+// ── Round 1 Row (Scores Hidden, Live Evaluation 0/1 -> 1/1) ───────────────────
+function Round1Row({ entry, index }: { entry: LeaderboardEntry; index: number }) {
   const track = getTrackConfig(entry.track)
+  const isJudged = entry.judgeCount > 0
+
   return (
     <motion.div
       key={entry.teamId}
       layout
       layoutId={entry.teamId}
-      className={`grid grid-cols-[56px_1fr_160px_90px_100px_60px] px-6 py-3.5 items-center border-b transition-colors ${
-        isAdvancing
+      className={`grid grid-cols-[56px_1fr_170px_110px_110px] px-6 py-3.5 items-center border-b transition-colors ${
+        isJudged
           ? 'bg-[#F4ECE1] hover:bg-white/60 border-black/5'
           : 'bg-[#EBE3D5]/50 hover:bg-[#EBE3D5] border-black/[0.04]'
       }`}
     >
-      {/* Rank */}
+      {/* S.No / ID */}
       <div className="flex items-center justify-center">
-        {isAdvancing ? (
-          <span className="text-lg font-black text-[#1A1A1A]">{entry.rank}</span>
-        ) : (
-          <span className="text-base font-bold text-slate-400">{entry.rank}</span>
-        )}
+        <span className="text-sm font-bold text-slate-400">#{index + 1}</span>
       </div>
 
       {/* Team */}
       <div className="flex items-center gap-3 min-w-0">
-        <Avatar name={entry.teamName} size="sm" className={`shrink-0 ring-2 ${isAdvancing ? 'ring-white shadow-sm' : 'ring-white/50'}`} />
+        <Avatar name={entry.teamName} size="sm" className={`shrink-0 ring-2 ${isJudged ? 'ring-white shadow-sm' : 'ring-white/50'}`} />
         <div className="min-w-0">
-          <div className={`font-bold truncate ${isAdvancing ? 'text-slate-900 text-sm' : 'text-slate-500 text-sm'}`}>
+          <div className="font-bold truncate text-slate-900 text-sm">
             {entry.teamName}
           </div>
           <div className="text-xs text-slate-400 truncate">{entry.college}</div>
         </div>
-        {isAdvancing && entry.rank <= ROUND2_CUTOFF && (
-          <span className="shrink-0 text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200 uppercase tracking-wide hidden sm:inline">
-            Top {ROUND2_CUTOFF}
-          </span>
-        )}
       </div>
 
       {/* Track */}
       <div>
         <span
-          className={`inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-bold border ${isAdvancing ? 'bg-white shadow-sm' : 'bg-transparent'}`}
+          className="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold border bg-white shadow-sm"
           style={{ color: track.color, borderColor: `${track.color}30` }}
         >
           {track.label}
         </span>
       </div>
 
-      {/* Judges */}
-      <div className={`text-center font-mono text-xs font-semibold ${isAdvancing ? 'text-slate-600' : 'text-slate-400'}`}>
-        {entry.judgeCount > 0 ? '1/1' : '0/1'}
+      {/* Judges Status (0/1 -> 1/1) */}
+      <div className="flex justify-center">
+        {isJudged ? (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm font-mono">
+            <CheckCircle2 size={12} className="text-emerald-600" />
+            1 / 1
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-200/80 text-slate-500 border border-slate-300 font-mono">
+            0 / 1
+          </span>
+        )}
       </div>
 
-      {/* Score */}
-      <motion.div
-        key={entry.totalScore}
-        initial={{ scale: 1.2 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 0.3 }}
-        className={`text-right font-black ${isAdvancing ? 'text-xl text-[#1A1A1A]' : 'text-base text-slate-400'}`}
-      >
-        {entry.totalScore > 0 ? entry.totalScore.toFixed(1) : '0.0'}
-      </motion.div>
-
-      {/* Delta */}
-      <div className="flex justify-end">
-        <Delta curr={entry.rank} prev={entry.previousRank} />
+      {/* Status (Score is hidden during Round 1) */}
+      <div className="text-right">
+        {isJudged ? (
+          <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-emerald-700 uppercase tracking-wider">
+            Evaluated
+          </span>
+        ) : (
+          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+            In Progress
+          </span>
+        )}
       </div>
     </motion.div>
   )
@@ -762,67 +761,42 @@ export function LeaderboardPage() {
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/5 text-slate-700 mb-4 shadow-xl shadow-black/5">
                 <Trophy size={14} className="text-amber-500" />
                 <span className="text-xs font-bold uppercase tracking-widest">
-                  {activeRound === 3 ? 'Stage 3: Winners Podium' : activeRound === 2 ? 'Stage 2: Top 20 Shortlist' : 'Stage 1: All Teams'}
+                  {activeRound === 3 ? 'Stage 3: Winners Podium' : activeRound === 2 ? 'Stage 2: Top 20 Shortlist' : 'Stage 1: Live Judging'}
                 </span>
               </div>
               <h2 className="text-[#E83C00] font-bold tracking-[0.2em] uppercase text-sm mb-2">
                 AI குரல் · VOICE FOR TAMIL NADU · 2026
               </h2>
-              <h1 className="text-6xl font-black text-[#1A1A1A] tracking-tighter" style={{ textShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
-                {activeRound === 3 ? 'Final Winners' : activeRound === 2 ? 'Round 2 · Top 20' : 'Live Scoreboard'}
+              <h1 className="text-5xl sm:text-6xl font-black text-[#1A1A1A] tracking-tighter" style={{ textShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
+                {activeRound === 3 ? 'Final Winners' : activeRound === 2 ? 'Round 2 · Top 20' : 'Live Evaluation Status'}
               </h1>
               <p className="text-slate-500 mt-2 text-sm font-medium">
                 {activeRound === 3
                   ? `${filtered.length} finalists`
                   : activeRound === 2
                   ? `${filtered.length} teams competing · judges scoring live`
-                  : `${filtered.length} teams · top ${ROUND2_CUTOFF} advance to Round 2`}
+                  : `${filtered.length} teams · tracking live evaluation completion`}
               </p>
             </motion.div>
           </AnimatePresence>
 
-          {/* ROUND 1 VIEW — All teams, top 20 highlighted */}
+          {/* ROUND 1 VIEW — Live Judging Status (Scores Hidden, 0/1 -> 1/1) */}
           {activeRound === 1 && (
             <div className="w-full rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5">
               {/* Table header */}
-              <div className="grid grid-cols-[56px_1fr_160px_90px_100px_60px] px-6 py-4 bg-[#1A1A1A] text-[10px] font-bold text-white/60 uppercase tracking-widest">
-                <div className="text-center">Rank</div>
+              <div className="grid grid-cols-[56px_1fr_170px_110px_110px] px-6 py-4 bg-[#1A1A1A] text-[10px] font-bold text-white/60 uppercase tracking-widest">
+                <div className="text-center">#</div>
                 <div>Team</div>
                 <div>Track</div>
-                <div className="text-center">Judges</div>
-                <div className="text-right">Score</div>
-                <div className="text-right">Δ</div>
+                <div className="text-center">Evaluation</div>
+                <div className="text-right">Status</div>
               </div>
 
-              {/* Advancing zone (Top 20) */}
+              {/* All teams listed with live 0/1 -> 1/1 evaluation status */}
               <div className="flex flex-col">
                 <AnimatePresence>
-                  {advancing.map((entry) => (
-                    <Round1Row key={entry.teamId} entry={entry} isAdvancing={true} />
-                  ))}
-                </AnimatePresence>
-              </div>
-
-              {/* ── Cutoff Divider ── */}
-              {notAdvancing.length > 0 && (
-                <div className="flex items-center gap-3 px-6 py-3 bg-slate-100 border-y border-dashed border-slate-300">
-                  <div className="flex-1 h-px bg-slate-300" />
-                  <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm">
-                    <ChevronRight size={12} className="text-slate-400" />
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                      Round 2 Cutoff — Top {ROUND2_CUTOFF} advance
-                    </span>
-                    <ChevronRight size={12} className="text-slate-400" />
-                  </div>
-                  <div className="flex-1 h-px bg-slate-300" />
-                </div>
-              )}
-
-              {/* Teams below cutoff */}
-              <div className="flex flex-col">
-                <AnimatePresence>
-                  {notAdvancing.map((entry) => (
-                    <Round1Row key={entry.teamId} entry={entry} isAdvancing={false} />
+                  {filtered.map((entry, idx) => (
+                    <Round1Row key={entry.teamId} entry={entry} index={idx} />
                   ))}
                 </AnimatePresence>
               </div>
