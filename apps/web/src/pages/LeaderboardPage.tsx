@@ -433,31 +433,47 @@ export function LeaderboardPage() {
   ]
 
   return (
-    <div className="min-h-screen flex flex-col relative" style={{
-      backgroundColor: isRevealing ? '#0A0A0A' : '#EBE3D5',
+    <div className="min-h-screen flex flex-col relative overflow-x-hidden" style={{
+      backgroundColor: isRevealing ? '#05060A' : '#EBE3D5',
       backgroundImage: isRevealing 
-        ? 'radial-gradient(#1f2937 1px, transparent 1px), radial-gradient(circle at 50% 10%, rgba(232,60,0,0.15), transparent 45%)'
+        ? 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(232,60,0,0.22), transparent 70%), radial-gradient(circle at 15% 40%, rgba(99,102,241,0.12), transparent 40%), radial-gradient(circle at 85% 50%, rgba(16,185,129,0.12), transparent 40%), radial-gradient(#1e293b 1px, transparent 1px)'
         : 'radial-gradient(#d4caba 1px, transparent 1px)',
-      backgroundSize: isRevealing ? '32px 32px, 100% 100%' : '32px 32px',
+      backgroundSize: isRevealing ? '100% 100%, 100% 100%, 100% 100%, 32px 32px' : '32px 32px',
       fontFamily: "'Space Grotesk', 'Inter', system-ui, sans-serif",
       color: isRevealing ? '#FFFFFF' : '#1A1A1A',
       transition: 'background-color 0.5s ease'
     }}>
 
+      {/* ── Cinematic Stage Lighting & Ambient Particles (Grand Reveal Mode) ── */}
+      {isRevealing && (
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+          {/* Top Golden Stage Spotlight Cone */}
+          <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[850px] h-[550px] bg-gradient-to-b from-amber-500/20 via-[#E83C00]/15 to-transparent blur-[110px] rounded-full" />
+          
+          {/* Ambient Corner Stage Lights */}
+          <div className="absolute top-1/4 -left-48 w-[500px] h-[500px] bg-indigo-600/15 blur-[130px] rounded-full animate-pulse" style={{ animationDuration: '6s' }} />
+          <div className="absolute top-1/3 -right-48 w-[500px] h-[500px] bg-emerald-500/15 blur-[130px] rounded-full animate-pulse" style={{ animationDuration: '7s' }} />
+          <div className="absolute -bottom-32 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-amber-500/10 blur-[120px] rounded-full" />
+
+          {/* Perspective Cyber Stage Grid */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_20%,#000_60%,transparent_100%)] opacity-70" />
+        </div>
+      )}
+
       {/* ── Top Bar ── */}
       <div className={`relative z-20 flex items-center justify-between px-6 sm:px-10 py-4 border-b backdrop-blur-md sticky top-0 transition-colors ${
         isRevealing 
-          ? 'bg-[#0A0A0A]/90 border-white/10 text-white' 
+          ? 'bg-[#05060A]/85 border-amber-500/20 text-white shadow-xl shadow-black/50' 
           : 'bg-[#EBE3D5]/80 border-black/5 text-[#1A1A1A]'
       }`}>
         <div className="flex items-center gap-4 sm:gap-6">
           <div className="flex items-center gap-2">
-            <SnapServeMark className={`h-8 w-8 drop-shadow-sm ${isRevealing ? 'text-white' : 'text-[#1A1A1A]'}`} />
+            <SnapServeMark className={`h-8 w-8 drop-shadow-sm ${isRevealing ? 'text-amber-400' : 'text-[#1A1A1A]'}`} />
             <span className="font-bold text-lg tracking-tight">snapserve.ai</span>
           </div>
           <span className="opacity-20 text-2xl font-light">|</span>
           <div className="flex items-center gap-2">
-            <VobizMark className={`h-6 w-8 drop-shadow-sm ${isRevealing ? 'text-white' : 'text-[#1A1A1A]'}`} />
+            <VobizMark className={`h-6 w-8 drop-shadow-sm ${isRevealing ? 'text-amber-400' : 'text-[#1A1A1A]'}`} />
             <span className="font-bold text-lg tracking-tight">vobiz.ai</span>
           </div>
         </div>
@@ -487,7 +503,7 @@ export function LeaderboardPage() {
             <span className="text-[11px] font-extrabold text-orange-500 tracking-widest uppercase">Live</span>
           </div>
 
-          <span className={`font-mono text-base sm:text-lg font-bold tracking-wider ${isRevealing ? 'text-slate-300' : 'text-slate-600'}`}>
+          <span className={`font-mono text-base sm:text-lg font-bold tracking-wider ${isRevealing ? 'text-amber-200/90' : 'text-slate-600'}`}>
             {clock.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
           </span>
         </div>
@@ -505,28 +521,28 @@ export function LeaderboardPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-6"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 mb-3 shadow-lg shadow-amber-950/20">
-              <Sparkles size={14} className="text-amber-400 animate-spin" />
+            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 border border-amber-500/40 text-amber-300 mb-3 shadow-xl shadow-amber-950/40 backdrop-blur-xl">
+              <Sparkles size={15} className="text-amber-400 animate-spin" />
               <span className="text-xs font-black uppercase tracking-widest">
                 Round 2 Qualifiers · Live Stage Ceremony
               </span>
             </div>
-            <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight leading-tight">
+            <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight bg-gradient-to-r from-amber-100 via-amber-300 to-yellow-500 bg-clip-text text-transparent drop-shadow-md">
               Top 20 Grand Reveal
             </h1>
-            <p className="text-slate-400 text-sm sm:text-base font-medium mt-1">
-              Revealing the advancing finalists in countdown order: <span className="text-amber-400 font-bold">#20 ➔ #1</span>
+            <p className="text-slate-300 text-sm sm:text-base font-medium mt-1">
+              Revealing advancing finalists in live countdown order: <span className="text-amber-400 font-extrabold">#20 ➔ #1</span>
             </p>
           </motion.div>
 
           {/* Floating Stage Controls Bar */}
-          <div className="flex items-center justify-center gap-2 sm:gap-3 bg-[#141414]/90 border border-white/15 px-4 py-2.5 rounded-2xl shadow-2xl mb-8 flex-wrap backdrop-blur-xl">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 bg-[#0d1017]/90 border border-amber-500/20 px-5 py-2.5 rounded-2xl shadow-2xl mb-8 flex-wrap backdrop-blur-xl ring-1 ring-white/5">
             <button
               onClick={() => setIsPaused(!isPaused)}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 isPaused 
-                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white' 
-                  : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/50' 
+                  : 'bg-white/10 hover:bg-white/15 text-slate-200 border border-white/10'
               }`}
             >
               {isPaused ? <Play size={13} fill="currentColor" /> : <Pause size={13} fill="currentColor" />}
@@ -536,7 +552,7 @@ export function LeaderboardPage() {
             <button
               onClick={stepNextReveal}
               disabled={revealedStep >= 20 || revealedStep >= advancing.length}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 disabled:opacity-40 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/15 text-slate-200 border border-white/10 disabled:opacity-30 transition-all cursor-pointer"
             >
               <SkipForward size={13} />
               <span>Next Rank ({revealedStep < 20 ? `#${20 - revealedStep}` : 'Done'})</span>
@@ -544,7 +560,7 @@ export function LeaderboardPage() {
 
             <button
               onClick={() => setRevealedStep(20)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-all cursor-pointer shadow-md"
             >
               <Zap size={13} className="text-amber-400" />
               <span>Reveal All Now</span>
@@ -552,20 +568,20 @@ export function LeaderboardPage() {
 
             <button
               onClick={() => { setRevealedStep(0); setIsPaused(false) }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-all cursor-pointer"
             >
               <RotateCcw size={13} />
               <span>Replay</span>
             </button>
 
-            <div className="w-px h-5 bg-white/10 mx-1" />
+            <div className="w-px h-5 bg-white/15 mx-1" />
 
             <button
               onClick={() => setSoundEnabled(!soundEnabled)}
               className={`p-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 soundEnabled 
-                  ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' 
-                  : 'bg-slate-800 text-slate-400 border border-slate-700'
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm' 
+                  : 'bg-white/5 text-slate-400 border border-white/10'
               }`}
               title={soundEnabled ? 'Fanfare Audio Enabled' : 'Audio Muted'}
             >
@@ -582,20 +598,20 @@ export function LeaderboardPage() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="bg-gradient-to-br from-[#1c140e] via-[#120f0c] to-[#0A0A0A] border-2 border-amber-500/30 p-8 sm:p-10 rounded-[2.5rem] shadow-2xl text-center relative overflow-hidden"
+                  className="bg-gradient-to-br from-[#1c140e] via-[#10121a] to-[#06070B] border-2 border-amber-500/40 p-8 sm:p-10 rounded-[2.5rem] shadow-2xl shadow-amber-950/30 text-center relative overflow-hidden backdrop-blur-2xl"
                 >
-                  <div className="w-20 h-20 rounded-3xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto mb-4 text-amber-400">
+                  <div className="w-20 h-20 rounded-3xl bg-amber-500/15 border border-amber-500/40 flex items-center justify-center mx-auto mb-4 text-amber-400 shadow-xl shadow-amber-950/50">
                     <Trophy size={38} />
                   </div>
                   <h3 className="text-2xl sm:text-3xl font-black text-white mb-2">
                     Round 1 Graded & Verified!
                   </h3>
-                  <p className="text-slate-400 max-w-lg mx-auto text-sm sm:text-base mb-6">
+                  <p className="text-slate-300 max-w-lg mx-auto text-sm sm:text-base mb-6">
                     The ceremony will announce all 20 qualifying teams one by one, counting down from Rank #20 down to the #1 Leader!
                   </p>
                   <button
                     onClick={stepNextReveal}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-2xl font-black text-sm shadow-xl shadow-orange-950/40 cursor-pointer"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-2xl font-black text-sm shadow-xl shadow-orange-950/60 cursor-pointer transition-all hover:scale-105"
                   >
                     <Play size={15} fill="white" />
                     Start Announcement (#20)
@@ -608,34 +624,39 @@ export function LeaderboardPage() {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 1.05, y: -20 }}
                   transition={{ type: 'spring', bounce: 0.35, duration: 0.65 }}
-                  className="relative p-7 sm:p-10 rounded-[2.5rem] overflow-hidden shadow-2xl text-center border-2"
+                  className="relative p-7 sm:p-10 rounded-[2.5rem] overflow-hidden shadow-2xl text-center border-2 backdrop-blur-2xl"
                   style={{
                     background: currentSpotlightRank === 1 
-                      ? 'linear-gradient(135deg, #2d1c08 0%, #151109 50%, #0A0A0A 100%)'
+                      ? 'linear-gradient(135deg, rgba(45,28,8,0.95) 0%, rgba(21,17,9,0.95) 50%, rgba(6,7,11,0.98) 100%)'
                       : currentSpotlightRank === 2
-                      ? 'linear-gradient(135deg, #1b2028 0%, #101318 50%, #0A0A0A 100%)'
+                      ? 'linear-gradient(135deg, rgba(27,32,40,0.95) 0%, rgba(16,19,24,0.95) 50%, rgba(6,7,11,0.98) 100%)'
                       : currentSpotlightRank === 3
-                      ? 'linear-gradient(135deg, #2a1608 0%, #16100c 50%, #0A0A0A 100%)'
-                      : 'linear-gradient(135deg, #0e2017 0%, #091510 50%, #0A0A0A 100%)',
+                      ? 'linear-gradient(135deg, rgba(42,22,8,0.95) 0%, rgba(22,16,12,0.95) 50%, rgba(6,7,11,0.98) 100%)'
+                      : 'linear-gradient(135deg, rgba(14,32,23,0.95) 0%, rgba(9,21,16,0.95) 50%, rgba(6,7,11,0.98) 100%)',
                     borderColor: currentSpotlightRank === 1
                       ? '#F59E0B'
                       : currentSpotlightRank === 2
                       ? '#94A3B8'
                       : currentSpotlightRank === 3
                       ? '#CD7F32'
-                      : '#10B981'
+                      : '#10B981',
+                    boxShadow: currentSpotlightRank === 1
+                      ? '0 0 50px rgba(245, 158, 11, 0.35)'
+                      : currentSpotlightRank <= 3
+                      ? '0 0 40px rgba(148, 163, 184, 0.25)'
+                      : '0 0 35px rgba(16, 185, 129, 0.25)'
                   }}
                 >
                   {/* Subtle Background Particle Glow */}
                   <div 
-                    className="absolute -top-16 left-1/2 -translate-x-1/2 w-64 h-64 rounded-full blur-3xl opacity-30 pointer-events-none"
+                    className="absolute -top-16 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full blur-3xl opacity-40 pointer-events-none"
                     style={{
                       backgroundColor: currentSpotlightRank === 1 ? '#F59E0B' : '#10B981'
                     }}
                   />
 
                   {/* Announcement Tag */}
-                  <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-4 shadow-md"
+                  <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-4 shadow-lg"
                     style={{
                       backgroundColor: currentSpotlightRank === 1 ? '#F59E0B' : '#10B981',
                       color: currentSpotlightRank === 1 ? '#000000' : '#FFFFFF'
@@ -645,7 +666,7 @@ export function LeaderboardPage() {
                   </div>
 
                   {/* Giant Rank */}
-                  <div className="text-6xl sm:text-7xl font-black mb-3 tracking-tighter"
+                  <div className="text-6xl sm:text-7xl font-black mb-3 tracking-tighter drop-shadow-lg"
                     style={{
                       color: currentSpotlightRank === 1 ? '#F59E0B' : currentSpotlightRank === 2 ? '#E2E8F0' : currentSpotlightRank === 3 ? '#FDBA74' : '#34D399'
                     }}>
@@ -653,23 +674,23 @@ export function LeaderboardPage() {
                   </div>
 
                   {/* Team Name */}
-                  <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight mb-2 truncate px-4">
+                  <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight mb-2 truncate px-4 drop-shadow-md">
                     {currentSpotlightTeam.teamName}
                   </h2>
 
                   {/* College & Track */}
                   <div className="flex items-center justify-center gap-2.5 flex-wrap text-slate-300 text-sm sm:text-base font-medium mb-6">
                     <span>{currentSpotlightTeam.college || 'Tamil Nadu'}</span>
-                    <span className="text-slate-600">•</span>
-                    <span className="px-2.5 py-0.5 rounded-lg bg-white/10 text-white text-xs font-bold border border-white/10">
+                    <span className="text-slate-500">•</span>
+                    <span className="px-3 py-1 rounded-lg bg-white/10 text-white text-xs font-bold border border-white/15 backdrop-blur-md">
                       {getTrackConfig(currentSpotlightTeam.track).label}
                     </span>
                   </div>
 
                   {/* Round 1 Score */}
-                  <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-2xl bg-black/50 border border-white/10">
+                  <div className="inline-flex items-center gap-3 px-7 py-3 rounded-2xl bg-black/60 border border-white/15 shadow-inner backdrop-blur-md">
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Round 1 Score</span>
-                    <span className="text-2xl sm:text-3xl font-black text-white font-mono">
+                    <span className="text-2xl sm:text-3xl font-black text-amber-300 font-mono drop-shadow">
                       {currentSpotlightTeam.totalScore.toFixed(1)}
                     </span>
                   </div>
@@ -677,7 +698,7 @@ export function LeaderboardPage() {
                   {/* Progress Indicator */}
                   <div className="mt-7 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400 font-semibold px-2">
                     <span>Progress: {revealedStep} of 20 revealed</span>
-                    <span className="text-amber-400">
+                    <span className="text-amber-400 font-bold">
                       {revealedStep === 20 ? '🎉 All Finalists Revealed!' : `Next: Rank #${currentSpotlightRank - 1}`}
                     </span>
                   </div>
@@ -689,13 +710,13 @@ export function LeaderboardPage() {
           {/* ══════════════════════════════════════════════════════════════════ */}
           {/* TOP 20 QUALIFIER BOARD (Rank 1 to 20 Grid)                         */}
           {/* ══════════════════════════════════════════════════════════════════ */}
-          <div className="w-full bg-[#111111] border border-white/10 rounded-[2rem] p-5 sm:p-7 shadow-2xl overflow-hidden">
+          <div className="w-full bg-[#0d1017]/85 border border-white/10 rounded-[2.5rem] p-5 sm:p-7 shadow-2xl overflow-hidden backdrop-blur-xl ring-1 ring-white/5">
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
               <div className="flex items-center gap-2.5">
                 <Trophy size={18} className="text-amber-400" />
                 <h3 className="text-lg font-black text-white">Round 2 Qualifiers Roster</h3>
               </div>
-              <span className="text-xs font-bold text-slate-400">
+              <span className="text-xs font-bold text-amber-300 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30">
                 {revealedStep} / {Math.min(20, advancing.length)} Unlocked
               </span>
             </div>
@@ -715,10 +736,10 @@ export function LeaderboardPage() {
                     animate={{ opacity: 1 }}
                     className={`flex items-center justify-between p-3.5 rounded-2xl transition-all border ${
                       isSpotlight
-                        ? 'bg-amber-500/20 border-amber-500 ring-2 ring-amber-500/50 shadow-xl shadow-amber-950/40'
+                        ? 'bg-amber-500/25 border-amber-400 ring-2 ring-amber-400/60 shadow-xl shadow-amber-950/60 scale-[1.02]'
                         : isRevealed
-                        ? 'bg-[#181818] border-white/10 hover:border-white/20'
-                        : 'bg-[#0e0e0e] border-white/5 opacity-40'
+                        ? 'bg-[#131722]/80 border-white/10 hover:border-white/20'
+                        : 'bg-[#090b10]/60 border-white/5 opacity-40'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -756,7 +777,7 @@ export function LeaderboardPage() {
                     {/* Right side info */}
                     {isRevealed && team ? (
                       <div className="text-right shrink-0 pl-2">
-                        <span className="text-sm font-black text-white font-mono">{team.totalScore.toFixed(1)}</span>
+                        <span className="text-sm font-black text-amber-300 font-mono">{team.totalScore.toFixed(1)}</span>
                         <span className="block text-[9px] font-bold uppercase text-emerald-400">Qualified</span>
                       </div>
                     ) : (
