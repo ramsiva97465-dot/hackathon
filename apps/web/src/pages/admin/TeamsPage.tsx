@@ -212,6 +212,65 @@ export function TeamsPage() {
   const [parseErrors, setParseErrors] = useState<string[]>([])
   const [dragActive, setDragActive] = useState(false)
 
+  // Manual Entry Modal state
+  const [manualEntryOpen, setManualEntryOpen] = useState(false)
+  const [manualTeamName, setManualTeamName] = useState('')
+  const [manualTrack, setManualTrack] = useState('Voice AI')
+  const [manualTableNumber, setManualTableNumber] = useState('')
+  const [manualMembers, setManualMembers] = useState<{ name: string; email: string; phone: string; role: string }[]>([
+    { name: '', email: '', phone: '', role: 'Team Lead' }
+  ])
+  const [savingManual, setSavingManual] = useState(false)
+
+  const resetManualForm = () => {
+    setManualTeamName('')
+    setManualTrack('Voice AI')
+    setManualTableNumber('')
+    setManualMembers([{ name: '', email: '', phone: '', role: 'Team Lead' }])
+  }
+
+  const handleManualSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const validMembers = manualMembers.filter(m => m.name.trim() && m.email.trim())
+    if (validMembers.length === 0) {
+      toast.error('At least 1 member with Full Name and Email is required.')
+      return
+    }
+
+    // Auto-derive team name if left empty (e.g. for solo hackers)
+    const finalTeamName = manualTeamName.trim() || validMembers[0].name.trim()
+
+    try {
+      setSavingManual(true)
+      const payload = [{
+        name: finalTeamName,
+        track: manualTrack,
+        tableNumber: manualTableNumber.trim() || undefined,
+        members: validMembers.map((m, idx) => ({
+          name: m.name.trim(),
+          email: m.email.trim().toLowerCase(),
+          phone: m.phone ? formatPhoneNumber(m.phone) : undefined,
+          role: idx === 0 ? 'Team Lead' : (m.role || 'Member')
+        }))
+      }]
+
+      const res = await api.teams.import(payload)
+      if (res.data?.success) {
+        toast.success(`Team "${finalTeamName}" registered successfully with ${validMembers.length} member(s)!`)
+        await fetchTeams()
+        resetManualForm()
+        setManualEntryOpen(false)
+      } else {
+        toast.error(res.data?.error || 'Failed to add team.')
+      }
+    } catch (err: any) {
+      console.error(err)
+      toast.error(err.response?.data?.message || 'Failed to add team.')
+    } finally {
+      setSavingManual(false)
+    }
+  }
+
   const handleDownloadTemplate = () => {
     const csvContent = "Team Name,Track,Table Number,College,Name,Email,Phone,Role\n" +
       "EchoFlow AI,Voice AI,T-01,IIT Madras,Arjun Mehta,arjun@example.com,9876543210,Leader\n" +
@@ -636,8 +695,16 @@ export function TeamsPage() {
               </div>
 
               <button
+                onClick={() => setManualEntryOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-xl text-white transition-all bg-emerald-600 hover:bg-emerald-500 shadow-sm shadow-emerald-950/20 cursor-pointer"
+              >
+                <UserPlus size={14} />
+                + Manual Entry
+              </button>
+
+              <button
                 onClick={() => setCsvImportOpen(true)}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-xl text-white transition-all bg-[#E83C00] hover:bg-[#c93400] shadow-sm shadow-orange-950/10"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-xl text-white transition-all bg-[#E83C00] hover:bg-[#c93400] shadow-sm shadow-orange-950/10 cursor-pointer"
               >
                 <Upload size={14} />
                 Import CSV
@@ -1403,6 +1470,215 @@ export function TeamsPage() {
                   {importingCsv ? 'Importing...' : `Import ${parsedTeams.length} Teams`}
                 </button>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Manual Team Entry Modal ── */}
+      <AnimatePresence>
+        {manualEntryOpen && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: 'rgba(8,13,28,0.72)', backdropFilter: 'blur(6px)' }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.28 }}
+              className="bg-white rounded-2xl w-full max-w-xl overflow-hidden flex flex-col"
+              style={{ maxHeight: '90vh', border: '1px solid #E2E8F0', boxShadow: '0 24px 64px rgba(0,0,0,0.14)' }}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-emerald-50 border border-emerald-100">
+                    <UserPlus size={16} className="text-emerald-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm">Add Team / Participant Manually</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">Register a solo hacker or squad directly without CSV</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setManualEntryOpen(false); resetManualForm(); }}
+                  className="p-2 rounded-xl text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              {/* Form Body */}
+              <form onSubmit={handleManualSubmit} className="flex flex-col flex-1 overflow-hidden">
+                <div className="p-5 overflow-y-auto flex-1 space-y-4">
+                  {/* Team & Track Details */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                        Team Name <span className="text-slate-400 font-normal normal-case">(optional for solo)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={manualTeamName}
+                        onChange={e => setManualTeamName(e.target.value)}
+                        placeholder="e.g. ALPHA SQUAD or Leave empty"
+                        className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none text-slate-900 bg-slate-50/50"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                        Track
+                      </label>
+                      <select
+                        value={manualTrack}
+                        onChange={e => setManualTrack(e.target.value)}
+                        className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none text-slate-900 bg-slate-50/50"
+                      >
+                        <option value="Voice AI">Voice AI</option>
+                        <option value="Conversational AI">Conversational AI</option>
+                        <option value="Default">Default Track</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                      Table Number <span className="text-slate-400 font-normal normal-case">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={manualTableNumber}
+                      onChange={e => setManualTableNumber(e.target.value)}
+                      placeholder="e.g. T-14"
+                      className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none text-slate-900 bg-slate-50/50"
+                    />
+                  </div>
+
+                  {/* Members Section */}
+                  <div className="pt-3 border-t border-slate-100 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                          Members ({manualMembers.length}/4)
+                        </h4>
+                        <p className="text-[10px] text-slate-500">
+                          {manualMembers.length === 1 ? 'Solo participant' : `${manualMembers.length} members squad`}
+                        </p>
+                      </div>
+                      {manualMembers.length < 4 && (
+                        <button
+                          type="button"
+                          onClick={() => setManualMembers([...manualMembers, { name: '', email: '', phone: '', role: 'Member' }])}
+                          className="flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-[10.5px] font-bold rounded-lg transition-all cursor-pointer"
+                        >
+                          <UserPlus size={12} /> Add Member
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {manualMembers.map((m, idx) => (
+                        <div key={idx} className="p-3 bg-slate-50/80 border border-slate-200 rounded-xl space-y-2 relative group">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">
+                              {idx === 0 ? '👑 Team Lead / Participant' : `Member ${idx + 1}`}
+                            </span>
+                            {manualMembers.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = [...manualMembers]
+                                  updated.splice(idx, 1)
+                                  setManualMembers(updated)
+                                }}
+                                className="text-slate-400 hover:text-red-500 transition-colors p-1"
+                                title="Remove member"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <input
+                              type="text"
+                              required
+                              value={m.name}
+                              onChange={e => {
+                                const updated = [...manualMembers]
+                                updated[idx].name = e.target.value
+                                setManualMembers(updated)
+                              }}
+                              placeholder="Full Name *"
+                              className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:border-emerald-500 outline-none text-slate-900 font-medium"
+                            />
+                            <input
+                              type="email"
+                              required
+                              value={m.email}
+                              onChange={e => {
+                                const updated = [...manualMembers]
+                                updated[idx].email = e.target.value
+                                setManualMembers(updated)
+                              }}
+                              placeholder="Email Address (Gmail) *"
+                              className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:border-emerald-500 outline-none text-slate-900 font-medium"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <input
+                              type="tel"
+                              value={m.phone}
+                              onChange={e => {
+                                const updated = [...manualMembers]
+                                updated[idx].phone = e.target.value
+                                setManualMembers(updated)
+                              }}
+                              placeholder="Phone Number (optional)"
+                              className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:border-emerald-500 outline-none text-slate-900 font-medium"
+                            />
+                            <input
+                              type="text"
+                              value={m.role}
+                              onChange={e => {
+                                const updated = [...manualMembers]
+                                updated[idx].role = e.target.value
+                                setManualMembers(updated)
+                              }}
+                              placeholder="Role (e.g. Developer / Lead)"
+                              className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-white focus:border-emerald-500 outline-none text-slate-900 font-medium"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-5 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => { setManualEntryOpen(false); resetManualForm(); }}
+                    className="px-4 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingManual}
+                    className="flex items-center gap-1.5 px-5 py-2 text-xs font-bold rounded-xl text-white transition-all bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 shadow-md shadow-emerald-950/20 cursor-pointer"
+                  >
+                    <Check size={13} />
+                    {savingManual ? 'Saving Team…' : 'Save & Register Team'}
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </motion.div>
         )}
