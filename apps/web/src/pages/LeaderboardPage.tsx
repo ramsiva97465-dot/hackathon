@@ -515,59 +515,6 @@ export function LeaderboardPage() {
             </p>
           </motion.div>
 
-          {/* Floating Stage Controls Bar */}
-          <div className="flex items-center justify-center gap-2 sm:gap-3 bg-[#F4ECE1] border border-black/10 px-5 py-2.5 rounded-2xl shadow-xl mb-8 flex-wrap">
-            <button
-              onClick={() => setIsPaused(!isPaused)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm ${
-                isPaused 
-                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white' 
-                  : 'bg-white hover:bg-slate-100 text-slate-700 border border-black/10'
-              }`}
-            >
-              {isPaused ? <Play size={13} fill="currentColor" /> : <Pause size={13} fill="currentColor" />}
-              <span>{isPaused ? 'Resume Countdown' : 'Pause'}</span>
-            </button>
-
-            <button
-              onClick={stepNextReveal}
-              disabled={revealedStep >= 20 || revealedStep >= advancing.length}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-black/10 disabled:opacity-40 transition-all cursor-pointer shadow-sm"
-            >
-              <SkipForward size={13} />
-              <span>Next Rank ({revealedStep < 20 ? `#${20 - revealedStep}` : 'Done'})</span>
-            </button>
-
-            <button
-              onClick={() => setRevealedStep(20)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#E83C00] hover:bg-[#c93400] text-white transition-all cursor-pointer shadow-sm shadow-[#E83C00]/20"
-            >
-              <Zap size={13} />
-              <span>Reveal All Now</span>
-            </button>
-
-            <button
-              onClick={() => { setRevealedStep(0); setIsPaused(false) }}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-black/10 transition-all cursor-pointer shadow-sm"
-            >
-              <RotateCcw size={13} />
-              <span>Replay</span>
-            </button>
-
-            <div className="w-px h-5 bg-black/10 mx-1" />
-
-            <button
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              className={`p-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm ${
-                soundEnabled 
-                  ? 'bg-emerald-100 text-emerald-700 border border-emerald-300' 
-                  : 'bg-white text-slate-400 border border-black/10'
-              }`}
-              title={soundEnabled ? 'Fanfare Audio Enabled' : 'Audio Muted'}
-            >
-              {soundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
-            </button>
-          </div>
 
           {/* 🌟 HERO SPOTLIGHT ANNOUNCEMENT CARD */}
           <div className="w-full max-w-3xl mb-10">
