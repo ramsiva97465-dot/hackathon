@@ -438,19 +438,16 @@ export function LeaderboardPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Grand Reveal Stage Ceremony Button */}
-          <button
-            onClick={() => isRevealing ? stopGrandReveal() : startGrandReveal()}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg select-none cursor-pointer ${
-              isRevealing
-                ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40'
-                : 'bg-[#E83C00] hover:bg-[#c93400] text-white shadow-orange-950/20'
-            }`}
-            title="Start dramatic Top 20 Countdown Announcement"
-          >
-            <Sparkles size={14} className={isRevealing ? 'animate-spin' : ''} />
-            <span>{isRevealing ? 'Exit Grand Reveal' : '🎭 Top 20 Grand Reveal (20 ➔ 1)'}</span>
-          </button>
+          {/* Close button only visible when reveal mode is currently active */}
+          {isRevealing && (
+            <button
+              onClick={stopGrandReveal}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 transition-all shadow-lg cursor-pointer"
+              title="Exit Grand Reveal"
+            >
+              <span>✕ Exit Stage Reveal</span>
+            </button>
+          )}
 
           {/* Active TV Mode Indicator (Controlled by Admin Panel) */}
           {!isRevealing && tvMode && (
