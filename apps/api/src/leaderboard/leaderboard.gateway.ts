@@ -47,4 +47,15 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
       console.error('[WS] Leaderboard broadcast failed:', err)
     }
   }
+
+  // Called when Admin triggers Stage Grand Reveal (e.g. Round 2 Top 20 Reveal countdown)
+  async broadcastRevealEvent(payload: { round: number; type: string; timestamp: number }) {
+    try {
+      if (!this.server) return
+      this.server.to('leaderboard').emit('leaderboard:reveal_start', payload)
+      console.log('[WS] Reveal broadcast sent:', payload)
+    } catch (err) {
+      console.error('[WS] Reveal broadcast failed:', err)
+    }
+  }
 }

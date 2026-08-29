@@ -617,9 +617,16 @@ export class TeamsService {
         data: { round: 2 }
       })
 
-      // Broadcast immediately so leaderboard auto-switches to Stage 2
+      // Broadcast immediately so leaderboard auto-switches to Stage 2 & starts countdown reveal
       this.leaderboardGateway.broadcastLeaderboardUpdate().catch(err =>
         console.error('[WS] Promote R1→R2 broadcast failed:', err)
+      )
+      this.leaderboardGateway.broadcastRevealEvent({
+        round: 2,
+        type: 'reveal_start',
+        timestamp: Date.now()
+      }).catch(err =>
+        console.error('[WS] Promote R1→R2 reveal broadcast failed:', err)
       )
 
       return { success: true, promotedCount: top20Ids.length }

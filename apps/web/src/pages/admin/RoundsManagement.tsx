@@ -5,7 +5,7 @@ import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { 
   Zap, Trophy, RefreshCw, AlertTriangle, Play,
-  Users, CheckCircle2, ChevronRight, Medal
+  Users, CheckCircle2, ChevronRight, Medal, Sparkles, ExternalLink
 } from 'lucide-react'
 
 type TeamOverview = {
@@ -59,7 +59,7 @@ export function RoundsManagement() {
 
   const handlePromote = async (currentRound: number) => {
     const confirmMsg = currentRound === 1 
-      ? 'Are you sure you want to promote the Top 20 teams from Round 1 to Round 2?'
+      ? 'Are you sure you want to promote the Top 20 teams from Round 1 to Round 2 & start the Countdown Reveal?'
       : 'Are you sure you want to lock Round 2 and select the Top 3 winners?'
     
     if (!window.confirm(confirmMsg)) return
@@ -68,10 +68,15 @@ export function RoundsManagement() {
       setLoading(true)
       const res = await api.teams.promote(currentRound)
       if (res.data?.success) {
-        toast.success(`Successfully promoted ${res.data.promotedCount} teams!`)
+        toast.success(`Successfully promoted ${res.data.promotedCount} teams! Countdown reveal broadcasted.`)
         // Shift active view tab to next round
         setActiveTab(currentRound + 1)
         fetchLeaderboard()
+
+        if (currentRound === 1) {
+          // Open leaderboard with reveal mode
+          window.open('/leaderboard?reveal=true&round=2', '_blank')
+        }
       }
     } catch (err: any) {
       console.error(err)
@@ -116,9 +121,20 @@ export function RoundsManagement() {
             <p className="text-sm text-slate-400 mt-0.5">Control stages, promote top teams, and select winners</p>
           </div>
           <div className="flex items-center gap-2">
+            <a
+              href="/leaderboard?reveal=true&round=2"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 px-4 py-2 border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 rounded-xl text-xs font-bold text-amber-300 transition-all shadow-lg select-none cursor-pointer"
+            >
+              <Sparkles size={13} className="text-amber-400" />
+              <span>🎭 Launch Top 20 Grand Reveal (20 ➔ 1)</span>
+              <ExternalLink size={12} className="text-amber-400/70" />
+            </a>
+
             <button
               onClick={handleReset}
-              className="flex items-center gap-1.5 px-4 py-2 border border-white/10 bg-[#111] hover:bg-[#1a1a1a] rounded-xl text-xs font-bold text-slate-300 transition-all shadow-2xl hover:text-white"
+              className="flex items-center gap-1.5 px-4 py-2 border border-white/10 bg-[#111] hover:bg-[#1a1a1a] rounded-xl text-xs font-bold text-slate-300 transition-all shadow-2xl hover:text-white cursor-pointer"
             >
               <RefreshCw size={13} />
               Reset All to Round 1
@@ -135,7 +151,7 @@ export function RoundsManagement() {
             <div>
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Active Judging State</span>
               <h2 className="text-lg font-black text-white">
-                {activeRoundNum === 3 ? '🏆 Winners Announced' : activeRoundNum === 2 ? '⚡ Round 2 (Top 20)' : '📝 Round 1 (All Teams)'}
+                {activeRoundNum === 3 ? '🏆 Winners Announced' : activeRoundNum === 2 ? '⚡ Round 2 (Top 20 Qualifiers)' : '📝 Round 1 (All Teams)'}
               </h2>
             </div>
           </div>
@@ -145,21 +161,32 @@ export function RoundsManagement() {
               <button
                 onClick={() => handlePromote(1)}
                 disabled={loading}
-                className="flex items-center gap-1.5 px-4 py-2.5 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-[#E83C00]/15"
+                className="flex items-center gap-1.5 px-4 py-2.5 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-[#E83C00]/15 cursor-pointer"
               >
                 <Play size={13} fill="white" />
-                Promote Top 20 to Round 2
+                Promote Top 20 & Start Grand Reveal
               </button>
             )}
             {activeRoundNum === 2 && (
-              <button
-                onClick={() => handlePromote(2)}
-                disabled={loading}
-                className="flex items-center gap-1.5 px-4 py-2.5 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-[#E83C00]/15"
-              >
-                <Trophy size={13} />
-                Announce Winners (Top 3)
-              </button>
+              <div className="flex items-center gap-2">
+                <a
+                  href="/leaderboard?reveal=true&round=2"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                >
+                  <Sparkles size={13} />
+                  Replay Grand Reveal (20 ➔ 1)
+                </a>
+                <button
+                  onClick={() => handlePromote(2)}
+                  disabled={loading}
+                  className="flex items-center gap-1.5 px-4 py-2.5 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-[#E83C00]/15 cursor-pointer"
+                >
+                  <Trophy size={13} />
+                  Announce Winners (Top 3)
+                </button>
+              </div>
             )}
           </div>
         </div>
