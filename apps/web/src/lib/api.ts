@@ -117,6 +117,10 @@ export const api = {
     getTvMode: () => apiClient.get('/leaderboard/tv-mode'),
     setTvMode: (enabled: boolean) =>
       apiClient.post('/leaderboard/tv-mode', { enabled }),
+    getRevealState: () => apiClient.get('/leaderboard/reveal-state'),
+    startReveal: (round?: number) =>
+      apiClient.post('/leaderboard/reveal-start', { round }),
+    stopReveal: () => apiClient.post('/leaderboard/reveal-stop'),
   },
 
   // Emails

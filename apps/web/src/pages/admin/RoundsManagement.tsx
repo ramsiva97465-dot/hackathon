@@ -21,6 +21,7 @@ export function RoundsManagement() {
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<number>(1) // 1 = Round 1, 2 = Round 2, 3 = Winners
   const [teams, setTeams] = useState<TeamOverview[]>([])
+  const [isStageRevealing, setIsStageRevealing] = useState(false)
   
   // Stats
   const [round1Count, setRound1Count] = useState(0)
@@ -29,9 +30,50 @@ export function RoundsManagement() {
 
   useEffect(() => {
     fetchLeaderboard()
-    const interval = setInterval(() => fetchLeaderboard(true), 10_000)
+    fetchRevealState()
+    const interval = setInterval(() => {
+      fetchLeaderboard(true)
+      fetchRevealState()
+    }, 4000)
     return () => clearInterval(interval)
   }, [activeTab])
+
+  const fetchRevealState = async () => {
+    try {
+      const res = await api.leaderboard.getRevealState()
+      if (typeof res.data?.isRevealing === 'boolean') {
+        setIsStageRevealing(res.data.isRevealing)
+      }
+    } catch (err) {
+      // Ignore
+    }
+  }
+
+  const handleStartReveal = async () => {
+    try {
+      setLoading(true)
+      await api.leaderboard.startReveal(2)
+      setIsStageRevealing(true)
+      toast.success('🎭 Top 20 Grand Reveal activated! All public Leaderboard screens are now counting down in real-time!')
+    } catch (err) {
+      toast.error('Failed to trigger reveal broadcast.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleStopReveal = async () => {
+    try {
+      setLoading(true)
+      await api.leaderboard.stopReveal()
+      setIsStageRevealing(false)
+      toast.success('🛑 Stage Reveal stopped! All Leaderboard screens returned to normal table view.')
+    } catch (err) {
+      toast.error('Failed to stop reveal.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const fetchLeaderboard = async (silent = false) => {
     try {
@@ -59,7 +101,7 @@ export function RoundsManagement() {
 
   const handlePromote = async (currentRound: number) => {
     const confirmMsg = currentRound === 1 
-      ? 'Are you sure you want to promote the Top 20 teams from Round 1 to Round 2 & start the Countdown Reveal?'
+      ? 'Are you sure you want to promote the Top 20 teams from Round 1 to Round 2 & start the Countdown Reveal on stage screens?'
       : 'Are you sure you want to lock Round 2 and select the Top 3 winners?'
     
     if (!window.confirm(confirmMsg)) return
@@ -68,14 +110,15 @@ export function RoundsManagement() {
       setLoading(true)
       const res = await api.teams.promote(currentRound)
       if (res.data?.success) {
-        toast.success(`Successfully promoted ${res.data.promotedCount} teams! Countdown reveal broadcasted.`)
+        toast.success(`Successfully promoted ${res.data.promotedCount} teams! Countdown reveal broadcasted to all live screens.`)
         // Shift active view tab to next round
         setActiveTab(currentRound + 1)
         fetchLeaderboard()
 
         if (currentRound === 1) {
-          // Open leaderboard with reveal mode
-          window.open('/leaderboard?reveal=true&round=2', '_blank')
+          // Trigger live reveal on all existing leaderboard screens automatically!
+          await api.leaderboard.startReveal(2)
+          setIsStageRevealing(true)
         }
       }
     } catch (err: any) {
@@ -91,6 +134,8 @@ export function RoundsManagement() {
 
     try {
       setLoading(true)
+      await api.leaderboard.stopReveal()
+      setIsStageRevealing(false)
       const res = await api.teams.resetRounds()
       if (res.data?.success) {
         toast.success('All teams have been reset to Round 1!')
@@ -121,16 +166,24 @@ export function RoundsManagement() {
             <p className="text-sm text-slate-400 mt-0.5">Control stages, promote top teams, and select winners</p>
           </div>
           <div className="flex items-center gap-2">
-            <a
-              href="/leaderboard?reveal=true&round=2"
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 px-4 py-2 border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 rounded-xl text-xs font-bold text-amber-300 transition-all shadow-lg select-none cursor-pointer"
-            >
-              <Sparkles size={13} className="text-amber-400" />
-              <span>🎭 Launch Top 20 Grand Reveal (20 ➔ 1)</span>
-              <ExternalLink size={12} className="text-amber-400/70" />
-            </a>
+            {isStageRevealing ? (
+              <button
+                onClick={handleStopReveal}
+                disabled={loading}
+                className="flex items-center gap-1.5 px-4 py-2 border border-rose-500/40 bg-rose-500/20 hover:bg-rose-500/30 rounded-xl text-xs font-bold text-rose-300 transition-all shadow-lg select-none cursor-pointer"
+              >
+                <span>🛑 Stop Stage Reveal</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleStartReveal}
+                disabled={loading}
+                className="flex items-center gap-1.5 px-4 py-2 border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 rounded-xl text-xs font-bold text-amber-300 transition-all shadow-lg select-none cursor-pointer"
+              >
+                <Sparkles size={13} className="text-amber-400" />
+                <span>🎭 Broadcast Top 20 Grand Reveal (20 ➔ 1)</span>
+              </button>
+            )}
 
             <button
               onClick={handleReset}
@@ -169,15 +222,14 @@ export function RoundsManagement() {
             )}
             {activeRoundNum === 2 && (
               <div className="flex items-center gap-2">
-                <a
-                  href="/leaderboard?reveal=true&round=2"
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  onClick={handleStartReveal}
+                  disabled={loading}
                   className="flex items-center gap-1.5 px-3.5 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
                 >
                   <Sparkles size={13} />
-                  Replay Grand Reveal (20 ➔ 1)
-                </a>
+                  Replay Grand Reveal on Stage
+                </button>
                 <button
                   onClick={() => handlePromote(2)}
                   disabled={loading}

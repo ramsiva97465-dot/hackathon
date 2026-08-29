@@ -46,6 +46,27 @@ export class LeaderboardController {
     return { success: true, tvMode: isEnabled }
   }
 
+  @Get('reveal-state')
+  getRevealState() {
+    return this.gateway.getRevealState()
+  }
+
+  @Post('reveal-start')
+  async startReveal(@Body() dto: { round?: number }) {
+    await this.gateway.broadcastRevealEvent({
+      round: dto.round || 2,
+      type: 'TOP_20_COUNTDOWN',
+      timestamp: Date.now()
+    })
+    return { success: true, isRevealing: true, round: dto.round || 2 }
+  }
+
+  @Post('reveal-stop')
+  async stopReveal() {
+    await this.gateway.broadcastStopReveal()
+    return { success: true, isRevealing: false }
+  }
+
   @Post('admin-score')
   async updateAdminScore(@Body() dto: AdminScoreDto) {
     await this.service.updateAdminScore(dto.teamId, dto.score)

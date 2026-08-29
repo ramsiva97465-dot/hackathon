@@ -214,9 +214,19 @@ export function LeaderboardPage() {
   })
 
   // Listen for broadcasted reveal triggers from admin panel
-  useWebSocket<{ round: number; type: string }>('leaderboard:reveal_start', (data) => {
-    if (data?.round === 2) {
+  useWebSocket<{ round?: number; type?: string }>('leaderboard:reveal_start', () => {
+    startGrandReveal()
+  })
+
+  useWebSocket<{ isRevealing: boolean }>('leaderboard:reveal_stop', () => {
+    stopGrandReveal()
+  })
+
+  useWebSocket<{ isRevealing: boolean; round?: number }>('leaderboard:reveal_state', (data) => {
+    if (data?.isRevealing) {
       startGrandReveal()
+    } else if (data && !data.isRevealing) {
+      stopGrandReveal()
     }
   })
 
@@ -251,18 +261,34 @@ export function LeaderboardPage() {
     }
   }
 
+  const fetchRevealState = async () => {
+    try {
+      const res = await api.leaderboard.getRevealState()
+      if (res.data?.isRevealing) {
+        if (!isRevealing) startGrandReveal()
+      } else if (res.data && !res.data.isRevealing && isRevealing && !searchParams.get('reveal')) {
+        stopGrandReveal()
+      }
+    } catch (err) {
+      // Ignore
+    }
+  }
+
   useEffect(() => { emit('leaderboard:subscribe') }, [emit])
 
   useEffect(() => {
     fetchLiveLeaderboard()
     fetchTvModeState()
+    fetchRevealState()
     const pollTimer = setInterval(() => {
       fetchLiveLeaderboard()
       fetchTvModeState()
-    }, 4000)
+      fetchRevealState()
+    }, 3000)
 
     const handleUpdateEvent = () => {
       fetchLiveLeaderboard()
+      fetchRevealState()
       const stored = localStorage.getItem('snapserve_tv_mode') === 'true'
       setTvMode(stored)
     }
@@ -277,7 +303,7 @@ export function LeaderboardPage() {
       window.removeEventListener('tv_mode_toggled', handleUpdateEvent)
       window.removeEventListener('storage', handleUpdateEvent)
     }
-  }, [activeRound])
+  }, [activeRound, isRevealing])
 
   useEffect(() => {
     const t = setInterval(() => setClock(new Date()), 1000)
