@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Query } from '@nestjs/common'
-import { IsString, IsNumber, IsOptional } from 'class-validator'
+import { IsString, IsNumber, IsOptional, IsBoolean } from 'class-validator'
 import { LeaderboardService } from './leaderboard.service'
 import { LeaderboardGateway } from './leaderboard.gateway'
 
@@ -13,7 +13,14 @@ class AdminScoreDto {
 }
 
 class TvModeDto {
+  @IsBoolean()
   enabled: boolean
+}
+
+class RevealStartDto {
+  @IsNumber()
+  @IsOptional()
+  round?: number
 }
 
 @Controller('leaderboard')
@@ -52,7 +59,7 @@ export class LeaderboardController {
   }
 
   @Post('reveal-start')
-  async startReveal(@Body() dto: { round?: number }) {
+  async startReveal(@Body() dto: RevealStartDto) {
     await this.gateway.broadcastRevealEvent({
       round: dto.round || 2,
       type: 'TOP_20_COUNTDOWN',
@@ -60,6 +67,7 @@ export class LeaderboardController {
     })
     return { success: true, isRevealing: true, round: dto.round || 2 }
   }
+
 
   @Post('reveal-stop')
   async stopReveal() {
