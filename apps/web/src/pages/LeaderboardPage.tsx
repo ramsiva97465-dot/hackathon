@@ -208,6 +208,7 @@ export function LeaderboardPage() {
   const [isPaused, setIsPaused] = useState<boolean>(false)
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true)
   const timerRef = useRef<any>(null)
+  const rosterRef = useRef<HTMLDivElement>(null)
 
   const { emit } = useWebSocket<LeaderboardEntry[]>('leaderboard:update', (data) => {
     setEntries(data)
@@ -387,6 +388,15 @@ export function LeaderboardPage() {
       return next
     })
   }
+
+  // Auto-scroll to Roster once all 20 are revealed
+  useEffect(() => {
+    if (!isRevealing || revealedStep < 20) return
+    const scrollTimer = setTimeout(() => {
+      rosterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 2800) // Wait ~2.8s so Rank #1 card has time to animate in first
+    return () => clearTimeout(scrollTimer)
+  }, [isRevealing, revealedStep])
 
   // Automatic Reveal Step Timer (2.3 seconds delay for suspense)
   useEffect(() => {
@@ -617,7 +627,7 @@ export function LeaderboardPage() {
           {/* ══════════════════════════════════════════════════════════════════ */}
           {/* TOP 20 QUALIFIER BOARD (Rank 1 to 20 Grid)                         */}
           {/* ══════════════════════════════════════════════════════════════════ */}
-          <div className="w-full bg-[#F4ECE1] border border-black/10 rounded-[2.5rem] p-5 sm:p-7 shadow-2xl shadow-black/10 overflow-hidden">
+          <div ref={rosterRef} className="w-full bg-[#F4ECE1] border border-black/10 rounded-[2.5rem] p-5 sm:p-7 shadow-2xl shadow-black/10 overflow-hidden">
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-black/10">
               <div className="flex items-center gap-2.5">
                 <Trophy size={18} className="text-amber-500" />
