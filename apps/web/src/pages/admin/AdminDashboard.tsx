@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { 
   FileText, Award, CheckCircle, Clock,
-  ArrowUpRight, Users, TrendingUp, Activity, Megaphone, Send, Trash2
+  ArrowUpRight, Users, TrendingUp, Activity, Megaphone, Send, Trash2, Zap
 } from 'lucide-react'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { Avatar } from '@/components/ui/Avatar'
@@ -11,6 +12,7 @@ import { api } from '@/lib/api'
 import { toast } from 'sonner'
 
 export function AdminDashboard() {
+  const navigate = useNavigate()
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
@@ -98,6 +100,17 @@ export function AdminDashboard() {
 
   const statsList = [
     {
+      label: 'Submitted Teams',
+      value: data?.stats?.submittedTeams ?? '0',
+      icon: Zap,
+      accent: '#10B981',
+      accentBg: 'rgba(16,185,129,0.18)',
+      accentBorder: 'rgba(16,185,129,0.4)',
+      gradient: 'linear-gradient(135deg, #062316 0%, #0a1710 100%)',
+      link: '/admin/teams?filter=submitted',
+      subtitle: 'Click to show submitted alone →'
+    },
+    {
       label: 'Total Teams',
       value: data?.stats?.totalTeams ?? '0',
       icon: Users,
@@ -105,15 +118,8 @@ export function AdminDashboard() {
       accentBg: 'rgba(232,60,0,0.15)',
       accentBorder: 'rgba(232,60,0,0.3)',
       gradient: 'linear-gradient(135deg, #110e0c 0%, #0a0a0a 100%)',
-    },
-    {
-      label: 'Competing Teams',
-      value: data?.stats?.competingTeams ?? '0',
-      icon: CheckCircle,
-      accent: '#10B981',
-      accentBg: 'rgba(16,185,129,0.15)',
-      accentBorder: 'rgba(16,185,129,0.3)',
-      gradient: 'linear-gradient(135deg, #0d1210 0%, #0a0a0a 100%)',
+      link: '/admin/teams',
+      subtitle: 'All registered teams'
     },
     {
       label: 'Total Members',
@@ -123,6 +129,8 @@ export function AdminDashboard() {
       accentBg: 'rgba(245,158,11,0.15)',
       accentBorder: 'rgba(245,158,11,0.3)',
       gradient: 'linear-gradient(135deg, #12100a 0%, #0a0a0a 100%)',
+      link: '/admin/teams',
+      subtitle: 'Registered participants'
     },
     {
       label: 'Active Judges',
@@ -132,6 +140,8 @@ export function AdminDashboard() {
       accentBg: 'rgba(139,92,246,0.15)',
       accentBorder: 'rgba(139,92,246,0.3)',
       gradient: 'linear-gradient(135deg, #100d12 0%, #0a0a0a 100%)',
+      link: '/admin/judges',
+      subtitle: 'Jury panel'
     },
   ]
 
@@ -166,7 +176,8 @@ export function AdminDashboard() {
             return (
               <motion.div key={stat.label} variants={itemVariants}>
                 <div
-                  className="group relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-default"
+                  onClick={() => stat.link && navigate(stat.link)}
+                  className="group relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer select-none"
                   style={{ background: stat.gradient, borderColor: stat.accentBorder }}
                 >
                   {/* Soft glow in corner */}
@@ -175,11 +186,14 @@ export function AdminDashboard() {
                     style={{ background: stat.accent }}
                   />
                   <div className="relative">
-                    <div
-                      className="w-9 h-9 rounded-xl flex items-center justify-center mb-4"
-                      style={{ background: stat.accentBg, border: `1px solid ${stat.accentBorder}`, color: stat.accent }}
-                    >
-                      <Icon size={16} />
+                    <div className="flex items-center justify-between mb-4">
+                      <div
+                        className="w-9 h-9 rounded-xl flex items-center justify-center"
+                        style={{ background: stat.accentBg, border: `1px solid ${stat.accentBorder}`, color: stat.accent }}
+                      >
+                        <Icon size={16} />
+                      </div>
+                      <ArrowUpRight size={15} className="text-slate-500 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                     </div>
                     <p
                       className="text-[2rem] font-bold tracking-tight tabular-nums leading-none mb-2"
@@ -187,10 +201,9 @@ export function AdminDashboard() {
                     >
                       {stat.value}
                     </p>
-                    <p className="text-[12px] font-semibold text-slate-400 mb-1">{stat.label}</p>
-                    <p className="text-[11px] font-bold flex items-center gap-1" style={{ color: stat.accent }}>
-                      <Activity size={10} className="animate-pulse" />
-                      Live Data
+                    <p className="text-[12px] font-semibold text-slate-300 mb-1">{stat.label}</p>
+                    <p className="text-[11px] font-medium text-slate-400 flex items-center gap-1" style={{ color: stat.accent }}>
+                      {stat.subtitle || 'Live Data'}
                     </p>
                   </div>
                 </div>

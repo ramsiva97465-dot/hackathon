@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useSearchParams } from 'react-router-dom'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { Avatar } from '@/components/ui/Avatar'
 import { Progress } from '@/components/ui/Progress'
@@ -7,7 +8,7 @@ import { containerVariants, itemVariants } from '@/lib/motion'
 import { getTrackConfig } from '@/lib/utils'
 import {
   Trophy, Users, Award, X, Check,
-  Search, Hash, Star, UserPlus, Download, Upload, AlertCircle, CheckCircle, Eye, ExternalLink, Github, Phone, Cpu, Layers, Instagram, Linkedin, Trash2
+  Search, Hash, Star, UserPlus, Download, Upload, AlertCircle, CheckCircle, Eye, ExternalLink, Github, Phone, Cpu, Layers, Instagram, Linkedin, Trash2, Clock, Zap, Filter
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
@@ -81,7 +82,7 @@ function processCsvData(text: string) {
   const teamNameIdx = rawHeaders.findIndex(h => h.includes('teamname') || h === 'team')
   const trackIdx = rawHeaders.findIndex(h => h.includes('track') || h === 'category')
   const tableIdx = rawHeaders.findIndex(h => h.includes('tablenumber') || h === 'table' || h === 'tableno')
-  const collegeIdx = rawHeaders.findIndex(h => h.includes('college') || h === 'university' || h === 'school')
+  const collegeIdx = rawHeaders.findIndex(h => h.includes('college') || h.includes('university') || h.includes('school'))
   const nameIdx = rawHeaders.findIndex(h => h === 'name' || h.includes('participantname') || h.includes('membername') || h.includes('leadername'))
   const emailIdx = rawHeaders.findIndex(h => h === 'email' || h.includes('participantemail') || h.includes('memberemail') || h.includes('leaderemail'))
   const phoneIdx = rawHeaders.findIndex(h => h === 'phone' || h.includes('phone') || h.includes('mobile'))
@@ -191,6 +192,27 @@ const RANK_STYLE: Record<number, { bg: string; text: string; label: string }> = 
 }
 
 export function TeamsPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const filterParam = (searchParams.get('filter') as 'all' | 'submitted' | 'not_submitted') || 'all'
+  const [filterType, setFilterType] = useState<'all' | 'submitted' | 'not_submitted'>(filterParam)
+
+  useEffect(() => {
+    const f = searchParams.get('filter')
+    if (f === 'submitted' || f === 'not_submitted' || f === 'all') {
+      setFilterType(f)
+    }
+  }, [searchParams])
+
+  const handleSetFilterType = (type: 'all' | 'submitted' | 'not_submitted') => {
+    setFilterType(type)
+    if (type === 'all') {
+      searchParams.delete('filter')
+      setSearchParams(searchParams, { replace: true })
+    } else {
+      setSearchParams({ filter: type }, { replace: true })
+    }
+  }
+
   const [teams, setTeams] = useState<Team[]>([])
   const [judges, setJudges] = useState<Judge[]>([])
   const [loading, setLoading] = useState(true)
@@ -582,13 +604,31 @@ export function TeamsPage() {
     }
   }
 
+  const isTeamSubmitted = (t: Team) => Boolean(
+    t.projectTitle?.trim() ||
+    t.agentName?.trim() ||
+    t.agentSolution?.trim() ||
+    t.agentPhoneNumber?.trim() ||
+    t.demoUrl?.trim() ||
+    t.githubUrl?.trim()
+  )
+
+  const submittedCount = teams.filter(isTeamSubmitted).length
+  const notSubmittedCount = teams.length - submittedCount
+
   const filtered = teams.filter(t => {
+    // Filter type check
+    if (filterType === 'submitted' && !isTeamSubmitted(t)) return false
+    if (filterType === 'not_submitted' && isTeamSubmitted(t)) return false
+
     const q = search.toLowerCase().trim()
     if (!q) return true
     return (
       t.name.toLowerCase().includes(q) ||
       (t.college && t.college.toLowerCase().includes(q)) ||
       (t.projectTitle && t.projectTitle.toLowerCase().includes(q)) ||
+      (t.agentName && t.agentName.toLowerCase().includes(q)) ||
+      (t.agentPhoneNumber && t.agentPhoneNumber.toLowerCase().includes(q)) ||
       (t.tableNumber && t.tableNumber.toLowerCase().includes(q)) ||
       t.members.some(m =>
         (m.email && m.email.toLowerCase().includes(q)) ||
@@ -599,10 +639,86 @@ export function TeamsPage() {
   })
 
   const stats = [
-    { label: 'Total Teams',      value: teams.length,                                       icon: Users,  color: '#E83C00', bg: 'rgba(232,60,0,0.07)',    border: 'rgba(232,60,0,0.15)'    },
-    { label: 'Judging Complete', value: teams.filter(t => t.judgesAssigned >= t.totalJudges && t.totalJudges > 0).length, icon: Award,  color: '#10B981', bg: 'rgba(16,185,129,0.07)', border: 'rgba(16,185,129,0.15)' },
-    { label: 'On Leaderboard',   value: teams.filter(t => t.rank !== null).length,           icon: Trophy, color: '#8B5CF6', bg: 'rgba(139,92,246,0.07)', border: 'rgba(139,92,246,0.15)' },
+    { 
+      label: 'Total Teams', 
+      value: teams.length, 
+      icon: Users, 
+      color: '#E83C00', 
+      bg: 'rgba(232,60,0,0.07)', 
+      border: 'rgba(232,60,0,0.15)',
+      onClick: () => handleSetFilterType('all'),
+      active: filterType === 'all'
+    },
+    { 
+      label: 'Submitted Teams', 
+      value: submittedCount, 
+      icon: Zap, 
+      color: '#10B981', 
+      bg: 'rgba(16,185,129,0.09)', 
+      border: 'rgba(16,185,129,0.25)',
+      onClick: () => handleSetFilterType('submitted'),
+      active: filterType === 'submitted'
+    },
+    { 
+      label: 'Pending Submission', 
+      value: notSubmittedCount, 
+      icon: Clock, 
+      color: '#F59E0B', 
+      bg: 'rgba(245,158,11,0.07)', 
+      border: 'rgba(245,158,11,0.15)',
+      onClick: () => handleSetFilterType('not_submitted'),
+      active: filterType === 'not_submitted'
+    },
+    { 
+      label: 'Judging Complete', 
+      value: teams.filter(t => t.judgesAssigned >= t.totalJudges && t.totalJudges > 0).length, 
+      icon: Award, 
+      color: '#8B5CF6', 
+      bg: 'rgba(139,92,246,0.07)', 
+      border: 'rgba(139,92,246,0.15)' 
+    },
   ]
+
+  const handleExportSubmittedOnlyCSV = () => {
+    const submittedTeams = teams.filter(isTeamSubmitted)
+    const headers = [
+      'Table Number',
+      'Team Name',
+      'Track',
+      'Project Title',
+      'Agent Name',
+      'Agent Hotline',
+      'Demo URL',
+      'GitHub URL',
+      'Members Count',
+      'Member Names',
+      'Member Emails',
+      'Member Phones'
+    ]
+
+    const rows = submittedTeams.map(t => {
+      const memberNames = t.members.map(m => m.name).join('; ')
+      const memberEmails = t.members.map(m => m.email || '').join('; ')
+      const memberPhones = t.members.map(m => m.phone || '').join('; ')
+
+      return [
+        `"${t.tableNumber || ''}"`,
+        `"${t.name.replace(/"/g, '""')}"`,
+        `"${t.track}"`,
+        `"${(t.projectTitle || '').replace(/"/g, '""')}"`,
+        `"${(t.agentName || '').replace(/"/g, '""')}"`,
+        `"${(t.agentPhoneNumber || '').replace(/"/g, '""')}"`,
+        `"${(t.demoUrl || '').replace(/"/g, '""')}"`,
+        `"${(t.githubUrl || '').replace(/"/g, '""')}"`,
+        `"${t.members.length}"`,
+        `"${memberNames.replace(/"/g, '""')}"`,
+        `"${memberEmails.replace(/"/g, '""')}"`,
+        `"${memberPhones.replace(/"/g, '""')}"`
+      ]
+    })
+
+    downloadCSV(`Voiceathon_Submitted_Teams_Only_${new Date().toISOString().split('T')[0]}.csv`, headers, rows)
+  }
 
   return (
     <DashboardLayout role="admin">
@@ -612,15 +728,21 @@ export function TeamsPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white tracking-tight">Teams</h1>
-            <p className="text-sm text-white/50 mt-0.5">All approved teams competing in the hackathon.</p>
+            <p className="text-sm text-white/50 mt-0.5">All registered and submitted teams competing in the hackathon.</p>
           </div>
           <div className="flex gap-3 flex-wrap">
-            {stats.map(({ icon: Icon, label, value, color, border }) => (
-              <div key={label} className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl"
-                style={{ border: `1.5px solid ${border}`, background: '#111' }}>
+            {stats.map(({ icon: Icon, label, value, color, border, bg, onClick, active }) => (
+              <div 
+                key={label} 
+                onClick={onClick}
+                className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl transition-all select-none ${
+                  onClick ? 'cursor-pointer hover:-translate-y-0.5' : 'cursor-default'
+                } ${active ? 'ring-2 ring-emerald-500 shadow-lg shadow-emerald-950/40' : ''}`}
+                style={{ border: `1.5px solid ${active ? '#10B981' : border}`, background: active ? 'rgba(16,185,129,0.14)' : '#111' }}
+              >
                 <Icon size={14} style={{ color }} />
                 <span className="text-sm font-bold text-white">{value}</span>
-                <span className="text-xs text-white/40 font-medium">{label}</span>
+                <span className="text-xs text-white/50 font-medium">{label}</span>
               </div>
             ))}
           </div>
@@ -630,22 +752,77 @@ export function TeamsPage() {
         <div className="bg-[#0A0A0A] rounded-2xl overflow-hidden shadow-2xl"
           style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
 
-          {/* Search Bar */}
+          {/* Search Bar & Filter Controls */}
           <div className="flex items-center justify-between px-5 py-4 flex-wrap gap-3"
             style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Search Box */}
               <div className="relative">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  placeholder="Search by team, Gmail/email, name, phone, table…"
-                  className="pl-9 pr-4 py-2 text-sm rounded-xl outline-none transition-all w-72 sm:w-80 text-white placeholder:text-slate-500"
+                  placeholder="Search by team, Gmail, name, phone, table…"
+                  className="pl-9 pr-4 py-2 text-sm rounded-xl outline-none transition-all w-64 sm:w-72 text-white placeholder:text-slate-500"
                   style={{ border: '1px solid rgba(255,255,255,0.1)', background: '#111' }}
                   onFocus={e => { e.currentTarget.style.borderColor = 'rgba(232,60,0,0.5)'; e.currentTarget.style.background = '#1a1a1a' }}
                   onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.background = '#111' }}
                 />
               </div>
+
+              {/* Show Submitted Teams Alone Segmented Pills */}
+              <div className="flex items-center p-1 bg-slate-900/90 border border-slate-800 rounded-xl gap-1">
+                <button
+                  type="button"
+                  onClick={() => handleSetFilterType('all')}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                    filterType === 'all'
+                      ? 'bg-slate-700 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  }`}
+                >
+                  <span>All Teams</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-300">
+                    {teams.length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSetFilterType('submitted')}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                    filterType === 'submitted'
+                      ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-950/40'
+                      : 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/30'
+                  }`}
+                >
+                  <CheckCircle size={13} className={filterType === 'submitted' ? 'text-white' : 'text-emerald-400'} />
+                  <span>Show Submitted Alone</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
+                    filterType === 'submitted' ? 'bg-emerald-800 text-white' : 'bg-emerald-950 text-emerald-300'
+                  }`}>
+                    {submittedCount}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSetFilterType('not_submitted')}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                    filterType === 'not_submitted'
+                      ? 'bg-amber-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  }`}
+                >
+                  <Clock size={13} />
+                  <span>Pending</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-300">
+                    {notSubmittedCount}
+                  </span>
+                </button>
+              </div>
+
+              {/* Export Dropdown */}
               <div className="relative">
                 <button
                   type="button"
@@ -659,7 +836,15 @@ export function TeamsPage() {
                 {exportMenuOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setExportMenuOpen(false)} />
-                    <div className="absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-700 rounded-xl shadow-xl z-50 p-1.5 space-y-1">
+                    <div className="absolute right-0 mt-2 w-72 bg-slate-900 border border-slate-700 rounded-xl shadow-xl z-50 p-1.5 space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => { setExportMenuOpen(false); handleExportSubmittedOnlyCSV() }}
+                        className="w-full text-left px-3 py-2 text-xs font-bold text-emerald-400 hover:bg-emerald-950/40 rounded-lg flex items-center justify-between transition-colors cursor-pointer"
+                      >
+                        <span>🚀 Export Submitted Teams Alone ({submittedCount})</span>
+                      </button>
+                      <div className="border-t border-slate-800 my-1" />
                       <button
                         type="button"
                         onClick={() => { setExportMenuOpen(false); handleExportTeamsOnlyCSV() }}
@@ -720,7 +905,7 @@ export function TeamsPage() {
                 {distributing ? 'Assigning…' : '⚡ Auto-Assign to Judges'}
               </button>
             </div>
-            <span className="text-xs font-semibold text-slate-400">{filtered.length} teams</span>
+            <span className="text-xs font-semibold text-slate-400">{filtered.length} teams shown</span>
           </div>
 
           {/* Column Headers */}
@@ -786,7 +971,19 @@ export function TeamsPage() {
                       ) : null}
                       <Avatar name={team.name} size="sm" />
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-white truncate">{team.name}</p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-bold text-white truncate">{team.name}</p>
+                          {isTeamSubmitted(team) ? (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
+                              <CheckCircle size={9} />
+                              Submitted
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-400 border border-slate-700/40 shrink-0">
+                              Pending
+                            </span>
+                          )}
+                        </div>
                         <div className="text-[10px] text-slate-400 font-medium flex items-center gap-1.5 mt-0.5">
                           <span>{team.members.length === 1 ? 'Solo' : `${team.members.length} members`}</span>
                           {team.members[0]?.phone && (

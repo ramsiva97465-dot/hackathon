@@ -10,6 +10,16 @@ export class AnalyticsService {
     const competingTeams = await this.prisma.team.count({
       where: { status: 'COMPETING' }
     })
+    const submittedTeams = await this.prisma.team.count({
+      where: {
+        OR: [
+          { projectTitle: { not: null } },
+          { agentName: { not: null } },
+          { agentSolution: { not: null } },
+          { agentPhoneNumber: { not: null } }
+        ]
+      }
+    })
     const totalMembers = await this.prisma.teamMember.count()
     const activeJudges = await this.prisma.judge.count()
 
@@ -50,6 +60,7 @@ export class AnalyticsService {
         stats: {
           totalTeams,
           competingTeams,
+          submittedTeams,
           totalMembers,
           activeJudges
         },
