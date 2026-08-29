@@ -434,46 +434,23 @@ export function LeaderboardPage() {
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-x-hidden" style={{
-      backgroundColor: isRevealing ? '#05060A' : '#EBE3D5',
-      backgroundImage: isRevealing 
-        ? 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(232,60,0,0.22), transparent 70%), radial-gradient(circle at 15% 40%, rgba(99,102,241,0.12), transparent 40%), radial-gradient(circle at 85% 50%, rgba(16,185,129,0.12), transparent 40%), radial-gradient(#1e293b 1px, transparent 1px)'
-        : 'radial-gradient(#d4caba 1px, transparent 1px)',
-      backgroundSize: isRevealing ? '100% 100%, 100% 100%, 100% 100%, 32px 32px' : '32px 32px',
+      backgroundColor: '#EBE3D5',
+      backgroundImage: 'radial-gradient(#d4caba 1px, transparent 1px)',
+      backgroundSize: '32px 32px',
       fontFamily: "'Space Grotesk', 'Inter', system-ui, sans-serif",
-      color: isRevealing ? '#FFFFFF' : '#1A1A1A',
-      transition: 'background-color 0.5s ease'
+      color: '#1A1A1A'
     }}>
 
-      {/* ── Cinematic Stage Lighting & Ambient Particles (Grand Reveal Mode) ── */}
-      {isRevealing && (
-        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-          {/* Top Golden Stage Spotlight Cone */}
-          <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[850px] h-[550px] bg-gradient-to-b from-amber-500/20 via-[#E83C00]/15 to-transparent blur-[110px] rounded-full" />
-          
-          {/* Ambient Corner Stage Lights */}
-          <div className="absolute top-1/4 -left-48 w-[500px] h-[500px] bg-indigo-600/15 blur-[130px] rounded-full animate-pulse" style={{ animationDuration: '6s' }} />
-          <div className="absolute top-1/3 -right-48 w-[500px] h-[500px] bg-emerald-500/15 blur-[130px] rounded-full animate-pulse" style={{ animationDuration: '7s' }} />
-          <div className="absolute -bottom-32 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-amber-500/10 blur-[120px] rounded-full" />
-
-          {/* Perspective Cyber Stage Grid */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_20%,#000_60%,transparent_100%)] opacity-70" />
-        </div>
-      )}
-
       {/* ── Top Bar ── */}
-      <div className={`relative z-20 flex items-center justify-between px-6 sm:px-10 py-4 border-b backdrop-blur-md sticky top-0 transition-colors ${
-        isRevealing 
-          ? 'bg-[#05060A]/85 border-amber-500/20 text-white shadow-xl shadow-black/50' 
-          : 'bg-[#EBE3D5]/80 border-black/5 text-[#1A1A1A]'
-      }`}>
+      <div className="relative z-20 flex items-center justify-between px-6 sm:px-10 py-4 border-b backdrop-blur-md sticky top-0 transition-colors bg-[#EBE3D5]/80 border-black/5 text-[#1A1A1A]">
         <div className="flex items-center gap-4 sm:gap-6">
           <div className="flex items-center gap-2">
-            <SnapServeMark className={`h-8 w-8 drop-shadow-sm ${isRevealing ? 'text-amber-400' : 'text-[#1A1A1A]'}`} />
+            <SnapServeMark className="h-8 w-8 drop-shadow-sm text-[#1A1A1A]" />
             <span className="font-bold text-lg tracking-tight">snapserve.ai</span>
           </div>
           <span className="opacity-20 text-2xl font-light">|</span>
           <div className="flex items-center gap-2">
-            <VobizMark className={`h-6 w-8 drop-shadow-sm ${isRevealing ? 'text-amber-400' : 'text-[#1A1A1A]'}`} />
+            <VobizMark className="h-6 w-8 drop-shadow-sm text-[#1A1A1A]" />
             <span className="font-bold text-lg tracking-tight">vobiz.ai</span>
           </div>
         </div>
@@ -483,10 +460,10 @@ export function LeaderboardPage() {
           {isRevealing && (
             <button
               onClick={stopGrandReveal}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 transition-all shadow-lg cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-rose-100 hover:bg-rose-200 text-rose-700 border border-rose-300 transition-all shadow-sm cursor-pointer"
               title="Exit Grand Reveal"
             >
-              <span>✕ Exit Stage Reveal</span>
+              <span>✕ Exit Announcement</span>
             </button>
           )}
 
@@ -503,7 +480,7 @@ export function LeaderboardPage() {
             <span className="text-[11px] font-extrabold text-orange-500 tracking-widest uppercase">Live</span>
           </div>
 
-          <span className={`font-mono text-base sm:text-lg font-bold tracking-wider ${isRevealing ? 'text-amber-200/90' : 'text-slate-600'}`}>
+          <span className="font-mono text-base sm:text-lg font-bold tracking-wider text-slate-600">
             {clock.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
           </span>
         </div>
@@ -513,7 +490,7 @@ export function LeaderboardPage() {
       {/* 🎭 DRAMATIC GRAND REVEAL CEREMONY (Countdown: 20 ➔ 1)                */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {isRevealing ? (
-        <div className="relative z-10 flex-1 flex flex-col items-center pt-6 pb-24 px-4 sm:px-6 max-w-6xl mx-auto w-full">
+        <div className="relative z-10 flex-1 flex flex-col items-center pt-8 pb-24 px-4 sm:px-6 max-w-6xl mx-auto w-full">
           
           {/* Header */}
           <motion.div
@@ -521,28 +498,31 @@ export function LeaderboardPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-6"
           >
-            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 border border-amber-500/40 text-amber-300 mb-3 shadow-xl shadow-amber-950/40 backdrop-blur-xl">
-              <Sparkles size={15} className="text-amber-400 animate-spin" />
-              <span className="text-xs font-black uppercase tracking-widest">
-                Round 2 Qualifiers · Live Stage Ceremony
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/5 text-slate-700 mb-3 shadow-xl shadow-black/5">
+              <Trophy size={14} className="text-amber-500" />
+              <span className="text-xs font-bold uppercase tracking-widest">
+                Round 2 Qualifiers · Live Ceremony
               </span>
             </div>
-            <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight bg-gradient-to-r from-amber-100 via-amber-300 to-yellow-500 bg-clip-text text-transparent drop-shadow-md">
+            <h2 className="text-[#E83C00] font-bold tracking-[0.2em] uppercase text-sm mb-2">
+              AI குரல் · VOICE FOR TAMIL NADU · 2026
+            </h2>
+            <h1 className="text-5xl sm:text-6xl font-black text-[#1A1A1A] tracking-tighter" style={{ textShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
               Top 20 Grand Reveal
             </h1>
-            <p className="text-slate-300 text-sm sm:text-base font-medium mt-1">
-              Revealing advancing finalists in live countdown order: <span className="text-amber-400 font-extrabold">#20 ➔ #1</span>
+            <p className="text-slate-500 mt-2 text-sm sm:text-base font-medium">
+              Revealing advancing finalists in live countdown order: <span className="text-[#E83C00] font-bold">#20 ➔ #1</span>
             </p>
           </motion.div>
 
           {/* Floating Stage Controls Bar */}
-          <div className="flex items-center justify-center gap-2 sm:gap-3 bg-[#0d1017]/90 border border-amber-500/20 px-5 py-2.5 rounded-2xl shadow-2xl mb-8 flex-wrap backdrop-blur-xl ring-1 ring-white/5">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 bg-[#F4ECE1] border border-black/10 px-5 py-2.5 rounded-2xl shadow-xl mb-8 flex-wrap">
             <button
               onClick={() => setIsPaused(!isPaused)}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm ${
                 isPaused 
-                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/50' 
-                  : 'bg-white/10 hover:bg-white/15 text-slate-200 border border-white/10'
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white' 
+                  : 'bg-white hover:bg-slate-100 text-slate-700 border border-black/10'
               }`}
             >
               {isPaused ? <Play size={13} fill="currentColor" /> : <Pause size={13} fill="currentColor" />}
@@ -552,7 +532,7 @@ export function LeaderboardPage() {
             <button
               onClick={stepNextReveal}
               disabled={revealedStep >= 20 || revealedStep >= advancing.length}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/15 text-slate-200 border border-white/10 disabled:opacity-30 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-black/10 disabled:opacity-40 transition-all cursor-pointer shadow-sm"
             >
               <SkipForward size={13} />
               <span>Next Rank ({revealedStep < 20 ? `#${20 - revealedStep}` : 'Done'})</span>
@@ -560,28 +540,28 @@ export function LeaderboardPage() {
 
             <button
               onClick={() => setRevealedStep(20)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-all cursor-pointer shadow-md"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#E83C00] hover:bg-[#c93400] text-white transition-all cursor-pointer shadow-sm shadow-[#E83C00]/20"
             >
-              <Zap size={13} className="text-amber-400" />
+              <Zap size={13} />
               <span>Reveal All Now</span>
             </button>
 
             <button
               onClick={() => { setRevealedStep(0); setIsPaused(false) }}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-slate-100 text-slate-700 border border-black/10 transition-all cursor-pointer shadow-sm"
             >
               <RotateCcw size={13} />
               <span>Replay</span>
             </button>
 
-            <div className="w-px h-5 bg-white/15 mx-1" />
+            <div className="w-px h-5 bg-black/10 mx-1" />
 
             <button
               onClick={() => setSoundEnabled(!soundEnabled)}
-              className={`p-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`p-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm ${
                 soundEnabled 
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm' 
-                  : 'bg-white/5 text-slate-400 border border-white/10'
+                  ? 'bg-emerald-100 text-emerald-700 border border-emerald-300' 
+                  : 'bg-white text-slate-400 border border-black/10'
               }`}
               title={soundEnabled ? 'Fanfare Audio Enabled' : 'Audio Muted'}
             >
@@ -598,20 +578,20 @@ export function LeaderboardPage() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="bg-gradient-to-br from-[#1c140e] via-[#10121a] to-[#06070B] border-2 border-amber-500/40 p-8 sm:p-10 rounded-[2.5rem] shadow-2xl shadow-amber-950/30 text-center relative overflow-hidden backdrop-blur-2xl"
+                  className="bg-[#F4ECE1] border-2 border-black/10 p-8 sm:p-10 rounded-[2.5rem] shadow-2xl shadow-black/10 text-center relative overflow-hidden"
                 >
-                  <div className="w-20 h-20 rounded-3xl bg-amber-500/15 border border-amber-500/40 flex items-center justify-center mx-auto mb-4 text-amber-400 shadow-xl shadow-amber-950/50">
+                  <div className="w-20 h-20 rounded-3xl bg-[#E83C00]/10 border border-[#E83C00]/20 flex items-center justify-center mx-auto mb-4 text-[#E83C00] shadow-sm">
                     <Trophy size={38} />
                   </div>
-                  <h3 className="text-2xl sm:text-3xl font-black text-white mb-2">
+                  <h3 className="text-2xl sm:text-3xl font-black text-[#1A1A1A] mb-2">
                     Round 1 Graded & Verified!
                   </h3>
-                  <p className="text-slate-300 max-w-lg mx-auto text-sm sm:text-base mb-6">
+                  <p className="text-slate-500 max-w-lg mx-auto text-sm sm:text-base mb-6 font-medium">
                     The ceremony will announce all 20 qualifying teams one by one, counting down from Rank #20 down to the #1 Leader!
                   </p>
                   <button
                     onClick={stepNextReveal}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-2xl font-black text-sm shadow-xl shadow-orange-950/60 cursor-pointer transition-all hover:scale-105"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-2xl font-black text-sm shadow-xl shadow-orange-950/20 cursor-pointer transition-all hover:scale-105"
                   >
                     <Play size={15} fill="white" />
                     Start Announcement (#20)
@@ -624,81 +604,61 @@ export function LeaderboardPage() {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 1.05, y: -20 }}
                   transition={{ type: 'spring', bounce: 0.35, duration: 0.65 }}
-                  className="relative p-7 sm:p-10 rounded-[2.5rem] overflow-hidden shadow-2xl text-center border-2 backdrop-blur-2xl"
+                  className="relative p-7 sm:p-10 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/10 text-center border-2 bg-[#F4ECE1]"
                   style={{
-                    background: currentSpotlightRank === 1 
-                      ? 'linear-gradient(135deg, rgba(45,28,8,0.95) 0%, rgba(21,17,9,0.95) 50%, rgba(6,7,11,0.98) 100%)'
-                      : currentSpotlightRank === 2
-                      ? 'linear-gradient(135deg, rgba(27,32,40,0.95) 0%, rgba(16,19,24,0.95) 50%, rgba(6,7,11,0.98) 100%)'
-                      : currentSpotlightRank === 3
-                      ? 'linear-gradient(135deg, rgba(42,22,8,0.95) 0%, rgba(22,16,12,0.95) 50%, rgba(6,7,11,0.98) 100%)'
-                      : 'linear-gradient(135deg, rgba(14,32,23,0.95) 0%, rgba(9,21,16,0.95) 50%, rgba(6,7,11,0.98) 100%)',
                     borderColor: currentSpotlightRank === 1
-                      ? '#F59E0B'
+                      ? '#E83C00'
                       : currentSpotlightRank === 2
-                      ? '#94A3B8'
+                      ? '#64748B'
                       : currentSpotlightRank === 3
-                      ? '#CD7F32'
-                      : '#10B981',
-                    boxShadow: currentSpotlightRank === 1
-                      ? '0 0 50px rgba(245, 158, 11, 0.35)'
-                      : currentSpotlightRank <= 3
-                      ? '0 0 40px rgba(148, 163, 184, 0.25)'
-                      : '0 0 35px rgba(16, 185, 129, 0.25)'
+                      ? '#D97706'
+                      : '#10B981'
                   }}
                 >
-                  {/* Subtle Background Particle Glow */}
-                  <div 
-                    className="absolute -top-16 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full blur-3xl opacity-40 pointer-events-none"
-                    style={{
-                      backgroundColor: currentSpotlightRank === 1 ? '#F59E0B' : '#10B981'
-                    }}
-                  />
-
                   {/* Announcement Tag */}
-                  <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-4 shadow-lg"
+                  <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-4 shadow-sm"
                     style={{
-                      backgroundColor: currentSpotlightRank === 1 ? '#F59E0B' : '#10B981',
-                      color: currentSpotlightRank === 1 ? '#000000' : '#FFFFFF'
+                      backgroundColor: currentSpotlightRank === 1 ? '#E83C00' : currentSpotlightRank === 2 ? '#64748B' : currentSpotlightRank === 3 ? '#D97706' : '#10B981',
+                      color: '#FFFFFF'
                     }}>
                     {currentSpotlightRank === 1 ? <Crown size={14} /> : currentSpotlightRank <= 3 ? <Medal size={14} /> : <CheckCircle2 size={14} />}
                     <span>{currentSpotlightRank === 1 ? '🥇 1st Place Finalist' : currentSpotlightRank === 2 ? '🥈 2nd Place Finalist' : currentSpotlightRank === 3 ? '🥉 3rd Place Finalist' : '⭐ Qualified For Round 2'}</span>
                   </div>
 
                   {/* Giant Rank */}
-                  <div className="text-6xl sm:text-7xl font-black mb-3 tracking-tighter drop-shadow-lg"
+                  <div className="text-6xl sm:text-7xl font-black mb-3 tracking-tighter"
                     style={{
-                      color: currentSpotlightRank === 1 ? '#F59E0B' : currentSpotlightRank === 2 ? '#E2E8F0' : currentSpotlightRank === 3 ? '#FDBA74' : '#34D399'
+                      color: currentSpotlightRank === 1 ? '#E83C00' : currentSpotlightRank === 2 ? '#334155' : currentSpotlightRank === 3 ? '#B45309' : '#047857'
                     }}>
                     RANK #{currentSpotlightRank}
                   </div>
 
                   {/* Team Name */}
-                  <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight mb-2 truncate px-4 drop-shadow-md">
+                  <h2 className="text-3xl sm:text-5xl font-black text-[#1A1A1A] tracking-tight mb-2 truncate px-4">
                     {currentSpotlightTeam.teamName}
                   </h2>
 
                   {/* College & Track */}
-                  <div className="flex items-center justify-center gap-2.5 flex-wrap text-slate-300 text-sm sm:text-base font-medium mb-6">
+                  <div className="flex items-center justify-center gap-2.5 flex-wrap text-slate-600 text-sm sm:text-base font-medium mb-6">
                     <span>{currentSpotlightTeam.college || 'Tamil Nadu'}</span>
-                    <span className="text-slate-500">•</span>
-                    <span className="px-3 py-1 rounded-lg bg-white/10 text-white text-xs font-bold border border-white/15 backdrop-blur-md">
+                    <span className="text-slate-400">•</span>
+                    <span className="px-3 py-1 rounded-lg bg-white text-slate-800 text-xs font-bold border border-black/10 shadow-sm">
                       {getTrackConfig(currentSpotlightTeam.track).label}
                     </span>
                   </div>
 
                   {/* Round 1 Score */}
-                  <div className="inline-flex items-center gap-3 px-7 py-3 rounded-2xl bg-black/60 border border-white/15 shadow-inner backdrop-blur-md">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Round 1 Score</span>
-                    <span className="text-2xl sm:text-3xl font-black text-amber-300 font-mono drop-shadow">
+                  <div className="inline-flex items-center gap-3 px-7 py-3 rounded-2xl bg-white border border-black/10 shadow-sm">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Round 1 Score</span>
+                    <span className="text-2xl sm:text-3xl font-black text-[#1A1A1A] font-mono">
                       {currentSpotlightTeam.totalScore.toFixed(1)}
                     </span>
                   </div>
 
                   {/* Progress Indicator */}
-                  <div className="mt-7 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400 font-semibold px-2">
+                  <div className="mt-7 pt-4 border-t border-black/10 flex items-center justify-between text-xs text-slate-500 font-semibold px-2">
                     <span>Progress: {revealedStep} of 20 revealed</span>
-                    <span className="text-amber-400 font-bold">
+                    <span className="text-[#E83C00] font-bold">
                       {revealedStep === 20 ? '🎉 All Finalists Revealed!' : `Next: Rank #${currentSpotlightRank - 1}`}
                     </span>
                   </div>
@@ -710,13 +670,13 @@ export function LeaderboardPage() {
           {/* ══════════════════════════════════════════════════════════════════ */}
           {/* TOP 20 QUALIFIER BOARD (Rank 1 to 20 Grid)                         */}
           {/* ══════════════════════════════════════════════════════════════════ */}
-          <div className="w-full bg-[#0d1017]/85 border border-white/10 rounded-[2.5rem] p-5 sm:p-7 shadow-2xl overflow-hidden backdrop-blur-xl ring-1 ring-white/5">
-            <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
+          <div className="w-full bg-[#F4ECE1] border border-black/10 rounded-[2.5rem] p-5 sm:p-7 shadow-2xl shadow-black/10 overflow-hidden">
+            <div className="flex items-center justify-between pb-4 mb-4 border-b border-black/10">
               <div className="flex items-center gap-2.5">
-                <Trophy size={18} className="text-amber-400" />
-                <h3 className="text-lg font-black text-white">Round 2 Qualifiers Roster</h3>
+                <Trophy size={18} className="text-amber-500" />
+                <h3 className="text-lg font-black text-[#1A1A1A]">Round 2 Qualifiers Roster</h3>
               </div>
-              <span className="text-xs font-bold text-amber-300 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30">
+              <span className="text-xs font-bold text-emerald-800 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-300">
                 {revealedStep} / {Math.min(20, advancing.length)} Unlocked
               </span>
             </div>
@@ -736,38 +696,38 @@ export function LeaderboardPage() {
                     animate={{ opacity: 1 }}
                     className={`flex items-center justify-between p-3.5 rounded-2xl transition-all border ${
                       isSpotlight
-                        ? 'bg-amber-500/25 border-amber-400 ring-2 ring-amber-400/60 shadow-xl shadow-amber-950/60 scale-[1.02]'
+                        ? 'bg-[#E83C00]/15 border-[#E83C00] ring-2 ring-[#E83C00]/40 shadow-xl shadow-orange-950/10 scale-[1.02]'
                         : isRevealed
-                        ? 'bg-[#131722]/80 border-white/10 hover:border-white/20'
-                        : 'bg-[#090b10]/60 border-white/5 opacity-40'
+                        ? 'bg-white border-black/5 hover:border-black/15 shadow-sm'
+                        : 'bg-[#EBE3D5]/50 border-black/[0.04] opacity-50'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       {/* Rank number badge */}
                       <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
                         rankNum === 1
-                          ? 'bg-amber-500 text-black font-extrabold shadow-md'
+                          ? 'bg-[#E83C00] text-white font-extrabold shadow-sm'
                           : rankNum === 2
-                          ? 'bg-slate-300 text-black font-extrabold'
+                          ? 'bg-slate-300 text-slate-900 font-extrabold'
                           : rankNum === 3
-                          ? 'bg-amber-700 text-white font-extrabold'
+                          ? 'bg-amber-200 text-amber-900 font-extrabold'
                           : isRevealed
-                          ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/50'
-                          : 'bg-black text-slate-600'
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                          : 'bg-slate-200 text-slate-400'
                       }`}>
                         #{rankNum}
                       </div>
 
                       {isRevealed && team ? (
                         <div className="min-w-0">
-                          <p className="text-sm font-black text-white truncate flex items-center gap-1.5">
+                          <p className="text-sm font-black text-[#1A1A1A] truncate flex items-center gap-1.5">
                             <span>{team.teamName}</span>
                             {rankNum <= 3 && <span>{rankNum === 1 ? '🥇' : rankNum === 2 ? '🥈' : '🥉'}</span>}
                           </p>
-                          <p className="text-[11px] text-slate-400 truncate font-medium">{team.college}</p>
+                          <p className="text-[11px] text-slate-500 truncate font-medium">{team.college}</p>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2 text-slate-600">
+                        <div className="flex items-center gap-2 text-slate-400">
                           <Lock size={12} className="animate-pulse" />
                           <span className="text-xs font-semibold tracking-wide">Locked & Pending...</span>
                         </div>
@@ -777,11 +737,11 @@ export function LeaderboardPage() {
                     {/* Right side info */}
                     {isRevealed && team ? (
                       <div className="text-right shrink-0 pl-2">
-                        <span className="text-sm font-black text-amber-300 font-mono">{team.totalScore.toFixed(1)}</span>
-                        <span className="block text-[9px] font-bold uppercase text-emerald-400">Qualified</span>
+                        <span className="text-sm font-black text-[#1A1A1A] font-mono">{team.totalScore.toFixed(1)}</span>
+                        <span className="block text-[9px] font-bold uppercase text-emerald-600">Qualified</span>
                       </div>
                     ) : (
-                      <div className="w-12 h-4 rounded bg-white/5 animate-pulse shrink-0" />
+                      <div className="w-12 h-4 rounded bg-slate-200/50 animate-pulse shrink-0" />
                     )}
                   </motion.div>
                 )
