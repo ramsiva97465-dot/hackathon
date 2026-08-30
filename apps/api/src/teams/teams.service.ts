@@ -630,16 +630,9 @@ export class TeamsService {
         data: { round: 2 }
       })
 
-      // Broadcast immediately so leaderboard auto-switches to Stage 2 & starts countdown reveal
+      // Broadcast leaderboard data update (without triggering reveal countdown)
       this.leaderboardGateway.broadcastLeaderboardUpdate().catch(err =>
         console.error('[WS] Promote R1→R2 broadcast failed:', err)
-      )
-      this.leaderboardGateway.broadcastRevealEvent({
-        round: 2,
-        type: 'reveal_start',
-        timestamp: Date.now()
-      }).catch(err =>
-        console.error('[WS] Promote R1→R2 reveal broadcast failed:', err)
       )
 
       return { success: true, promotedCount: top20Ids.length }
@@ -681,16 +674,9 @@ export class TeamsService {
         data: { round: 3 }
       })
 
-      // Broadcast immediately so leaderboard auto-switches to Stage 3 & starts Top 3 Grand Finale Reveal
+      // Broadcast leaderboard data update (without triggering reveal countdown)
       this.leaderboardGateway.broadcastLeaderboardUpdate().catch(err =>
         console.error('[WS] Promote R2→R3 broadcast failed:', err)
-      )
-      this.leaderboardGateway.broadcastRevealEvent({
-        round: 3,
-        type: 'reveal_start',
-        timestamp: Date.now()
-      }).catch(err =>
-        console.error('[WS] Promote R2→R3 reveal broadcast failed:', err)
       )
 
       return { success: true, promotedCount: top3.length }
