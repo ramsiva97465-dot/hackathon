@@ -205,8 +205,12 @@ export function LeaderboardPage() {
   })
 
   // ── Grand Reveal State ─────────────────────────────────────────────────────
-  // revealedStep goes from 0 up to 20.
-  // Step 1 reveals Rank 20. Step 20 reveals Rank 1.
+  // For Round 2: revealedStep 0..20 (Rank 20 down to 1)
+  // For Round 3: revealedStep 0..3 (Rank 3 down to 1)
+  const [revealRound, setRevealRound] = useState<number>(() => {
+    const r = searchParams.get('round')
+    return r ? Number(r) : 2
+  })
   const [isRevealing, setIsRevealing] = useState<boolean>(searchParams.get('reveal') === 'true')
   const [revealedStep, setRevealedStep] = useState<number>(0)
   const [isPaused, setIsPaused] = useState<boolean>(false)
@@ -219,8 +223,8 @@ export function LeaderboardPage() {
   })
 
   // Listen for broadcasted reveal triggers from admin panel
-  useWebSocket<{ round?: number; type?: string }>('leaderboard:reveal_start', () => {
-    startGrandReveal()
+  useWebSocket<{ round?: number; type?: string }>('leaderboard:reveal_start', (data) => {
+    startGrandReveal(data?.round || 2)
   })
 
   useWebSocket<{ isRevealing: boolean }>('leaderboard:reveal_stop', () => {
@@ -229,7 +233,7 @@ export function LeaderboardPage() {
 
   useWebSocket<{ isRevealing: boolean; round?: number }>('leaderboard:reveal_state', (data) => {
     if (data?.isRevealing) {
-      startGrandReveal()
+      startGrandReveal(data?.round || 2)
     } else if (data && !data.isRevealing) {
       stopGrandReveal()
     }
@@ -270,7 +274,7 @@ export function LeaderboardPage() {
     try {
       const res = await api.leaderboard.getRevealState()
       if (res.data?.isRevealing) {
-        if (!isRevealing) startGrandReveal()
+        if (!isRevealing) startGrandReveal(res.data.round || 2)
       } else if (res.data && !res.data.isRevealing && isRevealing && !searchParams.get('reveal')) {
         stopGrandReveal()
       }
@@ -318,7 +322,8 @@ export function LeaderboardPage() {
   // Check URL query for ?reveal=true
   useEffect(() => {
     if (searchParams.get('reveal') === 'true' && !isRevealing) {
-      startGrandReveal()
+      const roundParam = Number(searchParams.get('round')) || 2
+      startGrandReveal(roundParam)
     }
   }, [searchParams])
 
@@ -366,9 +371,20 @@ export function LeaderboardPage() {
   // Advancing Top 20 (sorted 1 to 20)
   const advancing = filtered.slice(0, ROUND2_CUTOFF)
   const notAdvancing = filtered.slice(ROUND2_CUTOFF)
+  const top3 = filtered.slice(0, 3)
+  const restR2 = filtered.slice(3)
+  const podiumOrder = [
+    top3.find(e => e.rank === 2),
+    top3.find(e => e.rank === 1),
+    top3.find(e => e.rank === 3),
+  ]
 
-  // ── Grand Reveal Logic (Countdown 20 ➔ 1) ──────────────────────────────────
-  const startGrandReveal = () => {
+  const isFinale = revealRound === 3
+  const maxSteps = isFinale ? 3 : Math.min(20, advancing.length || 20)
+
+  // ── Grand Reveal Logic ─────────────────────────────────────────────────────
+  const startGrandReveal = (round: number = 2) => {
+    setRevealRound(round)
     setIsRevealing(true)
     setRevealedStep(0)
     setIsPaused(false)
@@ -377,15 +393,16 @@ export function LeaderboardPage() {
 
   const stopGrandReveal = () => {
     setIsRevealing(false)
-    setRevealedStep(20)
+    setRevealedStep(maxSteps)
     searchParams.delete('reveal')
+    searchParams.delete('round')
     setSearchParams(searchParams, { replace: true })
   }
 
   const stepNextReveal = () => {
     setRevealedStep(prev => {
-      const next = Math.min(20, prev + 1)
-      const currentRank = 21 - next
+      const next = Math.min(maxSteps, prev + 1)
+      const currentRank = isFinale ? (4 - next) : (21 - next)
       if (soundEnabled) {
         playRevealChime(currentRank)
       }
@@ -393,9 +410,20 @@ export function LeaderboardPage() {
     })
   }
 
-  // Auto-scroll loop for Top 20: Scroll from #1 down to #20, then smoothly re-scroll back to #1 and repeat
+  // Auto-scroll loop for Top 20 (Round 2) or Podium scroll (Round 3)
   useEffect(() => {
-    if (!isRevealing || revealedStep < 20) return
+    if (!isRevealing) return
+
+    if (isFinale) {
+      if (revealedStep < 3) return
+      // When all Top 3 winners are crowned, smoothly scroll to Podium
+      const timer = setTimeout(() => {
+        rosterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 2500)
+      return () => clearTimeout(timer)
+    }
+
+    if (revealedStep < 20) return
 
     let isPausedAtBoundary = false
     let scrollInterval: ReturnType<typeof setInterval> | null = null
@@ -434,52 +462,45 @@ export function LeaderboardPage() {
       if (pauseTimeout) clearTimeout(pauseTimeout)
       if (scrollInterval) clearInterval(scrollInterval)
     }
-  }, [isRevealing, revealedStep])
+  }, [isRevealing, revealedStep, isFinale])
 
-
-  // Automatic Reveal Step Timer (2.3 seconds delay for suspense)
+  // Automatic Reveal Step Timer (Suspense delay)
   useEffect(() => {
     if (!isRevealing || isPaused) {
       if (timerRef.current) clearInterval(timerRef.current)
       return
     }
 
+    const delay = isFinale ? 3200 : 2400
+
     timerRef.current = setInterval(() => {
       setRevealedStep(prev => {
-        if (prev >= advancing.length || prev >= 20) {
+        if (prev >= maxSteps) {
           clearInterval(timerRef.current)
           return prev
         }
         const next = prev + 1
-        const currentRank = 21 - next
+        const currentRank = isFinale ? (4 - next) : (21 - next)
         if (soundEnabled) {
           playRevealChime(currentRank)
         }
         return next
       })
-    }, 2400)
+    }, delay)
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
     }
-  }, [isRevealing, isPaused, advancing.length, soundEnabled])
+  }, [isRevealing, isPaused, isFinale, maxSteps, soundEnabled])
 
   // Current spotlight team during countdown
-  // At step 1 -> rank 20 -> advancing[19]
-  // At step 20 -> rank 1 -> advancing[0]
-  const currentSpotlightRank = 21 - revealedStep
-  const currentSpotlightTeam = revealedStep > 0 && revealedStep <= advancing.length 
-    ? advancing[20 - revealedStep] 
+  // For Round 2 (20 -> 1): Step 1 reveals rank 20 (advancing[19]), Step 20 reveals rank 1 (advancing[0])
+  // For Round 3 (3 -> 1): Step 1 reveals rank 3 (top3[2]), Step 2 reveals rank 2 (top3[1]), Step 3 reveals rank 1 (top3[0])
+  const currentSpotlightRank = isFinale ? (4 - revealedStep) : (21 - revealedStep)
+  const currentSpotlightTeam = revealedStep > 0
+    ? (isFinale ? top3[3 - revealedStep] : advancing[20 - revealedStep])
     : null
 
-  // For Round 2/3 podium
-  const top3 = filtered.slice(0, 3)
-  const restR2 = filtered.slice(3)
-  const podiumOrder = [
-    top3.find(e => e.rank === 2),
-    top3.find(e => e.rank === 1),
-    top3.find(e => e.rank === 3),
-  ]
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-x-hidden" style={{
@@ -537,7 +558,7 @@ export function LeaderboardPage() {
       </div>
 
       {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* 🎭 DRAMATIC GRAND REVEAL CEREMONY (Countdown: 20 ➔ 1)                */}
+      {/* 🎭 DRAMATIC GRAND REVEAL CEREMONY (Round 2: 20➔1 | Round 3: 3➔1)      */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {isRevealing ? (
         <div className="relative z-10 flex-1 flex flex-col items-center pt-8 pb-24 px-4 sm:px-6 max-w-6xl mx-auto w-full">
@@ -551,14 +572,14 @@ export function LeaderboardPage() {
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/5 text-slate-700 mb-3 shadow-xl shadow-black/5">
               <Trophy size={14} className="text-amber-500" />
               <span className="text-xs font-bold uppercase tracking-widest">
-                Round 2 Qualifiers · Live Ceremony
+                {isFinale ? 'Stage 3 · Champions Ceremony' : 'Round 2 Qualifiers · Live Ceremony'}
               </span>
             </div>
             <h2 className="text-[#E83C00] font-bold tracking-[0.2em] uppercase text-sm mb-2">
               AI குரல் · VOICE FOR TAMIL NADU · 2026
             </h2>
             <h1 className="text-5xl sm:text-6xl font-black text-[#1A1A1A] tracking-tighter" style={{ textShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
-              Top 20 Grand Reveal
+              {isFinale ? 'Top 3 Grand Finale Reveal' : 'Top 20 Grand Reveal'}
             </h1>
           </motion.div>
 
@@ -574,20 +595,22 @@ export function LeaderboardPage() {
                   className="bg-[#F4ECE1] border-2 border-black/10 p-8 sm:p-10 rounded-[2.5rem] shadow-2xl shadow-black/10 text-center relative overflow-hidden"
                 >
                   <div className="w-20 h-20 rounded-3xl bg-[#E83C00]/10 border border-[#E83C00]/20 flex items-center justify-center mx-auto mb-4 text-[#E83C00] shadow-sm">
-                    <Trophy size={38} />
+                    {isFinale ? <Crown size={40} className="text-amber-500" /> : <Trophy size={38} />}
                   </div>
                   <h3 className="text-2xl sm:text-3xl font-black text-[#1A1A1A] mb-2">
-                    Round 1 Graded & Verified!
+                    {isFinale ? 'Grand Finale Graded & Ready!' : 'Round 1 Graded & Verified!'}
                   </h3>
                   <p className="text-slate-500 max-w-lg mx-auto text-sm sm:text-base mb-6 font-medium">
-                    The ceremony will announce all 20 qualifying teams one by one, counting down from Rank #20 down to the #1 Leader!
+                    {isFinale 
+                      ? 'The ceremony will announce the 2nd Runner Up (#3), 1st Runner Up (#2), and crown the Grand Champion (#1)!' 
+                      : 'The ceremony will announce all 20 qualifying teams one by one, counting down from Rank #20 down to the #1 Leader!'}
                   </p>
                   <button
                     onClick={stepNextReveal}
                     className="inline-flex items-center gap-2 px-6 py-3 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-2xl font-black text-sm shadow-xl shadow-orange-950/20 cursor-pointer transition-all hover:scale-105"
                   >
                     <Play size={15} fill="white" />
-                    Start Announcement (#20)
+                    {isFinale ? 'Start Finale Ceremony (#3 🥉)' : 'Start Announcement (#20)'}
                   </button>
                 </motion.div>
               ) : currentSpotlightTeam ? (
@@ -602,10 +625,10 @@ export function LeaderboardPage() {
                     borderColor: currentSpotlightRank === 1
                       ? '#E83C00'
                       : currentSpotlightRank === 2
-                      ? '#64748B'
+                      ? '#475569'
                       : currentSpotlightRank === 3
-                      ? '#D97706'
-                      : '#10B981'
+                      ? '#B45309'
+                      : '#059669'
                   }}
                 >
                   {/* Announcement Tag */}
@@ -617,17 +640,17 @@ export function LeaderboardPage() {
                     {currentSpotlightRank === 1 ? (
                       <>
                         <Crown size={14} className="text-amber-300 fill-amber-300/30 stroke-[2.5]" />
-                        <span>1st Place Finalist</span>
+                        <span>{isFinale ? '👑 Grand Champion · 1st Place' : '1st Place Finalist'}</span>
                       </>
                     ) : currentSpotlightRank === 2 ? (
                       <>
                         <Medal size={14} className="text-slate-200 stroke-[2.5]" />
-                        <span>2nd Place Finalist</span>
+                        <span>{isFinale ? '🥈 1st Runner Up · 2nd Place' : '2nd Place Finalist'}</span>
                       </>
                     ) : currentSpotlightRank === 3 ? (
                       <>
                         <Award size={14} className="text-amber-200 stroke-[2.5]" />
-                        <span>3rd Place Finalist</span>
+                        <span>{isFinale ? '🥉 2nd Runner Up · 3rd Place' : '3rd Place Finalist'}</span>
                       </>
                     ) : (
                       <>
@@ -642,7 +665,7 @@ export function LeaderboardPage() {
                     style={{
                       color: currentSpotlightRank === 1 ? '#E83C00' : currentSpotlightRank === 2 ? '#334155' : currentSpotlightRank === 3 ? '#B45309' : '#047857'
                     }}>
-                    RANK #{currentSpotlightRank}
+                    {isFinale && currentSpotlightRank === 1 ? '👑 CHAMPION' : `RANK #${currentSpotlightRank}`}
                   </div>
 
                   {/* Team Name */}
@@ -659,9 +682,11 @@ export function LeaderboardPage() {
                     </span>
                   </div>
 
-                  {/* Round 1 Score */}
+                  {/* Score Card */}
                   <div className="inline-flex items-center gap-3 px-7 py-3 rounded-2xl bg-white border border-black/10 shadow-sm">
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Round 1 Score</span>
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                      {isFinale ? 'Final Score' : 'Round 1 Score'}
+                    </span>
                     <span className="text-2xl sm:text-3xl font-black text-[#1A1A1A] font-mono">
                       {currentSpotlightTeam.totalScore.toFixed(1)}
                     </span>
@@ -669,11 +694,11 @@ export function LeaderboardPage() {
 
                   {/* Progress Indicator */}
                   <div className="mt-7 pt-4 border-t border-black/10 flex items-center justify-between text-xs text-slate-500 font-semibold px-2">
-                    <span className="font-mono">Progress: {revealedStep} of 20 revealed</span>
-                    {revealedStep === 20 ? (
+                    <span className="font-mono">Progress: {revealedStep} of {maxSteps} revealed</span>
+                    {revealedStep === maxSteps ? (
                       <span className="inline-flex items-center gap-1.5 text-[#E83C00] font-black">
                         <Sparkles size={14} className="text-amber-500 fill-amber-500/20" />
-                        All 20 Finalists Revealed
+                        {isFinale ? '👑 All Winners Crowned!' : 'All 20 Finalists Revealed'}
                       </span>
                     ) : (
                       <span className="text-slate-700 font-bold">
@@ -687,167 +712,249 @@ export function LeaderboardPage() {
           </div>
 
           {/* ══════════════════════════════════════════════════════════════════ */}
-          {/* TOP 20 QUALIFIERS TABLE (Neat single-column table list, 1 by 1)    */}
+          {/* BOTTOM VIEW: Top 20 Table (for Round 2) OR 3D Podium (for Round 3) */}
           {/* ══════════════════════════════════════════════════════════════════ */}
-          <div ref={rosterRef} className="w-full max-w-5xl rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1]">
-            {/* Header with Title & Status Counter */}
-            <div className="flex items-center justify-between px-6 py-4 bg-[#F4ECE1] border-b border-black/10">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600">
-                  <Trophy size={16} />
-                </div>
-                <div>
-                  <h3 className="text-base sm:text-lg font-black text-[#1A1A1A]">Round 2 · Top 20 Qualifiers</h3>
-                  <p className="text-xs text-slate-500 font-medium">Official shortlisted teams advancing to Round 2</p>
-                </div>
+          {isFinale ? (
+            /* ROUND 3: WINNERS PODIUM */
+            <div ref={rosterRef} className="w-full max-w-5xl flex flex-col items-center">
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/5 text-slate-700 mb-6 shadow-sm">
+                <Trophy size={14} className="text-amber-500" />
+                <span className="text-xs font-bold uppercase tracking-widest">
+                  Official Stage 3 Podium · Top 3 Winners
+                </span>
               </div>
-              <span className="text-xs font-black text-emerald-800 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-300 shadow-sm font-mono">
-                {revealedStep} / {Math.min(20, advancing.length)} Unlocked
-              </span>
-            </div>
 
-            {/* Table Column Headers */}
-            <div className="grid grid-cols-[64px_1fr_170px_110px_120px] px-6 py-3.5 bg-[#1A1A1A] text-[10px] font-bold text-white/70 uppercase tracking-widest">
-              <div className="text-center">Rank</div>
-              <div>Team & College</div>
-              <div>Track</div>
-              <div className="text-center">Score</div>
-              <div className="text-right">Status</div>
-            </div>
+              <div className="flex items-end justify-center gap-4 sm:gap-8 w-full max-w-4xl">
+                {podiumOrder.map((entry, idx) => {
+                  if (!entry) return null
+                  const isFirst = entry.rank === 1
+                  const heights = { 1: 'h-[360px] sm:h-[400px]', 2: 'h-[300px] sm:h-[340px]', 3: 'h-[260px] sm:h-[300px]' }
+                  const cardStyles = {
+                    1: { bg: '#F4ECE1', border: '#E83C00', badge: 'bg-[#E83C00] text-white', shadow: 'shadow-2xl shadow-orange-900/25 ring-2 ring-orange-400/50' },
+                    2: { bg: '#F4ECE1', border: '#475569', badge: 'bg-slate-700 text-white', shadow: 'shadow-xl shadow-black/10' },
+                    3: { bg: '#F4ECE1', border: '#B45309', badge: 'bg-amber-800 text-white', shadow: 'shadow-xl shadow-black/10' },
+                  }
+                  const style = cardStyles[entry.rank as keyof typeof cardStyles]
+                  const isUnlocked = revealedStep >= (4 - entry.rank)
 
-            {/* Rows (1 to 20, neat single column row-by-row like Round 1) */}
-            <div className="flex flex-col">
-              {Array.from({ length: Math.min(20, advancing.length || 20) }).map((_, idx) => {
-                const rankNum = idx + 1 // 1 to 20
-                const team = advancing[idx]
-                const isRevealed = rankNum >= (21 - revealedStep)
-                const isSpotlight = rankNum === currentSpotlightRank && revealedStep > 0
-                const track = team ? getTrackConfig(team.track) : null
-
-                if (!isRevealed || !team) {
                   return (
                     <motion.div
-                      key={`slot-locked-${rankNum}`}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="grid grid-cols-[64px_1fr_170px_110px_120px] px-6 py-3.5 items-center border-b border-black/[0.04] bg-[#EBE3D5]/40 text-slate-400 opacity-60"
+                      key={`podium-${entry.teamId}`}
+                      layout
+                      initial={{ opacity: 0, y: 50 }}
+                      animate={{ opacity: isUnlocked ? 1 : 0.45, y: 0 }}
+                      transition={{ delay: idx * 0.15, duration: 0.6, type: 'spring', bounce: 0.35 }}
+                      className={`relative flex flex-col items-center p-6 sm:p-8 rounded-[2.5rem] w-1/3 ${heights[entry.rank as keyof typeof heights]} ${style.shadow} transition-all`}
+                      style={{ backgroundColor: style.bg, border: `2px solid ${style.border}` }}
                     >
-                      <div className="flex items-center justify-center">
-                        <span className="w-8 h-8 rounded-xl bg-black/5 flex items-center justify-center font-black text-xs text-slate-400">
-                          #{rankNum}
-                        </span>
+                      {/* Top Badge */}
+                      <div className={`absolute -top-6 px-4 sm:px-6 py-2 sm:py-2.5 rounded-2xl flex items-center gap-1.5 justify-center font-black text-sm sm:text-base shadow-xl ${style.badge}`}>
+                        {isFirst ? (
+                          <>
+                            <Crown size={18} className="text-amber-300 fill-amber-300/30 stroke-[2.5]" />
+                            <span>1st Place</span>
+                          </>
+                        ) : entry.rank === 2 ? (
+                          <>
+                            <Medal size={18} className="text-slate-200 stroke-[2.5]" />
+                            <span>2nd Place</span>
+                          </>
+                        ) : (
+                          <>
+                            <Award size={18} className="text-amber-200 stroke-[2.5]" />
+                            <span>3rd Place</span>
+                          </>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2 text-slate-400">
-                        <Lock size={13} className="animate-pulse text-slate-400" />
-                        <span className="text-xs font-semibold tracking-wide">Locked & Pending Announcement...</span>
+
+                      {/* Avatar & Team Info */}
+                      <div className="mt-7 sm:mt-9 flex flex-col items-center text-center flex-1 w-full min-w-0">
+                        <Avatar name={entry.teamName} size="lg" className={`mb-3 shadow-lg ring-4 ${isFirst ? 'ring-[#E83C00]/30' : 'ring-black/10'}`} />
+                        <h3 className="text-lg sm:text-2xl font-black text-[#1A1A1A] mb-1 truncate w-full">{entry.teamName}</h3>
+                        <p className="text-slate-500 font-medium text-xs sm:text-sm truncate w-full">{entry.college}</p>
+                        <div className="mt-2">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-white text-slate-800 border border-black/10 shadow-xs">
+                            {getTrackConfig(entry.track).label}
+                          </span>
+                        </div>
                       </div>
-                      <div>
-                        <div className="w-20 h-5 rounded-lg bg-black/5 animate-pulse" />
-                      </div>
-                      <div className="text-center">
-                        <span className="text-xs font-mono text-slate-300">--</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pending</span>
+
+                      {/* Final Score */}
+                      <div className="w-full pt-4 mt-auto border-t border-black/10 text-center">
+                        <motion.div key={entry.totalScore} initial={{ scale: 1.15 }} animate={{ scale: 1 }}
+                          className="text-3xl sm:text-4xl font-black text-[#1A1A1A] font-mono">
+                          {entry.totalScore.toFixed(1)}
+                        </motion.div>
+                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mt-0.5">Final Score</p>
                       </div>
                     </motion.div>
                   )
-                }
-
-                return (
-                  <motion.div
-                    key={`slot-revealed-${rankNum}-${team.teamId}`}
-                    layout
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className={`grid grid-cols-[64px_1fr_170px_110px_120px] px-6 py-3.5 items-center border-b transition-colors ${
-                      isSpotlight
-                        ? 'bg-[#E83C00]/15 border-[#E83C00]/40 shadow-md ring-1 ring-[#E83C00]/30'
-                        : rankNum === 1
-                        ? 'bg-orange-500/5 hover:bg-orange-500/10 border-black/5'
-                        : 'bg-[#F4ECE1] hover:bg-white/60 border-black/5'
-                    }`}
-                  >
-                    {/* Rank Badge */}
-                    <div className="flex items-center justify-center">
-                      {rankNum === 1 ? (
-                        <span className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shadow-sm bg-[#E83C00] text-white ring-2 ring-[#E83C00]/30 gap-0.5">
-                          <Crown size={11} className="text-amber-200 fill-amber-200/20 stroke-[2.5]" />
-                          1
-                        </span>
-                      ) : rankNum === 2 ? (
-                        <span className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shadow-sm bg-slate-300 text-slate-900 ring-1 ring-slate-400/40 gap-0.5">
-                          <Medal size={11} className="text-slate-700 stroke-[2.5]" />
-                          2
-                        </span>
-                      ) : rankNum === 3 ? (
-                        <span className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shadow-sm bg-amber-200 text-amber-900 ring-1 ring-amber-400/40 gap-0.5">
-                          <Award size={11} className="text-amber-800 stroke-[2.5]" />
-                          3
-                        </span>
-                      ) : (
-                        <span className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs">
-                          #{rankNum}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Team & College */}
-                    <div className="flex items-center gap-3 min-w-0">
-                      <Avatar name={team.teamName} size="sm" className="shrink-0 ring-2 ring-white shadow-sm" />
-                      <div className="min-w-0">
-                        <div className="font-bold truncate text-slate-900 text-sm flex items-center gap-2">
-                          <span>{team.teamName}</span>
-                          {rankNum === 1 && (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-orange-100 text-[#E83C00] border border-orange-300 tracking-wider uppercase shadow-xs">
-                              <Crown size={9} className="text-[#E83C00]" /> Leader
-                            </span>
-                          )}
-                          {rankNum === 2 && (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-slate-200 text-slate-700 border border-slate-300 tracking-wider uppercase shadow-xs">
-                              <Medal size={9} className="text-slate-600" /> 2nd
-                            </span>
-                          )}
-                          {rankNum === 3 && (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-100 text-amber-800 border border-amber-300 tracking-wider uppercase shadow-xs">
-                              <Award size={9} className="text-amber-700" /> 3rd
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-xs text-slate-400 truncate">{team.college}</div>
-                      </div>
-                    </div>
-
-                    {/* Track */}
-                    <div>
-                      {track && (
-                        <span
-                          className="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold border bg-white shadow-sm"
-                          style={{ color: track.color, borderColor: `${track.color}30` }}
-                        >
-                          {track.label}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Score */}
-                    <div className="text-center font-mono font-black text-sm text-[#1A1A1A]">
-                      {team.totalScore.toFixed(1)}
-                    </div>
-
-                    {/* Qualified Status */}
-                    <div className="text-right">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm uppercase tracking-wide">
-                        <CheckCircle2 size={11} className="text-emerald-600" />
-                        Qualified
-                      </span>
-                    </div>
-                  </motion.div>
-                )
-              })}
+                })}
+              </div>
             </div>
-          </div>
+          ) : (
+            /* ROUND 2: TOP 20 QUALIFIERS TABLE */
+            <div ref={rosterRef} className="w-full max-w-5xl rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1]">
+              {/* Header with Title & Status Counter */}
+              <div className="flex items-center justify-between px-6 py-4 bg-[#F4ECE1] border-b border-black/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600">
+                    <Trophy size={16} />
+                  </div>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-black text-[#1A1A1A]">Round 2 · Top 20 Qualifiers</h3>
+                    <p className="text-xs text-slate-500 font-medium">Official shortlisted teams advancing to Round 2</p>
+                  </div>
+                </div>
+                <span className="text-xs font-black text-emerald-800 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-300 shadow-sm font-mono">
+                  {revealedStep} / {Math.min(20, advancing.length)} Unlocked
+                </span>
+              </div>
+
+              {/* Table Column Headers */}
+              <div className="grid grid-cols-[64px_1fr_170px_110px_120px] px-6 py-3.5 bg-[#1A1A1A] text-[10px] font-bold text-white/70 uppercase tracking-widest">
+                <div className="text-center">Rank</div>
+                <div>Team & College</div>
+                <div>Track</div>
+                <div className="text-center">Score</div>
+                <div className="text-right">Status</div>
+              </div>
+
+              {/* Rows (1 to 20, neat single column row-by-row like Round 1) */}
+              <div className="flex flex-col">
+                {Array.from({ length: Math.min(20, advancing.length || 20) }).map((_, idx) => {
+                  const rankNum = idx + 1 // 1 to 20
+                  const team = advancing[idx]
+                  const isRevealed = rankNum >= (21 - revealedStep)
+                  const isSpotlight = rankNum === currentSpotlightRank && revealedStep > 0
+                  const track = team ? getTrackConfig(team.track) : null
+
+                  if (!isRevealed || !team) {
+                    return (
+                      <motion.div
+                        key={`slot-locked-${rankNum}`}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="grid grid-cols-[64px_1fr_170px_110px_120px] px-6 py-3.5 items-center border-b border-black/[0.04] bg-[#EBE3D5]/40 text-slate-400 opacity-60"
+                      >
+                        <div className="flex items-center justify-center">
+                          <span className="w-8 h-8 rounded-xl bg-black/5 flex items-center justify-center font-black text-xs text-slate-400">
+                            #{rankNum}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-slate-400">
+                          <Lock size={13} className="animate-pulse text-slate-400" />
+                          <span className="text-xs font-semibold tracking-wide">Locked & Pending Announcement...</span>
+                        </div>
+                        <div>
+                          <div className="w-20 h-5 rounded-lg bg-black/5 animate-pulse" />
+                        </div>
+                        <div className="text-center">
+                          <span className="text-xs font-mono text-slate-300">--</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pending</span>
+                        </div>
+                      </motion.div>
+                    )
+                  }
+
+                  return (
+                    <motion.div
+                      key={`slot-revealed-${rankNum}-${team.teamId}`}
+                      layout
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className={`grid grid-cols-[64px_1fr_170px_110px_120px] px-6 py-3.5 items-center border-b transition-colors ${
+                        isSpotlight
+                          ? 'bg-[#E83C00]/15 border-[#E83C00]/40 shadow-md ring-1 ring-[#E83C00]/30'
+                          : rankNum === 1
+                          ? 'bg-orange-500/5 hover:bg-orange-500/10 border-black/5'
+                          : 'bg-[#F4ECE1] hover:bg-white/60 border-black/5'
+                      }`}
+                    >
+                      {/* Rank Badge */}
+                      <div className="flex items-center justify-center">
+                        {rankNum === 1 ? (
+                          <span className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shadow-sm bg-[#E83C00] text-white ring-2 ring-[#E83C00]/30 gap-0.5">
+                            <Crown size={11} className="text-amber-200 fill-amber-200/20 stroke-[2.5]" />
+                            1
+                          </span>
+                        ) : rankNum === 2 ? (
+                          <span className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shadow-sm bg-slate-300 text-slate-900 ring-1 ring-slate-400/40 gap-0.5">
+                            <Medal size={11} className="text-slate-700 stroke-[2.5]" />
+                            2
+                          </span>
+                        ) : rankNum === 3 ? (
+                          <span className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shadow-sm bg-amber-200 text-amber-900 ring-1 ring-amber-400/40 gap-0.5">
+                            <Award size={11} className="text-amber-800 stroke-[2.5]" />
+                            3
+                          </span>
+                        ) : (
+                          <span className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs">
+                            #{rankNum}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Team & College */}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Avatar name={team.teamName} size="sm" className="shrink-0 ring-2 ring-white shadow-sm" />
+                        <div className="min-w-0">
+                          <div className="font-bold truncate text-slate-900 text-sm flex items-center gap-2">
+                            <span>{team.teamName}</span>
+                            {rankNum === 1 && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-orange-100 text-[#E83C00] border border-orange-300 tracking-wider uppercase shadow-xs">
+                                <Crown size={9} className="text-[#E83C00]" /> Leader
+                              </span>
+                            )}
+                            {rankNum === 2 && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-slate-200 text-slate-700 border border-slate-300 tracking-wider uppercase shadow-xs">
+                                <Medal size={9} className="text-slate-600" /> 2nd
+                              </span>
+                            )}
+                            {rankNum === 3 && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-100 text-amber-800 border border-amber-300 tracking-wider uppercase shadow-xs">
+                                <Award size={9} className="text-amber-700" /> 3rd
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-slate-400 truncate">{team.college}</div>
+                        </div>
+                      </div>
+
+                      {/* Track */}
+                      <div>
+                        {track && (
+                          <span
+                            className="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold border bg-white shadow-sm"
+                            style={{ color: track.color, borderColor: `${track.color}30` }}
+                          >
+                            {track.label}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Score */}
+                      <div className="text-center font-mono font-black text-sm text-[#1A1A1A]">
+                        {team.totalScore.toFixed(1)}
+                      </div>
+
+                      {/* Qualified Status */}
+                      <div className="text-right">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm uppercase tracking-wide">
+                          <CheckCircle2 size={11} className="text-emerald-600 stroke-[2.5]" />
+                          Qualified
+                        </span>
+                      </div>
+                    </motion.div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
+
 
       ) : (
         /* ════════════════════════════════════════════════════════════════════ */

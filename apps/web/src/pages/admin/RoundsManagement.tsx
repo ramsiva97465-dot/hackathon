@@ -5,7 +5,7 @@ import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { 
   Zap, Trophy, RefreshCw, AlertTriangle, Play,
-  Users, CheckCircle2, ChevronRight, Medal, Sparkles, ExternalLink
+  Users, CheckCircle2, ChevronRight, Medal, Sparkles, ExternalLink, Crown
 } from 'lucide-react'
 
 type TeamOverview = {
@@ -49,32 +49,6 @@ export function RoundsManagement() {
     }
   }
 
-  const handleStartReveal = async () => {
-    try {
-      setLoading(true)
-      await api.leaderboard.startReveal(2)
-      setIsStageRevealing(true)
-      toast.success('🎭 Top 20 Grand Reveal activated! All public Leaderboard screens are now counting down in real-time!')
-    } catch (err) {
-      toast.error('Failed to trigger reveal broadcast.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleStopReveal = async () => {
-    try {
-      setLoading(true)
-      await api.leaderboard.stopReveal()
-      setIsStageRevealing(false)
-      toast.success('🛑 Stage Reveal stopped! All Leaderboard screens returned to normal table view.')
-    } catch (err) {
-      toast.error('Failed to stop reveal.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const fetchLeaderboard = async (silent = false) => {
     try {
       if (!silent) setLoading(true)
@@ -99,10 +73,39 @@ export function RoundsManagement() {
     }
   }
 
+  const handleStartReveal = async (round: number = 2) => {
+    try {
+      setLoading(true)
+      await api.leaderboard.startReveal(round)
+      setIsStageRevealing(true)
+      toast.success(round === 3 ? 'Top 3 Grand Finale Reveal broadcasted to stage screens!' : 'Top 20 Grand Reveal broadcasted to stage screens!')
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to start reveal.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleStopReveal = async () => {
+    try {
+      setLoading(true)
+      await api.leaderboard.stopReveal()
+      setIsStageRevealing(false)
+      toast.success('Stage reveal ended. Returned to standard leaderboard.')
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to stop reveal.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handlePromote = async (currentRound: number) => {
+
     const confirmMsg = currentRound === 1 
       ? 'Are you sure you want to promote the Top 20 teams from Round 1 to Round 2 & start the Countdown Reveal on stage screens?'
-      : 'Are you sure you want to lock Round 2 and select the Top 3 winners?'
+      : 'Are you sure you want to promote the Top 3 winners from Round 2 to Round 3 & start the Grand Finale Reveal on stage screens?'
     
     if (!window.confirm(confirmMsg)) return
 
@@ -110,14 +113,18 @@ export function RoundsManagement() {
       setLoading(true)
       const res = await api.teams.promote(currentRound)
       if (res.data?.success) {
-        toast.success(`Successfully promoted ${res.data.promotedCount} teams! Countdown reveal broadcasted to all live screens.`)
+        toast.success(`Successfully promoted ${res.data.promotedCount} teams! Reveal broadcasted to all live screens.`)
         // Shift active view tab to next round
         setActiveTab(currentRound + 1)
         fetchLeaderboard()
 
         if (currentRound === 1) {
-          // Trigger live reveal on all existing leaderboard screens automatically!
+          // Trigger Top 20 reveal
           await api.leaderboard.startReveal(2)
+          setIsStageRevealing(true)
+        } else if (currentRound === 2) {
+          // Trigger Top 3 Grand Finale reveal
+          await api.leaderboard.startReveal(3)
           setIsStageRevealing(true)
         }
       }
@@ -174,9 +181,18 @@ export function RoundsManagement() {
               >
                 <span>🛑 Stop Stage Reveal</span>
               </button>
+            ) : activeRoundNum === 3 ? (
+              <button
+                onClick={() => handleStartReveal(3)}
+                disabled={loading}
+                className="flex items-center gap-1.5 px-4 py-2 border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 rounded-xl text-xs font-bold text-amber-300 transition-all shadow-lg select-none cursor-pointer"
+              >
+                <Crown size={13} className="text-amber-400" />
+                <span>👑 Broadcast Top 3 Grand Finale Reveal (3 ➔ 1)</span>
+              </button>
             ) : (
               <button
-                onClick={handleStartReveal}
+                onClick={() => handleStartReveal(2)}
                 disabled={loading}
                 className="flex items-center gap-1.5 px-4 py-2 border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 rounded-xl text-xs font-bold text-amber-300 transition-all shadow-lg select-none cursor-pointer"
               >
@@ -204,7 +220,7 @@ export function RoundsManagement() {
             <div>
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Active Judging State</span>
               <h2 className="text-lg font-black text-white">
-                {activeRoundNum === 3 ? '🏆 Winners Announced' : activeRoundNum === 2 ? '⚡ Round 2 (Top 20 Qualifiers)' : '📝 Round 1 (All Teams)'}
+                {activeRoundNum === 3 ? '🏆 Stage 3 (Winners Announced)' : activeRoundNum === 2 ? '⚡ Stage 2 (Top 20 Qualifiers)' : '📝 Stage 1 (All Teams Judging)'}
               </h2>
             </div>
           </div>
@@ -223,25 +239,36 @@ export function RoundsManagement() {
             {activeRoundNum === 2 && (
               <div className="flex items-center gap-2">
                 <button
-                  onClick={handleStartReveal}
+                  onClick={() => handleStartReveal(2)}
                   disabled={loading}
                   className="flex items-center gap-1.5 px-3.5 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
                 >
                   <Sparkles size={13} />
-                  Replay Grand Reveal on Stage
+                  Replay Top 20 Reveal
                 </button>
                 <button
                   onClick={() => handlePromote(2)}
                   disabled={loading}
                   className="flex items-center gap-1.5 px-4 py-2.5 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-[#E83C00]/15 cursor-pointer"
                 >
-                  <Trophy size={13} />
-                  Announce Winners (Top 3)
+                  <Crown size={14} />
+                  Promote Top 3 & Grand Finale Reveal
                 </button>
               </div>
             )}
+            {activeRoundNum === 3 && (
+              <button
+                onClick={() => handleStartReveal(3)}
+                disabled={loading}
+                className="flex items-center gap-1.5 px-4 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              >
+                <Crown size={14} className="text-amber-400" />
+                Replay Top 3 Grand Finale Reveal
+              </button>
+            )}
           </div>
         </div>
+
 
         {/* Round Tab Selector */}
         <div className="flex border-b border-white/10 gap-6">

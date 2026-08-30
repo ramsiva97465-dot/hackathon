@@ -668,9 +668,16 @@ export class TeamsService {
         })
       }
 
-      // Broadcast immediately so leaderboard auto-switches to Stage 3 (Winners)
+      // Broadcast immediately so leaderboard auto-switches to Stage 3 & starts Top 3 Grand Finale Reveal
       this.leaderboardGateway.broadcastLeaderboardUpdate().catch(err =>
         console.error('[WS] Promote R2→R3 broadcast failed:', err)
+      )
+      this.leaderboardGateway.broadcastRevealEvent({
+        round: 3,
+        type: 'reveal_start',
+        timestamp: Date.now()
+      }).catch(err =>
+        console.error('[WS] Promote R2→R3 reveal broadcast failed:', err)
       )
 
       return { success: true, promotedCount: top3.length }
@@ -678,6 +685,7 @@ export class TeamsService {
 
     throw new Error('Invalid round promotion request.')
   }
+
 
   async resetRounds() {
     const hackathon = await this.prisma.hackathon.findFirst()
