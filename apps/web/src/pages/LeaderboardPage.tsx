@@ -167,26 +167,28 @@ function playRevealChime(rank: number) {
   }
 }
 
-function playHeartbeatTick() {
+function playHeartbeatTick(intensity = 1) {
   try {
     const AudioContext = window.AudioContext || (window as any).webkitAudioContext
     if (!AudioContext) return
     const ctx = new AudioContext()
     
-    // Sub-bass thumping heartbeat tick
+    // Sub-bass thumping heartbeat tick with dynamic pitch & volume
     const osc = ctx.createOscillator()
     const gain = ctx.createGain()
     osc.type = 'sine'
-    osc.frequency.setValueAtTime(55, ctx.currentTime)
-    osc.frequency.exponentialRampToValueAtTime(32, ctx.currentTime + 0.2)
+    const baseFreq = 48 + (intensity * 6)
+    osc.frequency.setValueAtTime(baseFreq, ctx.currentTime)
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.6, ctx.currentTime + 0.22)
     
-    gain.gain.setValueAtTime(0.45, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28)
+    const vol = Math.min(0.65, 0.35 + (intensity * 0.06))
+    gain.gain.setValueAtTime(vol, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3)
     
     osc.connect(gain)
     gain.connect(ctx.destination)
     osc.start(ctx.currentTime)
-    osc.stop(ctx.currentTime + 0.28)
+    osc.stop(ctx.currentTime + 0.3)
   } catch (e) {
     //
   }
@@ -548,34 +550,58 @@ export function LeaderboardPage() {
     const currentRank = isFinale ? (4 - next) : (21 - next)
 
     if (isFinale) {
-      // 🌟 Slow 3-Second Dramatic Countdown & Slot-Machine Decryption for LCD Screen
+      // 🌟 Ultra-Slow 6.0-Second Dramatic Suspense Countdown for LCD Screen (5 ➔ 4 ➔ 3 ➔ 2 ➔ 1 ➔ 👑)
       setIsDecrypting(true)
       setDecryptingRank(currentRank)
-      setCountdownNum(3)
-      if (soundEnabled) playHeartbeatTick()
+      setCountdownNum(5)
+      if (soundEnabled) playHeartbeatTick(1)
 
       const candidateNames = filtered.map(t => t.teamName)
       let scrambleIdx = 0
-      const scrambleInterval = setInterval(() => {
-        if (candidateNames.length > 0) {
-          setScrambledName(candidateNames[scrambleIdx % candidateNames.length])
-          scrambleIdx++
-        }
-      }, 70)
+      let scrambleInterval: any = null
 
-      // T = 1.0s: Countdown 2
+      const runScramble = (speed: number) => {
+        if (scrambleInterval) clearInterval(scrambleInterval)
+        scrambleInterval = setInterval(() => {
+          if (candidateNames.length > 0) {
+            setScrambledName(candidateNames[scrambleIdx % candidateNames.length])
+            scrambleIdx++
+          }
+        }, speed)
+      }
+
+      // T = 0.0s: Start with rapid scrambling (60ms)
+      runScramble(60)
+
+      // T = 1.2s: Countdown 4
+      setTimeout(() => {
+        setCountdownNum(4)
+        runScramble(85)
+        if (soundEnabled) playHeartbeatTick(2)
+      }, 1200)
+
+      // T = 2.4s: Countdown 3
+      setTimeout(() => {
+        setCountdownNum(3)
+        runScramble(130)
+        if (soundEnabled) playHeartbeatTick(3)
+      }, 2400)
+
+      // T = 3.6s: Countdown 2
       setTimeout(() => {
         setCountdownNum(2)
-        if (soundEnabled) playHeartbeatTick()
-      }, 1000)
+        runScramble(210)
+        if (soundEnabled) playHeartbeatTick(4)
+      }, 3600)
 
-      // T = 2.0s: Countdown 1
+      // T = 4.8s: Countdown 1 (Maximum Suspense!)
       setTimeout(() => {
         setCountdownNum(1)
-        if (soundEnabled) playHeartbeatTick()
-      }, 2000)
+        runScramble(360)
+        if (soundEnabled) playHeartbeatTick(5)
+      }, 4800)
 
-      // T = 3.0s: Unseal Winner & Trigger Climax!
+      // T = 6.0s: Unseal Winner & Trigger Climax!
       setTimeout(() => {
         clearInterval(scrambleInterval)
         setIsDecrypting(false)
@@ -585,7 +611,7 @@ export function LeaderboardPage() {
           playRevealChime(currentRank)
         }
         triggerFinaleConfetti(currentRank)
-      }, 3000)
+      }, 6000)
 
     } else {
       // Round 2 standard reveal
@@ -832,7 +858,7 @@ export function LeaderboardPage() {
                     <motion.div
                       initial={{ width: '0%' }}
                       animate={{ width: '100%' }}
-                      transition={{ duration: 3, ease: 'linear' }}
+                      transition={{ duration: 6, ease: 'linear' }}
                       className="h-full bg-gradient-to-r from-amber-600 via-amber-400 to-orange-500 shadow-md"
                     />
                   </div>
