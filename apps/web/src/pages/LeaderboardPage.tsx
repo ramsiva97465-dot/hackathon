@@ -7,10 +7,11 @@ import { getTrackConfig } from '@/lib/utils'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { 
   TrendingUp, TrendingDown, Minus, Trophy, ChevronRight, Monitor,
-  Play, Pause, SkipForward, RotateCcw, Volume2, VolumeX, Sparkles, Star, CheckCircle2, Lock, Flame, Zap, Award, Crown, Medal
+  Play, Pause, SkipForward, RotateCcw, Volume2, VolumeX, Sparkles, Star, CheckCircle2, Lock, Flame, Zap, Award, Crown, Medal, X, Layers, ShieldCheck
 } from 'lucide-react'
 import type { LeaderboardEntry } from '@hackathon/shared'
 import api from '@/lib/api'
+
 
 const ROUND2_CUTOFF = 20 // Top 20 advance to round 2
 
@@ -142,11 +143,13 @@ function Round1Row({ entry, index }: { entry: LeaderboardEntry; index: number })
       {/* Status (Score is hidden during Round 1) */}
       <div className="text-right">
         {isJudged ? (
-          <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-emerald-700 uppercase tracking-wider">
+          <span className="inline-flex items-center gap-1 text-[11px] font-black text-emerald-700 uppercase tracking-wider">
+            <ShieldCheck size={12} className="text-emerald-600 stroke-[2.5]" />
             Evaluated
           </span>
         ) : (
-          <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
             In Progress
           </span>
         )}
@@ -154,6 +157,7 @@ function Round1Row({ entry, index }: { entry: LeaderboardEntry; index: number })
     </motion.div>
   )
 }
+
 
 // ── Round 2 Table Row ─────────────────────────────────────────────────────────
 function Round2Row({ entry }: { entry: LeaderboardEntry }) {
@@ -505,24 +509,25 @@ export function LeaderboardPage() {
           {isRevealing && (
             <button
               onClick={stopGrandReveal}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-rose-100 hover:bg-rose-200 text-rose-700 border border-rose-300 transition-all shadow-sm cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-all shadow-xs cursor-pointer"
               title="Exit Grand Reveal"
             >
-              <span>✕ Exit Announcement</span>
+              <X size={13} className="text-rose-600 stroke-[2.5]" />
+              <span>Exit Announcement</span>
             </button>
           )}
 
           {/* Active TV Mode Indicator (Controlled by Admin Panel) */}
           {!isRevealing && tvMode && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 shadow-sm animate-pulse">
-              <Monitor size={13} className="text-emerald-600" />
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 shadow-xs animate-pulse">
+              <Monitor size={13} className="text-emerald-600 stroke-[2.2]" />
               <span className="text-[10px] font-black uppercase tracking-wider hidden sm:inline">TV Auto-Scroll</span>
             </div>
           )}
 
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-orange-500/30 bg-orange-500/10">
-            <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-            <span className="text-[11px] font-extrabold text-orange-500 tracking-widest uppercase">Live</span>
+          <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 shadow-xs">
+            <Flame size={13} className="text-orange-500 fill-orange-500/20" />
+            <span className="text-[11px] font-black text-[#E83C00] tracking-widest uppercase">Live</span>
           </div>
 
           <span className="font-mono text-base sm:text-lg font-bold tracking-wider text-slate-600">
@@ -606,11 +611,30 @@ export function LeaderboardPage() {
                   {/* Announcement Tag */}
                   <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-4 shadow-sm"
                     style={{
-                      backgroundColor: currentSpotlightRank === 1 ? '#E83C00' : currentSpotlightRank === 2 ? '#64748B' : currentSpotlightRank === 3 ? '#D97706' : '#10B981',
+                      backgroundColor: currentSpotlightRank === 1 ? '#E83C00' : currentSpotlightRank === 2 ? '#475569' : currentSpotlightRank === 3 ? '#B45309' : '#059669',
                       color: '#FFFFFF'
                     }}>
-                    {currentSpotlightRank === 1 ? <Crown size={14} /> : currentSpotlightRank <= 3 ? <Medal size={14} /> : <CheckCircle2 size={14} />}
-                    <span>{currentSpotlightRank === 1 ? '🥇 1st Place Finalist' : currentSpotlightRank === 2 ? '🥈 2nd Place Finalist' : currentSpotlightRank === 3 ? '🥉 3rd Place Finalist' : '⭐ Qualified For Round 2'}</span>
+                    {currentSpotlightRank === 1 ? (
+                      <>
+                        <Crown size={14} className="text-amber-300 fill-amber-300/30 stroke-[2.5]" />
+                        <span>1st Place Finalist</span>
+                      </>
+                    ) : currentSpotlightRank === 2 ? (
+                      <>
+                        <Medal size={14} className="text-slate-200 stroke-[2.5]" />
+                        <span>2nd Place Finalist</span>
+                      </>
+                    ) : currentSpotlightRank === 3 ? (
+                      <>
+                        <Award size={14} className="text-amber-200 stroke-[2.5]" />
+                        <span>3rd Place Finalist</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheck size={14} className="text-emerald-200 stroke-[2.5]" />
+                        <span>Qualified For Round 2</span>
+                      </>
+                    )}
                   </div>
 
                   {/* Giant Rank */}
@@ -645,10 +669,17 @@ export function LeaderboardPage() {
 
                   {/* Progress Indicator */}
                   <div className="mt-7 pt-4 border-t border-black/10 flex items-center justify-between text-xs text-slate-500 font-semibold px-2">
-                    <span>Progress: {revealedStep} of 20 revealed</span>
-                    <span className="text-[#E83C00] font-bold">
-                      {revealedStep === 20 ? '🎉 All Finalists Revealed!' : `Next: Rank #${currentSpotlightRank - 1}`}
-                    </span>
+                    <span className="font-mono">Progress: {revealedStep} of 20 revealed</span>
+                    {revealedStep === 20 ? (
+                      <span className="inline-flex items-center gap-1.5 text-[#E83C00] font-black">
+                        <Sparkles size={14} className="text-amber-500 fill-amber-500/20" />
+                        All 20 Finalists Revealed
+                      </span>
+                    ) : (
+                      <span className="text-slate-700 font-bold">
+                        Next: Rank #{currentSpotlightRank - 1}
+                      </span>
+                    )}
                   </div>
                 </motion.div>
               ) : null}
@@ -739,26 +770,49 @@ export function LeaderboardPage() {
                   >
                     {/* Rank Badge */}
                     <div className="flex items-center justify-center">
-                      <span className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shadow-sm ${
-                        rankNum === 1
-                          ? 'bg-[#E83C00] text-white font-black ring-2 ring-[#E83C00]/30'
-                          : rankNum === 2
-                          ? 'bg-slate-300 text-slate-900 font-extrabold'
-                          : rankNum === 3
-                          ? 'bg-amber-200 text-amber-900 font-extrabold'
-                          : 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold'
-                      }`}>
-                        #{rankNum}
-                      </span>
+                      {rankNum === 1 ? (
+                        <span className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shadow-sm bg-[#E83C00] text-white ring-2 ring-[#E83C00]/30 gap-0.5">
+                          <Crown size={11} className="text-amber-200 fill-amber-200/20 stroke-[2.5]" />
+                          1
+                        </span>
+                      ) : rankNum === 2 ? (
+                        <span className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shadow-sm bg-slate-300 text-slate-900 ring-1 ring-slate-400/40 gap-0.5">
+                          <Medal size={11} className="text-slate-700 stroke-[2.5]" />
+                          2
+                        </span>
+                      ) : rankNum === 3 ? (
+                        <span className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shadow-sm bg-amber-200 text-amber-900 ring-1 ring-amber-400/40 gap-0.5">
+                          <Award size={11} className="text-amber-800 stroke-[2.5]" />
+                          3
+                        </span>
+                      ) : (
+                        <span className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs">
+                          #{rankNum}
+                        </span>
+                      )}
                     </div>
 
                     {/* Team & College */}
                     <div className="flex items-center gap-3 min-w-0">
                       <Avatar name={team.teamName} size="sm" className="shrink-0 ring-2 ring-white shadow-sm" />
                       <div className="min-w-0">
-                        <div className="font-bold truncate text-slate-900 text-sm flex items-center gap-1.5">
+                        <div className="font-bold truncate text-slate-900 text-sm flex items-center gap-2">
                           <span>{team.teamName}</span>
-                          {rankNum <= 3 && <span>{rankNum === 1 ? '🥇' : rankNum === 2 ? '🥈' : '🥉'}</span>}
+                          {rankNum === 1 && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-orange-100 text-[#E83C00] border border-orange-300 tracking-wider uppercase shadow-xs">
+                              <Crown size={9} className="text-[#E83C00]" /> Leader
+                            </span>
+                          )}
+                          {rankNum === 2 && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-slate-200 text-slate-700 border border-slate-300 tracking-wider uppercase shadow-xs">
+                              <Medal size={9} className="text-slate-600" /> 2nd
+                            </span>
+                          )}
+                          {rankNum === 3 && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-100 text-amber-800 border border-amber-300 tracking-wider uppercase shadow-xs">
+                              <Award size={9} className="text-amber-700" /> 3rd
+                            </span>
+                          )}
                         </div>
                         <div className="text-xs text-slate-400 truncate">{team.college}</div>
                       </div>
@@ -948,8 +1002,22 @@ export function LeaderboardPage() {
                     style={{ backgroundColor: style.bg, border: `2px solid ${style.border}` }}
                   >
                     <div className={`absolute -top-7 px-6 py-3 rounded-2xl flex items-center gap-2 justify-center font-black text-xl shadow-xl ${style.badge}`}>
-                      <span>{medals[idx]}</span>
-                      {isFirst ? '1st Place' : entry.rank === 2 ? '2nd Place' : '3rd Place'}
+                      {isFirst ? (
+                        <>
+                          <Crown size={22} className="text-amber-300 fill-amber-300/30 stroke-[2.5]" />
+                          <span>1st Place</span>
+                        </>
+                      ) : entry.rank === 2 ? (
+                        <>
+                          <Medal size={22} className="text-slate-200 stroke-[2.5]" />
+                          <span>2nd Place</span>
+                        </>
+                      ) : (
+                        <>
+                          <Award size={22} className="text-amber-200 stroke-[2.5]" />
+                          <span>3rd Place</span>
+                        </>
+                      )}
                     </div>
                     <div className="mt-10 flex flex-col items-center text-center flex-1 w-full">
                       <Avatar name={entry.teamName} size="lg" className={`mb-5 shadow-lg ring-4 ${isFirst ? 'ring-orange-200' : 'ring-white/60'}`} />
