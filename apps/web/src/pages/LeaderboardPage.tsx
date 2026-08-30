@@ -389,36 +389,49 @@ export function LeaderboardPage() {
     })
   }
 
-  // Auto-scroll to Roster + slow-scroll through all teams once all 20 are revealed
+  // Auto-scroll loop for Top 20: Scroll from #1 down to #20, then smoothly re-scroll back to #1 and repeat
   useEffect(() => {
     if (!isRevealing || revealedStep < 20) return
 
-    // Step 1: After 2.5s, scroll to the roster grid
-    const scrollToRoster = setTimeout(() => {
+    let isPausedAtBoundary = false
+    let scrollInterval: ReturnType<typeof setInterval> | null = null
+    let pauseTimeout: ReturnType<typeof setTimeout> | null = null
+
+    // Step 1: After initial 2.5s, scroll down to the Top 20 table
+    const initialScroll = setTimeout(() => {
       rosterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
+      // Step 2: Start continuous looping scroll after table comes into view
+      pauseTimeout = setTimeout(() => {
+        scrollInterval = setInterval(() => {
+          if (isPausedAtBoundary) return
+
+          window.scrollBy({ top: 1, behavior: 'auto' })
+
+          const atBottom = (window.innerHeight + Math.ceil(window.scrollY)) >= document.body.offsetHeight - 12
+          if (atBottom) {
+            isPausedAtBoundary = true
+            // Pause at bottom for 2.5s so audience can read Rank #15-#20
+            pauseTimeout = setTimeout(() => {
+              // Smooth scroll back up to Rank #1 (Top of Table)
+              rosterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              // Pause at top for 2.5s so audience can read Rank #1-#5 before scrolling down again
+              pauseTimeout = setTimeout(() => {
+                isPausedAtBoundary = false
+              }, 2500)
+            }, 2500)
+          }
+        }, 32) // ~31px/sec smooth readable scroll speed
+      }, 1500)
     }, 2500)
 
-    // Step 2: After 3.5s (roster is in view), start slow continuous scroll through it
-    let slowScrollInterval: ReturnType<typeof setInterval> | null = null
-    const startSlowScroll = setTimeout(() => {
-      slowScrollInterval = setInterval(() => {
-        // Scroll down 1px at a time for smooth effect
-        window.scrollBy({ top: 1, behavior: 'auto' })
-
-        // Stop when we've reached the very bottom of the page
-        const atBottom = (window.innerHeight + Math.ceil(window.scrollY)) >= document.body.offsetHeight - 10
-        if (atBottom && slowScrollInterval) {
-          clearInterval(slowScrollInterval)
-        }
-      }, 30) // 30ms interval = ~33px/sec — slow enough to read every team
-    }, 3500)
-
     return () => {
-      clearTimeout(scrollToRoster)
-      clearTimeout(startSlowScroll)
-      if (slowScrollInterval) clearInterval(slowScrollInterval)
+      clearTimeout(initialScroll)
+      if (pauseTimeout) clearTimeout(pauseTimeout)
+      if (scrollInterval) clearInterval(scrollInterval)
     }
   }, [isRevealing, revealedStep])
+
 
   // Automatic Reveal Step Timer (2.3 seconds delay for suspense)
   useEffect(() => {
