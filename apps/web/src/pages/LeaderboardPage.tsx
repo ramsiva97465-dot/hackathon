@@ -413,7 +413,7 @@ export function LeaderboardPage() {
           setIsDecrypting(false)
           setCountdownNum(null)
         } else if (data.step > revealedStep && !isDecrypting) {
-          executeRevealToStep(data.step, targetRound)
+          setRevealedStep(data.step)
         }
       }
     } else if (data && !data.isRevealing) {
@@ -466,7 +466,7 @@ export function LeaderboardPage() {
             setIsDecrypting(false)
             setCountdownNum(null)
           } else if (res.data.step > revealedStep && !isDecrypting) {
-            executeRevealToStep(res.data.step, targetRound)
+            setRevealedStep(res.data.step)
           }
         }
       } else if (res.data && !res.data.isRevealing && isRevealing && !searchParams.get('reveal')) {
@@ -478,6 +478,29 @@ export function LeaderboardPage() {
   }
 
   useEffect(() => { emit('leaderboard:subscribe') }, [emit])
+
+  // One-time user interaction listener to wake up browser audio context
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      try {
+        const AudioContext = window.AudioContext || (window as any).webkitAudioContext
+        if (AudioContext) {
+          const ctx = new AudioContext()
+          if (ctx.state === 'suspended') ctx.resume()
+        }
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.resume()
+          window.speechSynthesis.getVoices()
+        }
+      } catch (e) {}
+    }
+    window.addEventListener('click', handleFirstInteraction, { once: true })
+    window.addEventListener('keydown', handleFirstInteraction, { once: true })
+    return () => {
+      window.removeEventListener('click', handleFirstInteraction)
+      window.removeEventListener('keydown', handleFirstInteraction)
+    }
+  }, [])
 
   useEffect(() => {
     fetchLiveLeaderboard()
@@ -558,18 +581,27 @@ export function LeaderboardPage() {
       if (activeRound === 2) return teamRound >= 2
       return true // Round 1: show all
     })
-    .sort((a, b) => b.totalScore - a.totalScore)
+    .sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0))
     .map((e, idx) => ({ ...e, rank: idx + 1 }))
 
   // Advancing Top 20 (sorted 1 to 20)
   const advancing = filtered.slice(0, ROUND2_CUTOFF)
   const notAdvancing = filtered.slice(ROUND2_CUTOFF)
-  const top3 = filtered.slice(0, 3)
+
+  // Official Top 3 for Grand Finale:
+  // If teams were promoted to Round 3 in database (team.round === 3), prioritize them; otherwise top 3 overall
+  const r3Teams = rawDisplay.filter(e => ((e as any).round || 1) === 3)
+  const top3 = ((r3Teams.length >= 3 ? r3Teams : rawDisplay).length > 0 ? (r3Teams.length >= 3 ? r3Teams : rawDisplay) : filtered)
+    .slice()
+    .sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0))
+    .slice(0, 3)
+    .map((e, idx) => ({ ...e, rank: idx + 1 }))
+
   const restR2 = filtered.slice(3)
   const podiumOrder = [
-    top3.find(e => e.rank === 2),
-    top3.find(e => e.rank === 1),
-    top3.find(e => e.rank === 3),
+    top3[1] || top3[0], // Rank 2 Silver (Left)
+    top3[0],            // Rank 1 Gold (Center)
+    top3[2] || top3[0], // Rank 3 Bronze (Right)
   ]
 
   const isFinale = revealRound === 3
@@ -845,6 +877,34 @@ export function LeaderboardPage() {
               <span className="text-[10px] font-black uppercase tracking-wider hidden sm:inline">TV Auto-Scroll</span>
             </div>
           )}
+
+          {/* Stage Audio Toggle */}
+          <button
+            onClick={() => {
+              const nextState = !soundEnabled
+              setSoundEnabled(nextState)
+              try {
+                const AudioContext = window.AudioContext || (window as any).webkitAudioContext
+                if (AudioContext) {
+                  const ctx = new AudioContext()
+                  if (ctx.state === 'suspended') ctx.resume()
+                }
+                if ('speechSynthesis' in window) {
+                  window.speechSynthesis.resume()
+                  if (nextState) speakCountdown('Stage audio active')
+                }
+              } catch (e) {}
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              soundEnabled 
+                ? 'bg-amber-500/15 border border-amber-500/30 text-amber-900 shadow-xs' 
+                : 'bg-black/5 border border-black/10 text-slate-500 hover:text-slate-800'
+            }`}
+            title={soundEnabled ? 'Stage Audio Active (Click to Mute)' : 'Stage Audio Muted (Click to Enable)'}
+          >
+            {soundEnabled ? <Volume2 size={13} className="text-amber-600 animate-pulse" /> : <VolumeX size={13} className="text-slate-400" />}
+            <span className="hidden sm:inline">{soundEnabled ? 'Audio ON' : 'Audio Muted'}</span>
+          </button>
 
           <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 shadow-xs">
             <Flame size={13} className="text-orange-500 fill-orange-500/20" />

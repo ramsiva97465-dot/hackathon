@@ -26,9 +26,17 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
 
   constructor(private readonly leaderboardService: LeaderboardService) {}
 
-  handleConnection(client: Socket) {
+  async handleConnection(client: Socket) {
     console.log(`[WS] Client connected: ${client.id}`)
     client.join('leaderboard')
+    try {
+      const leaderboard = await this.leaderboardService.getLeaderboard()
+      client.emit('leaderboard:update', leaderboard)
+      client.emit('leaderboard:tv_mode', { tvMode: this.isTvMode })
+      client.emit('leaderboard:reveal_state', { isRevealing: this.isRevealing, round: this.revealRound, step: this.revealStep })
+    } catch (err) {
+      console.error('[WS] Error sending initial state on connection:', err)
+    }
   }
 
   handleDisconnect(client: Socket) {
