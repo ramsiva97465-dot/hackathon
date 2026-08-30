@@ -144,10 +144,9 @@ export function RoundsManagement() {
   }
 
   const handlePromote = async (currentRound: number) => {
-
     const confirmMsg = currentRound === 1 
-      ? 'Are you sure you want to promote the Top 20 teams from Round 1 to Round 2 & start the Countdown Reveal on stage screens?'
-      : 'Are you sure you want to promote the Top 3 winners from Round 2 to Round 3 & start the Grand Finale Reveal on stage screens?'
+      ? 'Are you sure you want to calculate scores and promote the Top 20 teams from Round 1 to Round 2?'
+      : 'Are you sure you want to calculate scores and promote the Top 3 winners from Round 2 to Round 3?'
     
     if (!window.confirm(confirmMsg)) return
 
@@ -155,20 +154,14 @@ export function RoundsManagement() {
       setLoading(true)
       const res = await api.teams.promote(currentRound)
       if (res.data?.success) {
-        toast.success(`Successfully promoted ${res.data.promotedCount} teams! Reveal broadcasted to all live screens.`)
+        toast.success(
+          currentRound === 1
+            ? `✅ Successfully promoted ${res.data.promotedCount} teams to Round 2! Click 'Broadcast Top 20 Grand Reveal' whenever you are ready to trigger the stage countdown.`
+            : `✅ Successfully promoted Top 3 winners to Round 3! Use the Top 3 Controller below to reveal 3rd, 2nd, and 1st step-by-step on stage.`
+        )
         // Shift active view tab to next round
         setActiveTab(currentRound + 1)
         fetchLeaderboard()
-
-        if (currentRound === 1) {
-          // Trigger Top 20 reveal
-          await api.leaderboard.startReveal(2)
-          setIsStageRevealing(true)
-        } else if (currentRound === 2) {
-          // Trigger Top 3 Grand Finale reveal
-          await api.leaderboard.startReveal(3)
-          setIsStageRevealing(true)
-        }
       }
     } catch (err: any) {
       console.error(err)
@@ -275,7 +268,7 @@ export function RoundsManagement() {
                 className="flex items-center gap-1.5 px-4 py-2.5 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-[#E83C00]/15 cursor-pointer"
               >
                 <Play size={13} fill="white" />
-                Promote Top 20 & Start Grand Reveal
+                <span>⚡ Promote Top 20 to Round 2</span>
               </button>
             )}
             {activeRoundNum === 2 && (
@@ -286,7 +279,7 @@ export function RoundsManagement() {
                   className="flex items-center gap-1.5 px-3.5 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
                 >
                   <Sparkles size={13} />
-                  Replay Top 20 Reveal
+                  <span>🎭 Broadcast Top 20 Reveal (20 ➔ 1)</span>
                 </button>
                 <button
                   onClick={() => handlePromote(2)}
@@ -294,7 +287,7 @@ export function RoundsManagement() {
                   className="flex items-center gap-1.5 px-4 py-2.5 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-[#E83C00]/15 cursor-pointer"
                 >
                   <Crown size={14} />
-                  Promote Top 3 & Grand Finale Reveal
+                  <span>👑 Promote Top 3 to Round 3</span>
                 </button>
               </div>
             )}
@@ -305,7 +298,7 @@ export function RoundsManagement() {
                 className="flex items-center gap-1.5 px-4 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
                 <Crown size={14} className="text-amber-400" />
-                Replay Top 3 Grand Finale Reveal
+                <span>👑 Broadcast Top 3 Grand Finale Reveal</span>
               </button>
             )}
           </div>
