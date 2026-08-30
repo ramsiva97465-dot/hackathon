@@ -2,6 +2,18 @@ import { Controller, Get, Post, Body, Param, Patch, UseGuards, Req, Delete } fro
 import { TeamsService } from './teams.service'
 import { ParticipantGuard } from '../auth/participant.guard'
 import { AuthGuard, PermissionsGuard, RequirePermissions } from '../auth/guards'
+import { IsNumber, IsOptional } from 'class-validator'
+
+class PromoteTeamsDto {
+  @IsNumber()
+  currentRound: number
+}
+
+class AutoDistributeJudgesDto {
+  @IsNumber()
+  @IsOptional()
+  judgesPerTeam?: number
+}
 
 @Controller('teams')
 export class TeamsController {
@@ -49,14 +61,17 @@ export class TeamsController {
     const dummyJudges = await prisma.user.findMany({
       where: { role: 'JUDGE', email: { not: 'judge@theaitel.com' } }
     })
-    for (const dj of dummyJudges) {
-      await prisma.judge.deleteMany({ where: { id: dj.id } })
-      await prisma.user.delete({ where: { id: dj.id } })
+    
+    for (const j of dummyJudges) {
+      await prisma.judgeAssignment.deleteMany({ where: { judgeId: j.id } })
+      await prisma.scoreSheet.deleteMany({ where: { judgeId: j.id } })
+      await prisma.judge.deleteMany({ where: { userId: j.id } })
+      await prisma.session.deleteMany({ where: { userId: j.id } })
+      await prisma.user.delete({ where: { id: j.id } })
     }
 
-    // Wipe all team and score related data
+    // Delete Dummy Teams & Scores
     await prisma.leaderboard.deleteMany({})
-    await prisma.teamMember.deleteMany({})
     await prisma.score.deleteMany({})
     await prisma.scoreSheet.deleteMany({})
     await prisma.judgeAssignment.deleteMany({})
@@ -80,8 +95,8 @@ export class TeamsController {
   }
 
   @Post('auto-distribute-judges')
-  autoDistributeJudges(@Body('judgesPerTeam') judgesPerTeam?: number) {
-    return this.service.autoDistributeJudges(judgesPerTeam ?? 1)
+  autoDistributeJudges(@Body() dto: AutoDistributeJudgesDto) {
+    return this.service.autoDistributeJudges(dto?.judgesPerTeam ?? 1)
   }
 
   @Patch(':id/table-number')
@@ -97,8 +112,8 @@ export class TeamsController {
   }
 
   @Post('promote')
-  promoteTeams(@Body('currentRound') currentRound: number) {
-    return this.service.promoteTeams(Number(currentRound))
+  promoteTeams(@Body() dto: PromoteTeamsDto) {
+    return this.service.promoteTeams(Number(dto.currentRound))
   }
 
   @Post('reset-rounds')

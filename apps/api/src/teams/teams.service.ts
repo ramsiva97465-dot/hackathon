@@ -582,8 +582,9 @@ export class TeamsService {
     if (!hackathon) throw new Error('No hackathon found')
 
     if (currentRound === 1) {
+      // Find all competing teams in the hackathon
       const teams = await this.prisma.team.findMany({
-        where: { hackathonId: hackathon.id, status: 'COMPETING', round: 1 },
+        where: { hackathonId: hackathon.id, status: 'COMPETING' },
         include: {
           scoreSheets: {
             where: { isSubmitted: true },
@@ -607,11 +608,23 @@ export class TeamsService {
         return { id: t.id, overallScore }
       }).sort((a, b) => b.overallScore - a.overallScore)
 
-      const top20Ids = sortedTeams.slice(0, 20).map(t => t.id)
+      const top20 = sortedTeams.slice(0, 20)
+      const top20Ids = top20.map(t => t.id)
+      const restIds = sortedTeams.slice(20).map(t => t.id)
+
       if (top20Ids.length === 0) {
-        throw new Error('No teams have been graded yet in Round 1.')
+        throw new Error('No teams found to promote.')
       }
 
+      // Reset rest to round 1
+      if (restIds.length > 0) {
+        await this.prisma.team.updateMany({
+          where: { id: { in: restIds } },
+          data: { round: 1 }
+        })
+      }
+
+      // Update top 20 to round 2
       await this.prisma.team.updateMany({
         where: { id: { in: top20Ids } },
         data: { round: 2 }
@@ -632,7 +645,7 @@ export class TeamsService {
       return { success: true, promotedCount: top20Ids.length }
     } else if (currentRound === 2) {
       const teams = await this.prisma.team.findMany({
-        where: { hackathonId: hackathon.id, status: 'COMPETING', round: 2 },
+        where: { hackathonId: hackathon.id, status: 'COMPETING', round: { in: [2, 3] } },
         include: {
           scoreSheets: {
             where: { isSubmitted: true },
@@ -658,15 +671,15 @@ export class TeamsService {
 
       const top3 = sortedTeams.slice(0, 3)
       if (top3.length === 0) {
-        throw new Error('No teams have been graded yet in Round 2.')
+        throw new Error('No teams found in Round 2.')
       }
 
-      for (let i = 0; i < top3.length; i++) {
-        await this.prisma.team.update({
-          where: { id: top3[i].id },
-          data: { round: 3 }
-        })
-      }
+      const top3Ids = top3.map(t => t.id)
+
+      await this.prisma.team.updateMany({
+        where: { id: { in: top3Ids } },
+        data: { round: 3 }
+      })
 
       // Broadcast immediately so leaderboard auto-switches to Stage 3 & starts Top 3 Grand Finale Reveal
       this.leaderboardGateway.broadcastLeaderboardUpdate().catch(err =>
@@ -682,6 +695,7 @@ export class TeamsService {
 
       return { success: true, promotedCount: top3.length }
     }
+
 
     throw new Error('Invalid round promotion request.')
   }

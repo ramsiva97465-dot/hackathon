@@ -18,44 +18,51 @@ const ROUND2_CUTOFF = 20 // Top 20 advance to round 2
 // ── Web Audio Synth for Dramatic Reveal Fanfares ──────────────────────────────
 function playRevealChime(rank: number) {
   try {
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
-    if (!AudioCtx) return
-    const ctx = new AudioCtx()
-
-    const isGold = rank === 1
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext
+    if (!AudioContext) return
+    const ctx = new AudioContext()
+    
+    // Fanfare chords based on rank for maximum suspense & triumph
+    const isChampion = rank === 1
     const isSilver = rank === 2
     const isBronze = rank === 3
-    const isTop10 = rank <= 10
 
-    const freqs = isGold 
-      ? [523.25, 659.25, 783.99, 1046.50, 1318.51] // High C Major fanfare
-      : isSilver 
-      ? [440.00, 554.37, 659.25, 880.00] // A Major
-      : isBronze 
-      ? [392.00, 493.88, 587.33, 783.99] // G Major
-      : isTop10 
-      ? [329.63, 392.00, 493.88] // E minor chord
-      : [261.63, 329.63, 392.00] // C major chord
+    let freqs: number[]
+    if (isChampion) {
+      // Grand Champion Victory Fanfare (C5 -> E5 -> G5 -> C6 -> E6 high triumph)
+      freqs = [523.25, 659.25, 783.99, 1046.50, 1318.51]
+    } else if (isSilver) {
+      // Silver 1st Runner Up Fanfare (D5 -> F#5 -> A5 -> D6)
+      freqs = [587.33, 739.99, 880.00, 1174.66]
+    } else if (isBronze) {
+      // Bronze 2nd Runner Up Fanfare (E5 -> G#5 -> B5 -> E6)
+      freqs = [440.00, 554.37, 659.25, 880.00]
+    } else {
+      // Standard Top 20 countdown chime
+      freqs = [392.00, 523.25, 659.25]
+    }
 
     freqs.forEach((freq, idx) => {
       const osc = ctx.createOscillator()
       const gain = ctx.createGain()
-      osc.type = isGold ? 'triangle' : 'sine'
-      osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.09)
+      osc.type = isChampion ? 'triangle' : isSilver ? 'sawtooth' : 'sine'
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.1)
       
-      gain.gain.setValueAtTime(0, ctx.currentTime + idx * 0.09)
-      gain.gain.linearRampToValueAtTime(isGold ? 0.28 : 0.16, ctx.currentTime + idx * 0.09 + 0.03)
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.09 + (isGold ? 1.4 : 0.65))
+      gain.gain.setValueAtTime(0, ctx.currentTime + idx * 0.1)
+      gain.gain.linearRampToValueAtTime(isChampion ? 0.32 : 0.2, ctx.currentTime + idx * 0.1 + 0.03)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.1 + (isChampion ? 1.8 : 0.8))
       
       osc.connect(gain)
       gain.connect(ctx.destination)
-      osc.start(ctx.currentTime + idx * 0.09)
-      osc.stop(ctx.currentTime + idx * 0.09 + (isGold ? 1.5 : 0.7))
+      osc.start(ctx.currentTime + idx * 0.1)
+      osc.stop(ctx.currentTime + idx * 0.1 + (isChampion ? 1.9 : 0.9))
     })
   } catch (e) {
     // Audio may be muted by browser policy before first user interaction
   }
 }
+
+
 
 const mockLeaderboard: LeaderboardEntry[] = [
   { rank: 1,  teamId: '1',  teamName: 'SpeakSense',    college: 'BITS Pilani',     track: 'REAL_WORLD_DEPLOYMENT', totalScore: 91.2, judgeCount: 6, previousRank: 2,  scores: [] },
@@ -728,48 +735,119 @@ export function LeaderboardPage() {
                 {podiumOrder.map((entry, idx) => {
                   if (!entry) return null
                   const isFirst = entry.rank === 1
-                  const heights = { 1: 'h-[360px] sm:h-[400px]', 2: 'h-[300px] sm:h-[340px]', 3: 'h-[260px] sm:h-[300px]' }
+                  const heights = { 1: 'h-[380px] sm:h-[420px]', 2: 'h-[320px] sm:h-[360px]', 3: 'h-[280px] sm:h-[320px]' }
                   const cardStyles = {
-                    1: { bg: '#F4ECE1', border: '#E83C00', badge: 'bg-[#E83C00] text-white', shadow: 'shadow-2xl shadow-orange-900/25 ring-2 ring-orange-400/50' },
-                    2: { bg: '#F4ECE1', border: '#475569', badge: 'bg-slate-700 text-white', shadow: 'shadow-xl shadow-black/10' },
-                    3: { bg: '#F4ECE1', border: '#B45309', badge: 'bg-amber-800 text-white', shadow: 'shadow-xl shadow-black/10' },
+                    1: { bg: '#F4ECE1', border: '#E83C00', badge: 'bg-[#E83C00] text-white', shadow: 'shadow-2xl shadow-orange-900/30 ring-4 ring-amber-400/60' },
+                    2: { bg: '#F4ECE1', border: '#475569', badge: 'bg-slate-700 text-white', shadow: 'shadow-xl shadow-black/10 ring-2 ring-slate-400/40' },
+                    3: { bg: '#F4ECE1', border: '#B45309', badge: 'bg-amber-800 text-white', shadow: 'shadow-xl shadow-black/10 ring-2 ring-amber-600/40' },
                   }
                   const style = cardStyles[entry.rank as keyof typeof cardStyles]
+                  // Unlocked step condition: Step 1 reveals #3, Step 2 reveals #2, Step 3 reveals #1
                   const isUnlocked = revealedStep >= (4 - entry.rank)
+
+                  if (!isUnlocked) {
+                    return (
+                      <motion.div
+                        key={`podium-locked-${entry.rank}`}
+                        layout
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className={`relative flex flex-col items-center justify-between p-6 sm:p-8 rounded-[2.5rem] w-1/3 ${heights[entry.rank as keyof typeof heights]} shadow-2xl overflow-hidden border-2 transition-all`}
+                        style={{
+                          background: isFirst
+                            ? 'linear-gradient(180deg, #1C1917 0%, #0C0A09 100%)'
+                            : entry.rank === 2
+                            ? 'linear-gradient(180deg, #18181B 0%, #09090B 100%)'
+                            : 'linear-gradient(180deg, #1F1B16 0%, #0F0D0B 100%)',
+                          borderColor: isFirst ? 'rgba(232, 60, 0, 0.4)' : entry.rank === 2 ? 'rgba(148, 163, 184, 0.3)' : 'rgba(217, 119, 6, 0.3)'
+                        }}
+                      >
+                        {/* Shimmering Animated Background Ring */}
+                        <div className="absolute inset-0 bg-radial from-amber-500/5 to-transparent pointer-events-none" />
+
+                        {/* Top Locked Badge */}
+                        <div className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-2xl flex items-center gap-1.5 justify-center font-black text-[11px] sm:text-xs shadow-xl ${
+                          isFirst 
+                            ? 'bg-amber-950/80 text-amber-300 border border-amber-500/40 ring-2 ring-amber-500/20' 
+                            : entry.rank === 2 
+                            ? 'bg-slate-900/90 text-slate-300 border border-slate-600/40' 
+                            : 'bg-amber-950/70 text-amber-400 border border-amber-700/40'
+                        }`}>
+                          <Lock size={12} className="text-amber-400 animate-pulse" />
+                          <span>{isFirst ? '👑 1st Place Champion' : entry.rank === 2 ? '🥈 1st Runner Up' : '🥉 2nd Runner Up'}</span>
+                        </div>
+
+                        {/* Center Mystery Shield with Pulsing Mystery Icon */}
+                        <div className="my-auto flex flex-col items-center text-center">
+                          <div className="w-14 h-14 sm:w-18 sm:h-18 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 shadow-inner relative">
+                            <Lock size={26} className="text-amber-400/80 animate-bounce" />
+                            <div className="absolute inset-0 rounded-3xl border border-amber-500/30 animate-ping opacity-25" />
+                          </div>
+                          <span className="text-xs sm:text-sm font-black text-white/90 tracking-wider">
+                            {isFirst ? '👑 FINALIST #1' : entry.rank === 2 ? '🥈 FINALIST #2' : '🥉 FINALIST #3'}
+                          </span>
+                          <span className="text-[10px] text-amber-400/80 font-bold uppercase tracking-widest mt-1 animate-pulse">
+                            🔒 Awaiting Reveal...
+                          </span>
+                        </div>
+
+                        {/* Bottom Mystery Score */}
+                        <div className="w-full pt-4 border-t border-white/10 text-center">
+                          <span className="text-xl sm:text-2xl font-mono font-black text-white/40 tracking-widest">
+                            ??.?
+                          </span>
+                          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">Final Score</p>
+                        </div>
+                      </motion.div>
+                    )
+                  }
 
                   return (
                     <motion.div
                       key={`podium-${entry.teamId}`}
                       layout
-                      initial={{ opacity: 0, y: 50 }}
-                      animate={{ opacity: isUnlocked ? 1 : 0.45, y: 0 }}
-                      transition={{ delay: idx * 0.15, duration: 0.6, type: 'spring', bounce: 0.35 }}
+                      initial={{ opacity: 0, scale: 0.8, y: 40 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      transition={{ duration: 0.6, type: 'spring', bounce: 0.4 }}
                       className={`relative flex flex-col items-center p-6 sm:p-8 rounded-[2.5rem] w-1/3 ${heights[entry.rank as keyof typeof heights]} ${style.shadow} transition-all`}
-                      style={{ backgroundColor: style.bg, border: `2px solid ${style.border}` }}
+                      style={{
+                        backgroundColor: style.bg,
+                        border: isFirst ? '3px solid #E83C00' : `2px solid ${style.border}`,
+                        boxShadow: isFirst
+                          ? '0 25px 50px -12px rgba(232, 60, 0, 0.35), 0 0 30px rgba(245, 158, 11, 0.3)'
+                          : style.shadow
+                      }}
                     >
                       {/* Top Badge */}
                       <div className={`absolute -top-6 px-4 sm:px-6 py-2 sm:py-2.5 rounded-2xl flex items-center gap-1.5 justify-center font-black text-sm sm:text-base shadow-xl ${style.badge}`}>
                         {isFirst ? (
                           <>
-                            <Crown size={18} className="text-amber-300 fill-amber-300/30 stroke-[2.5]" />
-                            <span>1st Place</span>
+                            <Crown size={18} className="text-amber-300 fill-amber-300 stroke-[2.5] animate-bounce" />
+                            <span>👑 Grand Champion</span>
                           </>
                         ) : entry.rank === 2 ? (
                           <>
                             <Medal size={18} className="text-slate-200 stroke-[2.5]" />
-                            <span>2nd Place</span>
+                            <span>🥈 1st Runner Up</span>
                           </>
                         ) : (
                           <>
                             <Award size={18} className="text-amber-200 stroke-[2.5]" />
-                            <span>3rd Place</span>
+                            <span>🥉 2nd Runner Up</span>
                           </>
                         )}
                       </div>
 
                       {/* Avatar & Team Info */}
                       <div className="mt-7 sm:mt-9 flex flex-col items-center text-center flex-1 w-full min-w-0">
-                        <Avatar name={entry.teamName} size="lg" className={`mb-3 shadow-lg ring-4 ${isFirst ? 'ring-[#E83C00]/30' : 'ring-black/10'}`} />
+                        <div className="relative">
+                          <Avatar name={entry.teamName} size="lg" className={`mb-3 shadow-lg ring-4 ${isFirst ? 'ring-[#E83C00] shadow-orange-500/40' : entry.rank === 2 ? 'ring-slate-400 shadow-slate-500/20' : 'ring-amber-600 shadow-amber-600/20'}`} />
+                          {isFirst && (
+                            <div className="absolute -top-3 -right-2 bg-amber-400 text-slate-900 rounded-full p-1 shadow-md animate-bounce">
+                              <Crown size={14} className="fill-slate-900" />
+                            </div>
+                          )}
+                        </div>
                         <h3 className="text-lg sm:text-2xl font-black text-[#1A1A1A] mb-1 truncate w-full">{entry.teamName}</h3>
                         <p className="text-slate-500 font-medium text-xs sm:text-sm truncate w-full">{entry.college}</p>
                         <div className="mt-2">
@@ -781,8 +859,8 @@ export function LeaderboardPage() {
 
                       {/* Final Score */}
                       <div className="w-full pt-4 mt-auto border-t border-black/10 text-center">
-                        <motion.div key={entry.totalScore} initial={{ scale: 1.15 }} animate={{ scale: 1 }}
-                          className="text-3xl sm:text-4xl font-black text-[#1A1A1A] font-mono">
+                        <motion.div key={entry.totalScore} initial={{ scale: 1.25 }} animate={{ scale: 1 }}
+                          className={`text-3xl sm:text-4xl font-black font-mono ${isFirst ? 'text-[#E83C00]' : 'text-[#1A1A1A]'}`}>
                           {entry.totalScore.toFixed(1)}
                         </motion.div>
                         <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mt-0.5">Final Score</p>
@@ -791,6 +869,7 @@ export function LeaderboardPage() {
                   )
                 })}
               </div>
+
             </div>
           ) : (
             /* ROUND 2: TOP 20 QUALIFIERS TABLE */
