@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSearchParams } from 'react-router-dom'
+import confetti from 'canvas-confetti'
 import { SnapServeMark, VobizMark } from '@/components/brand/BrandLogos'
 import { Avatar } from '@/components/ui/Avatar'
 import { getTrackConfig } from '@/lib/utils'
@@ -12,8 +13,65 @@ import {
 import type { LeaderboardEntry } from '@hackathon/shared'
 import api from '@/lib/api'
 
-
 const ROUND2_CUTOFF = 20 // Top 20 advance to round 2
+
+// ── Cinematic Confetti FX for Grand Finale ────────────────────────────────────
+function triggerFinaleConfetti(rank: number) {
+  try {
+    if (rank === 3) {
+      // Bronze confetti burst from right
+      confetti({
+        particleCount: 75,
+        spread: 70,
+        origin: { x: 0.8, y: 0.6 },
+        colors: ['#b45309', '#d97706', '#f59e0b', '#fbbf24', '#ffffff']
+      })
+    } else if (rank === 2) {
+      // Silver confetti burst from left
+      confetti({
+        particleCount: 95,
+        spread: 75,
+        origin: { x: 0.2, y: 0.6 },
+        colors: ['#94a3b8', '#cbd5e1', '#e2e8f0', '#38bdf8', '#ffffff']
+      })
+    } else if (rank === 1) {
+      // 👑 GRAND CHAMPION DUAL CANNON & FIREWORKS SHOWER (3.5s celebration)
+      const duration = 3.5 * 1000
+      const end = Date.now() + duration
+      const colors = ['#E83C00', '#F59E0B', '#FFD700', '#FBBF24', '#FFFFFF', '#10B981']
+
+      ;(function frame() {
+        confetti({
+          particleCount: 7,
+          angle: 60,
+          spread: 65,
+          origin: { x: 0, y: 0.75 },
+          colors
+        })
+        confetti({
+          particleCount: 7,
+          angle: 120,
+          spread: 65,
+          origin: { x: 1, y: 0.75 },
+          colors
+        })
+        confetti({
+          particleCount: 5,
+          spread: 360,
+          startVelocity: 30,
+          origin: { x: 0.5, y: 0.35 },
+          colors
+        })
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame)
+        }
+      })()
+    }
+  } catch (e) {
+    // Non-blocking fallback
+  }
+}
 
 // ── Web Audio Synth for Dramatic Reveal Fanfares ──────────────────────────────
 function playRevealChime(rank: number) {
@@ -21,46 +79,94 @@ function playRevealChime(rank: number) {
     const AudioContext = window.AudioContext || (window as any).webkitAudioContext
     if (!AudioContext) return
     const ctx = new AudioContext()
-    
-    // Fanfare chords based on rank for maximum suspense & triumph
+
     const isChampion = rank === 1
     const isSilver = rank === 2
     const isBronze = rank === 3
 
-    let freqs: number[]
     if (isChampion) {
-      // Grand Champion Victory Fanfare (C5 -> E5 -> G5 -> C6 -> E6 high triumph)
-      freqs = [523.25, 659.25, 783.99, 1046.50, 1318.51]
-    } else if (isSilver) {
-      // Silver 1st Runner Up Fanfare (D5 -> F#5 -> A5 -> D6)
-      freqs = [587.33, 739.99, 880.00, 1174.66]
-    } else if (isBronze) {
-      // Bronze 2nd Runner Up Fanfare (E5 -> G#5 -> B5 -> E6)
-      freqs = [440.00, 554.37, 659.25, 880.00]
-    } else {
-      // Standard Top 20 countdown chime
-      freqs = [392.00, 523.25, 659.25]
-    }
+      // 1. Deep Sub-Bass Rumble
+      const subOsc = ctx.createOscillator()
+      const subGain = ctx.createGain()
+      subOsc.type = 'sine'
+      subOsc.frequency.setValueAtTime(65, ctx.currentTime)
+      subOsc.frequency.exponentialRampToValueAtTime(130, ctx.currentTime + 0.5)
+      subGain.gain.setValueAtTime(0.35, ctx.currentTime)
+      subGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.2)
+      subOsc.connect(subGain)
+      subGain.connect(ctx.destination)
+      subOsc.start(ctx.currentTime)
+      subOsc.stop(ctx.currentTime + 2.2)
 
-    freqs.forEach((freq, idx) => {
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.type = isChampion ? 'triangle' : isSilver ? 'sawtooth' : 'sine'
-      osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.1)
-      
-      gain.gain.setValueAtTime(0, ctx.currentTime + idx * 0.1)
-      gain.gain.linearRampToValueAtTime(isChampion ? 0.32 : 0.2, ctx.currentTime + idx * 0.1 + 0.03)
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.1 + (isChampion ? 1.8 : 0.8))
-      
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      osc.start(ctx.currentTime + idx * 0.1)
-      osc.stop(ctx.currentTime + idx * 0.1 + (isChampion ? 1.9 : 0.9))
-    })
+      // 2. Royal Champion Harmonic Chords (C5 -> E5 -> G5 -> C6 -> E6 -> G6)
+      const freqs = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98]
+      freqs.forEach((freq, idx) => {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.type = 'triangle'
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.12)
+        gain.gain.setValueAtTime(0, ctx.currentTime + idx * 0.12)
+        gain.gain.linearRampToValueAtTime(0.35, ctx.currentTime + idx * 0.12 + 0.04)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.12 + 2.4)
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        osc.start(ctx.currentTime + idx * 0.12)
+        osc.stop(ctx.currentTime + idx * 0.12 + 2.5)
+      })
+    } else if (isSilver) {
+      // Silver 1st Runner Up (Bright Crystal Chimes D5 -> F#5 -> A5 -> D6)
+      const freqs = [587.33, 739.99, 880.00, 1174.66]
+      freqs.forEach((freq, idx) => {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.type = 'sawtooth'
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.1)
+        gain.gain.setValueAtTime(0, ctx.currentTime + idx * 0.1)
+        gain.gain.linearRampToValueAtTime(0.22, ctx.currentTime + idx * 0.1 + 0.03)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.1 + 1.2)
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        osc.start(ctx.currentTime + idx * 0.1)
+        osc.stop(ctx.currentTime + idx * 0.1 + 1.3)
+      })
+    } else if (isBronze) {
+      // Bronze 2nd Runner Up (Warm Brass Chimes E5 -> G#5 -> B5 -> E6)
+      const freqs = [440.00, 554.37, 659.25, 880.00]
+      freqs.forEach((freq, idx) => {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.type = 'triangle'
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.1)
+        gain.gain.setValueAtTime(0, ctx.currentTime + idx * 0.1)
+        gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + idx * 0.1 + 0.03)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.1 + 1.0)
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        osc.start(ctx.currentTime + idx * 0.1)
+        osc.stop(ctx.currentTime + idx * 0.1 + 1.1)
+      })
+    } else {
+      // Top 20 countdown ping
+      const freqs = [392.00, 523.25, 659.25]
+      freqs.forEach((freq, idx) => {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.type = 'sine'
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.08)
+        gain.gain.setValueAtTime(0, ctx.currentTime + idx * 0.08)
+        gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + idx * 0.08 + 0.02)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.08 + 0.6)
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        osc.start(ctx.currentTime + idx * 0.08)
+        osc.stop(ctx.currentTime + idx * 0.08 + 0.65)
+      })
+    }
   } catch (e) {
     // Audio may be muted by browser policy before first user interaction
   }
 }
+
 
 
 
@@ -576,17 +682,21 @@ export function LeaderboardPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-6"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/5 text-slate-700 mb-3 shadow-xl shadow-black/5">
-              <Trophy size={14} className="text-amber-500" />
-              <span className="text-xs font-bold uppercase tracking-widest">
-                {isFinale ? 'Stage 3 · Champions Ceremony' : 'Round 2 Qualifiers · Live Ceremony'}
+            <div className={`inline-flex items-center gap-2 px-5 py-2 rounded-full mb-3 shadow-xl ${
+              isFinale 
+                ? 'bg-amber-950/80 border border-amber-500/40 text-amber-300 shadow-amber-900/30' 
+                : 'bg-white border border-black/5 text-slate-700 shadow-black/5'
+            }`}>
+              {isFinale ? <Crown size={15} className="text-amber-400 fill-amber-400/40" /> : <Trophy size={14} className="text-amber-500" />}
+              <span className="text-xs font-black uppercase tracking-widest">
+                {isFinale ? '👑 Grand Finale · Champions Coronation' : 'Round 2 Qualifiers · Live Ceremony'}
               </span>
             </div>
             <h2 className="text-[#E83C00] font-bold tracking-[0.2em] uppercase text-sm mb-2">
               AI குரல் · VOICE FOR TAMIL NADU · 2026
             </h2>
             <h1 className="text-5xl sm:text-6xl font-black text-[#1A1A1A] tracking-tighter" style={{ textShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
-              {isFinale ? 'Top 3 Grand Finale Reveal' : 'Top 20 Grand Reveal'}
+              {isFinale ? 'Top 3 Grand Finale Winners' : 'Top 20 Grand Reveal'}
             </h1>
           </motion.div>
 
@@ -599,25 +709,38 @@ export function LeaderboardPage() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="bg-[#F4ECE1] border-2 border-black/10 p-8 sm:p-10 rounded-[2.5rem] shadow-2xl shadow-black/10 text-center relative overflow-hidden"
+                  className={`p-8 sm:p-10 rounded-[2.5rem] shadow-2xl text-center relative overflow-hidden border-2 ${
+                    isFinale
+                      ? 'bg-gradient-to-b from-[#1c140e] to-[#0c0906] border-amber-500/40 text-white shadow-orange-950/40'
+                      : 'bg-[#F4ECE1] border-black/10 text-[#1A1A1A] shadow-black/10'
+                  }`}
                 >
-                  <div className="w-20 h-20 rounded-3xl bg-[#E83C00]/10 border border-[#E83C00]/20 flex items-center justify-center mx-auto mb-4 text-[#E83C00] shadow-sm">
-                    {isFinale ? <Crown size={40} className="text-amber-500" /> : <Trophy size={38} />}
+                  <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-sm relative ${
+                    isFinale ? 'bg-amber-500/10 border border-amber-500/30 text-amber-400' : 'bg-[#E83C00]/10 border border-[#E83C00]/20 text-[#E83C00]'
+                  }`}>
+                    {isFinale ? (
+                      <>
+                        <Crown size={40} className="text-amber-400 animate-bounce" />
+                        <div className="absolute inset-0 rounded-3xl border border-amber-400/40 animate-ping opacity-30" />
+                      </>
+                    ) : (
+                      <Trophy size={38} />
+                    )}
                   </div>
-                  <h3 className="text-2xl sm:text-3xl font-black text-[#1A1A1A] mb-2">
-                    {isFinale ? 'Grand Finale Graded & Ready!' : 'Round 1 Graded & Verified!'}
+                  <h3 className={`text-2xl sm:text-3xl font-black mb-2 ${isFinale ? 'text-white' : 'text-[#1A1A1A]'}`}>
+                    {isFinale ? '👑 Grand Finale Verdict Sealed!' : 'Round 1 Graded & Verified!'}
                   </h3>
-                  <p className="text-slate-500 max-w-lg mx-auto text-sm sm:text-base mb-6 font-medium">
+                  <p className={`max-w-lg mx-auto text-sm sm:text-base mb-6 font-medium ${isFinale ? 'text-slate-300' : 'text-slate-500'}`}>
                     {isFinale 
-                      ? 'The ceremony will announce the 2nd Runner Up (#3), 1st Runner Up (#2), and crown the Grand Champion (#1)!' 
+                      ? 'The stage is set to unveil the 2nd Runner Up (#3), 1st Runner Up (#2), and crown the Grand Champion (#1) of Tamil Nadu!' 
                       : 'The ceremony will announce all 20 qualifying teams one by one, counting down from Rank #20 down to the #1 Leader!'}
                   </p>
                   <button
                     onClick={stepNextReveal}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-2xl font-black text-sm shadow-xl shadow-orange-950/20 cursor-pointer transition-all hover:scale-105"
+                    className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-2xl font-black text-sm shadow-xl shadow-orange-950/40 cursor-pointer transition-all hover:scale-105"
                   >
                     <Play size={15} fill="white" />
-                    {isFinale ? 'Start Finale Ceremony (#3 🥉)' : 'Start Announcement (#20)'}
+                    {isFinale ? '⚡ Begin Coronation Ceremony (#3 🥉)' : 'Start Announcement (#20)'}
                   </button>
                 </motion.div>
               ) : currentSpotlightTeam ? (
@@ -627,15 +750,19 @@ export function LeaderboardPage() {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 1.05, y: -20 }}
                   transition={{ type: 'spring', bounce: 0.35, duration: 0.65 }}
-                  className="relative p-7 sm:p-10 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/10 text-center border-2 bg-[#F4ECE1]"
+                  className={`relative p-7 sm:p-10 rounded-[2.5rem] overflow-hidden shadow-2xl text-center border-2 ${
+                    isFinale && currentSpotlightRank === 1
+                      ? 'bg-gradient-to-b from-[#2e1205] via-[#1a0a02] to-[#0d0501] border-[#E83C00] text-white ring-4 ring-amber-400/80 shadow-[0_0_80px_rgba(232,60,0,0.5)]'
+                      : isFinale && currentSpotlightRank === 2
+                      ? 'bg-gradient-to-b from-[#1e293b] to-[#0f172a] border-slate-400 text-white shadow-slate-900/40'
+                      : isFinale && currentSpotlightRank === 3
+                      ? 'bg-gradient-to-b from-[#2b170c] to-[#120904] border-amber-700 text-white shadow-amber-950/40'
+                      : 'bg-[#F4ECE1] text-[#1A1A1A] border-black/10 shadow-black/10'
+                  }`}
                   style={{
-                    borderColor: currentSpotlightRank === 1
-                      ? '#E83C00'
-                      : currentSpotlightRank === 2
-                      ? '#475569'
-                      : currentSpotlightRank === 3
-                      ? '#B45309'
-                      : '#059669'
+                    borderColor: !isFinale
+                      ? (currentSpotlightRank === 1 ? '#E83C00' : currentSpotlightRank === 2 ? '#475569' : currentSpotlightRank === 3 ? '#B45309' : '#059669')
+                      : undefined
                   }}
                 >
                   {/* Announcement Tag */}
@@ -670,46 +797,78 @@ export function LeaderboardPage() {
                   {/* Giant Rank */}
                   <div className="text-6xl sm:text-7xl font-black mb-3 tracking-tighter"
                     style={{
-                      color: currentSpotlightRank === 1 ? '#E83C00' : currentSpotlightRank === 2 ? '#334155' : currentSpotlightRank === 3 ? '#B45309' : '#047857'
+                      color: isFinale && currentSpotlightRank === 1
+                        ? '#FBBF24'
+                        : isFinale && currentSpotlightRank === 2
+                        ? '#CBD5E1'
+                        : isFinale && currentSpotlightRank === 3
+                        ? '#F59E0B'
+                        : (currentSpotlightRank === 1 ? '#E83C00' : currentSpotlightRank === 2 ? '#334155' : currentSpotlightRank === 3 ? '#B45309' : '#047857')
                     }}>
-                    {isFinale && currentSpotlightRank === 1 ? '👑 CHAMPION' : `RANK #${currentSpotlightRank}`}
+                    {isFinale && currentSpotlightRank === 1 ? '👑 GRAND CHAMPION' : `RANK #${currentSpotlightRank}`}
                   </div>
 
                   {/* Team Name */}
-                  <h2 className="text-3xl sm:text-5xl font-black text-[#1A1A1A] tracking-tight mb-2 truncate px-4">
+                  <h2 className={`text-3xl sm:text-5xl font-black tracking-tight mb-2 truncate px-4 ${
+                    isFinale ? 'text-white' : 'text-[#1A1A1A]'
+                  }`}>
                     {currentSpotlightTeam.teamName}
                   </h2>
 
                   {/* College & Track */}
-                  <div className="flex items-center justify-center gap-2.5 flex-wrap text-slate-600 text-sm sm:text-base font-medium mb-6">
+                  <div className={`flex items-center justify-center gap-2.5 flex-wrap text-sm sm:text-base font-medium mb-6 ${
+                    isFinale ? 'text-slate-300' : 'text-slate-600'
+                  }`}>
                     <span>{currentSpotlightTeam.college || 'Tamil Nadu'}</span>
-                    <span className="text-slate-400">•</span>
+                    <span className="opacity-40">•</span>
                     <span className="px-3 py-1 rounded-lg bg-white text-slate-800 text-xs font-bold border border-black/10 shadow-sm">
                       {getTrackConfig(currentSpotlightTeam.track).label}
                     </span>
                   </div>
 
                   {/* Score Card */}
-                  <div className="inline-flex items-center gap-3 px-7 py-3 rounded-2xl bg-white border border-black/10 shadow-sm">
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  <div className="inline-flex items-center gap-3 px-7 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-sm">
+                    <span className={`text-xs font-bold uppercase tracking-widest ${isFinale ? 'text-amber-200' : 'text-slate-500'}`}>
                       {isFinale ? 'Final Score' : 'Round 1 Score'}
                     </span>
-                    <span className="text-2xl sm:text-3xl font-black text-[#1A1A1A] font-mono">
+                    <span className={`text-3xl sm:text-4xl font-black font-mono ${isFinale ? 'text-amber-300' : 'text-[#1A1A1A]'}`}>
                       {currentSpotlightTeam.totalScore.toFixed(1)}
                     </span>
                   </div>
 
+                  {/* Action button for next step in Grand Finale */}
+                  {isFinale && revealedStep < 3 && (
+                    <div className="mt-6 flex justify-center">
+                      <button
+                        onClick={stepNextReveal}
+                        className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl font-black text-sm shadow-xl cursor-pointer transition-all hover:scale-105 ${
+                          revealedStep === 1
+                            ? 'bg-slate-700 hover:bg-slate-600 text-white shadow-slate-900/50'
+                            : 'bg-gradient-to-r from-[#E83C00] to-amber-500 hover:from-[#c93400] hover:to-amber-600 text-white shadow-orange-950/50 ring-2 ring-amber-400 animate-pulse'
+                        }`}
+                      >
+                        <Play size={14} fill="white" />
+                        {revealedStep === 1 ? 'Reveal 1st Runner Up (#2 🥈) ➔' : '👑 CROWN THE GRAND CHAMPION (#1) ➔'}
+                      </button>
+                    </div>
+                  )}
+
                   {/* Progress Indicator */}
                   <div className="mt-7 pt-4 border-t border-black/10 flex items-center justify-between text-xs text-slate-500 font-semibold px-2">
-                    <span className="font-mono">Progress: {revealedStep} of {maxSteps} revealed</span>
+                    <span className={`font-mono ${isFinale ? 'text-slate-400' : 'text-slate-500'}`}>
+                      Progress: {revealedStep} of {maxSteps} revealed
+                    </span>
                     {revealedStep === maxSteps ? (
-                      <span className="inline-flex items-center gap-1.5 text-[#E83C00] font-black">
-                        <Sparkles size={14} className="text-amber-500 fill-amber-500/20" />
-                        {isFinale ? '👑 All Winners Crowned!' : 'All 20 Finalists Revealed'}
-                      </span>
+                      <button
+                        onClick={() => { setRevealedStep(0); }}
+                        className="inline-flex items-center gap-1.5 text-amber-400 hover:text-amber-300 font-black cursor-pointer"
+                      >
+                        <RotateCcw size={13} />
+                        {isFinale ? '🔄 Replay Grand Finale Ceremony' : 'Replay Announcement'}
+                      </button>
                     ) : (
-                      <span className="text-slate-700 font-bold">
-                        Next: Rank #{currentSpotlightRank - 1}
+                      <span className={isFinale ? 'text-amber-300 font-bold' : 'text-slate-700 font-bold'}>
+                        Next: {isFinale ? (currentSpotlightRank === 3 ? '1st Runner Up (#2 🥈)' : 'Grand Champion (#1 👑)') : `Rank #${currentSpotlightRank - 1}`}
                       </span>
                     )}
                   </div>
@@ -735,7 +894,7 @@ export function LeaderboardPage() {
                 {podiumOrder.map((entry, idx) => {
                   if (!entry) return null
                   const isFirst = entry.rank === 1
-                  const heights = { 1: 'h-[380px] sm:h-[420px]', 2: 'h-[320px] sm:h-[360px]', 3: 'h-[280px] sm:h-[320px]' }
+                  const heights = { 1: 'h-[400px] sm:h-[450px]', 2: 'h-[320px] sm:h-[360px]', 3: 'h-[280px] sm:h-[320px]' }
                   const cardStyles = {
                     1: { bg: '#F4ECE1', border: '#E83C00', badge: 'bg-[#E83C00] text-white', shadow: 'shadow-2xl shadow-orange-900/30 ring-4 ring-amber-400/60' },
                     2: { bg: '#F4ECE1', border: '#475569', badge: 'bg-slate-700 text-white', shadow: 'shadow-xl shadow-black/10 ring-2 ring-slate-400/40' },
@@ -746,29 +905,42 @@ export function LeaderboardPage() {
                   const isUnlocked = revealedStep >= (4 - entry.rank)
 
                   if (!isUnlocked) {
+                    const isNextToUnlock = revealedStep === (3 - entry.rank)
                     return (
                       <motion.div
                         key={`podium-locked-${entry.rank}`}
                         layout
                         initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
+                        animate={{ 
+                          opacity: 1, 
+                          scale: isNextToUnlock && isFirst ? [1, 1.03, 1] : 1 
+                        }}
+                        transition={{ 
+                          repeat: isNextToUnlock && isFirst ? Infinity : 0, 
+                          duration: 1.8 
+                        }}
                         className={`relative flex flex-col items-center justify-between p-6 sm:p-8 rounded-[2.5rem] w-1/3 ${heights[entry.rank as keyof typeof heights]} shadow-2xl overflow-hidden border-2 transition-all`}
                         style={{
                           background: isFirst
-                            ? 'linear-gradient(180deg, #1C1917 0%, #0C0A09 100%)'
+                            ? 'linear-gradient(180deg, #2A1408 0%, #120904 100%)'
                             : entry.rank === 2
                             ? 'linear-gradient(180deg, #18181B 0%, #09090B 100%)'
                             : 'linear-gradient(180deg, #1F1B16 0%, #0F0D0B 100%)',
-                          borderColor: isFirst ? 'rgba(232, 60, 0, 0.4)' : entry.rank === 2 ? 'rgba(148, 163, 184, 0.3)' : 'rgba(217, 119, 6, 0.3)'
+                          borderColor: isFirst 
+                            ? (isNextToUnlock ? '#F59E0B' : 'rgba(232, 60, 0, 0.5)')
+                            : entry.rank === 2 
+                            ? 'rgba(148, 163, 184, 0.3)' 
+                            : 'rgba(217, 119, 6, 0.3)',
+                          boxShadow: isFirst && isNextToUnlock ? '0 0 40px rgba(245, 158, 11, 0.4)' : undefined
                         }}
                       >
                         {/* Shimmering Animated Background Ring */}
-                        <div className="absolute inset-0 bg-radial from-amber-500/5 to-transparent pointer-events-none" />
+                        <div className="absolute inset-0 bg-radial from-amber-500/10 to-transparent pointer-events-none" />
 
                         {/* Top Locked Badge */}
                         <div className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-2xl flex items-center gap-1.5 justify-center font-black text-[11px] sm:text-xs shadow-xl ${
                           isFirst 
-                            ? 'bg-amber-950/80 text-amber-300 border border-amber-500/40 ring-2 ring-amber-500/20' 
+                            ? 'bg-amber-950 text-amber-300 border border-amber-500/50 ring-2 ring-amber-500/30' 
                             : entry.rank === 2 
                             ? 'bg-slate-900/90 text-slate-300 border border-slate-600/40' 
                             : 'bg-amber-950/70 text-amber-400 border border-amber-700/40'
@@ -780,14 +952,18 @@ export function LeaderboardPage() {
                         {/* Center Mystery Shield with Pulsing Mystery Icon */}
                         <div className="my-auto flex flex-col items-center text-center">
                           <div className="w-14 h-14 sm:w-18 sm:h-18 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 shadow-inner relative">
-                            <Lock size={26} className="text-amber-400/80 animate-bounce" />
-                            <div className="absolute inset-0 rounded-3xl border border-amber-500/30 animate-ping opacity-25" />
+                            {isFirst ? (
+                              <Crown size={28} className="text-amber-400 animate-bounce" />
+                            ) : (
+                              <Lock size={26} className="text-amber-400/80 animate-pulse" />
+                            )}
+                            <div className="absolute inset-0 rounded-3xl border border-amber-500/40 animate-ping opacity-30" />
                           </div>
                           <span className="text-xs sm:text-sm font-black text-white/90 tracking-wider">
-                            {isFirst ? '👑 FINALIST #1' : entry.rank === 2 ? '🥈 FINALIST #2' : '🥉 FINALIST #3'}
+                            {isFirst ? '👑 GRAND CHAMPION' : entry.rank === 2 ? '🥈 1ST RUNNER UP' : '🥉 2ND RUNNER UP'}
                           </span>
-                          <span className="text-[10px] text-amber-400/80 font-bold uppercase tracking-widest mt-1 animate-pulse">
-                            🔒 Awaiting Reveal...
+                          <span className="text-[10px] text-amber-400 font-bold uppercase tracking-widest mt-1 animate-pulse">
+                            {isNextToUnlock ? '⚡ Next To Crown ⚡' : '🔒 Awaiting Reveal...'}
                           </span>
                         </div>
 
@@ -814,7 +990,7 @@ export function LeaderboardPage() {
                         backgroundColor: style.bg,
                         border: isFirst ? '3px solid #E83C00' : `2px solid ${style.border}`,
                         boxShadow: isFirst
-                          ? '0 25px 50px -12px rgba(232, 60, 0, 0.35), 0 0 30px rgba(245, 158, 11, 0.3)'
+                          ? '0 25px 60px -12px rgba(232, 60, 0, 0.4), 0 0 35px rgba(245, 158, 11, 0.35)'
                           : style.shadow
                       }}
                     >
@@ -869,7 +1045,6 @@ export function LeaderboardPage() {
                   )
                 })}
               </div>
-
             </div>
           ) : (
             /* ROUND 2: TOP 20 QUALIFIERS TABLE */
