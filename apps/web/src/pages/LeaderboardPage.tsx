@@ -512,14 +512,13 @@ export function LeaderboardPage() {
     return () => clearInterval(interval)
   }, [tvMode, isRevealing])
 
-  // Auto-detect current round from live data
+  // Active round is controlled explicitly via search params or when reveal runs
   useEffect(() => {
-    if (manualOverride || isRevealing) return
-    const rawData = entries
-    if (rawData.length === 0) return
-    const maxRound = Math.max(...rawData.map(e => (e as any).round || 1))
-    setActiveRound(maxRound)
-  }, [entries, manualOverride, isRevealing])
+    const r = searchParams.get('round')
+    if (r) {
+      setActiveRound(Number(r))
+    }
+  }, [searchParams])
 
   const rawDisplay = entries
 
