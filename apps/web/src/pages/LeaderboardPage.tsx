@@ -736,14 +736,14 @@ export function LeaderboardPage() {
     }
   }, [isRevealing, revealedStep, isFinale])
 
-  // Automatic Reveal Step Timer (Suspense delay)
+  // Automatic Reveal Step Timer for Round 2 Auto-Play only (Round 3 Finale is 100% controlled by Admin Remote)
   useEffect(() => {
-    if (!isRevealing || isPaused) {
+    if (!isRevealing || isPaused || isFinale) {
       if (timerRef.current) clearInterval(timerRef.current)
       return
     }
 
-    const delay = isFinale ? 3200 : 2400
+    const delay = 2400
 
     timerRef.current = setInterval(() => {
       setRevealedStep(prev => {
@@ -752,7 +752,7 @@ export function LeaderboardPage() {
           return prev
         }
         const next = prev + 1
-        const currentRank = isFinale ? (4 - next) : (21 - next)
+        const currentRank = 21 - next
         if (soundEnabled) {
           playRevealChime(currentRank)
         }
