@@ -163,12 +163,34 @@ function playRevealChime(rank: number) {
       })
     }
   } catch (e) {
-    // Audio may be muted by browser policy before first user interaction
+    // Audio may be muted before first user interaction
   }
 }
 
-
-
+function playHeartbeatTick() {
+  try {
+    const AudioContext = window.AudioContext || (window as any).webkitAudioContext
+    if (!AudioContext) return
+    const ctx = new AudioContext()
+    
+    // Sub-bass thumping heartbeat tick
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(55, ctx.currentTime)
+    osc.frequency.exponentialRampToValueAtTime(32, ctx.currentTime + 0.2)
+    
+    gain.gain.setValueAtTime(0.45, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28)
+    
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.start(ctx.currentTime)
+    osc.stop(ctx.currentTime + 0.28)
+  } catch (e) {
+    //
+  }
+}
 
 const mockLeaderboard: LeaderboardEntry[] = [
   { rank: 1,  teamId: '1',  teamName: 'SpeakSense',    college: 'BITS Pilani',     track: 'REAL_WORLD_DEPLOYMENT', totalScore: 91.2, judgeCount: 6, previousRank: 2,  scores: [] },
@@ -328,8 +350,13 @@ export function LeaderboardPage() {
   const [revealedStep, setRevealedStep] = useState<number>(0)
   const [isPaused, setIsPaused] = useState<boolean>(false)
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true)
+  const [isDecrypting, setIsDecrypting] = useState<boolean>(false)
+  const [countdownNum, setCountdownNum] = useState<number | null>(null)
+  const [scrambledName, setScrambledName] = useState<string>('')
+  const [decryptingRank, setDecryptingRank] = useState<number | null>(null)
   const timerRef = useRef<any>(null)
   const rosterRef = useRef<HTMLDivElement>(null)
+
 
   const { emit } = useWebSocket<LeaderboardEntry[]>('leaderboard:update', (data) => {
     setEntries(data)
@@ -513,15 +540,62 @@ export function LeaderboardPage() {
   }
 
   const stepNextReveal = () => {
-    setRevealedStep(prev => {
-      const next = Math.min(maxSteps, prev + 1)
-      const currentRank = isFinale ? (4 - next) : (21 - next)
+    if (isDecrypting) return // Prevent clicking during active decryption
+
+    const next = Math.min(maxSteps, revealedStep + 1)
+    if (next === revealedStep) return
+
+    const currentRank = isFinale ? (4 - next) : (21 - next)
+
+    if (isFinale) {
+      // 🌟 Slow 3-Second Dramatic Countdown & Slot-Machine Decryption for LCD Screen
+      setIsDecrypting(true)
+      setDecryptingRank(currentRank)
+      setCountdownNum(3)
+      if (soundEnabled) playHeartbeatTick()
+
+      const candidateNames = filtered.map(t => t.teamName)
+      let scrambleIdx = 0
+      const scrambleInterval = setInterval(() => {
+        if (candidateNames.length > 0) {
+          setScrambledName(candidateNames[scrambleIdx % candidateNames.length])
+          scrambleIdx++
+        }
+      }, 70)
+
+      // T = 1.0s: Countdown 2
+      setTimeout(() => {
+        setCountdownNum(2)
+        if (soundEnabled) playHeartbeatTick()
+      }, 1000)
+
+      // T = 2.0s: Countdown 1
+      setTimeout(() => {
+        setCountdownNum(1)
+        if (soundEnabled) playHeartbeatTick()
+      }, 2000)
+
+      // T = 3.0s: Unseal Winner & Trigger Climax!
+      setTimeout(() => {
+        clearInterval(scrambleInterval)
+        setIsDecrypting(false)
+        setCountdownNum(null)
+        setRevealedStep(next)
+        if (soundEnabled) {
+          playRevealChime(currentRank)
+        }
+        triggerFinaleConfetti(currentRank)
+      }, 3000)
+
+    } else {
+      // Round 2 standard reveal
+      setRevealedStep(next)
       if (soundEnabled) {
         playRevealChime(currentRank)
       }
-      return next
-    })
+    }
   }
+
 
   // Auto-scroll loop for Top 20 (Round 2) or Podium scroll (Round 3)
   useEffect(() => {
@@ -703,7 +777,70 @@ export function LeaderboardPage() {
           {/* 🌟 HERO SPOTLIGHT ANNOUNCEMENT CARD */}
           <div className="w-full max-w-3xl mb-10">
             <AnimatePresence mode="wait">
-              {revealedStep === 0 ? (
+              {isDecrypting ? (
+                <motion.div
+                  key="decrypting-lcd-card"
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 1.08 }}
+                  transition={{ duration: 0.4 }}
+                  className="relative p-8 sm:p-12 rounded-[2.5rem] overflow-hidden shadow-2xl text-center border-2 bg-gradient-to-b from-[#241308] via-[#140b04] to-[#080402] border-amber-500 text-white ring-4 ring-amber-500/40 shadow-[0_0_80px_rgba(245,158,11,0.4)]"
+                >
+                  {/* Animated Background Laser Radar */}
+                  <div className="absolute inset-0 bg-radial from-amber-500/20 via-transparent to-transparent pointer-events-none animate-pulse" />
+
+                  {/* Top Decryption Tag */}
+                  <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest mb-6 bg-amber-950/90 border border-amber-500/60 text-amber-300 shadow-md">
+                    <Sparkles size={14} className="text-amber-400 animate-spin" />
+                    <span>
+                      {decryptingRank === 1
+                        ? '👑 Unsealing Grand Champion (1st Place)...'
+                        : decryptingRank === 2
+                        ? '🥈 Decrypting 1st Runner Up (2nd Place)...'
+                        : '🥉 Decrypting 2nd Runner Up (3rd Place)...'}
+                    </span>
+                  </div>
+
+                  {/* Giant Countdown Pulse */}
+                  <div className="relative my-3 flex items-center justify-center">
+                    <motion.div
+                      key={countdownNum}
+                      initial={{ scale: 2.2, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.5, opacity: 0 }}
+                      transition={{ duration: 0.45, ease: 'easeOut' }}
+                      className="text-7xl sm:text-9xl font-black font-mono text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-300 to-orange-500 drop-shadow-[0_0_40px_rgba(251,191,36,0.9)]"
+                    >
+                      {countdownNum}
+                    </motion.div>
+                  </div>
+
+                  {/* Slot Machine Scrambled Name Roll */}
+                  <div className="h-16 flex items-center justify-center">
+                    <motion.div
+                      key={scrambledName}
+                      initial={{ opacity: 0.4, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-2xl sm:text-4xl font-mono font-black text-amber-200/90 tracking-wider truncate px-4"
+                    >
+                      {scrambledName || 'IDENTIFYING WINNER...'}
+                    </motion.div>
+                  </div>
+
+                  {/* Decryption Progress Bar */}
+                  <div className="w-full max-w-md mx-auto mt-6 bg-black/60 rounded-full h-2.5 overflow-hidden border border-amber-500/40 shadow-inner">
+                    <motion.div
+                      initial={{ width: '0%' }}
+                      animate={{ width: '100%' }}
+                      transition={{ duration: 3, ease: 'linear' }}
+                      className="h-full bg-gradient-to-r from-amber-600 via-amber-400 to-orange-500 shadow-md"
+                    />
+                  </div>
+                  <p className="text-xs text-amber-400 font-mono font-bold uppercase tracking-widest mt-4 animate-pulse">
+                    ⚡ ANALYZING FINAL EVALUATION MARKS · STAND BY ⚡
+                  </p>
+                </motion.div>
+              ) : revealedStep === 0 ? (
                 <motion.div
                   key="ready-state"
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -744,6 +881,7 @@ export function LeaderboardPage() {
                   </button>
                 </motion.div>
               ) : currentSpotlightTeam ? (
+
                 <motion.div
                   key={`spotlight-${currentSpotlightRank}-${currentSpotlightTeam.teamId}`}
                   initial={{ opacity: 0, scale: 0.85, y: 30 }}
@@ -906,6 +1044,8 @@ export function LeaderboardPage() {
 
                   if (!isUnlocked) {
                     const isNextToUnlock = revealedStep === (3 - entry.rank)
+                    const isCurrentlyDecrypting = isDecrypting && entry.rank === decryptingRank
+
                     return (
                       <motion.div
                         key={`podium-locked-${entry.rank}`}
@@ -913,25 +1053,33 @@ export function LeaderboardPage() {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ 
                           opacity: 1, 
-                          scale: isNextToUnlock && isFirst ? [1, 1.03, 1] : 1 
+                          scale: isCurrentlyDecrypting ? [1, 1.05, 1] : isNextToUnlock && isFirst ? [1, 1.03, 1] : 1 
                         }}
                         transition={{ 
-                          repeat: isNextToUnlock && isFirst ? Infinity : 0, 
-                          duration: 1.8 
+                          repeat: isCurrentlyDecrypting || (isNextToUnlock && isFirst) ? Infinity : 0, 
+                          duration: isCurrentlyDecrypting ? 0.7 : 1.8 
                         }}
                         className={`relative flex flex-col items-center justify-between p-6 sm:p-8 rounded-[2.5rem] w-1/3 ${heights[entry.rank as keyof typeof heights]} shadow-2xl overflow-hidden border-2 transition-all`}
                         style={{
-                          background: isFirst
+                          background: isCurrentlyDecrypting
+                            ? 'linear-gradient(180deg, #3d1b0a 0%, #170a04 100%)'
+                            : isFirst
                             ? 'linear-gradient(180deg, #2A1408 0%, #120904 100%)'
                             : entry.rank === 2
                             ? 'linear-gradient(180deg, #18181B 0%, #09090B 100%)'
                             : 'linear-gradient(180deg, #1F1B16 0%, #0F0D0B 100%)',
-                          borderColor: isFirst 
+                          borderColor: isCurrentlyDecrypting
+                            ? '#F59E0B'
+                            : isFirst 
                             ? (isNextToUnlock ? '#F59E0B' : 'rgba(232, 60, 0, 0.5)')
                             : entry.rank === 2 
                             ? 'rgba(148, 163, 184, 0.3)' 
                             : 'rgba(217, 119, 6, 0.3)',
-                          boxShadow: isFirst && isNextToUnlock ? '0 0 40px rgba(245, 158, 11, 0.4)' : undefined
+                          boxShadow: isCurrentlyDecrypting 
+                            ? '0 0 50px rgba(245, 158, 11, 0.6), 0 0 20px rgba(232, 60, 0, 0.4)' 
+                            : isFirst && isNextToUnlock 
+                            ? '0 0 40px rgba(245, 158, 11, 0.4)' 
+                            : undefined
                         }}
                       >
                         {/* Shimmering Animated Background Ring */}
@@ -939,38 +1087,50 @@ export function LeaderboardPage() {
 
                         {/* Top Locked Badge */}
                         <div className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-2xl flex items-center gap-1.5 justify-center font-black text-[11px] sm:text-xs shadow-xl ${
-                          isFirst 
+                          isCurrentlyDecrypting
+                            ? 'bg-amber-500 text-slate-950 ring-4 ring-amber-400/50 font-black animate-pulse'
+                            : isFirst 
                             ? 'bg-amber-950 text-amber-300 border border-amber-500/50 ring-2 ring-amber-500/30' 
                             : entry.rank === 2 
                             ? 'bg-slate-900/90 text-slate-300 border border-slate-600/40' 
                             : 'bg-amber-950/70 text-amber-400 border border-amber-700/40'
                         }`}>
-                          <Lock size={12} className="text-amber-400 animate-pulse" />
-                          <span>{isFirst ? '👑 1st Place Champion' : entry.rank === 2 ? '🥈 1st Runner Up' : '🥉 2nd Runner Up'}</span>
+                          <Lock size={12} className={isCurrentlyDecrypting ? 'text-slate-950 animate-spin' : 'text-amber-400 animate-pulse'} />
+                          <span>
+                            {isCurrentlyDecrypting
+                              ? `⚡ UNSEALING #${entry.rank} ⚡`
+                              : isFirst 
+                              ? '👑 1st Place Champion' 
+                              : entry.rank === 2 
+                              ? '🥈 1st Runner Up' 
+                              : '🥉 2nd Runner Up'}
+                          </span>
                         </div>
 
                         {/* Center Mystery Shield with Pulsing Mystery Icon */}
                         <div className="my-auto flex flex-col items-center text-center">
-                          <div className="w-14 h-14 sm:w-18 sm:h-18 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 shadow-inner relative">
+                          <div className={`w-14 h-14 sm:w-18 sm:h-18 rounded-3xl flex items-center justify-center mb-3 shadow-inner relative ${
+                            isCurrentlyDecrypting ? 'bg-amber-500/20 border-2 border-amber-400 ring-4 ring-amber-400/30' : 'bg-white/5 border border-white/10'
+                          }`}>
                             {isFirst ? (
-                              <Crown size={28} className="text-amber-400 animate-bounce" />
+                              <Crown size={28} className={isCurrentlyDecrypting ? 'text-amber-300 animate-bounce' : 'text-amber-400 animate-bounce'} />
                             ) : (
-                              <Lock size={26} className="text-amber-400/80 animate-pulse" />
+                              <Lock size={26} className={isCurrentlyDecrypting ? 'text-amber-300 animate-bounce' : 'text-amber-400/80 animate-pulse'} />
                             )}
-                            <div className="absolute inset-0 rounded-3xl border border-amber-500/40 animate-ping opacity-30" />
+                            <div className="absolute inset-0 rounded-3xl border border-amber-500/40 animate-ping opacity-40" />
                           </div>
                           <span className="text-xs sm:text-sm font-black text-white/90 tracking-wider">
                             {isFirst ? '👑 GRAND CHAMPION' : entry.rank === 2 ? '🥈 1ST RUNNER UP' : '🥉 2ND RUNNER UP'}
                           </span>
-                          <span className="text-[10px] text-amber-400 font-bold uppercase tracking-widest mt-1 animate-pulse">
-                            {isNextToUnlock ? '⚡ Next To Crown ⚡' : '🔒 Awaiting Reveal...'}
+                          <span className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${isCurrentlyDecrypting ? 'text-amber-300 animate-bounce' : 'text-amber-400 animate-pulse'}`}>
+                            {isCurrentlyDecrypting ? `⚡ DECIPHERING (${countdownNum}s) ⚡` : isNextToUnlock ? '⚡ Next To Crown ⚡' : '🔒 Awaiting Reveal...'}
                           </span>
                         </div>
 
                         {/* Bottom Mystery Score */}
                         <div className="w-full pt-4 border-t border-white/10 text-center">
-                          <span className="text-xl sm:text-2xl font-mono font-black text-white/40 tracking-widest">
-                            ??.?
+                          <span className={`text-xl sm:text-2xl font-mono font-black tracking-widest ${isCurrentlyDecrypting ? 'text-amber-300 animate-pulse' : 'text-white/40'}`}>
+                            {isCurrentlyDecrypting ? '??.?' : '??.?'}
                           </span>
                           <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">Final Score</p>
                         </div>

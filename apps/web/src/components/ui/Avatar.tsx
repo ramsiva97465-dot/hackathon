@@ -52,14 +52,14 @@ export function Avatar({ src, name = '?', size = 'md', status, className, ...pro
   const initials = getInitials(name)
 
   return (
-    <div className={cn('relative inline-flex shrink-0', className)} {...props}>
+    <div className={cn('relative inline-flex shrink-0 rounded-full', className)} {...props}>
       <div
         className={cn(
           'rounded-full flex items-center justify-center font-display font-extrabold text-white overflow-hidden',
           'ring-1 ring-white/10 shadow-[0_4px_15px_rgba(0,0,0,0.4)]',
           sizeStyles[size]
         )}
-        style={{ background: src ? undefined : bgGradient }}
+        style={{ background: bgGradient }}
       >
         {src ? (
           <img src={src} alt={name} className="w-full h-full object-cover" />
@@ -70,7 +70,7 @@ export function Avatar({ src, name = '?', size = 'md', status, className, ...pro
       {status && (
         <span
           className={cn(
-            'absolute bottom-0 right-0 rounded-full border border-[#030712]',
+            'absolute bottom-0 right-0 rounded-full ring-2 ring-background',
             statusColors[status],
             statusSizes[size]
           )}
