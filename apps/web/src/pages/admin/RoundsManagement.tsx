@@ -22,6 +22,7 @@ export function RoundsManagement() {
   const [activeTab, setActiveTab] = useState<number>(1) // 1 = Round 1, 2 = Round 2, 3 = Winners
   const [teams, setTeams] = useState<TeamOverview[]>([])
   const [isStageRevealing, setIsStageRevealing] = useState(false)
+  const [revealStep, setRevealStep] = useState(0)
   
   // Stats
   const [round1Count, setRound1Count] = useState(0)
@@ -43,6 +44,9 @@ export function RoundsManagement() {
       const res = await api.leaderboard.getRevealState()
       if (typeof res.data?.isRevealing === 'boolean') {
         setIsStageRevealing(res.data.isRevealing)
+      }
+      if (typeof res.data?.step === 'number') {
+        setRevealStep(res.data.step)
       }
     } catch (err) {
       // Ignore
@@ -78,10 +82,47 @@ export function RoundsManagement() {
       setLoading(true)
       await api.leaderboard.startReveal(round)
       setIsStageRevealing(true)
+      setRevealStep(0)
       toast.success(round === 3 ? 'Top 3 Grand Finale Reveal broadcasted to stage screens!' : 'Top 20 Grand Reveal broadcasted to stage screens!')
     } catch (err) {
       console.error(err)
       toast.error('Failed to start reveal.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleTriggerStep = async (step: number) => {
+    try {
+      setLoading(true)
+      if (!isStageRevealing) {
+        await api.leaderboard.startReveal(3)
+        setIsStageRevealing(true)
+      }
+      await api.leaderboard.setRevealStep(step)
+      setRevealStep(step)
+      if (step === 1) toast.success('🚀 Triggered 3rd Place Reveal (5s countdown started on LCD Screen)!')
+      else if (step === 2) toast.success('🚀 Triggered 2nd Place Reveal (5s countdown started on LCD Screen)!')
+      else if (step === 3) toast.success('👑 Triggered Grand Champion Coronation (5s countdown + Confetti on LCD Screen)!')
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to trigger reveal step.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResetStageToLocked = async () => {
+    try {
+      setLoading(true)
+      await api.leaderboard.startReveal(3)
+      await api.leaderboard.setRevealStep(0)
+      setRevealStep(0)
+      setIsStageRevealing(true)
+      toast.success('Stage reset to Vault Locked mode (ready for 3rd Place announcement).')
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to reset stage step.')
     } finally {
       setLoading(false)
     }
@@ -92,6 +133,7 @@ export function RoundsManagement() {
       setLoading(true)
       await api.leaderboard.stopReveal()
       setIsStageRevealing(false)
+      setRevealStep(0)
       toast.success('Stage reveal ended. Returned to standard leaderboard.')
     } catch (err) {
       console.error(err)
@@ -269,6 +311,148 @@ export function RoundsManagement() {
           </div>
         </div>
 
+        {/* 🎭 LIVE STAGE OPERATOR CONSOLE FOR TOP 3 GRAND FINALE */}
+        {(activeRoundNum === 3 || activeTab === 3 || isStageRevealing) && (
+          <div className="p-6 sm:p-7 rounded-2xl border-2 border-amber-500/40 bg-gradient-to-br from-[#1e130a] via-[#120a05] to-[#0a0502] text-white shadow-2xl relative overflow-hidden">
+            {/* Header */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-black uppercase tracking-widest mb-2">
+                  <Crown size={14} className="text-amber-400 animate-bounce" />
+                  <span>Auditorium LCD Screen Live Remote Control</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                  Top 3 Grand Finale Reveal Controller
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mt-1 font-medium">
+                  Click each button when the stage host speaks. The big LCD screen will synchronously run the <span className="text-amber-300 font-bold">5, 4, 3, 2, 1 slow countdown</span>, slot-machine name roll, sub-bass heartbeat ticks, and unseal that winner!
+                </p>
+              </div>
+
+              <a
+                href="/leaderboard?round=3&reveal=true"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-xs font-black text-amber-200 transition-all shadow-md shrink-0 self-start lg:self-center cursor-pointer"
+              >
+                <ExternalLink size={14} />
+                Open Live LCD Window ↗
+              </a>
+            </div>
+
+            {/* Step Buttons Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Step 1: 3rd Place */}
+              <button
+                onClick={() => handleTriggerStep(1)}
+                disabled={loading}
+                className={`p-5 rounded-2xl border-2 text-left transition-all cursor-pointer relative overflow-hidden group ${
+                  revealStep >= 1
+                    ? 'border-amber-600/80 bg-amber-950/70 text-amber-200 shadow-lg'
+                    : 'border-amber-700/40 bg-black/50 hover:bg-amber-950/40 text-slate-200 hover:border-amber-500 hover:scale-[1.02]'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-amber-800 text-amber-100 shadow-sm">
+                    Step 1
+                  </span>
+                  <span className={`text-xs font-bold ${revealStep >= 1 ? 'text-emerald-400 font-black' : 'text-amber-400'}`}>
+                    {revealStep >= 1 ? '✅ 3rd Unsealed' : '⚡ Ready To Trigger'}
+                  </span>
+                </div>
+                <div className="font-black text-base text-white flex items-center gap-2">
+                  <Medal size={18} className="text-amber-500" />
+                  <span>Reveal 2nd Runner Up (#3 🥉)</span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1.5 font-medium">
+                  Triggers 5➔1 slow suspense roll & unseals Bronze Pedestal
+                </p>
+              </button>
+
+              {/* Step 2: 2nd Place */}
+              <button
+                onClick={() => handleTriggerStep(2)}
+                disabled={loading}
+                className={`p-5 rounded-2xl border-2 text-left transition-all cursor-pointer relative overflow-hidden group ${
+                  revealStep >= 2
+                    ? 'border-slate-400/80 bg-slate-900/90 text-slate-100 shadow-lg'
+                    : 'border-slate-600/40 bg-black/50 hover:bg-slate-900/40 text-slate-200 hover:border-slate-300 hover:scale-[1.02]'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-slate-700 text-white shadow-sm">
+                    Step 2
+                  </span>
+                  <span className={`text-xs font-bold ${revealStep >= 2 ? 'text-emerald-400 font-black' : 'text-slate-300'}`}>
+                    {revealStep >= 2 ? '✅ 2nd Unsealed' : '⚡ Ready To Trigger'}
+                  </span>
+                </div>
+                <div className="font-black text-base text-white flex items-center gap-2">
+                  <Medal size={18} className="text-slate-300" />
+                  <span>Reveal 1st Runner Up (#2 🥈)</span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1.5 font-medium">
+                  Triggers 5➔1 slow suspense roll & unseals Silver Pedestal
+                </p>
+              </button>
+
+              {/* Step 3: Grand Champion */}
+              <button
+                onClick={() => handleTriggerStep(3)}
+                disabled={loading}
+                className={`p-5 rounded-2xl border-2 text-left transition-all cursor-pointer relative overflow-hidden group ${
+                  revealStep >= 3
+                    ? 'border-[#E83C00] bg-gradient-to-br from-[#E83C00]/40 to-amber-500/30 text-white ring-4 ring-amber-400/60 shadow-2xl shadow-orange-950/60'
+                    : 'border-amber-500/60 bg-black/50 hover:bg-amber-500/20 text-white hover:border-amber-400 hover:scale-[1.02] ring-2 ring-amber-500/30 animate-pulse'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-[#E83C00] to-amber-500 text-white shadow-sm">
+                    👑 Step 3 (Grand Climax)
+                  </span>
+                  <span className={`text-xs font-bold ${revealStep >= 3 ? 'text-amber-300 font-black' : 'text-amber-300'}`}>
+                    {revealStep >= 3 ? '👑 Champion Crowned!' : '🔥 Ready To Crown'}
+                  </span>
+                </div>
+                <div className="font-black text-base text-white flex items-center gap-2">
+                  <Crown size={18} className="text-amber-300 animate-bounce" />
+                  <span>CROWN GRAND CHAMPION (#1)</span>
+                </div>
+                <p className="text-xs text-amber-200 mt-1.5 font-medium">
+                  5➔1 Countdown + Dual Confetti Fireworks + Royal Fanfare
+                </p>
+              </button>
+            </div>
+
+            {/* Console Footer Status & Resets */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-6 pt-4 border-t border-white/10 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400">Current LCD Stage Status:</span>
+                <span className="font-black font-mono px-2.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300">
+                  {revealStep === 0 ? '🔒 All 3 Locked (Vault Suspense)' : revealStep === 1 ? '🥉 3rd Place Unsealed' : revealStep === 2 ? '🥈 2nd Place Unsealed' : '👑 Grand Champion Crowned (Final Stage)'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleResetStageToLocked}
+                  disabled={loading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-slate-300 hover:text-white transition-all cursor-pointer"
+                >
+                  <RefreshCw size={12} />
+                  Reset to Vault Locked (Step 0)
+                </button>
+                <button
+                  onClick={handleStopReveal}
+                  disabled={loading}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-xs font-bold text-rose-300 transition-all cursor-pointer"
+                >
+                  🛑 Exit Stage Mode
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Round Tab Selector */}
         <div className="flex border-b border-white/10 gap-6">

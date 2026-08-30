@@ -68,6 +68,12 @@ export class LeaderboardController {
     return { success: true, isRevealing: true, round: dto.round || 2 }
   }
 
+  @Post('reveal-step')
+  async setRevealStep(@Body() dto: { step: number }) {
+    const step = Number(dto.step ?? 0)
+    await this.gateway.broadcastRevealStep(step)
+    return { success: true, step }
+  }
 
   @Post('reveal-stop')
   async stopReveal() {

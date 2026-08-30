@@ -369,13 +369,22 @@ export function LeaderboardPage() {
     startGrandReveal(data?.round || 2)
   })
 
+  useWebSocket<{ step: number; round?: number }>('leaderboard:reveal_step', (data) => {
+    if (typeof data?.step === 'number') {
+      executeRevealToStep(data.step)
+    }
+  })
+
   useWebSocket<{ isRevealing: boolean }>('leaderboard:reveal_stop', () => {
     stopGrandReveal()
   })
 
-  useWebSocket<{ isRevealing: boolean; round?: number }>('leaderboard:reveal_state', (data) => {
+  useWebSocket<{ isRevealing: boolean; round?: number; step?: number }>('leaderboard:reveal_state', (data) => {
     if (data?.isRevealing) {
       startGrandReveal(data?.round || 2)
+      if (typeof data.step === 'number' && data.step > 0 && !isDecrypting) {
+        executeRevealToStep(data.step)
+      }
     } else if (data && !data.isRevealing) {
       stopGrandReveal()
     }
@@ -541,13 +550,19 @@ export function LeaderboardPage() {
     setSearchParams(searchParams, { replace: true })
   }
 
-  const stepNextReveal = () => {
-    if (isDecrypting) return // Prevent clicking during active decryption
+  const executeRevealToStep = (targetStep: number) => {
+    if (targetStep <= 0) {
+      setRevealedStep(0)
+      setIsDecrypting(false)
+      setCountdownNum(null)
+      return
+    }
 
-    const next = Math.min(maxSteps, revealedStep + 1)
-    if (next === revealedStep) return
+    if (targetStep <= revealedStep && !isDecrypting) {
+      return
+    }
 
-    const currentRank = isFinale ? (4 - next) : (21 - next)
+    const currentRank = isFinale ? (4 - targetStep) : (21 - targetStep)
 
     if (isFinale) {
       // 🌟 Ultra-Slow 6.0-Second Dramatic Suspense Countdown for LCD Screen (5 ➔ 4 ➔ 3 ➔ 2 ➔ 1 ➔ 👑)
@@ -606,7 +621,7 @@ export function LeaderboardPage() {
         clearInterval(scrambleInterval)
         setIsDecrypting(false)
         setCountdownNum(null)
-        setRevealedStep(next)
+        setRevealedStep(targetStep)
         if (soundEnabled) {
           playRevealChime(currentRank)
         }
@@ -615,11 +630,21 @@ export function LeaderboardPage() {
 
     } else {
       // Round 2 standard reveal
-      setRevealedStep(next)
+      setRevealedStep(targetStep)
       if (soundEnabled) {
         playRevealChime(currentRank)
       }
     }
+  }
+
+  const stepNextReveal = () => {
+    if (isDecrypting) return // Prevent clicking during active decryption
+
+    const next = Math.min(maxSteps, revealedStep + 1)
+    if (next === revealedStep) return
+
+    executeRevealToStep(next)
+    api.leaderboard.setRevealStep(next).catch(() => {})
   }
 
 

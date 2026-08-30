@@ -22,6 +22,7 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
   private isTvMode = false
   private isRevealing = false
   private revealRound = 2
+  private revealStep = 0
 
   constructor(private readonly leaderboardService: LeaderboardService) {}
 
@@ -39,7 +40,7 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
     const leaderboard = await this.leaderboardService.getLeaderboard()
     client.emit('leaderboard:update', leaderboard)
     client.emit('leaderboard:tv_mode', { tvMode: this.isTvMode })
-    client.emit('leaderboard:reveal_state', { isRevealing: this.isRevealing, round: this.revealRound })
+    client.emit('leaderboard:reveal_state', { isRevealing: this.isRevealing, round: this.revealRound, step: this.revealStep })
   }
 
   getTvMode(): boolean {
@@ -47,7 +48,7 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
   }
 
   getRevealState() {
-    return { isRevealing: this.isRevealing, round: this.revealRound }
+    return { isRevealing: this.isRevealing, round: this.revealRound, step: this.revealStep }
   }
 
   // Called by ScoresService after score submission
@@ -74,27 +75,43 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
     }
   }
 
-  // Called when Admin triggers Stage Grand Reveal (e.g. Round 2 Top 20 Reveal countdown)
+  // Called when Admin triggers Stage Grand Reveal
   async broadcastRevealEvent(payload: { round: number; type: string; timestamp: number }) {
     this.isRevealing = true
     this.revealRound = payload.round || 2
+    this.revealStep = 0
     try {
       if (!this.server) return
       this.server.to('leaderboard').emit('leaderboard:reveal_start', payload)
-      this.server.to('leaderboard').emit('leaderboard:reveal_state', { isRevealing: true, round: this.revealRound })
+      this.server.to('leaderboard').emit('leaderboard:reveal_state', { isRevealing: true, round: this.revealRound, step: 0 })
       console.log('[WS] Reveal broadcast sent:', payload)
     } catch (err) {
       console.error('[WS] Reveal broadcast failed:', err)
     }
   }
 
+  // Called when Admin triggers specific step (e.g. Step 1 -> #3, Step 2 -> #2, Step 3 -> #1)
+  async broadcastRevealStep(step: number) {
+    this.isRevealing = true
+    this.revealStep = step
+    try {
+      if (!this.server) return
+      this.server.to('leaderboard').emit('leaderboard:reveal_step', { step, round: this.revealRound })
+      this.server.to('leaderboard').emit('leaderboard:reveal_state', { isRevealing: true, round: this.revealRound, step: this.revealStep })
+      console.log(`[WS] Reveal Step ${step} broadcast sent`)
+    } catch (err) {
+      console.error('[WS] Reveal step broadcast failed:', err)
+    }
+  }
+
   // Called when Admin stops / closes reveal mode
   async broadcastStopReveal() {
     this.isRevealing = false
+    this.revealStep = 0
     try {
       if (!this.server) return
       this.server.to('leaderboard').emit('leaderboard:reveal_stop', { isRevealing: false })
-      this.server.to('leaderboard').emit('leaderboard:reveal_state', { isRevealing: false, round: this.revealRound })
+      this.server.to('leaderboard').emit('leaderboard:reveal_state', { isRevealing: false, round: this.revealRound, step: 0 })
       console.log('[WS] Stop reveal broadcast sent')
     } catch (err) {
       console.error('[WS] Stop reveal broadcast failed:', err)
