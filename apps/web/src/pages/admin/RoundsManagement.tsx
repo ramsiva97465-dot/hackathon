@@ -208,31 +208,13 @@ export function RoundsManagement() {
             <p className="text-sm text-slate-400 mt-0.5">Control stages, promote top teams, and select winners</p>
           </div>
           <div className="flex items-center gap-2">
-            {isStageRevealing ? (
+            {isStageRevealing && (
               <button
                 onClick={handleStopReveal}
                 disabled={loading}
                 className="flex items-center gap-1.5 px-4 py-2 border border-rose-500/40 bg-rose-500/20 hover:bg-rose-500/30 rounded-xl text-xs font-bold text-rose-300 transition-all shadow-lg select-none cursor-pointer"
               >
-                <span>🛑 Stop Stage Reveal</span>
-              </button>
-            ) : activeRoundNum === 3 ? (
-              <button
-                onClick={() => handleStartReveal(3)}
-                disabled={loading}
-                className="flex items-center gap-1.5 px-4 py-2 border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 rounded-xl text-xs font-bold text-amber-300 transition-all shadow-lg select-none cursor-pointer"
-              >
-                <Crown size={13} className="text-amber-400" />
-                <span>👑 Broadcast Top 3 Grand Finale Reveal (3 ➔ 1)</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => handleStartReveal(2)}
-                disabled={loading}
-                className="flex items-center gap-1.5 px-4 py-2 border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 rounded-xl text-xs font-bold text-amber-300 transition-all shadow-lg select-none cursor-pointer"
-              >
-                <Sparkles size={13} className="text-amber-400" />
-                <span>🎭 Broadcast Top 20 Grand Reveal (20 ➔ 1)</span>
+                <span>🛑 Exit Stage Reveal</span>
               </button>
             )}
 
@@ -255,24 +237,22 @@ export function RoundsManagement() {
             <div>
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Active Judging State</span>
               <h2 className="text-lg font-black text-white">
-                {activeRoundNum === 3 ? '🏆 Stage 3 (Winners Announced)' : activeRoundNum === 2 ? '⚡ Stage 2 (Top 20 Qualifiers)' : '📝 Stage 1 (All Teams Judging)'}
+                {activeRoundNum === 3 ? '🏆 Stage 3 (Top 3 Finalists Ready)' : activeRoundNum === 2 ? '⚡ Stage 2 (Top 20 Qualifiers Competing)' : '📝 Stage 1 (All Teams Evaluation)'}
               </h2>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
             {activeRoundNum === 1 && (
-              <button
-                onClick={() => handlePromote(1)}
-                disabled={loading}
-                className="flex items-center gap-1.5 px-4 py-2.5 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-[#E83C00]/15 cursor-pointer"
-              >
-                <Play size={13} fill="white" />
-                <span>⚡ Promote Top 20 to Round 2</span>
-              </button>
-            )}
-            {activeRoundNum === 2 && (
-              <div className="flex items-center gap-2">
+              <>
+                <button
+                  onClick={() => handlePromote(1)}
+                  disabled={loading}
+                  className="flex items-center gap-1.5 px-4 py-2.5 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-[#E83C00]/15 cursor-pointer"
+                >
+                  <Play size={13} fill="white" />
+                  <span>⚡ Promote Top 20 to Round 2</span>
+                </button>
                 <button
                   onClick={() => handleStartReveal(2)}
                   disabled={loading}
@@ -281,25 +261,33 @@ export function RoundsManagement() {
                   <Sparkles size={13} />
                   <span>🎭 Broadcast Top 20 Reveal (20 ➔ 1)</span>
                 </button>
+              </>
+            )}
+            {activeRoundNum === 2 && (
+              <>
+                <button
+                  onClick={() => handleStartReveal(2)}
+                  disabled={loading}
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                >
+                  <Sparkles size={13} />
+                  <span>🎭 Replay Top 20 Reveal</span>
+                </button>
                 <button
                   onClick={() => handlePromote(2)}
                   disabled={loading}
                   className="flex items-center gap-1.5 px-4 py-2.5 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-[#E83C00]/15 cursor-pointer"
                 >
                   <Crown size={14} />
-                  <span>👑 Promote Top 3 to Round 3</span>
+                  <span>👑 Promote Top 3 Winners to Round 3</span>
                 </button>
-              </div>
+              </>
             )}
             {activeRoundNum === 3 && (
-              <button
-                onClick={() => handleStartReveal(3)}
-                disabled={loading}
-                className="flex items-center gap-1.5 px-4 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
-              >
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-black">
                 <Crown size={14} className="text-amber-400" />
-                <span>👑 Broadcast Top 3 Grand Finale Reveal</span>
-              </button>
+                Use Top 3 Controller Below ↓
+              </span>
             )}
           </div>
         </div>
