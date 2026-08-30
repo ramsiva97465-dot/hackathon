@@ -17,7 +17,6 @@ export class LeaderboardService {
     const whereCondition: any = {
       hackathonId: hackathon.id,
       status: 'COMPETING',
-      attendanceStatus: 'CHECKED_IN'
     }
 
     if (targetRound === 3) {
@@ -25,6 +24,7 @@ export class LeaderboardService {
     } else if (targetRound === 2) {
       whereCondition.round = { in: [2, 3] }
     }
+
 
     const teams = await this.prisma.team.findMany({
       where: whereCondition,
