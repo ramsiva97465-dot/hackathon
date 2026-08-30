@@ -381,9 +381,15 @@ export function LeaderboardPage() {
 
   useWebSocket<{ isRevealing: boolean; round?: number; step?: number }>('leaderboard:reveal_state', (data) => {
     if (data?.isRevealing) {
-      startGrandReveal(data?.round || 2)
-      if (typeof data.step === 'number' && data.step > 0 && !isDecrypting) {
-        executeRevealToStep(data.step)
+      if (!isRevealing) startGrandReveal(data?.round || 2)
+      if (typeof data.step === 'number') {
+        if (data.step === 0) {
+          setRevealedStep(0)
+          setIsDecrypting(false)
+          setCountdownNum(null)
+        } else if (data.step > revealedStep && !isDecrypting) {
+          executeRevealToStep(data.step)
+        }
       }
     } else if (data && !data.isRevealing) {
       stopGrandReveal()
@@ -426,6 +432,15 @@ export function LeaderboardPage() {
       const res = await api.leaderboard.getRevealState()
       if (res.data?.isRevealing) {
         if (!isRevealing) startGrandReveal(res.data.round || 2)
+        if (typeof res.data?.step === 'number') {
+          if (res.data.step === 0 && revealedStep > 0) {
+            setRevealedStep(0)
+            setIsDecrypting(false)
+            setCountdownNum(null)
+          } else if (res.data.step > revealedStep && !isDecrypting) {
+            executeRevealToStep(res.data.step)
+          }
+        }
       } else if (res.data && !res.data.isRevealing && isRevealing && !searchParams.get('reveal')) {
         stopGrandReveal()
       }
