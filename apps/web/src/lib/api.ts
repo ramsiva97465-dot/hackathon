@@ -120,8 +120,8 @@ export const api = {
     getRevealState: () => apiClient.get('/leaderboard/reveal-state'),
     startReveal: (round?: number) =>
       apiClient.post('/leaderboard/reveal-start', { round }),
-    setRevealStep: (step: number) =>
-      apiClient.post('/leaderboard/reveal-step', { step }),
+    setRevealStep: (step: number, round: number = 3) =>
+      apiClient.post('/leaderboard/reveal-step', { step, round }),
     stopReveal: () => apiClient.post('/leaderboard/reveal-stop'),
   },
 

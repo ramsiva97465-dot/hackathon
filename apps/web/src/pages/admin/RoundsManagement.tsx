@@ -95,11 +95,9 @@ export function RoundsManagement() {
   const handleTriggerStep = async (step: number) => {
     try {
       setLoading(true)
-      if (!isStageRevealing) {
-        await api.leaderboard.startReveal(3)
-        setIsStageRevealing(true)
-      }
-      await api.leaderboard.setRevealStep(step)
+      await api.leaderboard.startReveal(3)
+      setIsStageRevealing(true)
+      await api.leaderboard.setRevealStep(step, 3)
       setRevealStep(step)
       if (step === 1) toast.success('🚀 Triggered 3rd Place Reveal (5s countdown started on LCD Screen)!')
       else if (step === 2) toast.success('🚀 Triggered 2nd Place Reveal (5s countdown started on LCD Screen)!')
@@ -116,7 +114,7 @@ export function RoundsManagement() {
     try {
       setLoading(true)
       await api.leaderboard.startReveal(3)
-      await api.leaderboard.setRevealStep(0)
+      await api.leaderboard.setRevealStep(0, 3)
       setRevealStep(0)
       setIsStageRevealing(true)
       toast.success('Stage reset to Vault Locked mode (ready for 3rd Place announcement).')

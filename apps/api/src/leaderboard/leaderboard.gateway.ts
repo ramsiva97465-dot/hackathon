@@ -91,14 +91,15 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
   }
 
   // Called when Admin triggers specific step (e.g. Step 1 -> #3, Step 2 -> #2, Step 3 -> #1)
-  async broadcastRevealStep(step: number) {
+  async broadcastRevealStep(step: number, round: number = 3) {
     this.isRevealing = true
+    this.revealRound = round || 3
     this.revealStep = step
     try {
       if (!this.server) return
       this.server.to('leaderboard').emit('leaderboard:reveal_step', { step, round: this.revealRound })
       this.server.to('leaderboard').emit('leaderboard:reveal_state', { isRevealing: true, round: this.revealRound, step: this.revealStep })
-      console.log(`[WS] Reveal Step ${step} broadcast sent`)
+      console.log(`[WS] Reveal Step ${step} (Round ${this.revealRound}) broadcast sent`)
     } catch (err) {
       console.error('[WS] Reveal step broadcast failed:', err)
     }

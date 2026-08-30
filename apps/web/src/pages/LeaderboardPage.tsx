@@ -371,7 +371,12 @@ export function LeaderboardPage() {
 
   useWebSocket<{ step: number; round?: number }>('leaderboard:reveal_step', (data) => {
     if (typeof data?.step === 'number') {
-      executeRevealToStep(data.step)
+      const targetRound = data.round || 3
+      if (targetRound !== revealRound || !isRevealing) {
+        setRevealRound(targetRound)
+        setIsRevealing(true)
+      }
+      executeRevealToStep(data.step, targetRound)
     }
   })
 
@@ -381,14 +386,17 @@ export function LeaderboardPage() {
 
   useWebSocket<{ isRevealing: boolean; round?: number; step?: number }>('leaderboard:reveal_state', (data) => {
     if (data?.isRevealing) {
-      if (!isRevealing) startGrandReveal(data?.round || 2)
+      const targetRound = data.round || 2
+      if (!isRevealing || revealRound !== targetRound) {
+        startGrandReveal(targetRound)
+      }
       if (typeof data.step === 'number') {
         if (data.step === 0) {
           setRevealedStep(0)
           setIsDecrypting(false)
           setCountdownNum(null)
         } else if (data.step > revealedStep && !isDecrypting) {
-          executeRevealToStep(data.step)
+          executeRevealToStep(data.step, targetRound)
         }
       }
     } else if (data && !data.isRevealing) {
@@ -431,14 +439,17 @@ export function LeaderboardPage() {
     try {
       const res = await api.leaderboard.getRevealState()
       if (res.data?.isRevealing) {
-        if (!isRevealing) startGrandReveal(res.data.round || 2)
+        const targetRound = res.data.round || 2
+        if (!isRevealing || revealRound !== targetRound) {
+          startGrandReveal(targetRound)
+        }
         if (typeof res.data?.step === 'number') {
           if (res.data.step === 0 && revealedStep > 0) {
             setRevealedStep(0)
             setIsDecrypting(false)
             setCountdownNum(null)
           } else if (res.data.step > revealedStep && !isDecrypting) {
-            executeRevealToStep(res.data.step)
+            executeRevealToStep(res.data.step, targetRound)
           }
         }
       } else if (res.data && !res.data.isRevealing && isRevealing && !searchParams.get('reveal')) {
@@ -564,7 +575,15 @@ export function LeaderboardPage() {
     setSearchParams(searchParams, { replace: true })
   }
 
-  const executeRevealToStep = (targetStep: number) => {
+  const executeRevealToStep = (targetStep: number, targetRound?: number) => {
+    const effectiveRound = targetRound || revealRound || 3
+    if (targetRound && targetRound !== revealRound) {
+      setRevealRound(targetRound)
+    }
+    if (!isRevealing) {
+      setIsRevealing(true)
+    }
+
     if (targetStep <= 0) {
       setRevealedStep(0)
       setIsDecrypting(false)
@@ -576,9 +595,10 @@ export function LeaderboardPage() {
       return
     }
 
-    const currentRank = isFinale ? (4 - targetStep) : (21 - targetStep)
+    const isFinaleStep = effectiveRound === 3
+    const currentRank = isFinaleStep ? (4 - targetStep) : (21 - targetStep)
 
-    if (isFinale) {
+    if (isFinaleStep) {
       // 🌟 Ultra-Slow 6.0-Second Dramatic Suspense Countdown for LCD Screen (5 ➔ 4 ➔ 3 ➔ 2 ➔ 1 ➔ 👑)
       setIsDecrypting(true)
       setDecryptingRank(currentRank)
