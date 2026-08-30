@@ -194,6 +194,23 @@ function playHeartbeatTick(intensity = 1) {
   }
 }
 
+function speakCountdown(text: string, rate = 0.85, pitch = 1.0) {
+  try {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.rate = rate
+    utterance.pitch = pitch
+    utterance.volume = 1.0
+    const voices = window.speechSynthesis.getVoices()
+    const preferred = voices.find(v => v.lang.includes('en-IN') || v.lang.includes('en-GB') || v.lang.includes('en-US'))
+    if (preferred) utterance.voice = preferred
+    window.speechSynthesis.speak(utterance)
+  } catch (e) {
+    // Ignore speech synthesis errors
+  }
+}
+
 const mockLeaderboard: LeaderboardEntry[] = [
   { rank: 1,  teamId: '1',  teamName: 'SpeakSense',    college: 'BITS Pilani',     track: 'REAL_WORLD_DEPLOYMENT', totalScore: 91.2, judgeCount: 6, previousRank: 2,  scores: [] },
   { rank: 2,  teamId: '2',  teamName: 'AudioMind',     college: 'VIT Chennai',     track: 'VOICE_AI_AGENT',        totalScore: 88.7, judgeCount: 5, previousRank: 1,  scores: [] },
@@ -599,11 +616,8 @@ export function LeaderboardPage() {
     const currentRank = isFinaleStep ? (4 - targetStep) : (21 - targetStep)
 
     if (isFinaleStep) {
-      // 🌟 Ultra-Slow 6.0-Second Dramatic Suspense Countdown for LCD Screen (5 ➔ 4 ➔ 3 ➔ 2 ➔ 1 ➔ 👑)
       setIsDecrypting(true)
       setDecryptingRank(currentRank)
-      setCountdownNum(5)
-      if (soundEnabled) playHeartbeatTick(1)
 
       const candidateNames = filtered.map(t => t.teamName)
       let scrambleIdx = 0
@@ -619,48 +633,62 @@ export function LeaderboardPage() {
         }, speed)
       }
 
-      // T = 0.0s: Start with rapid scrambling (60ms)
-      runScramble(60)
+      if (targetStep === 3) {
+        // 👑 STEP 3 GRAND CLIMAX: 10 ➔ 9 ➔ 8 ➔ 7 ➔ 6 ➔ 5 ➔ 4 ➔ 3 ➔ 2 ➔ 1 ➔ 👑 with VOCAL ANNOUNCER!
+        setCountdownNum(10)
+        speakCountdown('Ten')
+        if (soundEnabled) playHeartbeatTick(1)
+        runScramble(50)
 
-      // T = 1.2s: Countdown 4
-      setTimeout(() => {
-        setCountdownNum(4)
-        runScramble(85)
-        if (soundEnabled) playHeartbeatTick(2)
-      }, 1200)
+        setTimeout(() => { setCountdownNum(9); speakCountdown('Nine'); if (soundEnabled) playHeartbeatTick(2); runScramble(65) }, 1100)
+        setTimeout(() => { setCountdownNum(8); speakCountdown('Eight'); if (soundEnabled) playHeartbeatTick(3); runScramble(80) }, 2200)
+        setTimeout(() => { setCountdownNum(7); speakCountdown('Seven'); if (soundEnabled) playHeartbeatTick(4); runScramble(100) }, 3300)
+        setTimeout(() => { setCountdownNum(6); speakCountdown('Six'); if (soundEnabled) playHeartbeatTick(5); runScramble(120) }, 4400)
+        setTimeout(() => { setCountdownNum(5); speakCountdown('Five'); if (soundEnabled) playHeartbeatTick(6); runScramble(150) }, 5500)
+        setTimeout(() => { setCountdownNum(4); speakCountdown('Four'); if (soundEnabled) playHeartbeatTick(7); runScramble(190) }, 6600)
+        setTimeout(() => { setCountdownNum(3); speakCountdown('Three'); if (soundEnabled) playHeartbeatTick(8); runScramble(240) }, 7700)
+        setTimeout(() => { setCountdownNum(2); speakCountdown('Two'); if (soundEnabled) playHeartbeatTick(9); runScramble(310) }, 8800)
+        setTimeout(() => { setCountdownNum(1); speakCountdown('One'); if (soundEnabled) playHeartbeatTick(10); runScramble(400) }, 9900)
 
-      // T = 2.4s: Countdown 3
-      setTimeout(() => {
-        setCountdownNum(3)
-        runScramble(130)
-        if (soundEnabled) playHeartbeatTick(3)
-      }, 2400)
+        // T = 11.3s: Unseal Grand Champion Climax!
+        setTimeout(() => {
+          clearInterval(scrambleInterval)
+          setIsDecrypting(false)
+          setCountdownNum(null)
+          setRevealedStep(3)
+          if (soundEnabled) {
+            playRevealChime(1)
+          }
+          triggerFinaleConfetti(1)
+          speakCountdown('Grand Champion, ' + (top3[0]?.teamName || 'Winner'))
+        }, 11300)
 
-      // T = 3.6s: Countdown 2
-      setTimeout(() => {
-        setCountdownNum(2)
-        runScramble(210)
-        if (soundEnabled) playHeartbeatTick(4)
-      }, 3600)
+      } else {
+        // 🥉 🥈 STEPS 1 & 2: 5 ➔ 4 ➔ 3 ➔ 2 ➔ 1 with VOCAL ANNOUNCER!
+        setCountdownNum(5)
+        speakCountdown('Five')
+        if (soundEnabled) playHeartbeatTick(1)
+        runScramble(60)
 
-      // T = 4.8s: Countdown 1 (Maximum Suspense!)
-      setTimeout(() => {
-        setCountdownNum(1)
-        runScramble(360)
-        if (soundEnabled) playHeartbeatTick(5)
-      }, 4800)
+        setTimeout(() => { setCountdownNum(4); speakCountdown('Four'); if (soundEnabled) playHeartbeatTick(2); runScramble(90) }, 1100)
+        setTimeout(() => { setCountdownNum(3); speakCountdown('Three'); if (soundEnabled) playHeartbeatTick(3); runScramble(140) }, 2200)
+        setTimeout(() => { setCountdownNum(2); speakCountdown('Two'); if (soundEnabled) playHeartbeatTick(4); runScramble(220) }, 3300)
+        setTimeout(() => { setCountdownNum(1); speakCountdown('One'); if (soundEnabled) playHeartbeatTick(5); runScramble(350) }, 4400)
 
-      // T = 6.0s: Unseal Winner & Trigger Climax!
-      setTimeout(() => {
-        clearInterval(scrambleInterval)
-        setIsDecrypting(false)
-        setCountdownNum(null)
-        setRevealedStep(targetStep)
-        if (soundEnabled) {
-          playRevealChime(currentRank)
-        }
-        triggerFinaleConfetti(currentRank)
-      }, 6000)
+        // T = 5.7s: Unseal Runner Up!
+        setTimeout(() => {
+          clearInterval(scrambleInterval)
+          setIsDecrypting(false)
+          setCountdownNum(null)
+          setRevealedStep(targetStep)
+          if (soundEnabled) {
+            playRevealChime(currentRank)
+          }
+          triggerFinaleConfetti(currentRank)
+          const runnerUpName = currentRank === 2 ? top3[1]?.teamName : top3[2]?.teamName
+          speakCountdown((currentRank === 2 ? '1st Runner Up, ' : '2nd Runner Up, ') + (runnerUpName || ''))
+        }, 5700)
+      }
 
     } else {
       // Round 2 standard reveal

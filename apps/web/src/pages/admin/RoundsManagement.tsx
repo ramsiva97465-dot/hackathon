@@ -341,10 +341,10 @@ export function RoundsManagement() {
                 </div>
                 <div className="font-black text-base text-white flex items-center gap-2">
                   <Medal size={18} className="text-amber-500" />
-                  <span>Reveal 2nd Runner Up (#3 🥉)</span>
+                  <span>Reveal 3rd Runner Up (#3 🥉)</span>
                 </div>
-                <p className="text-xs text-slate-400 mt-1.5 font-medium">
-                  Triggers 5➔1 slow suspense roll & unseals Bronze Pedestal
+                <p className="text-xs text-amber-400 mt-1.5 font-medium">
+                  Triggers 5➔1 voice suspense roll & unseals Bronze Pedestal
                 </p>
               </button>
 
@@ -371,7 +371,7 @@ export function RoundsManagement() {
                   <span>Reveal 1st Runner Up (#2 🥈)</span>
                 </div>
                 <p className="text-xs text-slate-400 mt-1.5 font-medium">
-                  Triggers 5➔1 slow suspense roll & unseals Silver Pedestal
+                  Triggers 5➔1 voice suspense roll & unseals Silver Pedestal
                 </p>
               </button>
 
@@ -398,7 +398,7 @@ export function RoundsManagement() {
                   <span>CROWN GRAND CHAMPION (#1)</span>
                 </div>
                 <p className="text-xs text-amber-200 mt-1.5 font-medium">
-                  5➔1 Countdown + Dual Confetti Fireworks + Royal Fanfare
+                  10➔1 Dramatic Voice Countdown + Dual Confetti Fireworks + Royal Fanfare
                 </p>
               </button>
             </div>
