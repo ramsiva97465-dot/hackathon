@@ -858,7 +858,12 @@ export function LeaderboardPage() {
         <div className="flex items-center gap-4 sm:gap-6">
           <div className="flex items-center gap-2">
             <SnapServeMark className="h-8 w-8 drop-shadow-sm text-[#1A1A1A]" />
-            <span className="font-bold text-lg tracking-tight">snapserve.ai</span>
+            <span
+              className="text-lg tracking-tight text-[#100703]"
+              style={{ fontFamily: "'Montserrat', system-ui, sans-serif", fontWeight: 800 }}
+            >
+              snapserve.ai
+            </span>
           </div>
           <span className="opacity-20 text-2xl font-light">|</span>
           <VobizLockup className="h-[24.32px] w-auto drop-shadow-sm" />
