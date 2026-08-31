@@ -8,7 +8,7 @@ import { getTrackConfig } from '@/lib/utils'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { 
   TrendingUp, TrendingDown, Minus, Trophy, ChevronRight, Monitor,
-  Play, Pause, SkipForward, RotateCcw, Volume2, VolumeX, Sparkles, Star, CheckCircle2, Lock, Flame, Zap, Award, Crown, Medal, X, Layers, ShieldCheck
+  Play, Pause, SkipForward, RotateCcw, Sparkles, Star, CheckCircle2, Lock, Flame, Zap, Award, Crown, Medal, X, Layers, ShieldCheck
 } from 'lucide-react'
 import type { LeaderboardEntry } from '@hackathon/shared'
 import api from '@/lib/api'
@@ -368,7 +368,7 @@ export function LeaderboardPage() {
   const [isRevealing, setIsRevealing] = useState<boolean>(searchParams.get('reveal') === 'true')
   const [revealedStep, setRevealedStep] = useState<number>(0)
   const [isPaused, setIsPaused] = useState<boolean>(false)
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(true)
+  const [soundEnabled] = useState<boolean>(true)
   const [isDecrypting, setIsDecrypting] = useState<boolean>(false)
   const [countdownNum, setCountdownNum] = useState<number | null>(null)
   const [scrambledName, setScrambledName] = useState<string>('')
@@ -877,34 +877,6 @@ export function LeaderboardPage() {
               <span className="text-[10px] font-black uppercase tracking-wider hidden sm:inline">TV Auto-Scroll</span>
             </div>
           )}
-
-          {/* Stage Audio Toggle */}
-          <button
-            onClick={() => {
-              const nextState = !soundEnabled
-              setSoundEnabled(nextState)
-              try {
-                const AudioContext = window.AudioContext || (window as any).webkitAudioContext
-                if (AudioContext) {
-                  const ctx = new AudioContext()
-                  if (ctx.state === 'suspended') ctx.resume()
-                }
-                if ('speechSynthesis' in window) {
-                  window.speechSynthesis.resume()
-                  if (nextState) speakCountdown('Stage audio active')
-                }
-              } catch (e) {}
-            }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              soundEnabled 
-                ? 'bg-amber-500/15 border border-amber-500/30 text-amber-900 shadow-xs' 
-                : 'bg-black/5 border border-black/10 text-slate-500 hover:text-slate-800'
-            }`}
-            title={soundEnabled ? 'Stage Audio Active (Click to Mute)' : 'Stage Audio Muted (Click to Enable)'}
-          >
-            {soundEnabled ? <Volume2 size={13} className="text-amber-600 animate-pulse" /> : <VolumeX size={13} className="text-slate-400" />}
-            <span className="hidden sm:inline">{soundEnabled ? 'Audio ON' : 'Audio Muted'}</span>
-          </button>
 
           <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 shadow-xs">
             <Flame size={13} className="text-orange-500 fill-orange-500/20" />
