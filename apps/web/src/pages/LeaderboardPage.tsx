@@ -861,7 +861,7 @@ export function LeaderboardPage() {
             <span className="font-bold text-lg tracking-tight">snapserve.ai</span>
           </div>
           <span className="opacity-20 text-2xl font-light">|</span>
-          <VobizLockup className="h-8 w-auto drop-shadow-sm" />
+          <VobizLockup className="h-[25.6px] w-auto drop-shadow-sm" />
         </div>
 
         <div className="flex items-center gap-3">
