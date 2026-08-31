@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSearchParams } from 'react-router-dom'
 import confetti from 'canvas-confetti'
-import { SnapServeMark, VobizMark } from '@/components/brand/BrandLogos'
+import { SnapServeMark, VobizLockup } from '@/components/brand/BrandLogos'
 import { Avatar } from '@/components/ui/Avatar'
 import { getTrackConfig } from '@/lib/utils'
 import { useWebSocket } from '@/hooks/useWebSocket'
@@ -856,26 +856,18 @@ export function LeaderboardPage() {
       {/* ── Top Bar ── */}
       <div className="relative z-20 flex items-center justify-between px-6 sm:px-10 py-4 border-b backdrop-blur-md sticky top-0 transition-colors bg-[#EBE3D5]/80 border-black/5 text-[#1A1A1A]">
         <div className="flex items-center gap-4 sm:gap-6">
-          <div className="flex items-center gap-2.5">
-            <SnapServeMark className="h-7 w-7 shrink-0" />
+          <div className="flex items-center gap-2">
+            <SnapServeMark className="h-8 w-8 drop-shadow-sm" />
             <span
-              className="text-[17px] leading-none tracking-tight"
-              style={{ fontFamily: "'Plus Jakarta Sans', 'Montserrat', system-ui, sans-serif" }}
+              className="text-lg tracking-tight leading-none"
+              style={{ fontFamily: "'Montserrat', system-ui, sans-serif" }}
             >
-              <span className="font-extrabold text-[#0A0A0A]">Snap</span>
-              <span className="font-extrabold text-[#6F6F6F]">Serve</span>
+              <span style={{ fontWeight: 800, color: '#0A0A0A' }}>Snap</span>
+              <span style={{ fontWeight: 800, color: '#6F6F6F' }}>Serve</span>
             </span>
           </div>
-          <span className="opacity-20 text-xl font-light leading-none self-center" aria-hidden>|</span>
-          <div className="flex items-center gap-2.5">
-            <VobizMark className="h-6 w-8 shrink-0" />
-            <span
-              className="text-[17px] leading-none tracking-tight font-extrabold text-[#0A0A0A]"
-              style={{ fontFamily: "'Plus Jakarta Sans', 'Montserrat', system-ui, sans-serif" }}
-            >
-              vobiz
-            </span>
-          </div>
+          <span className="opacity-20 text-2xl font-light">|</span>
+          <VobizLockup className="h-[24.32px] w-auto drop-shadow-sm" />
         </div>
 
         <div className="flex items-center gap-3">
