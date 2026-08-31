@@ -855,18 +855,18 @@ export function LeaderboardPage() {
 
       {/* ── Top Bar ── */}
       <div className="relative z-20 flex items-center justify-between px-6 sm:px-10 py-4 border-b backdrop-blur-md sticky top-0 transition-colors bg-[#EBE3D5]/80 border-black/5 text-[#1A1A1A]">
-        <div className="flex items-center gap-4 sm:gap-6">
-          <div className="flex items-center gap-2">
-            <SnapServeMark className="h-8 w-8 drop-shadow-sm" />
+        <div className="flex items-end gap-4 sm:gap-6">
+          <div className="flex items-end gap-2">
+            <SnapServeMark className="h-[24.32px] w-[24.32px] shrink-0 object-contain" />
             <span
-              className="text-lg tracking-tight leading-none"
-              style={{ fontFamily: "'Montserrat', system-ui, sans-serif" }}
+              className="text-[15px] leading-none tracking-tight"
+              style={{ fontFamily: "'Plus Jakarta Sans', 'Montserrat', system-ui, sans-serif" }}
             >
               <span style={{ fontWeight: 800, color: '#0A0A0A' }}>Snap</span>
               <span style={{ fontWeight: 800, color: '#6F6F6F' }}>Serve</span>
             </span>
           </div>
-          <span className="opacity-20 text-2xl font-light">|</span>
+          <span className="opacity-20 text-lg font-light leading-none pb-[1px]" aria-hidden>|</span>
           <VobizLockup className="h-[24.32px] w-auto drop-shadow-sm" />
         </div>
 
