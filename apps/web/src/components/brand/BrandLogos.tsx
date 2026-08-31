@@ -44,6 +44,18 @@ export function VobizMark({ className, title = 'Vobiz' }: LogoProps) {
   )
 }
 
+/** Official Vobiz lockup (mark + wordmark), cropped tight — aspect ratio 400:111 */
+export function VobizLockup({ className, title = 'Vobiz' }: LogoProps) {
+  return (
+    <img
+      src="/logos/vobiz-full.png"
+      alt={title}
+      className={cn('object-contain object-left shrink-0', className)}
+      draggable={false}
+    />
+  )
+}
+
 /** Official Vobiz wordmark */
 export function VobizWordmark({ className, tone = 'dark', title = 'Vobiz' }: LogoProps) {
   return (

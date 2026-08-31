@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSearchParams } from 'react-router-dom'
 import confetti from 'canvas-confetti'
-import { SnapServeMark, VobizMark } from '@/components/brand/BrandLogos'
+import { SnapServeMark, VobizLockup } from '@/components/brand/BrandLogos'
 import { Avatar } from '@/components/ui/Avatar'
 import { getTrackConfig } from '@/lib/utils'
 import { useWebSocket } from '@/hooks/useWebSocket'
@@ -861,10 +861,7 @@ export function LeaderboardPage() {
             <span className="font-bold text-lg tracking-tight">snapserve.ai</span>
           </div>
           <span className="opacity-20 text-2xl font-light">|</span>
-          <div className="flex items-center gap-2">
-            <VobizMark className="h-6 w-8 drop-shadow-sm text-[#1A1A1A]" />
-            <span className="font-bold text-lg tracking-tight">vobiz.ai</span>
-          </div>
+          <VobizLockup className="h-8 w-auto drop-shadow-sm" />
         </div>
 
         <div className="flex items-center gap-3">
