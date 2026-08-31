@@ -761,7 +761,7 @@ export function LeaderboardPage() {
       if (isDecrypting || revealedStep < 3) return
       const timer = setTimeout(() => {
         rosterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }, 4000)
+      }, 7000)
       return () => clearTimeout(timer)
     }
 
