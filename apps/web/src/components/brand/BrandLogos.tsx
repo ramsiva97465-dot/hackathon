@@ -20,6 +20,18 @@ export function SnapServeMark({ className, title = 'SnapServe' }: LogoProps) {
   )
 }
 
+/** Official SnapServe lockup (mark + wordmark), cropped for light headers */
+export function SnapServeLockup({ className, title = 'SnapServe' }: LogoProps) {
+  return (
+    <img
+      src="/logos/snapserve-full.png"
+      alt={title}
+      className={cn('object-contain object-left shrink-0', className)}
+      draggable={false}
+    />
+  )
+}
+
 /** Official SnapServe wordmark — best on light surfaces */
 export function SnapServeWordmark({ className, title = 'SnapServe' }: LogoProps) {
   return (
