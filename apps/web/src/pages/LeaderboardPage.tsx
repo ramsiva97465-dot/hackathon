@@ -742,16 +742,26 @@ export function LeaderboardPage() {
   }
 
 
+  // Keep the LCD locked on the countdown card until the name is unsealed
+  useEffect(() => {
+    if (!isDecrypting) return
+    window.scrollTo({ top: 0, behavior: 'auto' })
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [isDecrypting])
+
   // Auto-scroll loop for Top 20 (Round 2) or Podium scroll (Round 3)
   useEffect(() => {
     if (!isRevealing) return
 
     if (isFinale) {
-      if (revealedStep < 3) return
-      // When all Top 3 winners are crowned, smoothly scroll to Podium
+      if (isDecrypting || revealedStep < 3) return
       const timer = setTimeout(() => {
         rosterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }, 2500)
+      }, 2000)
       return () => clearTimeout(timer)
     }
 
@@ -794,7 +804,7 @@ export function LeaderboardPage() {
       if (pauseTimeout) clearTimeout(pauseTimeout)
       if (scrollInterval) clearInterval(scrollInterval)
     }
-  }, [isRevealing, revealedStep, isFinale])
+  }, [isRevealing, revealedStep, isFinale, isDecrypting])
 
   // Automatic Reveal Step Timer for Round 2 Auto-Play only (Round 3 Finale is 100% controlled by Admin Remote)
   useEffect(() => {
