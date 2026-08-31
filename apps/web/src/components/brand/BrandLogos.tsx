@@ -20,7 +20,7 @@ export function SnapServeMark({ className, title = 'SnapServe' }: LogoProps) {
   )
 }
 
-/** Official SnapServe lockup (mark + wordmark), cropped for light headers */
+/** Official SnapServe lockup (mark + wordmark) — pixel-exact brand art */
 export function SnapServeLockup({ className, title = 'SnapServe' }: LogoProps) {
   return (
     <img

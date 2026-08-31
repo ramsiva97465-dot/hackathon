@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 144" fill="none" role="img" aria-label="SnapServe">
+  <!-- Three staggered bars  measured from brand lockup -->
+  <rect x="0" y="3" width="133" height="39" rx="19.5" fill="#0F0F0F"/>
+  <rect x="19" y="52" width="133" height="39" rx="19.5" fill="#727272"/>
+  <rect x="38" y="102" width="133" height="39" rx="19.5" fill="#AEAEB2"/>
+  <!-- Wordmark: Snap (bold black) + Serve (medium gray) -->
+  <text
+    x="168"
+    y="98"
+    font-family="Montserrat, 'Segoe UI', Arial, sans-serif"
+    font-size="72"
+    letter-spacing="-0.04em"
+  >
+    <tspan font-weight="800" fill="#181B1F">Snap</tspan><tspan font-weight="500" fill="#4B4847">Serve</tspan>
+  </text>
+</svg>
