@@ -1119,23 +1119,6 @@ export function LeaderboardPage() {
                     </span>
                   </div>
 
-                  {/* Action button for next step in Grand Finale */}
-                  {isFinale && revealedStep < 3 && (
-                    <div className="mt-6 flex justify-center">
-                      <button
-                        onClick={stepNextReveal}
-                        className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl font-black text-sm shadow-xl cursor-pointer transition-all hover:scale-105 ${
-                          revealedStep === 1
-                            ? 'bg-slate-700 hover:bg-slate-600 text-white shadow-slate-900/50'
-                            : 'bg-gradient-to-r from-[#E83C00] to-amber-500 hover:from-[#c93400] hover:to-amber-600 text-white shadow-orange-950/50 ring-2 ring-amber-400 animate-pulse'
-                        }`}
-                      >
-                        <Play size={14} fill="white" />
-                        {revealedStep === 1 ? 'Reveal 1st Runner Up (#2 🥈) ➔' : '👑 CROWN THE GRAND CHAMPION (#1) ➔'}
-                      </button>
-                    </div>
-                  )}
-
                   {/* Progress Indicator */}
                   <div className="mt-7 pt-4 border-t border-black/10 flex items-center justify-between text-xs text-slate-500 font-semibold px-2">
                     <span className={`font-mono ${isFinale ? 'text-slate-400' : 'text-slate-500'}`}>
