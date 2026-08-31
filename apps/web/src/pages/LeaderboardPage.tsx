@@ -856,7 +856,7 @@ export function LeaderboardPage() {
       {/* ── Top Bar ── */}
       <div className="relative z-20 flex items-center justify-between px-6 sm:px-10 py-4 border-b backdrop-blur-md sticky top-0 transition-colors bg-[#EBE3D5]/80 border-black/5 text-[#1A1A1A]">
         <div className="flex items-center gap-4 sm:gap-6">
-          <SnapServeLockup className="h-[24.32px] w-auto drop-shadow-sm" />
+          <SnapServeLockup className="h-8 w-auto" />
           <span className="opacity-20 text-2xl font-light">|</span>
           <VobizLockup className="h-[24.32px] w-auto drop-shadow-sm" />
         </div>
