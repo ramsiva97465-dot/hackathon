@@ -391,6 +391,7 @@ export function LeaderboardPage() {
       const targetRound = data.round || 3
       if (targetRound !== revealRound || !isRevealing) {
         setRevealRound(targetRound)
+        setActiveRound(targetRound)
         setIsRevealing(true)
       }
       executeRevealToStep(data.step, targetRound)
@@ -571,6 +572,14 @@ export function LeaderboardPage() {
     }
   }, [searchParams])
 
+  // Auto-sync public leaderboard stage when teams are promoted (no ?round= yet)
+  useEffect(() => {
+    if (searchParams.get('round') || isRevealing) return
+    const maxRound = entries.reduce((max, e) => Math.max(max, (e as any).round || 1), 1)
+    if (maxRound >= 3 && activeRound !== 3) setActiveRound(3)
+    else if (maxRound === 2 && activeRound === 1) setActiveRound(2)
+  }, [entries, searchParams, isRevealing, activeRound])
+
   const rawDisplay = entries
 
   // ── Round-based filtering ──────────────────────────────────────────────────
@@ -610,6 +619,7 @@ export function LeaderboardPage() {
   // ── Grand Reveal Logic ─────────────────────────────────────────────────────
   const startGrandReveal = (round: number = 2) => {
     setRevealRound(round)
+    setActiveRound(round)
     setIsRevealing(true)
     setRevealedStep(0)
     setIsPaused(false)
@@ -619,8 +629,12 @@ export function LeaderboardPage() {
   const stopGrandReveal = () => {
     setIsRevealing(false)
     setRevealedStep(maxSteps)
+    // Keep stage on the reveal round after exit (don't snap back to Round 1)
+    if (revealRound >= 2) {
+      setActiveRound(revealRound)
+      searchParams.set('round', String(revealRound))
+    }
     searchParams.delete('reveal')
-    searchParams.delete('round')
     setSearchParams(searchParams, { replace: true })
   }
 
@@ -628,6 +642,7 @@ export function LeaderboardPage() {
     const effectiveRound = targetRound || revealRound || 3
     if (targetRound && targetRound !== revealRound) {
       setRevealRound(targetRound)
+      setActiveRound(targetRound)
     }
     if (!isRevealing) {
       setIsRevealing(true)

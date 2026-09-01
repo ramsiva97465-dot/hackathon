@@ -575,7 +575,8 @@ export function TeamsPage() {
     if (!assignTarget) return
     try {
       setAssigning(true)
-      await api.teams.assignJudge(assignTarget.id, judgeId, 'round1')
+      await api.teams.assignJudge(assignTarget.id, judgeId, `round${assignTarget.round || 1}`)
+      toast.success(`Judge assigned for Round ${assignTarget.round || 1}`)
       await fetchTeams()
       setAssignTarget(null)
     } catch (err) { console.error('Failed to assign judge', err) }

@@ -126,7 +126,8 @@ export class JudgesService {
 
     const r3Count = await this.prisma.team.count({ where: { status: 'COMPETING', round: 3 } })
     const r2Count = await this.prisma.team.count({ where: { status: 'COMPETING', round: 2 } })
-    const activeJudgingRound = r3Count >= 3 ? 3 : r2Count >= 1 ? 2 : 1
+    // Any Round 3 finalist switches judges to Round 3; else Round 2 if Top 20 promoted
+    const activeJudgingRound = r3Count >= 1 ? 3 : r2Count >= 1 ? 2 : 1
     const filteredAssignments = assignments.filter(a => a.team.round === activeJudgingRound)
 
     return {
@@ -154,7 +155,8 @@ export class JudgesService {
         let isScored = scoreSheet?.isSubmitted || false
         let isLocked = scoreSheet?.isSubmitted || false
 
-        if (team.adminScore !== null && team.adminScore !== undefined) {
+        // Admin override scores only lock Round 1. Round 2+ needs a fresh judge pass.
+        if (activeJudgingRound === 1 && team.adminScore !== null && team.adminScore !== undefined) {
           if (team.adminScore === 0) {
             totalScore = null
             isScored = false

@@ -640,16 +640,14 @@ export class TeamsService {
         })
       }
 
-      // Update top 20 to round 2
+      // Update top 20 to round 2 — clear adminScore so Round 2 starts clean
       await this.prisma.team.updateMany({
         where: { id: { in: top20Ids } },
-        data: { round: 2 }
+        data: { round: 2, adminScore: null }
       })
 
       // 1. Clear all existing judge assignments so Judges Portal becomes EMPTY for Round 2 until Admin assigns Round 2 teams!
-      await this.prisma.judgeAssignment.deleteMany({
-        where: { hackathonId: hackathon.id }
-      })
+      await this.prisma.judgeAssignment.deleteMany({})
 
       // 2. Delete existing score sheets for promoted top 20 teams so they start with fresh score sheets in Round 2
       await this.prisma.scoreSheet.deleteMany({
@@ -697,13 +695,11 @@ export class TeamsService {
 
       await this.prisma.team.updateMany({
         where: { id: { in: top3Ids } },
-        data: { round: 3 }
+        data: { round: 3, adminScore: null }
       })
 
       // 1. Clear judge assignments for Round 3
-      await this.prisma.judgeAssignment.deleteMany({
-        where: { hackathonId: hackathon.id }
-      })
+      await this.prisma.judgeAssignment.deleteMany({})
 
       // 2. Delete score sheets for top 3 teams for Round 3 fresh start
       await this.prisma.scoreSheet.deleteMany({

@@ -12,7 +12,8 @@ type TeamOverview = {
   teamId: string
   teamName: string
   track: string
-  overallScore: number
+  totalScore: number
+  overallScore?: number
   judgeCount: number
   round: number
 }
@@ -65,8 +66,8 @@ export function RoundsManagement() {
       const statsRes = await api.leaderboard.get()
       if (Array.isArray(statsRes.data)) {
         const all: TeamOverview[] = statsRes.data
-        setRound1Count(all.length)
-        setRound2Count(all.filter(t => t.round >= 2).length)
+        setRound1Count(all.filter(t => (t.round || 1) === 1).length)
+        setRound2Count(all.filter(t => t.round === 2).length)
         setWinnersCount(all.filter(t => t.round === 3).length)
       }
     } catch (err) {
@@ -191,6 +192,11 @@ export function RoundsManagement() {
   }
 
   const activeRoundNum = winnersCount > 0 ? 3 : round2Count > 0 ? 2 : 1
+  const displayTeams = activeTab === 2
+    ? teams.filter(t => t.round === 2)
+    : activeTab === 3
+      ? teams.filter(t => t.round === 3)
+      : teams
 
   return (
     <DashboardLayout role="admin">
@@ -466,7 +472,7 @@ export function RoundsManagement() {
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">2nd Place</span>
                 <h3 className="text-lg font-black text-white mt-1">{teams[1]?.teamName}</h3>
                 <p className="text-xs text-slate-400 font-medium mt-1">{teams[1]?.track}</p>
-                <span className="mt-3 text-2xl font-black text-slate-300 block">{teams[1]?.overallScore}</span>
+                <span className="mt-3 text-2xl font-black text-slate-300 block">{teams[1]?.totalScore ?? teams[1]?.overallScore}</span>
               </div>
             </div>
 
@@ -478,7 +484,7 @@ export function RoundsManagement() {
                 <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest block">1st Place Winner</span>
                 <h3 className="text-xl font-black text-white mt-1">{teams[0]?.teamName}</h3>
                 <p className="text-xs text-slate-400 font-medium mt-1">{teams[0]?.track}</p>
-                <span className="mt-3 text-3xl font-black text-amber-500 block drop-shadow-md">{teams[0]?.overallScore}</span>
+                <span className="mt-3 text-3xl font-black text-amber-500 block drop-shadow-md">{teams[0]?.totalScore ?? teams[0]?.overallScore}</span>
               </div>
             </div>
 
@@ -490,7 +496,7 @@ export function RoundsManagement() {
                 <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest block">3rd Place</span>
                 <h3 className="text-lg font-black text-white mt-1">{teams[2]?.teamName}</h3>
                 <p className="text-xs text-slate-400 font-medium mt-1">{teams[2]?.track}</p>
-                <span className="mt-3 text-2xl font-black text-slate-300 block">{teams[2]?.overallScore}</span>
+                <span className="mt-3 text-2xl font-black text-slate-300 block">{teams[2]?.totalScore ?? teams[2]?.overallScore}</span>
               </div>
             </div>
           </div>
@@ -503,7 +509,7 @@ export function RoundsManagement() {
               {activeTab === 3 ? 'Winners Standings' : activeTab === 2 ? 'Round 2 Qualified Teams' : 'Round 1 Leaderboard'}
             </h3>
             <div className="flex items-center gap-3">
-              {activeTab === 2 && teams.length > 0 && (
+              {activeTab === 2 && displayTeams.length > 0 && (
                 <button
                   disabled={loading}
                   onClick={async () => {
@@ -529,12 +535,12 @@ export function RoundsManagement() {
                 </button>
               )}
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                {teams.length} Teams
+                {displayTeams.length} Teams
               </span>
             </div>
           </div>
 
-          {teams.length === 0 ? (
+          {displayTeams.length === 0 ? (
             <div className="p-8 text-center text-slate-500">
               <p className="text-xs font-medium">No teams are active or graded in this round yet.</p>
             </div>
@@ -551,7 +557,7 @@ export function RoundsManagement() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 text-xs">
-                  {teams.map((t, idx) => (
+                  {displayTeams.map((t, idx) => (
                     <tr key={t.teamId} className="hover:bg-white/5 transition-colors">
                       <td className="px-6 py-4 font-bold text-slate-500">
                         #{idx + 1}
@@ -566,7 +572,7 @@ export function RoundsManagement() {
                         {t.judgeCount}
                       </td>
                       <td className="px-6 py-4 text-right font-black text-white">
-                        {t.overallScore}
+                        {t.totalScore ?? t.overallScore}
                       </td>
                     </tr>
                   ))}
