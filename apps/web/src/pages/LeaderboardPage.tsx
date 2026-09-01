@@ -375,10 +375,19 @@ export function LeaderboardPage() {
   const [decryptingRank, setDecryptingRank] = useState<number | null>(null)
   const timerRef = useRef<any>(null)
   const rosterRef = useRef<HTMLDivElement>(null)
+  const activeRoundRef = useRef(activeRound)
 
+  useEffect(() => {
+    activeRoundRef.current = activeRound
+  }, [activeRound])
 
-  const { emit } = useWebSocket<LeaderboardEntry[]>('leaderboard:update', (data) => {
-    setEntries(data)
+  const { emit } = useWebSocket<LeaderboardEntry[]>('leaderboard:update', async () => {
+    try {
+      const res = await api.leaderboard.get({ round: activeRoundRef.current })
+      if (Array.isArray(res.data)) setEntries(res.data)
+    } catch {
+      // Ignore live refresh errors
+    }
   })
 
   // Listen for broadcasted reveal triggers from admin panel

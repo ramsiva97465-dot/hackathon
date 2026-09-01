@@ -1,6 +1,25 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 
+type ScoreSheetWithScores = {
+  isSubmitted: boolean
+  round?: number | null
+  scores: { score: number }[]
+}
+
+function sheetsForRound(sheets: ScoreSheetWithScores[], round: number) {
+  return sheets.filter((s) => s.isSubmitted && (s.round || 1) === round)
+}
+
+function averageFromSheets(sheets: ScoreSheetWithScores[]) {
+  if (sheets.length === 0) return 0
+  const total = sheets.reduce((sum, sheet) => {
+    const sheetTotal = sheet.scores.reduce((sSum, sc) => sSum + sc.score, 0)
+    return sum + sheetTotal
+  }, 0)
+  return total / sheets.length
+}
+
 @Injectable()
 export class LeaderboardService {
   constructor(private readonly prisma: PrismaService) {}
@@ -25,7 +44,6 @@ export class LeaderboardService {
       whereCondition.round = { in: [2, 3] }
     }
 
-
     const teams = await this.prisma.team.findMany({
       where: whereCondition,
       include: {
@@ -40,23 +58,49 @@ export class LeaderboardService {
     })
 
     const entries = teams.map((team) => {
-      // Calculate overall score: average of submitted score sheets
-      const submittedSheets = team.scoreSheets.filter((s) => s.isSubmitted)
-      
-      let totalScore = 0
-      if (team.adminScore !== null && team.adminScore !== undefined) {
-        totalScore = team.adminScore
-      } else if (submittedSheets.length > 0) {
-        const total = submittedSheets.reduce((sum, sheet) => {
-          const sheetTotal = sheet.scores.reduce((sSum, sc) => sSum + sc.score, 0)
-          return sum + sheetTotal
-        }, 0)
-        totalScore = total / submittedSheets.length
-      }
+      const bonus =
+        (team as any).bonusVerifiedAt || (team as any).bonusVerifiedBy
+          ? team.bonusPoints || 0
+          : 0
 
-      // Add bonus points ONLY IF verified by Admin via QR scanner
-      if ((team as any).bonusVerifiedAt || (team as any).bonusVerifiedBy) {
-        totalScore += team.bonusPoints || 0
+      let totalScore = 0
+      let judgeCount = 0
+
+      if (targetRound === 1) {
+        if (team.round1Score !== null && team.round1Score !== undefined) {
+          totalScore = team.round1Score
+          judgeCount = team.round1JudgeCount ?? 0
+        } else {
+          const r1Sheets = sheetsForRound(team.scoreSheets, 1)
+          judgeCount = r1Sheets.length
+          if (team.adminScore !== null && team.adminScore !== undefined && (team.round || 1) === 1) {
+            totalScore = team.adminScore
+          } else {
+            totalScore = averageFromSheets(r1Sheets)
+          }
+          totalScore += bonus
+        }
+      } else if (targetRound === 2) {
+        if ((team.round || 1) >= 3 && team.round2Score !== null && team.round2Score !== undefined) {
+          totalScore = team.round2Score
+          judgeCount = team.round2JudgeCount ?? 0
+        } else {
+          const r2Sheets = sheetsForRound(team.scoreSheets, 2)
+          judgeCount = r2Sheets.length
+          if (team.adminScore !== null && team.adminScore !== undefined && (team.round || 1) === 2) {
+            totalScore = team.adminScore
+          } else {
+            totalScore = averageFromSheets(r2Sheets)
+          }
+        }
+      } else {
+        const r3Sheets = sheetsForRound(team.scoreSheets, 3)
+        judgeCount = r3Sheets.length
+        if (team.adminScore !== null && team.adminScore !== undefined && (team.round || 1) === 3) {
+          totalScore = team.adminScore
+        } else {
+          totalScore = averageFromSheets(r3Sheets)
+        }
       }
 
       return {
@@ -65,7 +109,7 @@ export class LeaderboardService {
         college: (team as any).application?.college || 'Unknown',
         track: team.track.name,
         totalScore: Math.round(totalScore * 10) / 10,
-        judgeCount: submittedSheets.length,
+        judgeCount,
         previousRank: (team as any).leaderboard?.rank ?? undefined,
         round: team.round,
         scores: [],
@@ -77,25 +121,27 @@ export class LeaderboardService {
       .sort((a, b) => b.totalScore - a.totalScore)
       .map((entry, i) => ({ ...entry, rank: i + 1 }))
 
-    // Update leaderboard table
+    // Persist only the team's current-round standing so historical R1 scores are not overwritten by R2 zeros
     await Promise.all(
-      sorted.map((e) =>
-        this.prisma.leaderboard.upsert({
-          where: { hackathonId_teamId: { hackathonId: hackathon.id, teamId: e.teamId } },
-          create: {
-            hackathonId: hackathon.id,
-            teamId: e.teamId,
-            rank: e.rank,
-            overallScore: e.totalScore,
-            judgeCount: e.judgeCount,
-          },
-          update: {
-            rank: e.rank,
-            overallScore: e.totalScore,
-            judgeCount: e.judgeCount,
-          },
-        })
-      )
+      sorted
+        .filter((e) => (e.round || 1) === targetRound)
+        .map((e) =>
+          this.prisma.leaderboard.upsert({
+            where: { hackathonId_teamId: { hackathonId: hackathon.id, teamId: e.teamId } },
+            create: {
+              hackathonId: hackathon.id,
+              teamId: e.teamId,
+              rank: e.rank,
+              overallScore: e.totalScore,
+              judgeCount: e.judgeCount,
+            },
+            update: {
+              rank: e.rank,
+              overallScore: e.totalScore,
+              judgeCount: e.judgeCount,
+            },
+          })
+        )
     )
 
     return sorted
@@ -111,8 +157,11 @@ export class LeaderboardService {
 
   async updateAdminScore(teamId: string, score: number | null) {
     if (score === 0) {
-      // Complete wipe of evaluations
-      const scoreSheets = await this.prisma.scoreSheet.findMany({ where: { teamId } })
+      const team = await this.prisma.team.findUnique({ where: { id: teamId } })
+      const currentRound = team?.round || 1
+      const scoreSheets = await this.prisma.scoreSheet.findMany({
+        where: { teamId, round: currentRound },
+      })
       const sheetIds = scoreSheets.map(s => s.id)
       
       if (sheetIds.length > 0) {
@@ -130,8 +179,6 @@ export class LeaderboardService {
         data: { adminScore: score },
       })
     }
-    // Re-calculate the leaderboard entry for this team specifically
-    // but the easiest way to keep ranks correct is to recalculate the whole leaderboard
-    await this.getLeaderboard()
+    await this.getLeaderboard({ round: 1 })
   }
 }

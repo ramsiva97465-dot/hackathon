@@ -149,7 +149,7 @@ export class TeamsService {
 
     // Also ensure the empty score sheet exists
     const existingSheet = await this.prisma.scoreSheet.findFirst({
-      where: { teamId, judgeId }
+      where: { teamId, judgeId, round: team.round || 1 }
     })
     if (!existingSheet) {
       await this.prisma.scoreSheet.create({
@@ -157,6 +157,7 @@ export class TeamsService {
           hackathonId: team.hackathonId,
           judgeId,
           teamId,
+          round: team.round || 1,
         }
       })
     }
@@ -196,7 +197,7 @@ export class TeamsService {
             }
           })
           const existingSheet = await this.prisma.scoreSheet.findFirst({
-            where: { teamId: team.id, judgeId: judge.id }
+            where: { teamId: team.id, judgeId: judge.id, round: team.round || 1 }
           })
           if (!existingSheet) {
             await this.prisma.scoreSheet.create({
@@ -204,6 +205,7 @@ export class TeamsService {
                 hackathonId: team.hackathonId,
                 judgeId: judge.id,
                 teamId: team.id,
+                round: team.round || 1,
               }
             })
           }
@@ -612,8 +614,35 @@ export class TeamsService {
     const hackathon = await this.prisma.hackathon.findFirst()
     if (!hackathon) throw new Error('No hackathon found')
 
+    const scoreForRound = (
+      t: {
+        adminScore: number | null
+        bonusPoints: number
+        bonusVerifiedAt: Date | null
+        bonusVerifiedBy: string | null
+        round: number
+        scoreSheets: { isSubmitted: boolean; round: number; scores: { score: number }[] }[]
+      },
+      round: number,
+    ) => {
+      const submittedSheets = t.scoreSheets.filter(s => s.isSubmitted && (s.round || 1) === round)
+      let overallScore = 0
+      if (t.adminScore !== null && t.adminScore !== undefined && (t.round || 1) === round) {
+        overallScore = t.adminScore
+      } else if (submittedSheets.length > 0) {
+        const total = submittedSheets.reduce((sum, sheet) => {
+          const sheetTotal = sheet.scores.reduce((sSum, sc) => sSum + sc.score, 0)
+          return sum + sheetTotal
+        }, 0)
+        overallScore = total / submittedSheets.length
+      }
+      if (round === 1 && (t.bonusVerifiedAt || t.bonusVerifiedBy)) {
+        overallScore += t.bonusPoints || 0
+      }
+      return { overallScore, judgeCount: submittedSheets.length }
+    }
+
     if (currentRound === 1) {
-      // Find all competing teams in the hackathon
       const teams = await this.prisma.team.findMany({
         where: { hackathonId: hackathon.id, status: 'COMPETING' },
         include: {
@@ -624,20 +653,12 @@ export class TeamsService {
         }
       })
 
-      const sortedTeams = teams.map(t => {
-        const submittedSheets = t.scoreSheets.filter(s => s.isSubmitted)
-        let overallScore = 0
-        if (t.adminScore !== null && t.adminScore !== undefined) {
-          overallScore = t.adminScore
-        } else if (submittedSheets.length > 0) {
-          const total = submittedSheets.reduce((sum, sheet) => {
-            const sheetTotal = sheet.scores.reduce((sSum, sc) => sSum + sc.score, 0)
-            return sum + sheetTotal
-          }, 0)
-          overallScore = total / submittedSheets.length
-        }
-        return { id: t.id, overallScore }
-      }).sort((a, b) => b.overallScore - a.overallScore)
+      const scoredTeams = teams.map(t => {
+        const { overallScore, judgeCount } = scoreForRound(t, 1)
+        return { id: t.id, overallScore, judgeCount }
+      })
+
+      const sortedTeams = [...scoredTeams].sort((a, b) => b.overallScore - a.overallScore)
 
       const top20 = sortedTeams.slice(0, 20)
       const top20Ids = top20.map(t => t.id)
@@ -647,29 +668,30 @@ export class TeamsService {
         throw new Error('No teams found to promote.')
       }
 
-      // Reset rest to round 1
+      // Freeze Round 1 scores for promoted teams only, so the Round 1 board keeps their
+      // real Round 1 result. Teams staying in Round 1 keep scoring live.
+      await Promise.all(top20.map((t) =>
+        this.prisma.team.update({
+          where: { id: t.id },
+          data: { round1Score: t.overallScore, round1JudgeCount: t.judgeCount },
+        })
+      ))
+
       if (restIds.length > 0) {
         await this.prisma.team.updateMany({
           where: { id: { in: restIds } },
-          data: { round: 1 }
+          data: { round: 1, round1Score: null, round1JudgeCount: null }
         })
       }
 
-      // Update top 20 to round 2 — clear adminScore so Round 2 starts clean
+      // Move top 20 to Round 2. Keep Round 1 score sheets. Round 2 starts at 0.
       await this.prisma.team.updateMany({
         where: { id: { in: top20Ids } },
         data: { round: 2, adminScore: null }
       })
 
-      // 1. Clear all existing judge assignments so Judges Portal becomes EMPTY for Round 2 until Admin assigns Round 2 teams!
       await this.prisma.judgeAssignment.deleteMany({})
 
-      // 2. Delete existing score sheets for promoted top 20 teams so they start with fresh score sheets in Round 2
-      await this.prisma.scoreSheet.deleteMany({
-        where: { teamId: { in: top20Ids } }
-      })
-
-      // Broadcast leaderboard data update (without triggering reveal countdown)
       this.leaderboardGateway.broadcastLeaderboardUpdate().catch(err =>
         console.error('[WS] Promote R1→R2 broadcast failed:', err)
       )
@@ -686,20 +708,12 @@ export class TeamsService {
         }
       })
 
-      const sortedTeams = teams.map(t => {
-        const submittedSheets = t.scoreSheets.filter(s => s.isSubmitted)
-        let overallScore = 0
-        if (t.adminScore !== null && t.adminScore !== undefined) {
-          overallScore = t.adminScore
-        } else if (submittedSheets.length > 0) {
-          const total = submittedSheets.reduce((sum, sheet) => {
-            const sheetTotal = sheet.scores.reduce((sSum, sc) => sSum + sc.score, 0)
-            return sum + sheetTotal
-          }, 0)
-          overallScore = total / submittedSheets.length
-        }
-        return { id: t.id, overallScore }
-      }).sort((a, b) => b.overallScore - a.overallScore)
+      const scoredTeams = teams.map(t => {
+        const { overallScore, judgeCount } = scoreForRound(t, 2)
+        return { id: t.id, overallScore, judgeCount }
+      })
+
+      const sortedTeams = [...scoredTeams].sort((a, b) => b.overallScore - a.overallScore)
 
       const top3 = sortedTeams.slice(0, 3)
       if (top3.length === 0) {
@@ -708,20 +722,20 @@ export class TeamsService {
 
       const top3Ids = top3.map(t => t.id)
 
+      await Promise.all(top3.map((t) =>
+        this.prisma.team.update({
+          where: { id: t.id },
+          data: { round2Score: t.overallScore, round2JudgeCount: t.judgeCount },
+        })
+      ))
+
       await this.prisma.team.updateMany({
         where: { id: { in: top3Ids } },
         data: { round: 3, adminScore: null }
       })
 
-      // 1. Clear judge assignments for Round 3
       await this.prisma.judgeAssignment.deleteMany({})
 
-      // 2. Delete score sheets for top 3 teams for Round 3 fresh start
-      await this.prisma.scoreSheet.deleteMany({
-        where: { teamId: { in: top3Ids } }
-      })
-
-      // Broadcast leaderboard data update (without triggering reveal countdown)
       this.leaderboardGateway.broadcastLeaderboardUpdate().catch(err =>
         console.error('[WS] Promote R2→R3 broadcast failed:', err)
       )
@@ -745,7 +759,14 @@ export class TeamsService {
     await this.prisma.leaderboard.deleteMany({})
     await this.prisma.team.updateMany({
       where: { hackathonId: hackathon.id },
-      data: { round: 1, adminScore: null },
+      data: {
+        round: 1,
+        adminScore: null,
+        round1Score: null,
+        round1JudgeCount: null,
+        round2Score: null,
+        round2JudgeCount: null,
+      },
     })
 
     return { success: true, message: 'Reset complete: scores, score sheets, and judge assignments cleared. All teams back to Round 1.' }

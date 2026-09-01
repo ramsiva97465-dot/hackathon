@@ -142,7 +142,11 @@ export class JudgesService {
       activeRound: activeJudgingRound,
       data: filteredAssignments.map(a => {
         const team = a.team
-        const scoreSheet = team.scoreSheets?.[0]
+        const teamRound = team.round || 1
+        const scoreSheet =
+          team.scoreSheets?.find((s) => (s.round || 1) === teamRound) ||
+          team.scoreSheets?.find((s) => !s.isSubmitted) ||
+          null
         
         let totalScore: number | null = null
         const existingScores: Record<string, number> = {}

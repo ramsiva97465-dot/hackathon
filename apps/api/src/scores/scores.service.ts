@@ -16,22 +16,26 @@ export class ScoresService {
       || await this.prisma.judge.findFirst({ where: { id: judgeId } })
     const resolvedJudgeId = judgeRecord ? judgeRecord.id : judgeId
 
-    // 2. Fetch or create scoreSheet
-    let scoreSheet = await this.prisma.scoreSheet.findUnique({
+    const team = await this.prisma.team.findUnique({ where: { id: teamId } })
+    if (!team) throw new NotFoundException('Team not found')
+    const judgingRound = team.round || 1
+
+    // 2. Fetch or create scoreSheet for this round only (Round 1 sheets stay frozen)
+    let scoreSheet = await this.prisma.scoreSheet.findFirst({
       where: {
-        judgeId_teamId: { judgeId: resolvedJudgeId, teamId },
+        judgeId: resolvedJudgeId,
+        teamId,
+        round: judgingRound,
       },
     })
 
     if (!scoreSheet) {
-      const team = await this.prisma.team.findUnique({ where: { id: teamId } })
-      if (!team) throw new NotFoundException('Team not found')
-
       scoreSheet = await this.prisma.scoreSheet.create({
         data: {
           judgeId: resolvedJudgeId,
           teamId,
           hackathonId: team.hackathonId,
+          round: judgingRound,
         },
       })
     }

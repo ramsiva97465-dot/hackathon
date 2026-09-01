@@ -223,6 +223,10 @@ model Team {
   status             TeamStatus @default(REGISTERED)
   adminScore         Float?
   round              Int        @default(1)
+  round1Score        Float?
+  round1JudgeCount   Int?
+  round2Score        Float?
+  round2JudgeCount   Int?
   projectTitle       String?
   projectDescription String?
   agentName          String?
@@ -357,6 +361,7 @@ model ScoreSheet {
   hackathonId String
   judgeId     String
   teamId      String
+  round       Int      @default(1)
   isSubmitted Boolean  @default(false)
   submittedAt DateTime?
   notes       String?  @db.Text
@@ -368,8 +373,9 @@ model ScoreSheet {
   team        Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
   scores      Score[]
 
-  @@unique([judgeId, teamId])
+  @@unique([judgeId, teamId, round])
   @@index([hackathonId])
+  @@index([round])
   @@map("score_sheets")
 }
 
