@@ -425,9 +425,14 @@ export function JudgeDashboard() {
               {loading ? (
                 <div className="py-12 text-center text-slate-500 text-sm font-medium">Fetching teams...</div>
               ) : filteredTeams.length === 0 ? (
-                <div className="py-12 text-center text-slate-500 text-sm flex flex-col items-center border border-dashed border-slate-300 rounded-2xl bg-slate-50/50">
-                  <Inbox className="mb-3 text-slate-400" size={32} />
-                  No teams found matching "{searchQuery}".
+                <div className="py-12 text-center text-slate-500 text-sm flex flex-col items-center border border-dashed border-slate-300 rounded-2xl bg-white/40 p-6 space-y-2">
+                  <Inbox className="mb-1 text-slate-400" size={36} />
+                  <p className="font-bold text-slate-700">
+                    {searchQuery ? `No teams found matching "${searchQuery}".` : activeRound === 2 ? '🎯 Round 2 in Progress — Awaiting Team Assignments' : activeRound === 3 ? '👑 Round 3 Final Stage — Awaiting Team Assignments' : 'No teams assigned yet.'}
+                  </p>
+                  <p className="text-xs text-slate-500 max-w-sm">
+                    {searchQuery ? 'Try clearing your search query.' : activeRound >= 2 ? 'The admin has advanced the stage. Your queue will appear here as soon as new round teams are assigned to you.' : 'Your queue will populate once an administrator assigns teams to your panel.'}
+                  </p>
                 </div>
               ) : (
                 filteredTeams.map((team) => {

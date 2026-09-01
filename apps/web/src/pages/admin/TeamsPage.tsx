@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/Progress'
 import { containerVariants, itemVariants } from '@/lib/motion'
 import { getTrackConfig } from '@/lib/utils'
 import {
-  Trophy, Users, Award, X, Check,
+  Trophy, Users, Award, X, Check, Crown,
   Search, Hash, Star, UserPlus, Download, Upload, AlertCircle, CheckCircle, Eye, ExternalLink, Github, Phone, Cpu, Layers, Instagram, Linkedin, Trash2, Clock, Zap, Filter
 } from 'lucide-react'
 import { api } from '@/lib/api'
@@ -165,6 +165,7 @@ function processCsvData(text: string) {
 
 type Team = {
   id: string; name: string; college: string; track: string
+  round?: number
   members: { name: string; email?: string; phone?: string; role?: string; linkedin?: string; instagram?: string; github?: string; followedInstagram?: boolean; followedLinkedin?: boolean }[]
   judgesAssigned: number; totalJudges: number
   avgScore: number | null; rank: number | null
@@ -196,6 +197,10 @@ export function TeamsPage() {
   const filterParam = (searchParams.get('filter') as 'all' | 'submitted' | 'not_submitted') || 'all'
   const [filterType, setFilterType] = useState<'all' | 'submitted' | 'not_submitted'>(filterParam)
 
+  const roundParam = searchParams.get('round')
+  const initialRound = roundParam === '2' ? 2 : roundParam === '3' ? 3 : roundParam === '1' ? 1 : 'all'
+  const [selectedRound, setSelectedRound] = useState<'all' | 1 | 2 | 3>(initialRound)
+
   useEffect(() => {
     const f = searchParams.get('filter')
     if (f === 'submitted' || f === 'not_submitted' || f === 'all') {
@@ -203,14 +208,34 @@ export function TeamsPage() {
     }
   }, [searchParams])
 
+  useEffect(() => {
+    const r = searchParams.get('round')
+    if (r === '2') setSelectedRound(2)
+    else if (r === '3') setSelectedRound(3)
+    else if (r === '1') setSelectedRound(1)
+    else if (r === 'all' || !r) setSelectedRound('all')
+  }, [searchParams])
+
   const handleSetFilterType = (type: 'all' | 'submitted' | 'not_submitted') => {
     setFilterType(type)
+    const newParams = new URLSearchParams(searchParams)
     if (type === 'all') {
-      searchParams.delete('filter')
-      setSearchParams(searchParams, { replace: true })
+      newParams.delete('filter')
     } else {
-      setSearchParams({ filter: type }, { replace: true })
+      newParams.set('filter', type)
     }
+    setSearchParams(newParams, { replace: true })
+  }
+
+  const handleSetSelectedRound = (round: 'all' | 1 | 2 | 3) => {
+    setSelectedRound(round)
+    const newParams = new URLSearchParams(searchParams)
+    if (round === 'all') {
+      newParams.delete('round')
+    } else {
+      newParams.set('round', String(round))
+    }
+    setSearchParams(newParams, { replace: true })
   }
 
   const [teams, setTeams] = useState<Team[]>([])
@@ -587,12 +612,13 @@ export function TeamsPage() {
 
   const [distributing, setDistributing] = useState(false)
 
-  const handleAutoDistribute = async () => {
+  const handleAutoDistribute = async (overrideRound?: number) => {
     try {
       setDistributing(true)
-      const res = await api.teams.autoDistributeJudges(1)
+      const targetRound = overrideRound ?? (selectedRound !== 'all' ? selectedRound : undefined)
+      const res = await api.teams.autoDistributeJudges(1, targetRound)
       if (res.data?.success) {
-        toast.success(res.data.message || 'Auto-assigned 1 judge per team across all judges!')
+        toast.success(res.data.message || `Auto-assigned 1 judge per team${targetRound ? ` in Round ${targetRound}` : ''}!`)
         fetchTeams()
       } else {
         toast.error(res.data?.message || 'Auto-assignment failed.')
@@ -615,8 +641,19 @@ export function TeamsPage() {
 
   const submittedCount = teams.filter(isTeamSubmitted).length
   const notSubmittedCount = teams.length - submittedCount
+  const round1Count = teams.filter(t => (t.round || 1) === 1).length
+  const round2Count = teams.filter(t => (t.round || 1) === 2).length
+  const round3Count = teams.filter(t => (t.round || 1) === 3).length
 
   const filtered = teams.filter(t => {
+    // Stage / Round filter check
+    if (selectedRound !== 'all') {
+      const teamRound = t.round || 1
+      if (selectedRound === 3 && teamRound !== 3) return false
+      if (selectedRound === 2 && teamRound !== 2) return false
+      if (selectedRound === 1 && teamRound !== 1) return false
+    }
+
     // Filter type check
     if (filterType === 'submitted' && !isTeamSubmitted(t)) return false
     if (filterType === 'not_submitted' && isTeamSubmitted(t)) return false
@@ -752,6 +789,105 @@ export function TeamsPage() {
         <div className="bg-[#0A0A0A] rounded-2xl overflow-hidden shadow-2xl"
           style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
 
+          {/* Stage / Round Filter Navigation Bar */}
+          <div className="flex items-center justify-between px-5 pt-4 pb-2 border-b border-white/5 bg-[#111] overflow-x-auto gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mr-1 shrink-0">Stage Filter:</span>
+              <button
+                type="button"
+                onClick={() => handleSetSelectedRound('all')}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  selectedRound === 'all'
+                    ? 'bg-white text-black shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                }`}
+              >
+                <span>All Stages</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-300">
+                  {teams.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSetSelectedRound(1)}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  selectedRound === 1
+                    ? 'bg-white text-black shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                }`}
+              >
+                <span>Round 1</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-300">
+                  {round1Count}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSetSelectedRound(2)}
+                className={`px-3.5 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  selectedRound === 2
+                    ? 'bg-gradient-to-r from-[#E83C00] to-amber-500 text-white shadow-lg'
+                    : 'bg-amber-500/10 text-amber-300 border border-amber-500/20 hover:bg-amber-500/20'
+                }`}
+              >
+                <Zap size={12} className={selectedRound === 2 ? 'text-white' : 'text-amber-400'} />
+                <span>Round 2 (Top 20)</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
+                  selectedRound === 2 ? 'bg-black/30 text-amber-200' : 'bg-amber-500/20 text-amber-300'
+                }`}>
+                  {round2Count}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSetSelectedRound(3)}
+                className={`px-3.5 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  selectedRound === 3
+                    ? 'bg-amber-400 text-black shadow-lg'
+                    : 'bg-amber-400/10 text-amber-400 border border-amber-400/20 hover:bg-amber-400/20'
+                }`}
+              >
+                <Crown size={12} className={selectedRound === 3 ? 'text-black' : 'text-amber-400'} />
+                <span>Round 3 (Finalists)</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
+                  selectedRound === 3 ? 'bg-black/30 text-black' : 'bg-amber-400/20 text-amber-400'
+                }`}>
+                  {round3Count}
+                </span>
+              </button>
+            </div>
+
+            <span className="text-xs font-semibold text-slate-400 shrink-0">{filtered.length} teams in view</span>
+          </div>
+
+          {/* Special Context Banner for Round 2 */}
+          {selectedRound === 2 && (
+            <div className="mx-5 mt-4 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-2.5">
+                <Zap size={16} className="text-amber-400 shrink-0" />
+                <div>
+                  <p className="text-xs font-black text-amber-200">
+                    Viewing Round 2 Qualified Teams ({round2Count} Teams)
+                  </p>
+                  <p className="text-[11px] text-amber-300/70">
+                    Judges queue has been emptied for Round 2. Auto-assign or manually assign judges to the 20 qualifiers below.
+                  </p>
+                </div>
+              </div>
+              <button
+                disabled={distributing || round2Count === 0}
+                onClick={() => handleAutoDistribute(2)}
+                className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-xs font-black transition-all flex items-center gap-1.5 shadow-md disabled:opacity-50 cursor-pointer"
+              >
+                <UserPlus size={13} />
+                {distributing ? 'Assigning…' : '⚡ Auto-Assign Round 2 to Judges'}
+              </button>
+            </div>
+          )}
+
           {/* Search Bar & Filter Controls */}
           <div className="flex items-center justify-between px-5 py-4 flex-wrap gap-3"
             style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
@@ -781,7 +917,7 @@ export function TeamsPage() {
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                   }`}
                 >
-                  <span>All Teams</span>
+                  <span>All Submissions</span>
                   <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-300">
                     {teams.length}
                   </span>
@@ -797,7 +933,7 @@ export function TeamsPage() {
                   }`}
                 >
                   <CheckCircle size={13} className={filterType === 'submitted' ? 'text-white' : 'text-emerald-400'} />
-                  <span>Show Submitted Alone</span>
+                  <span>Submitted Alone</span>
                   <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
                     filterType === 'submitted' ? 'bg-emerald-800 text-white' : 'bg-emerald-950 text-emerald-300'
                   }`}>
@@ -896,13 +1032,13 @@ export function TeamsPage() {
               </button>
 
               <button
-                disabled={distributing}
-                onClick={handleAutoDistribute}
+                disabled={distributing || filtered.length === 0}
+                onClick={() => handleAutoDistribute(selectedRound !== 'all' ? selectedRound : undefined)}
                 className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-xl text-amber-300 transition-all bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 disabled:opacity-50 cursor-pointer"
-                title="Auto-distribute 100 teams evenly across all confirmed judges"
+                title="Auto-distribute teams evenly across all confirmed judges"
               >
                 <UserPlus size={14} className="text-amber-400" />
-                {distributing ? 'Assigning…' : '⚡ Auto-Assign to Judges'}
+                {distributing ? 'Assigning…' : selectedRound === 2 ? `⚡ Auto-Assign Round 2 (${round2Count})` : selectedRound === 3 ? `👑 Auto-Assign Round 3 (${round3Count})` : '⚡ Auto-Assign to Judges'}
               </button>
             </div>
             <span className="text-xs font-semibold text-slate-400">{filtered.length} teams shown</span>
@@ -973,6 +1109,16 @@ export function TeamsPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-bold text-white truncate">{team.name}</p>
+                          {team.round === 2 && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
+                              ⚡ Round 2
+                            </span>
+                          )}
+                          {team.round === 3 && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-yellow-500/25 text-yellow-300 border border-yellow-500/50 shrink-0">
+                              👑 Round 3
+                            </span>
+                          )}
                           {isTeamSubmitted(team) ? (
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
                               <CheckCircle size={9} />

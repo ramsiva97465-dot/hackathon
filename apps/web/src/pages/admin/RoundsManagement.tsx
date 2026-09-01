@@ -502,9 +502,36 @@ export function RoundsManagement() {
             <h3 className="text-xs font-bold text-white uppercase tracking-wider">
               {activeTab === 3 ? 'Winners Standings' : activeTab === 2 ? 'Round 2 Qualified Teams' : 'Round 1 Leaderboard'}
             </h3>
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-              {teams.length} Teams
-            </span>
+            <div className="flex items-center gap-3">
+              {activeTab === 2 && teams.length > 0 && (
+                <button
+                  disabled={loading}
+                  onClick={async () => {
+                    try {
+                      setLoading(true)
+                      const res = await api.teams.autoDistributeJudges(1, 2)
+                      if (res.data?.success) {
+                        toast.success(res.data.message || 'Auto-assigned Round 2 teams to judges!')
+                        fetchLeaderboard()
+                      } else {
+                        toast.error(res.data?.message || 'Assignment failed')
+                      }
+                    } catch (e) {
+                      toast.error('Failed to auto-assign Round 2')
+                    } finally {
+                      setLoading(false)
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                >
+                  <Users size={12} className="text-amber-400" />
+                  <span>⚡ Auto-Assign Round 2 to Judges</span>
+                </button>
+              )}
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                {teams.length} Teams
+              </span>
+            </div>
           </div>
 
           {teams.length === 0 ? (

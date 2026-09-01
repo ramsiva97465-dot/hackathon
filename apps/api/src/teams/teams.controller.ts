@@ -13,6 +13,10 @@ class AutoDistributeJudgesDto {
   @IsNumber()
   @IsOptional()
   judgesPerTeam?: number
+
+  @IsNumber()
+  @IsOptional()
+  round?: number
 }
 
 @Controller('teams')
@@ -96,7 +100,7 @@ export class TeamsController {
 
   @Post('auto-distribute-judges')
   autoDistributeJudges(@Body() dto: AutoDistributeJudgesDto) {
-    return this.service.autoDistributeJudges(dto?.judgesPerTeam ?? 1)
+    return this.service.autoDistributeJudges(dto?.judgesPerTeam ?? 1, dto?.round ? Number(dto.round) : undefined)
   }
 
   @Patch(':id/table-number')

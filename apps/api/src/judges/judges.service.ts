@@ -124,8 +124,9 @@ export class JudgesService {
       }
     })
 
-    const hasRound2 = assignments.some(a => a.team.round === 2)
-    const activeJudgingRound = hasRound2 ? 2 : 1
+    const r3Count = await this.prisma.team.count({ where: { status: 'COMPETING', round: 3 } })
+    const r2Count = await this.prisma.team.count({ where: { status: 'COMPETING', round: 2 } })
+    const activeJudgingRound = r3Count >= 3 ? 3 : r2Count >= 1 ? 2 : 1
     const filteredAssignments = assignments.filter(a => a.team.round === activeJudgingRound)
 
     return {

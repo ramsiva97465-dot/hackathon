@@ -85,6 +85,7 @@ export class TeamsService {
     const mapped = validTeams.map(t => ({
       id: t.id,
       name: t.name,
+      round: t.round || 1,
       college: t.application?.college || 'Unknown',
       track: t.track.slug === 'real-world-deployment' ? 'REAL_WORLD_DEPLOYMENT' : 
              t.track.slug === 'multimodal-ai' ? 'MULTIMODAL_AI' : 'VOICE_AI_AGENT',
@@ -131,23 +132,33 @@ export class TeamsService {
       }
     })
 
-    // Also create the empty score sheet
-    await this.prisma.scoreSheet.create({
-      data: {
-        hackathonId: team.hackathonId,
-        judgeId,
-        teamId,
-      }
+    // Also ensure the empty score sheet exists
+    const existingSheet = await this.prisma.scoreSheet.findFirst({
+      where: { teamId, judgeId }
     })
+    if (!existingSheet) {
+      await this.prisma.scoreSheet.create({
+        data: {
+          hackathonId: team.hackathonId,
+          judgeId,
+          teamId,
+        }
+      })
+    }
 
     return { success: true, data: assignment }
   }
 
-  async autoDistributeJudges(judgesPerTeam: number = 1) {
-    const teams = await this.prisma.team.findMany({ where: { status: 'COMPETING' } })
+  async autoDistributeJudges(judgesPerTeam: number = 1, round?: number) {
+    const whereClause: any = { status: 'COMPETING' }
+    if (round !== undefined && round !== null) {
+      whereClause.round = Number(round)
+    }
+
+    const teams = await this.prisma.team.findMany({ where: whereClause })
     const judges = await this.prisma.judge.findMany()
 
-    if (teams.length === 0) return { success: false, message: 'No active teams to assign.' }
+    if (teams.length === 0) return { success: false, message: `No active teams found${round ? ` in Round ${round}` : ''} to assign.` }
     if (judges.length === 0) return { success: false, message: 'No judges available.' }
 
     let count = 0
@@ -169,19 +180,24 @@ export class TeamsService {
               teamId: team.id,
             }
           })
-          await this.prisma.scoreSheet.create({
-            data: {
-              hackathonId: team.hackathonId,
-              judgeId: judge.id,
-              teamId: team.id,
-            }
+          const existingSheet = await this.prisma.scoreSheet.findFirst({
+            where: { teamId: team.id, judgeId: judge.id }
           })
+          if (!existingSheet) {
+            await this.prisma.scoreSheet.create({
+              data: {
+                hackathonId: team.hackathonId,
+                judgeId: judge.id,
+                teamId: team.id,
+              }
+            })
+          }
           count++
         }
       }
     }
 
-    return { success: true, message: `Successfully assigned ${count} judge assignments across ${teams.length} teams.` }
+    return { success: true, message: `Successfully assigned ${count} judge assignments across ${teams.length} teams${round ? ` in Round ${round}` : ''}.` }
   }
 
   async updateTableNumber(teamId: string, tableNumber: string) {
@@ -630,6 +646,16 @@ export class TeamsService {
         data: { round: 2 }
       })
 
+      // 1. Clear all existing judge assignments so Judges Portal becomes EMPTY for Round 2 until Admin assigns Round 2 teams!
+      await this.prisma.judgeAssignment.deleteMany({
+        where: { hackathonId: hackathon.id }
+      })
+
+      // 2. Delete existing score sheets for promoted top 20 teams so they start with fresh score sheets in Round 2
+      await this.prisma.scoreSheet.deleteMany({
+        where: { teamId: { in: top20Ids } }
+      })
+
       // Broadcast leaderboard data update (without triggering reveal countdown)
       this.leaderboardGateway.broadcastLeaderboardUpdate().catch(err =>
         console.error('[WS] Promote R1→R2 broadcast failed:', err)
@@ -674,6 +700,16 @@ export class TeamsService {
         data: { round: 3 }
       })
 
+      // 1. Clear judge assignments for Round 3
+      await this.prisma.judgeAssignment.deleteMany({
+        where: { hackathonId: hackathon.id }
+      })
+
+      // 2. Delete score sheets for top 3 teams for Round 3 fresh start
+      await this.prisma.scoreSheet.deleteMany({
+        where: { teamId: { in: top3Ids } }
+      })
+
       // Broadcast leaderboard data update (without triggering reveal countdown)
       this.leaderboardGateway.broadcastLeaderboardUpdate().catch(err =>
         console.error('[WS] Promote R2→R3 broadcast failed:', err)
@@ -693,6 +729,9 @@ export class TeamsService {
 
     await this.prisma.score.deleteMany({})
     await this.prisma.scoreSheet.deleteMany({})
+    await this.prisma.judgeAssignment.deleteMany({
+      where: { hackathonId: hackathon.id }
+    })
     await this.prisma.leaderboard.deleteMany({
       where: { hackathonId: hackathon.id }
     })
