@@ -577,8 +577,14 @@ export function TeamsPage() {
     } catch (err) { console.error('Failed to load judges', err) }
   }
 
-  const handleAssignJudge = async (judgeId: string) => {
+  const handleAssignJudge = async (judgeId: string, isUpdate = false) => {
     if (!assignTarget) return
+    if (isUpdate) {
+      const ok = window.confirm(
+        `This team already has one judge. Replace them with the selected judge for Round ${assignTarget.round || 1}?`
+      )
+      if (!ok) return
+    }
     try {
       setAssigning(true)
       const res = await api.teams.assignJudge(assignTarget.id, judgeId, `round${assignTarget.round || 1}`)
@@ -586,7 +592,7 @@ export function TeamsPage() {
         toast.error(res.data?.message || 'Failed to assign judge.')
         return
       }
-      toast.success(res.data?.message || `Judge assigned for Round ${assignTarget.round || 1}`)
+      toast.success(res.data?.message || (isUpdate ? 'Judge updated.' : `Judge assigned for Round ${assignTarget.round || 1}`))
       await fetchTeams()
       await fetchJudges()
       setAssignTarget(null)
@@ -1306,7 +1312,7 @@ export function TeamsPage() {
                         onClick={() => setAssignTarget(team)}
                         className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#E83C00]/10 text-[#E83C00] hover:bg-[#E83C00]/20 border border-[#E83C00]/20 text-[11px] font-bold rounded-lg transition-all whitespace-nowrap"
                       >
-                        <UserPlus size={11} /> Assign
+                        <UserPlus size={11} /> {team.judgesAssigned > 0 ? 'Update' : 'Assign'}
                       </button>
                     </div>
                   </motion.div>
@@ -1621,9 +1627,11 @@ export function TeamsPage() {
                     <UserPlus size={16} style={{ color: '#E83C00' }} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900 text-sm">Assign Judge</h3>
+                    <h3 className="font-bold text-slate-900 text-sm">
+                      {(assignTarget.assignedJudgeIds || []).length > 0 ? 'Update Judge' : 'Assign Judge'}
+                    </h3>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Evaluating <span className="font-semibold text-slate-700">{assignTarget.name}</span>
+                      One judge per team · <span className="font-semibold text-slate-700">{assignTarget.name}</span>
                     </p>
                   </div>
                 </div>
@@ -1646,7 +1654,9 @@ export function TeamsPage() {
                     <p className="text-sm font-semibold text-slate-400">No judges available</p>
                   </div>
                 ) : judges.map(judge => {
-                  const alreadyAssigned = (assignTarget.assignedJudgeIds || []).includes(judge.id)
+                  const assignedIds = assignTarget.assignedJudgeIds || []
+                  const alreadyAssigned = assignedIds.includes(judge.id)
+                  const hasOtherJudge = assignedIds.length > 0 && !alreadyAssigned
                   return (
                   <div
                     key={judge.id}
@@ -1665,16 +1675,24 @@ export function TeamsPage() {
                       </div>
                     </div>
                     <button
-                      onClick={() => handleAssignJudge(judge.id)}
+                      onClick={() => handleAssignJudge(judge.id, hasOtherJudge)}
                       disabled={assigning || alreadyAssigned}
                       className="text-[11px] font-bold px-3.5 py-1.5 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       style={alreadyAssigned
                         ? { color: '#16A34A', background: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.22)' }
-                        : { color: '#E83C00', background: 'rgba(232,60,0,0.07)', border: '1px solid rgba(232,60,0,0.18)' }}
-                      onMouseEnter={e => { if (!alreadyAssigned) e.currentTarget.style.background = 'rgba(232,60,0,0.14)' }}
-                      onMouseLeave={e => { if (!alreadyAssigned) e.currentTarget.style.background = 'rgba(232,60,0,0.07)' }}
+                        : hasOtherJudge
+                          ? { color: '#B45309', background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.28)' }
+                          : { color: '#E83C00', background: 'rgba(232,60,0,0.07)', border: '1px solid rgba(232,60,0,0.18)' }}
+                      onMouseEnter={e => {
+                        if (alreadyAssigned) return
+                        e.currentTarget.style.background = hasOtherJudge ? 'rgba(245,158,11,0.18)' : 'rgba(232,60,0,0.14)'
+                      }}
+                      onMouseLeave={e => {
+                        if (alreadyAssigned) return
+                        e.currentTarget.style.background = hasOtherJudge ? 'rgba(245,158,11,0.10)' : 'rgba(232,60,0,0.07)'
+                      }}
                     >
-                      {alreadyAssigned ? 'Assigned' : assigning ? '…' : 'Assign'}
+                      {alreadyAssigned ? 'Current' : assigning ? '…' : hasOtherJudge ? 'Update' : 'Assign'}
                     </button>
                   </div>
                   )

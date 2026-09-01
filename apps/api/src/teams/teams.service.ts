@@ -128,18 +128,34 @@ export class TeamsService {
     const judge = await this.prisma.judge.findUnique({ where: { id: judgeId } })
     if (!judge) return { success: false, message: 'Judge not found.' }
 
-    const existingAssignment = await this.prisma.judgeAssignment.findFirst({
-      where: { teamId, judgeId },
+    const judgingRound = team.round || 1
+    const currentAssignments = await this.prisma.judgeAssignment.findMany({
+      where: { teamId },
     })
-    if (existingAssignment) {
+    const alreadyThisJudge = currentAssignments.find(a => a.judgeId === judgeId)
+    if (alreadyThisJudge && currentAssignments.length === 1) {
       return {
         success: true,
-        data: existingAssignment,
+        data: alreadyThisJudge,
         message: 'This judge is already assigned to this team.',
       }
     }
 
-    const assignment = await this.prisma.judgeAssignment.create({
+    const replaced = currentAssignments.some(a => a.judgeId !== judgeId)
+
+    // One judge per team: drop any other assignments and this round's leftover sheets
+    await this.prisma.judgeAssignment.deleteMany({
+      where: { teamId, judgeId: { not: judgeId } },
+    })
+    await this.prisma.scoreSheet.deleteMany({
+      where: {
+        teamId,
+        round: judgingRound,
+        judgeId: { not: judgeId },
+      },
+    })
+
+    const assignment = alreadyThisJudge || await this.prisma.judgeAssignment.create({
       data: {
         hackathonId: team.hackathonId,
         judgeId,
@@ -147,9 +163,8 @@ export class TeamsService {
       }
     })
 
-    // Also ensure the empty score sheet exists
     const existingSheet = await this.prisma.scoreSheet.findFirst({
-      where: { teamId, judgeId, round: team.round || 1 }
+      where: { teamId, judgeId, round: judgingRound }
     })
     if (!existingSheet) {
       await this.prisma.scoreSheet.create({
@@ -157,12 +172,18 @@ export class TeamsService {
           hackathonId: team.hackathonId,
           judgeId,
           teamId,
-          round: team.round || 1,
+          round: judgingRound,
         }
       })
     }
 
-    return { success: true, data: assignment }
+    return {
+      success: true,
+      data: assignment,
+      message: replaced
+        ? `Judge updated for Round ${judgingRound}.`
+        : `Judge assigned for Round ${judgingRound}.`,
+    }
   }
 
   async autoDistributeJudges(judgesPerTeam: number = 1, round?: number) {
@@ -180,38 +201,33 @@ export class TeamsService {
     let count = 0
     for (let i = 0; i < teams.length; i++) {
       const team = teams[i]
-      for (let j = 0; j < Math.min(judgesPerTeam, judges.length); j++) {
-        const judgeIdx = (i * judgesPerTeam + j) % judges.length
-        const judge = judges[judgeIdx]
+      const alreadyAssigned = await this.prisma.judgeAssignment.findFirst({
+        where: { teamId: team.id }
+      })
+      if (alreadyAssigned) continue
 
-        const existing = await this.prisma.judgeAssignment.findFirst({
-          where: { teamId: team.id, judgeId: judge.id }
-        })
-
-        if (!existing) {
-          await this.prisma.judgeAssignment.create({
-            data: {
-              hackathonId: team.hackathonId,
-              judgeId: judge.id,
-              teamId: team.id,
-            }
-          })
-          const existingSheet = await this.prisma.scoreSheet.findFirst({
-            where: { teamId: team.id, judgeId: judge.id, round: team.round || 1 }
-          })
-          if (!existingSheet) {
-            await this.prisma.scoreSheet.create({
-              data: {
-                hackathonId: team.hackathonId,
-                judgeId: judge.id,
-                teamId: team.id,
-                round: team.round || 1,
-              }
-            })
-          }
-          count++
+      const judge = judges[i % judges.length]
+      await this.prisma.judgeAssignment.create({
+        data: {
+          hackathonId: team.hackathonId,
+          judgeId: judge.id,
+          teamId: team.id,
         }
+      })
+      const existingSheet = await this.prisma.scoreSheet.findFirst({
+        where: { teamId: team.id, judgeId: judge.id, round: team.round || 1 }
+      })
+      if (!existingSheet) {
+        await this.prisma.scoreSheet.create({
+          data: {
+            hackathonId: team.hackathonId,
+            judgeId: judge.id,
+            teamId: team.id,
+            round: team.round || 1,
+          }
+        })
       }
+      count++
     }
 
     return { success: true, message: `Successfully assigned ${count} judge assignments across ${teams.length} teams${round ? ` in Round ${round}` : ''}.` }
