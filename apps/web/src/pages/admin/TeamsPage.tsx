@@ -1161,6 +1161,17 @@ export function TeamsPage() {
                               👑 Round 3
                             </span>
                           )}
+                          {team.demoUrl && (
+                            <a
+                              href={team.demoUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              title="Open Presentation Drive URL"
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition-all shrink-0"
+                            >
+                              <ExternalLink size={9} /> Drive
+                            </a>
+                          )}
                           {isTeamSubmitted(team) ? (
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
                               <CheckCircle size={9} />
@@ -1327,17 +1338,6 @@ export function TeamsPage() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-1 min-w-0">
-                      {team.demoUrl && (
-                        <a
-                          href={team.demoUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          title="Open Presentation Drive URL"
-                          className="inline-flex items-center justify-center w-7 h-7 shrink-0 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg shadow-sm transition-all"
-                        >
-                          <ExternalLink size={12} />
-                        </a>
-                      )}
                       <button
                         onClick={() => setViewTarget(team)}
                         title="View team details"
