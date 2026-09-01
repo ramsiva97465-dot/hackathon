@@ -1,0 +1,542 @@
+"S.No","Team Name","Round","Track","Team Leader","Leader Email","Team Members","Project Title","Agent Name","Agent Phone Number","Demo URL / Slides","GitHub URL","Tech Stack","Project Description","Solution / Problem Solved","Average Judge Score","Judges Evaluated Count"
+"1","Aura","3","Conversational AI","chandru, B","droptochandru.in@gmail.com","CHANDRU B, MATHIYAZHAGAN L, ASWIN KUMAR S, T S KAMESH","Intelligent Appointment Recovery"," ASWIN","+918065356571","https://docs.google.com/presentation/d/1l6i4IDLWzHvD3O3PjU5VGbc0LHIp41Am/edit?usp=sharing&ouid=103003436294585995263&rtpof=true&sd=true","N/A","STT: Sarvam AI, LLM: Custom / Other, TTS: ElevenLabs","We are building LabLoop AI, a voice-powered appointment recovery system for diagnostic centres. When a patient cancels an appointment, LabLoop automatically identifies a suitable patient from the waiting list, calls them, offers the newly available slot, confirms the booking, updates the database, and sends an appointment confirmation via WhatsApp. It also follows up with patients who have pending diagnostic appointments or repeat tests.","Diagnostic centres lose valuable appointment slots due to last-minute cancellations, no-shows, and missed follow-ups. Staff often don't have enough time to manually find suitable patients to fill these empty slots or contact patients who need repeat tests and follow-ups. LabLoop AI solves this by automatically identifying the right patients from the database, contacting them through voice, offering available slots, confirming and updating appointments, and sending appointment confirmations through WhatsApp. This turns otherwise lost appointments into recovered bookings while improving patient follow-through.","0.0","1"
+"2","Terraze","3","Voice AI","Gopinath","gopiguna0210@gmail.com","Gopinath, HARIHARAN. A, DURGA SATHISH. V","AI Voice Course Registration","TERRAZE EDUTECH COURSE REGISTRATION","+918065354414","https://docs.google.com/presentation/d/1xSDPS5k__im2bFd0KzahXHI3UW47d9px/edit?usp=drivesdk&ouid=112184173928611918756&rtpof=true&sd=true","N/A","STT: Sarvam AI, LLM: OpenAI (GPT-4o), TTS: ElevenLabs","An AI-powered voice agent that handles real phone calls for Terraze Edutech and guides students through course enquiries and registration. It provides course details, offers a 50% discount, collects the student's name and phone number, and completes the registration conversation naturally.","Students often need to contact an admission team to get course information and complete registration. Our voice agent automates this process by answering course-related questions, supporting English, Tamil, and Hindi, handling natural conversations, validating phone numbers, and guiding the caller from enquiry to registration confirmation.","0.0","1"
+"3","Top Team","3","Voice AI","Gopalakrishnan R","720824108030@hit.edu.in","Gopalakrishnan R, Fazil M, Infant Isac J","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"4","ALTERNATORS","2","Voice AI","SHRUTHIK S","shruthik18261@gmail.com","SHRUTHIK S, Nirmal Kumar B, Mathu Vinesh N","College Admission Management ","STEPHEN","+918071581361","https://docs.google.com/presentation/d/1Y2Rx50VYh9Q7Z3rwUH5dNsCvxM0V09OV/edit?usp=sharing&ouid=104349641253386109581&rtpof=true&sd=true","N/A","STT: Deepgram, LLM: OpenAI (GPT-4o), TTS: ElevenLabs","STEPHEN is a conversational voice AI representative that answers admission enquiries instantly, day or night, in multiple languages — listening, understanding intent, and responding naturally. It captures leads into SnapServe and hands off to a human counsellor when needed, turning a five-agent AI system into one smooth, always-on admissions experience.","Admission offices are slow and inconsistent, leaving student enquiries delayed or lost. STEPHEN fixes this as a 24/7 voice AI receptionist that instantly answers questions and routes every enquiry to the right next step.","0.0","1"
+"5","ASG","2","Voice AI","Guru Ragav G","gururagavops@gmaill.com","Guru Ragav G, Ayaan Shaik, Sree Dev. S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"6","AUTOFLOW","2","Voice AI","RAGUL KUMAR K C","ragul@ragulkumarai.com","RAGUL KUMAR K C","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"7","Axdox-IT","2","Voice AI","SHRI SIVA J","shrisiva367@gmail.com","SHRI SIVA J","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"8","Code catylst","2","Voice AI","Swetha KJ","kjswetha490@gmail.com","Swetha KJ","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"9","Flare","2","Voice AI","SIDDHARTHAN K","720824108104@hit.edu.in","SIDDHARTHAN K","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"10","Janani","2","Voice AI","Janani A C","720824108038@hit.edu.in","Janani A C","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"11","Mohamed Abdul Aziz","2","Voice AI","Mohamed Abdul Aziz","ultemateaziz64@gmail.com","Mohamed Abdul Aziz","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"12","Red team","2","Voice AI","Nesa priyan R","nesapriyan44@gmail.com","Nesa priyan R, Sunilraj Navarathinaraja28, Sivabalan, Thirumoorthi, R.P.SRI RAM KARTHIK, Sachin, SIVABALAJI","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"13","Sigma Code","2","Voice AI","Basil Ahamed","sbasil.ahamed@gmail.com","Basil Ahamed","NestIQ — Tamil-first Voice AI Squad for Real Estate: Instant Lead Calls & Site-Visit Booking","KURAL — TAMIL NEW BUYER QUALIFIER (NESTIQ FRONT DESK)","+918065355786","https://drive.google.com/drive/folders/15DePsydalUiQmJQKT-PGi3E9R3khP8UE?usp=drive_link","N/A","STT: Sarvam AI, LLM: Google Gemini, TTS: Custom / Other","NestIQ is a Tamil-first multi-agent voice squad ('NestIQ Front Desk') for real estate. Kural, the new-buyer qualifier, calls website leads back within 60 seconds and qualifies them in natural spoken Tamil (buy/rent, area, BHK, budget, timeline), then books a site visit on the calendar. Mid-call, existing customers are handed off to Arjun, the existing-buyer care specialist — same call, shared memory, zero re-asked questions (you can hear the handoff: Kural is a female voice, Arjun male). WhatsApp confirmation + Google Sheets disposition writeback close the loop.","Real estate agencies in Tamil Nadu lose 40-60% of portal and website leads because agents call back hours late — buyers have already spoken to a competitor. Half these buyers prefer Tamil over English forms and apps. NestIQ fixes speed-to-lead end-to-end: enquiry form → automatic Tamil voice call in under 60 seconds → qualification (buy/rent, area, BHK, budget, timeline) → live site-visit booking mid-call → WhatsApp confirmation + Sheet writeback with HOT/WARM/NOT INTERESTED disposition. Voice is the natural medium — property buying in India runs on phone calls. Full lead-source automation with zero manual triggers, demoed live on our Vobiz hotline +91 80653 55786.","0.0","1"
+"14","TECH-MACHOS","2","Voice AI","Tamizhselvan.V","tamizhselvan.v.professional@gmail.com","Tamizhselvan.V, SABAREESH.R","AI Automotive Sales & Test-Drive Agent","AUTOVOICE SALES AGENT","+918071579449","https://docs.google.com/presentation/d/1zkVIZw26jJtDCpjXD96qx23sDQYTzG_U/edit?usp=drive_link&ouid=109406897865618487917&rtpof=true&sd=true","N/A","STT: Deepgram, LLM: OpenAI (GPT-4o), TTS: ElevenLabs","I voice agent that contacts automotive leads, understands their requirements, recommends suitable vehicles from a controlled knowledge base, qualifies purchase intent, and assists with test-drive scheduling.","Delayed Lead Follow-ups: 65% of web/portal leads cold-down because sales executives take hours to initiate the first callback. Language Barrier: Non-English callers struggle with rigid IVR systems or English-only sales agents across Tamil Nadu districts. High Staff Turnover & Overhead: Dealership tele-callers spend 70% of call time on unreachable numbers or un-qualified leads. No Instant Data Loop: Details captured on calls rarely sync immediately with WhatsApp or CRM, leading to high test-drive drop-offs.
+
+
+
+","0.0","1"
+"15","Tripix","2","Voice AI","PRAVEEN BALAJI V","p45447108@gmail.com","PRAVEEN BALAJI V, P VEDANANDH, R G MANIESHWARRAGHAV","An AI-Powered Voice Assistant for Hospital Patient Care","CURELO AI","+918071581346","https://docs.google.com/presentation/d/1YsMZ3hVE_SkwBRIeUiScfN5IpYvOzZO9/edit?usp=sharing&ouid=108679950742428794276&rtpof=true&sd=true","N/A","STT: Deepgram, LLM: OpenAI (GPT-4o), TTS: ElevenLabs","We’re building an AI-powered voice-based hospital patient care agent.
+
+In simple terms, our system is a voice assistant that calls and communicates with patients over the phone and can:
+
+Book hospital appointments through voice conversation
+ Help patients navigate the hospital — departments, doctors, rooms, etc.
+ Make follow-up calls to discharged patients
+ Check on patients after discharge and collect their responses
+ Remind patients about appointments or follow-ups
+Connect patients to the appropriate hospital service when needed
+Use AI voice conversation instead of requiring patients to interact with an app","Appointment Access & Scheduling Problems
+Difficulty booking, rescheduling, or remembering appointments.
+Hospital Navigation Problems
+Patients struggle to find the right department, doctor, room, or service.
+Patient Communication Gaps
+Important information, reminders, and follow-ups can be missed or misunderstood.
+Post-Discharge Follow-Up Problems
+Hospitals may struggle to regularly check on discharged patients and collect their feedback/status","0.0","1"
+"16","VoxTech","2","Voice AI","Keerthika M","720824108048@hit.edu.in","Keerthika M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"17","Whimsical Scarlet","2","Voice AI","Sandana S D","sandanasundar@gmail.com","Sandana S D","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"18","buG","2","Voice AI","GNANA RAJA N","720824108027@hit.edu.in","GNANA RAJA N","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"19","mindbridge","2","Voice AI","M Keerthi Vardhan","crazycodecrafters04@gmail.com","M Keerthi Vardhan, K Yugavardhan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"20","single man","2","Voice AI","Mahenthiran","mahenthiran0802@gmail.com","Mahenthiran","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"21","-","1","Voice AI","Bhavya P","krishnanbhavya524@gmail.com","Bhavya P, Reshmi S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"22","404 removes","1","Voice AI","Sam Elijah Bg","25ad136@rmkcet.ac.in","Sam Elijah Bg","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"23","502 Bad_gateway","1","Voice AI","VIGNESH BABU T R","t.r.vigneshbabu3110@gmail.com","VIGNESH BABU T R, Aldrin Lijo J E","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"24","A Kaushik Gandhi","1","Voice AI","A Kaushik Gandhi","kauxhik77@gmail.com","A Kaushik Gandhi","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"25","A Venkatesh A","1","Voice AI","A Venkatesh A","venkatesh14121997@gmail.com","A Venkatesh A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"26","A1","1","Voice AI","SARAVANAN R K","rks17102005@gmail.com","SARAVANAN R K","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"27","AAQIB MAJEED","1","Voice AI","AAQIB MAJEED","baaqib172@gmail.com","AAQIB MAJEED","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"28","AI","1","Voice AI","SATHYA KALA M","720824108101@hit.edu.in","SATHYA KALA M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"29","AI Buddies","1","Voice AI","Meenakshi Hariharakrishnan","hariharakrishnanmeenakshi@gmail.com","Meenakshi Hariharakrishnan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"30","AI DEVELOPERS","1","Voice AI","Vivek kumar S","vivek.kumar@kiksy.ai","Vivek kumar S, Swathishri V","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"31","AI ENTHUSS","1","Voice AI","AMIRTHA VARSHINI","varshinichristuraj07@gmail.com","AMIRTHA VARSHINI, MOHAMED AFFAN K U, SUDARSHNI S, DEEPAK PALANISAMY","N/A","NAMMA SEVAI","+918065382656","https://docs.google.com/presentation/d/1qlQZiQ99rtjp-bOACNYcvQlNxptAbn8y/edit?usp=sharing&ouid=116443872186565381934&rtpof=true&sd=true","N/A","STT: Sarvam AI, LLM: OpenAI (GPT-4o), TTS: Cartesia","N/A","N/A","0.0","1"
+"32","AI Echo","1","Voice AI","sahan","720824108090@hit.edu.in","sahan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"33","AI squad","1","Voice AI","ANUSHIYA K","720824108010@hit.edu.in","ANUSHIYA K","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"34","AI&DS phoenix","1","Voice AI","Loga Anand M","logaanand897@gmail.com","Loga Anand M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"35","ARORAX","1","Voice AI","Rohith RAJU","rajukamlam@gmail.com","Rohith RAJU","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"36","ASPIRANTS UNITED","1","Voice AI","TOUQEER SHARIFF","touqeersha035@gmail.com","TOUQEER SHARIFF, ABDUL MAAJID, HASAN ZAKI","Aira: Court Ecosystem Assistant","AIRA","+918071581330","https://drive.google.com/file/d/1RrzEEEQTIQ8ooD-KNQxpMrr4dUW3MXEf/view?usp=sharing","N/A","STT: Sarvam AI, LLM: Anthropic (Claude 3.5), TTS: ElevenLabs, Squad Hotlines: SCHEDULER AGENT (): +918071581330 | REMINDER AGENT  (): +918071581330 | QUALIFIER AGENT  (): +918071581330","A voice-enabled judicial workflow agent that recovers missing annexures, books 10‑min chambers slots, and logs outcomes via WhatsApp + Sheets.
+
+","Court hearings slip because clerks spend hours chasing missing annexures and scheduling short chambers calls across Hindi/Tamil/Hinglish. Aira automates these follow-ups via voice, books slots, and logs outcomes—reducing avoidable adjournments and creating an audit trail.","0.0","1"
+"37","ATREIDES","1","Voice AI","RAHUL R NAIR","rahulrohitnair@gmail.com","RAHUL R NAIR","Kadal Kaaval ","KADAL KAAVAL ADVISORY AGENT","+919262175546","https://docs.google.com/presentation/d/17ekJmNeWULmes1W5JZUpfLstC7MAu9MNl5UpMd3v75c/edit?usp=sharing","N/A","STT: Sarvam AI, LLM: OpenAI (GPT-4o), TTS: Google Cloud TTS, Squad Hotlines: KADAL KAAVAL ALERT AGENT (): +919262175546","A multi-agent AI voice squad that calls fishing households in Tamil Nadu's high-risk coastal districts with daily sea and cyclone advisories in Tamil, confirms they've understood, and automatically escalates to direct warning calls and WhatsApp family alerts when conditions turn severe.","Tamil Nadu is India's third most cyclone-prone state, and districts like Nagapattinam and Cuddalore have been repeatedly hit — the 2004 tsunami, Cyclone Thane, Cyclone Gaja, and most recently Cyclone Ditwah in November 2025. Current disaster alerts from the State Disaster Management Authority are one-way SMS blasts, with no way to confirm a household actually received or understood the warning — a real gap for low-literacy or elderly fishing families. Our voice squad closes that loop with a live spoken Tamil call that confirms understanding and automatically notifies a family member, rather than a text message sent into the void.","0.0","1"
+"38","AU Techies","1","Voice AI","Vasanth C","vasanthc.work@gmail.com","Vasanth C","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"39","AUTOFLOW -ragul","1","Voice AI","Ragul kumar","rcragul001@gmail.com","Ragul kumar","Aarthi — Tamil AI Receptionist for Small Clinics","AARTHI","+918065382821","https://drive.google.com/file/d/1Bu4eNr5gtiTMdlj_bmbLpCpcd6v1w-wC/view","N/A","STT: Custom / Other, LLM: Google Gemini, TTS: Custom / Other","A Tamil-speaking AI receptionist that answers a clinic's phone line and books,
+reschedules or cancels appointments against a live calendar. It also calls
+patients back automatically within seconds of them submitting the clinic's web
+enquiry form — handling Tamil, Tanglish and English with no menus and no key presses.
+[ cut-off human in repitaion , give back their time to interact who already in clinic and other important human needed works]","WHAT AARTHI DOES
+
+1. Answers real phone calls in Tamil
+Speaks Tanglish — Tamil sentences with business words kept in English
+(doctor, appointment, book, date, time). No IVR menus, no key presses.
+Switches to English automatically if the caller speaks English.
+
+2.Routes symptoms to the right doctor
+The patient describes the problem in their own words. Aarthi maps it to the
+correct department and names the doctor — skin to Dermatology, teeth to Dental,
+everything else to General. The caller never has to know the department.
+
+3.Books against a live calendar
+She checks real availability before offering any time, and offers only slots
+that are genuinely free. She refuses Sundays, the 1-3 PM lunch break, and past
+dates. Two patients can never take the same slot.
+
+4.Recognises returning callers
+On the second call she identifies the patient by their phone number and opens
+with their existing appointment — ""ஓ Ragul! உங்களுக்கு Monday 4:30 PM-க்கு
+appointment book ஆயிருக்கு"" — without asking who they are.
+
+5.Rescues cancellations
+When a patient cancels, she immediately asks whether the timing was the problem
+and offers the next free slot, carrying over their details so they don't repeat
+themselves. A lost appointment becomes a rebooked one.
+
+6.Books for family and friends
+""என் பிரண்டுக்கு பண்ணனும்"" — she takes the other person's name and books it
+under theirs.
+
+7.Understands natural speech
+""ok பண்ணிடுங்க"", ""சரி"", ""பண்ணுங்க"" — anything that means go ahead is accepted.
+She never instructs the caller to say yes or no.
+
+8.Calls web leads back automatically
+A patient fills the clinic's enquiry form and their phone rings within five
+seconds. No staff involvement, no queue, no callback list.
+
+9.Sends the location on WhatsApp
+Asked for directions, she says the area out loud and WhatsApps the map link.
+
+Notifies the clinic by email
+Every booking reaches the clinic owner's inbox. Patients get WhatsApp, staff get
+email — each channel goes to whoever actually uses it.
+
+10.Records and transcribes every call
+Full audio plus a written transcript of both sides.
+
+11.Never invents anything
+She will not claim an appointment is booked unless the booking actually
+succeeded, will not name a doctor who does not exist, and will not quote a fee
+she does not know — she says the staff will confirm it. Every claim she makes is
+backed by a real system result.
+
+12.Detects medical emergencies and stops booking
+Chest pain, breathing trouble, heavy bleeding, fainting, seizures, accidents,
+stroke signs, poisoning, labour pain, an unresponsive baby, or anyone at risk of
+self-harm — Aarthi stops the booking conversation immediately. She does not offer
+a slot, does not quote clinic hours, and does not tell them to wait. She tells
+them to go to the nearest hospital or call 108, and offers to transfer the call
+to clinic staff straight away. A same-day appointment is not an answer to chest
+pain, and the agent is built to know that.
+
+13.Hands over to a real human
+When a caller is in an emergency or is distressed and needs a person, Aarthi
+transfers the live call to clinic staff — the caller stays on the line and a human
+picks up. She also refuses to give medical advice of any kind: she will not name a
+medicine, give a dose, or judge whether a symptom is serious. That is the doctor's
+job, and she says so.
+
+14.Appointments appear in the clinic calendar
+Every booking made on a call lands in the clinic's calendar in real time, visible
+to staff with the patient's name, date and time. Cancellations and reschedules
+update it immediately, which is what keeps double-booking impossible.","0.0","1"
+"40","Ace","1","Voice AI","Rishwanth J","rishwanth738@gmail.com","Rishwanth J, Anirudhan R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"41","Ace Programmers","1","Voice AI","Jabez Jena","boycalledjabez@gmail.com","Jabez Jena","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"42","Action","1","Voice AI","Kishore S","kishoreselvaraj05@gmail.com","Kishore S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"43","Adharsh Kumar V","1","Voice AI","Adharsh Kumar V","adharsh.olive@gmail.com","Adharsh Kumar V","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"44","Aegis Zero","1","Voice AI","Sanjeevi Sriram G","sairam150407@gmail.com","Sanjeevi Sriram G","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"45","Aesthetic agent","1","Voice AI","Ayesha","y.ayesha.official@gmail.com","Ayesha","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"46","Agent N4","1","Voice AI","Sreegeethesh Dhananjayan","jaspritsreea@gmail.com","Sreegeethesh Dhananjayan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"47","AgentX","1","Voice AI","Prisha Ragavan Kanddavel","prishakanddavel2006@gmail.com","Prisha Ragavan Kanddavel, Murasolimaran","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","0"
+"48","Agrivorse","1","Voice AI","Vignesh","720825108119@hit.edu.in","Vignesh","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"49","Ahan Raj Ahan","1","Voice AI","Ahan Raj Ahan","ahanr1152@gmail.com","Ahan Raj Ahan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"50","Ai today","1","Voice AI","MUNEEB K","km334310@gmail.com","MUNEEB K","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"51","Ai verse","1","Voice AI","Sivatmika M","sivatmika1901@gmail.com","Sivatmika M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"52","Aibots","1","Voice AI","DHARANI LOGANATHAN","kavidharani48@gmail.com","DHARANI LOGANATHAN","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"53","Akatsuki","1","Voice AI","Balamurugan Shanmugam","balams987@gmail.com","Balamurugan Shanmugam","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"54","Algoverse","1","Voice AI","Poovarasan R","rameshpoovarasanashwin123@gmail.com","Poovarasan R, Vijay M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"55","Alpha","1","Voice AI","R.Roshini","ramroshini07@gmail.com","R.Roshini","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"56","Alpha Code-X","1","Voice AI","Imran Farhat","imranfarhat442@gmail.com","Imran Farhat","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"57","Amaltheus","1","Voice AI","Mohammed Shahid","musabbarshahid@gmail.com","Mohammed Shahid","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"58","Anku","1","Voice AI","Ankita Maroti Kadam","ankitakadam514@gmail.com","Ankita Maroti Kadam","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"59","Apex trio","1","Voice AI","S THARUN KANNA","tharunkannawork@gmail.com","S THARUN KANNA, THILAKRAJ DHANANJAYAN, KAUSHIK KRISHNA MK","HR MANAGEMENT BOT","JADE AI","+917971442645","https://drive.google.com/file/d/11ZhszBLfZOe191Ti2cxg2RwjayXoRRCW/view?usp=drivesdk","N/A","STT: Deepgram, LLM: OpenAI (GPT-4o), TTS: ElevenLabs","JADE AI is an AI-powered voice recruitment agent that conducts adaptive voice interviews, evaluates candidates based on role-specific requirements, and provides recruiters with structured scorecards and ranked shortlists.","JADE AI solves the problem of slow and inefficient candidate screening. It uses voice AI to conduct adaptive interviews with real-time follow-up questions, assess communication and competency signals, and generate structured candidate scores and summaries, helping recruiters quickly identify the best candidates.","0.0","1"
+"60","Araxys","1","Voice AI","Kevin Sudhan","kevinsudhan31@gmail.com","Kevin Sudhan, Sunil D, Pranay J Sathish","Araxys: A Voice Native Freight Forwarding Desk","PRIYA","+917965854267","https://drive.google.com/drive/folders/1_sNVSixLwXSrFmazwwaf3afXylqEgkUP?usp=drive_link","N/A","STT: Custom / Other, LLM: Custom / Other, TTS: Custom / Other, Squad Hotlines: ARUN (): +917965854267","Araxys is a voice run freight forwarding desk. Two AI agents answer the hotline in Tamil and English, quote from a live rate card, verify real container space in three dimensions, and close a booking before the call ends.
+
+Everything spoken on the phone flows directly into a CRM. The system allocates the cargo to a sailing, and generates all twelve shipping documents without anyone re typing a single field.","A freight forwarder's front desk is a phone, and it leaks. Customers ring at all hours, describe their cargo in whatever language they think in, and ask what it costs. Unless a human happens to be free, that enquiry is gone. What does get answered lands in a notepad, and somebody re enters it into three separate systems hours later.
+
+Priya handles the commercial call. She works out the route and checks whether the cargo physically fits an available container. That means every axis aligned orientation, stackability, payload limits, and how much container floor length the cargo actually consumes. It is not a naive volume comparison, the kind that claims 30 CBM fits inside a 33 CBM box, or misses that a 2.6m crate will never enter a 20GP with 2.39m of interior height. She quotes from a published rate card, negotiates within a defined band, and fixes a sailing date.
+
+Arun takes the warm handoff. As the documentation desk, he collects the shipper, consignee, HS code, and package detail that a commercial invoice legally requires. The customer never repeats a single detail they already gave Priya.
+
+Voice is what makes it work, because this industry runs on calls, not forms. The agents speak Tamil and English, including mid sentence code switching, and they remember which language each caller used. A customer who spoke Tamil last time is greeted in Tamil next time. They ask one question at a time and then wait. The shopping list question, where an agent fires four requests in one breath, is what makes most voice agents unusable on a real phone line.
+
+The agents make no tool calls mid conversation. This is deliberate. A lookup during a live call is latency the customer hears as dead air. Instead, the moment a call ends, the transcript is parsed into 39 structured fields, the record is promoted to a booking, container space is allocated, and the agents' entire knowledge base is republished. The next call opens with an agent that already knows.","0.0","1"
+"61","Arigatou","1","Voice AI","Gokul S","gokulofficialwork7@gmail.com","Gokul S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"62","Ariveya","1","Voice AI","Avinash R","ravinash218@gmail.com","Avinash R, Shivprasad Roul","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"63","Artificial","1","Voice AI","Navinesh M","720825108064@hit.edu.in","Navinesh M, SANJAYSAAI S, Thiru Murugan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"64","Arun K","1","Voice AI","Arun K","arunk1.n2s@gmail.com","Arun K","N/A","AARTHI ","+917965854248","N/A","N/A","STT: Deepgram, LLM: OpenAI (GPT-4o), TTS: ElevenLabs","N/A","N/A","0.0","1"
+"65","Aura core","1","Voice AI","Swetha J","720824108114@hit.edu.in","Swetha J","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"66","Aura light","1","Voice AI","SANJAY S","720824108095@hit.edu.in","SANJAY S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"67","Aura spark","1","Voice AI","SWETHA S","720824108115@hit.edu.in","SWETHA S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"68","Auronex","1","Voice AI","Kheerthna Ganesan","kikipec108@gmail.com","Kheerthna Ganesan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"69","AuroraX","1","Voice AI","Rajarajan Kannan","rajkannan4107@gmail.com","Rajarajan Kannan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"70","Autobots","1","Voice AI","Thiruselvan P","offtsp2006@gmail.com","Thiruselvan P","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"71","Avengers","1","Voice AI","JUMAIL A","the.jumail2008@gmail.com","JUMAIL A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"72","Axolv","1","Voice AI","Chandru I","ivar.chandru@gmail.com","Chandru I","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"73","Azlon ai","1","Voice AI","Saran B","saransuji50@gmail.com","Saran B, SIVA, Sanjay v","N/A","AZLON AI ","+918065354495","N/A","N/A","STT: Deepgram, LLM: OpenAI (GPT-4o), TTS: ElevenLabs","N/A","N/A","0.0","1"
+"74","BK","1","Voice AI","Balaji K","bk@vabsgen.com","Balaji K, Sanjay P, Sathyamurthy Saravanan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"75","BRUTEFORCE","1","Voice AI","Himanshu Raj","rinaajit86@gmail.com","Himanshu Raj","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"76","BUG SYNDICATE","1","Voice AI","Megesh L","megeshl2007@gmail.com","Megesh L","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"77","BUMBLEBEE","1","Voice AI","Nirmalraj D","nirmalraj0907@gmail.com","Nirmalraj D","CyberShield: AI-Powered Cybersecurity Incident Response System","CYBER SECURITY AGENT 1","+918065354496","https://docs.google.com/presentation/d/1ZN1FewGabx9gsptiUcED7XdL2yqwBWNs/edit?usp=sharing&ouid=103448880688019893533&rtpof=true&sd=true","N/A","STT: Deepgram, LLM: Google Gemini, TTS: Cartesia, Squad Hotlines: CYBER SECURITY AGENT 2 (): +918071579496","CyberShield is an AI-powered voice cybersecurity system that triages incidents, creates a case record, assesses risk, and provides personalized security guidance. High-risk incidents are automatically escalated to a human security expert.","CyberShield solves the problem of people not knowing what to do or who to contact when they face a cybersecurity incident. It provides immediate voice-based triage, assesses the incident’s risk, gives actionable guidance, and escalates serious cases to a human expert.","0.0","1"
+"78","BhumiVeda AI","1","Voice AI","Narayanababu Raju","narayanababu.raju@bhumiveda.ai","Narayanababu Raju","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"79","Black panthers","1","Voice AI","Puli Phanindhra","puli48752@gmail.com","Puli Phanindhra","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"80","Black team","1","Voice AI","Prem Kumar. R","premkumarff2007@gmail.com","Prem Kumar. R, Prathap S, Sarveshvaran J, Vettrivelan R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"81","Black wolf","1","Voice AI","Naveen Kumar M","720824108073@hit.edu.in","Naveen Kumar M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"82","BlackVoiceBox","1","Voice AI","Om Gupta","guptaom750@gmail.com","Om Gupta, Siddhesh srinivasan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"83","Brain Catalyst","1","Voice AI","Kommavarapu Kameswari Sreevalli","kommavarapukameswari2801@gmail.com","Kommavarapu Kameswari Sreevalli","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"84","Brain.exe","1","Voice AI","Dev Anand","devanand.rt1011@gmail.com","Dev Anand","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"85","COSMIC","1","Voice AI","COSMIC MONKEY","cosmicmonkeyes@gmail.com","COSMIC MONKEY","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"86","CYBERGUARDS","1","Voice AI","SANTHOSH KUMAR M","santhoshkumar160706@gmail.com","SANTHOSH KUMAR M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"87","CampusX","1","Voice AI","Shubham Patra","patrashubham031@gmail.com","Shubham Patra","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"88","Caraxes","1","Voice AI","Davud","davud8222@gmail.com","Davud","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"89","CareTakers","1","Voice AI","Senthilkumar","kumar.au@gmail.com","Senthilkumar","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"90","Casual coders","1","Voice AI","Nasreen J","720824108071@hit.edu.in","Nasreen J, YAMUNA G","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"91","Chandra Prakash S","1","Voice AI","Chandra Prakash S","scp.thedevil@gmail.com","Chandra Prakash S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"92","Chandrasekaran K","1","Voice AI","Chandrasekaran K","chankrish2421@gmail.com","Chandrasekaran K","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"93","Chiefxai","1","Voice AI","Dhaksin S","dhaksin53@gmail.com","Dhaksin S, Britto Sam Jose J","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"94","Clean bugger","1","Voice AI","Gowtham R","720824108031@hit.edu.in","Gowtham R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"95","CltrlZ","1","Voice AI","Rajavarthini A","rajavarthini.a.e@gmail.com","Rajavarthini A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"96","Code Developers","1","Voice AI","Viknesha K","720825108121@hit.edu.in","Viknesha K","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"97","Code Huntrix","1","Voice AI","Mohamed Riyaz Ahamed","riyazahamedff@gmail.com","Mohamed Riyaz Ahamed","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"98","CodeNova","1","Voice AI","Lekha Sudharsan","lekhasudharsan47@gmail.com","Lekha Sudharsan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"99","CodeRunner","1","Voice AI","Dharshan Dhiren","dharshandhiren2006@gmail.com","Dharshan Dhiren","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"100","CodeRunners","1","Voice AI","Kanagavel A K","kanagavel.indi@gmail.com","Kanagavel A K","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"101","CodeSpear","1","Voice AI","Ajay","110125104016@aalimec.ac.in","Ajay, AKILAN R, Hasan Zaki, Abdul maajid, AASIF IBRAHIM PA","AI Voice Front Desk for Clinics","NAMMACARE","+918071579440","https://drive.google.com/file/d/19W_APFQJ-b5lHErZn2Qif30r0TBG89_D/view?usp=sharing","N/A","STT: Sarvam AI, LLM: Google Gemini, TTS: ElevenLabs","NammaCare is a 24/7 AI voice front desk for clinics that handles patient calls in Tamil, Tanglish, and English. It understands patient requests, checks appointment availability, books slots, captures structured data, sends WhatsApp confirmations, and escalates complex cases to human staff.","Clinics often miss patient calls when reception staff are busy, while patients face waiting, repeated calls, language barriers, and manual appointment booking. NammaCare uses voice AI to understand natural multilingual conversations, turn them into actionable requests, check availability, complete bookings, and follow up automatically without diagnosing or prescribing, and with human escalation when needed.","0.0","1"
+"102","CodexK7","1","Voice AI","Priyadharshini V","pd7293209@gmail.com","Priyadharshini V, Kesavan A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"103","Cognivox","1","Voice AI","ROSHINI S","720825108081@hit.edu.in","ROSHINI S, SIVA NANDHINI V, Prathiba","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"104","Comet","1","Voice AI","KARTHIKEYAN P","karthikeyanvsp2005@gmail.com","KARTHIKEYAN P","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"105","Crazy","1","Voice AI","Yashasvi Yadav","developer.2006.life@gmail.com","Yashasvi Yadav","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"106","CrazyCrew","1","Voice AI","Gokul","sgokul3127@gmail.com","Gokul","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"107","Ctrl AI","1","Voice AI","Hari Prasad Y","hp343538@gmail.com","Hari Prasad Y","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"108","Ctrl Alt Elite","1","Voice AI","Gopinath R","gopinath2638@gmail.com","Gopinath R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"109","D2","1","Voice AI","A M Deepan Chakkaravarthy","720825108013@hit.edu.in","A M Deepan Chakkaravarthy","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"110","DHWANI","1","Voice AI","Charan E.J","ejcharan02@gmail.com","Charan E.J, THARUN B","Multilingual AI Voice Agent for Retail Order Automation","SAARATHI","+918065481871","https://drive.google.com/drive/folders/1dLKRx3WyZ0Fzl9b2a2E9RY4dP4CoJiXK?usp=sharing","N/A","STT: Sarvam AI, LLM: Groq / Llama 3, TTS: Custom / Other","
+We’re building a real-time AI communication agent that bridges sign language and spoken language. It uses computer vision to understand sign language and voice AI to enable natural, two-way conversations between deaf/sign-language users and people who don’t know sign language.
+","Our agent solves the communication barrier faced by deaf and sign-language users in everyday situations. When the other person doesn’t understand sign language, communication becomes difficult and often requires a human interpreter. Our agent removes this dependency by translating between sign language and speech in real time, making communication more accessible, independent, and inclusive.
+","0.0","1"
+"111","Dare Devils","1","Voice AI","SanjayKumar B","sanjaykumarbjc@gmail.com","SanjayKumar B","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"112","Data Forge","1","Voice AI","Livanthika S","livanthika.02@gmail.com","Livanthika S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"113","Data manager","1","Voice AI","Manoj","justmanoj2005@gmail.com","Manoj","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"114","Decibel","1","Voice AI","Vootla Pushpak","vootlapushpakwork2001@gmail.com","Vootla Pushpak","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"115","Deeps","1","Voice AI","Deepakraj B","draj39999@gmail.com","Deepakraj B","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"116","Dev Tyagi","1","Voice AI","Dev Tyagi","devtyagi96341122@gmail.com","Dev Tyagi","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"117","DevBuild","1","Voice AI","Aditya N.B","nbaditya32@gmail.com","Aditya N.B","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"118","Devops","1","Voice AI","M Saranya","saranyamani8059@gmail.com","M Saranya","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"119","Dhurandhar","1","Voice AI","Madhanraj M","madhanat94@gmail.com","Madhanraj M, Madesh Vaithya H, PRIEYAN M N","SiteSure — AI-Powered Construction Material Readiness & Coordination Agent","SITESURE - ""KNOW BEFORE YOU BUILD""","+918071581367","https://drive.google.com/file/d/1fz-bNvPaCE8E8R3ls853z-oezX9-hjif/view?usp=sharing","N/A","STT: Deepgram, LLM: OpenAI (GPT-4o), TTS: ElevenLabs","SiteSure is an AI voice agent that makes sure tomorrow’s construction work is actually ready today. It calls suppliers and site teams, verifies material availability and delivery commitments, detects potential delays, and coordinates recovery actions before they become costly site disruptions","It’s 6 PM at a construction site. Tomorrow morning, the team is scheduled to start slab work. The materials have already been ordered, so everything looks “confirmed” on the project sheet.
+
+But the site manager still has to start making calls — “Is the steel ready? How much is actually available? Will the cement arrive by 8 AM? Has the truck left?”
+
+One supplier says the delivery is delayed. Another has only part of the required quantity. By the time the manager discovers the shortage, workers and equipment are already waiting at the site — and a small material delay becomes an expensive project delay.
+
+This is the gap SiteSure solves.
+
+Instead of relying on “order confirmed” statuses, SiteSure proactively calls suppliers and site teams, verifies what is actually ready, identifies shortages and delivery risks, and coordinates alternatives before tomorrow's work begins.
+
+SiteSure turns “We think the material will arrive” into “We know it will.”","0.0","1"
+"120","Digital voices","1","Voice AI","PRIYA A M","720825108077@hit.edu.in","PRIYA A M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"121","Dracarys","1","Voice AI","VISHWAR S J","sec24ci014@sairamtap.edu.in","VISHWAR S J","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"122","Dragon Ken","1","Voice AI","Gopi","gopinwrk@gmail.com","Gopi","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"123","ECHO TECH","1","Voice AI","Deepak Kumar R","720824108019@hit.edu.in","Deepak Kumar R, Christina Hings CL, BRINDHA B, Jayarajan R G","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"124","EVIL LARRY","1","Voice AI","Rahul Sajin","rahulsajin2007@gmail.com","Rahul Sajin, Shriram S, A.Tejaram","NammaCare Priya – Tamil Voice Service Assistant","PRIYA","+919262175497","https://docs.google.com/presentation/d/1H7lAoKMqluSeoZfR_4YPCOtZkZQKqL4t/edit?usp=sharing&ouid=103448880688019893533&rtpof=true&sd=true","N/A","STT: Deepgram, LLM: OpenAI (GPT-4o), TTS: ElevenLabs","NammaCare Priya is a Tamil-first AI voice assistant for vehicle service centers. It handles inbound customer calls in Tamil, Tanglish, and English, understands service requests, collects vehicle and appointment details, checks availability, and helps customers schedule service appointments.","Vehicle service centers often miss calls and spend valuable time handling repetitive appointment inquiries. Priya provides a natural 24/7 voice experience that answers customer questions, collects the required details, checks appointment availability, and helps organize service bookings without requiring staff to answer every call.","0.0","1"
+"125","Easy Ai labs","1","Voice AI","Kavaiya Yashkumar Amrutlal","yash.kavaiya3@gmail.com","Kavaiya Yashkumar Amrutlal","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"126","Echo Titan","1","Voice AI","MUNEESWARAN R","720824108069@hit.edu.in","MUNEESWARAN R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"127","Echo minds","1","Voice AI","Srinath Sk","sksrinath278@gmail.com","Srinath Sk","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"128","EchoMind","1","Voice AI","Buvanesh M","buvaneshbuvi19@gmail.com","Buvanesh M, Vishwa, Akash .N","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"129","EchoTamil","1","Voice AI","Vahitha G","vagithag0@gmail.com","Vahitha G, Surya R M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"130","EchoTech","1","Voice AI","Mano D","720824108056@hit.edu.in","Mano D, Sri Saranya N, Priyanka CA","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"131","Eclipse","1","Voice AI","Amudhini K","amudhinikarthick269@gmail.com","Amudhini K"," Insurance Assist Voice Agent","LARA","+918888882137","https://docs.google.com/presentation/d/16e86OuLO3x3a8RHwTuW_R-04iX_DKW2UIcjZYcStiFk/edit?usp=sharing","N/A","STT: Sarvam AI, LLM: OpenAI (GPT-4o), TTS: Cartesia","SecureShield AI is a multilingual voice agent that handles insurance customer calls in real time, answering policy, claims, renewal, and payment questions.
+It provides fast, accurate support in English, Tamil, and Hindi while securely escalating complex issues to human agents.","Our agent solves the problem of long wait times, repetitive customer-service calls, and language barriers in insurance support. It provides instant multilingual assistance for policy, claims, renewal, and payment queries, while escalating complex issues to human agents.","0.0","1"
+"132","Eco spark","1","Voice AI","Jai Adhith A","adhith1246@gmail.com","Jai Adhith A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"133","Error","1","Voice AI","Gowtham","720824208032@hit.edu.in","Gowtham","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"134","Error 404","1","Voice AI","Divya shree R","divyashree.r@dnyxtech.com","Divya shree R, Pradeesh Govindarajan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"135","FLASH","1","Voice AI","AKSHAY V","720824108009@hit.edu.in","AKSHAY V","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"136","FS0C1ETY","1","Voice AI","Abul Ayubul Ansari","abulayubulansari@gmail.com","Abul Ayubul Ansari","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"137","FURIOUS","1","Voice AI","DINESH M","720824108024@hit.edu.in","DINESH M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"138","Faux thinker","1","Voice AI","Razeen Shaheed","raze.priv@gmail.com","Razeen Shaheed","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"139","G.Gokul","1","Voice AI","G.Gokul","gokul080305@gmail.com","G.Gokul","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"140","GenZ Voice","1","Voice AI","Sivaranjani S","senthilsivaranjani428@gmail.com","Sivaranjani S, HARITHA B, Kathiavan","Anovaidya — AI Trauma Assistant","ANOVAIDYA CARE","+917965854145","https://docs.google.com/presentation/d/1lxaPQvsypXnQ82nes1RHLsXFlVot9Tjo/edit?usp=sharing&ouid=103098276998910115925&rtpof=true&sd=true","N/A","STT: Deepgram, LLM: OpenAI (GPT-4o), TTS: ElevenLabs","Anovaidya is a voice-first AI trauma-triage assistant that understands a user's symptoms through natural conversation, assesses the urgency of their condition, detects their location, finds nearby hospitals or clinics, provides directions, and generates a medical assessment report that can be delivered by email.","During stressful medical situations, people may not know how serious their symptoms are, where to seek care, or how to reach the nearest healthcare facility. Anovaidya uses voice AI to collect symptoms conversationally, assess severity, request the user's location when medical attention is recommended, discover nearby healthcare facilities, provide navigation guidance, and generate a follow-up report.","0.0","1"
+"141","GenZion","1","Voice AI","Adarsh Velmurugan","theadarsh.ai@gmail.com","Adarsh Velmurugan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"142","Genai","1","Voice AI","Mohamed Nafil","nafil2907@gmail.com","Mohamed Nafil","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"143","GetLost","1","Voice AI","Mohammed Shajahan","mohammedshajahan2007@gmail.com","Mohammed Shajahan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"144","Girls square","1","Voice AI","Priyadharshini S Priyadharshini","priya3006dharshini@gmail.com","Priyadharshini S Priyadharshini","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"145","Glitch Mode","1","Voice AI","Sanjith M","sanjithnit@gmail.com","Sanjith M, Tharika S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"146","Gowshik","1","Voice AI","Naveen Kumar","naveenkumar101214@gmail.com","Naveen Kumar","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"147","GrowOne","1","Voice AI","Gobalakrishnan R","ra.gobalakrishnan@gmail.com","Gobalakrishnan R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"148","HACK ROCKER","1","Voice AI","Keerthana V","keerthuv11@gmail.com","Keerthana V","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"149","HR Innovation","1","Voice AI","Harris Ruben R","harrisrubenr@gmail.com","Harris Ruben R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"150","HRbuilds","1","Voice AI","Jeevitha Ramesh","jeevitharamesh731@gmail.com","Jeevitha Ramesh, Harish Raaj","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"151","Haris","1","Voice AI","HARIS BALAJI","harisbalaji1810@gmail.com","HARIS BALAJI","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"152","Hawks","1","Voice AI","Kavin Karthick","720824108306@hit.edu.in","Kavin Karthick","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"153","Hesavix","1","Voice AI","Hemashree","hemashree280307@gmail.com","Hemashree, SAVITHA R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"154","Highperformr","1","Voice AI","Himanesh V","himanesh2k3@gmail.com","Himanesh V","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"155","Highperformr AI","1","Voice AI","Sathish","sathish@highperformr.ai","Sathish","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"156","Hindusthan","1","Voice AI","Mohamed ismail Nijamudeen","ismailismail6612@gmail.com","Mohamed ismail Nijamudeen","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"157","Impossible","1","Voice AI","Vetheshwaran P","vetheshwaran@gmail.com","Vetheshwaran P","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"158","Individual","1","Voice AI","Aarthi B","720824108002@hit.edu.in","Aarthi B, Jananii S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"159","Inferno'Z","1","Voice AI","Hemashree Sureshkumar","hemashrees.cse2024@citchennai.net","Hemashree Sureshkumar","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"160","J s s d Harshitha","1","Voice AI","J s s d Harshitha","jharshitha21@gmail.com","J s s d Harshitha","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"161","JD","1","Voice AI","Bharath S","skbharath2006@gmail.com","Bharath S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"162","Jeevan","1","Voice AI","Adharsh Kumar","vak97890@gmail.com","Adharsh Kumar","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"163","John_Snow","1","Voice AI","SATHISH M","720824108100@hit.edu.in","SATHISH M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"164","Kalai","1","Voice AI","KALAIVANAN M","720824108044@hit.edu.in","KALAIVANAN M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"165","Kalpana","1","Voice AI","Kalpana","abikalpana1506@gmail.com","Kalpana","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"166","Karan Persoya","1","Voice AI","Karan Persoya","karanpersoya22@gmail.com","Karan Persoya","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"167","Kaushik","1","Voice AI","A Kaushik Gandhi","kauxhik77@gmail.com","A Kaushik Gandhi","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"168","Kaze AI","1","Conversational AI","S Ashwanth, Sankar","ashwanthsankar2k@gmail.com","S ASHWANTH SANKAR","Sachet: AI-Powered Tactical Emergency Triage & Hazard Dispatch System","SACHET_AI","+918071579228","https://docs.google.com/presentation/d/1oQgraWWbyzggSCIoERx2h-Ej-tvmSd3X/edit?usp=drive_link&ouid=112987330314210003597&rtpof=true&sd=true","N/A","STT: Sarvam AI, LLM: Groq / Llama 3, TTS: ElevenLabs","Sachet is an enterprise hands-free, high-noise voice agent swarm built for high-hazard industrial environments such as offshore oil rigs, chemical processing plants, and heavy manufacturing sites. Developed on SnapServe, Sachet uses a two-tier multi-agent architecture: a primary Triage Agent filters out up to 100 dB of ambient mechanical noise to capture critical incident details (gas leaks, structural hazards, or severe trauma) and seamlessly transfers the live call state to a specialized Trauma & Hazmat Agent. Sachet guides field workers step-by-step through tactical first-aid protocols (such as TCCC/MARCH) while simultaneously logging structured incident data to a live ERP dashboard and dispatching instant WhatsApp/SMS emergency alerts with specific deck locations and casualty metrics to site managers and rescue teams.","In high-risk industrial facilities across India (such as offshore platforms in Mumbai High or chemical plants), ambient machinery and gas flare noise ranges between 90–110 dB. When a blowout or physical trauma occurs, workers wearing heavy PPE cannot type on screens or manually log reports, leading to panic and critical 10- to 15-minute communication delays. Unresolved emergency delays result in catastrophic loss of life, severe regulatory penalties (OISD/DGMS compliance), and daily downtime losses exceeding ₹5 Crore. Sachet solves this by delivering hands-free, low-latency voice triage in regional languages, executing zero-loss agent-to-agent call transfers, and automating multi-channel emergency dispatch to protect human life and critical infrastructure.","0.0","1"
+"169","Kevintries","1","Voice AI","Kevin Jones","kj6384647@gmail.com","Kevin Jones","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"170","Krabby Patty","1","Voice AI","Aswin Gottipati","gottipati.aswin@proton.me","Aswin Gottipati","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"171","Kural","1","Voice AI","Sangeetha V","sangeethavenkat372@gmail.com","Sangeetha V, Shiv Prasad K R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"172","KuralX","1","Voice AI","Vikash","vikashinnamuri@gmail.com","Vikash, Keerthana S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"173","Kuralpath AI","1","Voice AI","Vijay Ps","psvijay618@gmail.com","Vijay Ps","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"174","L&F","1","Voice AI","Logeshwaran R","logeshwaranr6380@gmail.com","Logeshwaran R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"175","LLM Titans","1","Voice AI","Selvakumar Murugesan","msel.kumar02@gmail.com","Selvakumar Murugesan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"176","Laxmitha S","1","Voice AI","Laxmitha S","720825108045@hit.edu.in","Laxmitha S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"177","Leaf","1","Voice AI","Veeriaperumal","veeriaperumal.k@gmail.com","Veeriaperumal, Koushick D","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"178","Lesoko Tech","1","Voice AI","Ali Ajeem","ajiajeem2001@gmail.com","Ali Ajeem","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"179","Lorem Ipsum","1","Voice AI","Hema Surya B","hemasurya469@gmail.com","Hema Surya B, Aravindhan B, Jeffrey Rufus","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"180","Love","1","Voice AI","MITHUN P R","720824108059@hit.edu.in","MITHUN P R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"181","Lumina Tech","1","Voice AI","Nafiya Fathima S","nafiya735@gmail.com","Nafiya Fathima S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"182","Maha","1","Voice AI","Mahalakshmi ASOHAN","mahalakshmi.a@hit.edu.in","Mahalakshmi ASOHAN","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"183","Mahalakshmi","1","Voice AI","Mahalakshmi","mahalakshmiolive@gmail.com","Mahalakshmi","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"184","Manickalai R","1","Voice AI","R.Manickalai","manickalai@gmail.com","R.Manickalai","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"185","Marlloz","1","Voice AI","Yeluru Nitish","yelurunitish006@gmail.com","Yeluru Nitish, Shaan GS","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"186","Marvel AI","1","Voice AI","Shivaranjan JB","shivaranjan0607@gmail.com","Shivaranjan JB","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"187","Maximum efforts","1","Voice AI","Manoj","manojkanth025@gmail.com","Manoj","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"188","MediConnect","1","Voice AI","Dileep Kumar Gajavelli","dileepgajavelli899@gmail.com","Dileep Kumar Gajavelli","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"189","Mic Drop","1","Voice AI","Sachinkannan G","sachinkannansekaran@gmail.com","Sachinkannan G, P.ANBARASU, Sri Yugesh M","AI RecruitScreen – AI Voice Candidate Screening Agent","AI RECRUITSCREEN INTERVIEW AGENT","+918065354090","https://1drv.ms/p/c/3b7b2ef00640992c/IQBrqnwpzR0wS5SS6HJqMHHUAbP4ctEi61H0Ew3SutTwtI0?e=b8kNe4","N/A","STT: Sarvam AI, LLM: Google Gemini, TTS: Cartesia","AI RecruitScreen is an AI-powered voice recruitment screening system that automatically conducts first round candidate interviews over the phone. It verifies shortlisted candidates, asks role specific questions, evaluates their answers using RAG and LLM-based semantic evaluation, and sends the screening results to an HR dashboard.","Recruiters spend significant time manually calling shortlisted candidates and asking repetitive first-round screening questions. AI RecruitScreen automates this process through a voice AI agent while maintaining consistent screening, reducing recruiter workload, and allowing HR to review AI-generated scores and recommendations before making the final hiring decision.","0.0","1"
+"190","Michael Gautham .M","1","Voice AI","MICHAEL GAUTHAM M","michaelgautham18@gmail.com","MICHAEL GAUTHAM M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"191","Mind matrix","1","Voice AI","SATHWIK TANGUDU SATHWIK","tangudusatheik@gmail.com","SATHWIK TANGUDU SATHWIK","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"192","MindMesh","1","Voice AI","Arun kannan","arun.salian@gmail.com","Arun kannan, Palani Gangadurai, GURU MALLIKARJUNA","உயிர் காவலன் · Uyir Kaavalan (Life Guardian)","NANCY","+918071581273","https://docs.google.com/presentation/d/1ZC3jG37SSfTw9lisDfRNRea0hMBfMnk0/edit?usp=sharing&ouid=110605985882078659610&rtpof=true&sd=true","N/A","STT: Sarvam AI, LLM: OpenAI (GPT-4o), TTS: Cartesia, Squad Hotlines: PRIYA (): +918065354384 | ANANYA (): +918065354387 | ANJALI (): +918071578958","Uyir Kaavalan is a universal AI voice-care platform — a squad of five voice agents that call patients daily, monitor their health, and instantly escalate to family, doctors and emergency services when something is wrong. It works for anyone who needs looking after, in any language; we built and demonstrated it first in Tamil for this Voice-a-thon.","The people who most need monitoring — elderly parents, post-operative and chronic patients, anyone recovering alone — are cut off from their caregivers by distance, language and literacy. Falls, missed medicines and early warning signs go unnoticed until they become emergencies. Apps and portals never reach these users, but a phone call in their own language does.
+
+Uyir Kaavalan solves this with voice AI in four ways:
+1. Priya makes a warm daily check-in call in the patient's language, capturing mood, meals, medication adherence and symptoms.
+2. The system reads signals from the patient's home CCTV camera (with wearable devices supported) and combines them with the daily-call answers into a live risk score.
+3. When a threshold is crossed, the system auto-places outbound voice calls — Ananya alerts the family doctor, and Anjali calls emergency services (108) with the patient's details and location.
+4. Anytime, family or doctors can call in and Nancy gives them the patient's real status, grounded in live patient data via a REST API.
+
+Voice is the interface because it needs no smartphone, no app and no literacy — it reaches everyone. Language is a configurable layer, so the same five agents run in Tamil today and any language tomorrow.","0.0","1"
+"193","Mirai","1","Voice AI","Karthikeyan","karthikn4241341@gmail.com","Karthikeyan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"194","Mors Manipulus","1","Voice AI","Ranveer Raj","ranveer4us@gmail.com","Ranveer Raj","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"195","Mr. Cashews","1","Voice AI","Durvank Gade","durvankgade@gmail.com","Durvank Gade","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"196","Mustaqeem Pachapuri","1","Voice AI","Mustaqeem Pachapuri","mustaqeempachapuri38@gmail.com","Mustaqeem Pachapuri","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"197","NEURAL NATURE","1","Voice AI","KaviPriya R","kavipriyar501@gmail.com","KaviPriya R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"198","NEXBIT","1","Voice AI","ABHIJEETH V N","abhijeethvn2006@gmail.com","ABHIJEETH V N, Dev Narayanan M, B Lakshmi Narayanan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"199","NEXUS AVENGERS","1","Voice AI","SAMIULLA S","samiullas831@gmail.com","SAMIULLA S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"200","NULL POINTERS","1","Voice AI","CHANDRU B","720825108012@hit.edu.in","CHANDRU B","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"201","Nawin Viswajith","1","Voice AI","Nawin Viswajith","nawinviswajith@gmail.com","Nawin Viswajith","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"202","Neo","1","Voice AI","Muniyappan Mani","rtrmuni3201@gmail.com","Muniyappan Mani","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"203","Neural Hub","1","Voice AI","HARINI K","720824108034@hit.edu.in","HARINI K","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"204","Neuro Nova","1","Voice AI","Monisha Muruganantham","monishamuruganantham2912@gmail.com","Monisha Muruganantham","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"205","Nexora","1","Voice AI","Varunika B","varunika.b2007@gmail.com","Varunika B","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"206","Nexus","1","Voice AI","Subbiramani M","720824108111@hit.edu.in","Subbiramani M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"207","Nova","1","Voice AI","Thejas R","thejas3005@gmail.com","Thejas R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"208","Nova ai","1","Voice AI","MUNEEB KONNACHALI","muneebk3030@gmail.com","MUNEEB KONNACHALI","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"209","Novax","1","Voice AI","Prithish S","prithishsprithish2008@gmail.com","Prithish S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"210","NullPointers","1","Voice AI","Sam","samakimperrera@gmail.com","Sam","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"211","OM Voice","1","Voice AI","Ashok kumar","ashokkumar0906.ak@gmail.com","Ashok kumar","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"212","Odyssey","1","Voice AI","Hema U","designer.hemau@gmail.com","Hema U","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"213","Omegaconsortium","1","Voice AI","Sanjay M","kathirvelan0123@gmail.com","Sanjay M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"214","One piece","1","Voice AI","Jeeva R","rjeevarajendran@gmail.com","Jeeva R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"215","One voice","1","Voice AI","Priyadharshini S","720824108081@hit.edu.in","Priyadharshini S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"216","Only one","1","Voice AI","Rahul G","rahul31072024@gmail.com","Rahul G","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"217","Orpheus","1","Voice AI","Ayesha Muskan. M","ayeshamuskanm2023@gmail.com","Ayesha Muskan. M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"218","Pavanam","1","Voice AI","Pavan S","pavan03062006@gmail.com","Pavan S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"219","Pechu","1","Voice AI","Hemanth","hemanthsankar2004@gmail.com","Hemanth, Hariharan R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"220","Pesu_Bot","1","Voice AI","Mohammed Naveed F","mohammednaveedf@gmail.com","Mohammed Naveed F","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"221","Pesum_bommai","1","Voice AI","Sachin","nihcas2015@gmail.com","Sachin","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"222","PetOVoice","1","Voice AI","Nitin JBS","nitinjbsway@gmail.com","Nitin JBS","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"223","Power Rangers","1","Voice AI","Subbu Karthikeyan S","subbu22092003@gmail.com","Subbu Karthikeyan S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"224","Power ranger","1","Voice AI","128_CSE_Suriyaprakashar. A","suriyaprakashar15751@gmail.com","128_CSE_Suriyaprakashar. A, Monish Balaji R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"225","Pragadesh","1","Voice AI","Pragadesh","pragadeshwaran231@gmail.com","Pragadesh","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"226","Prime & Bee","1","Voice AI","Chanpath","kavin.sampath.r@gmail.com","Chanpath","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"227","Prompt Engineers","1","Voice AI","Sudharsan G S","sudharsangsdgs12345@gmail.com","Sudharsan G S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"228","Prompt Partners","1","Voice AI","Sai pavitra And Yugesh","saipavitraramesh@gmail.com","Sai pavitra And Yugesh","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"229","Pykicks","1","Voice AI","Priyadharshini A","priyadharshiniannadurai413@gmail.com","Priyadharshini A, Adarsh M, SUHASINI R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"230","Quant_Speak","1","Voice AI","Janakiraman Ragunathan","jkr@quantrail-data.com","Janakiraman Ragunathan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"231","Quants","1","Voice AI","Purushothaman V","purushoth1727@gmail.com","Purushothaman V, Kishore Kumar","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"232","Quantum Voice","1","Voice AI","Blessing Santhosh B","720824108016@hit.edu.in","Blessing Santhosh B","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"233","Quantum voices","1","Voice AI","Madhivanan V","720824108055@hit.edu.in","Madhivanan V","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"234","Ram Kumar","1","Voice AI","Gokul","fibe1707@gmail.com","Gokul","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"235","Rising Devs","1","Voice AI","Athina Karthikeyan","bkathina.cse2025@citchennai.net","Athina Karthikeyan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"236","Riyas","1","Voice AI","Thibin.S","thibinramesh8@gmail.com","Thibin.S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"237","Ruralconnect","1","Voice AI","sv sudharshanan","sudhar4114@gmail.com","sv sudharshanan, melwinjude, SYLESH A R","Rural Connect ","AGENT RC","+918065356769","https://docs.google.com/presentation/d/1pcxiuPAHrDXij-MYRyr9apiSg40Mv95O/edit?usp=sharing&ouid=118340931618727714833&rtpof=true&sd=true","N/A","STT: Sarvam AI, LLM: Custom / Other, TTS: Custom / Other","RuralConnect Voice is a multilingual AI voice agent that helps rural workers register and access employment opportunities through a simple phone conversation. It collects worker details such as name, location, and work preferences, then connects the voice interaction to RuralConnect for structured data and future job matching.","Rural workers can face barriers such as limited digital literacy, language differences, and dependence on intermediaries when looking for work. Our voice agent removes the need for apps, typing, or complex forms by allowing workers to register and share their details naturally over a phone call, with the conversation converted into structured data for RuralConnect.","0.0","1"
+"238","SETU","1","Voice AI","Neeraj","neerajmadhav777@gmail.com","Neeraj, KOVVURI SURYA VENKATA REDDY, Sri Karthik Pampana","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"239","SIGNAL SQUAD","1","Voice AI","YAMINI SIVAKUMAR","sparrow1938584@gmail.com","YAMINI SIVAKUMAR","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"240","SMx Labs","1","Voice AI","Mohamed Rashad M","mohamed.rashad072004@gmail.com","Mohamed Rashad M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"241","SQ1","1","Voice AI","Lakshman Shanmugam","slakshman2004@gmail.com","Lakshman Shanmugam, Dhinakaran Thangaraj, Navya Sri Siva Sai Tulasi","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"242","SRD","1","Voice AI","Dhanapriya Giddaluru","dhanapriyagiddaluru@gmail.com","Dhanapriya Giddaluru, Saran, Roshini","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"243","STRIKERS","1","Voice AI","TARUN RAGAV R","tarunragavravindran@gmail.com","TARUN RAGAV R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"244","Sai Lingesh,krithesh,nithyavell","1","Voice AI","Sai Lingesh","sailingesh.olive@gmail.com","Sai Lingesh","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"245","Saksham Awasthi","1","Voice AI","Saksham Awasthi","sakshamawasthi9936@gmail.com","Saksham Awasthi","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"246","Shivaprasad V","1","Voice AI","Shivaprasad V","spdly.studios@gmail.com","Shivaprasad V, Shivaprasad V","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"247","SideMen","1","Voice AI","Sidharth","sidharthdk73@gmail.com","Sidharth","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"248","Silisnakies","1","Voice AI","Nithish kumar V","nithishggl8@gmail.com","Nithish kumar V","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"249","Sindhanai Labs","1","Voice AI","Naveen Kumar S","naveenkumarforjobs@gmail.com","Naveen Kumar S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"250","Slowgrain Labs","1","Voice AI","Shankar K","shankar@slowgrainlabs.com","Shankar K, Shankar K","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"251","Smarties","1","Voice AI","NATHIYA S P","720824108072@hit.edu.in","NATHIYA S P","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"252","Solo","1","Voice AI","Nikhil Padman","nikhilpadman4@gmail.com","Nikhil Padman, Muthu Prakash","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"253","Solo Hack","1","Voice AI","Thamill Indian B U","thamillbalan@gmail.com","Thamill Indian B U","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"254","Solo stack","1","Voice AI","ANBARASHAN V","anbarashandv@gmail.com","ANBARASHAN V","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"255","SoloDev","1","Voice AI","Abhi Ram Gupta Kaja","abhiramguptak@gmail.com","Abhi Ram Gupta Kaja","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"256","Solo_Voice","1","Voice AI","Malini S","malinisekar474@gmail.com","Malini S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"257","Soloman","1","Voice AI","CHANDRU S","720824108302@hit.edu.in","CHANDRU S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"258","Solosquard","1","Voice AI","Debabrata Pattnayak","debabratapattnayak24@gmail.com","Debabrata Pattnayak","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"259","Sonuslabs","1","Voice AI","Likhith S","likhiths05072002@gmail.com","Likhith S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"260","SparTech","1","Voice AI","Nithish T","nithish23101@gmail.com","Nithish T","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"261","Spartans","1","Voice AI","Rajesh","theexplorerengine@gmail.com","Rajesh","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"262","SpeakSync","1","Voice AI","ABITHA S","720824108006@hit.edu.in","ABITHA S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"263","Speech Ninjas","1","Voice AI","Ashiq S A","iamashiqofficial@gmail.com","Ashiq S A, Mohammed Faheem, Dhamaraiselvi Sekar, Akbar Ali Y","Real Time E_sevai Bot","GOVERNMENT-E-SEVAI","+918065354389","https://docs.google.com/presentation/d/1tVx9RoJKzjDLDa-yjsyPoj-2wmkzv35z/edit?usp=sharing&ouid=111537079596193892746&rtpof=true&sd=true","N/A","STT: Sarvam AI, LLM: Custom / Other, TTS: Custom / Other","N/A","Bot can Solve e_sevai related issues like how to apply  x certificates it can tells details in a call","0.0","1"
+"264","Spidey sense","1","Voice AI","DHARSHAN SAI S","s.dharshansai@gmail.com","DHARSHAN SAI S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"265","Spinacle","1","Voice AI","Suryaa Narayanan K","resultyst@gmail.com","Suryaa Narayanan K","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"266","Spryzen Requiem","1","Voice AI","Mohamed Riyas","mohamedriyas65199@gmail.com","Mohamed Riyas","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"267","Sridhar M","1","Voice AI","sridhar mohanraj","sridharmohanraj371@gmail.com","sridhar mohanraj","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"268","Stellar","1","Voice AI","M.Mohammed Salman","salman14072004@gmail.com","M.Mohammed Salman","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"269","Storm Breakerz","1","Voice AI","KISHORE KUMAR","9308kishorekumar@gmail.com","KISHORE KUMAR, LOUJAN B, Fahran Ali","Lyra 2.0 — AI Order Co-Pilot for FMCG Distributors","LYRA RECEPTIONIST","+918065355944","https://drive.google.com/file/d/1tGIXhovdhRBpsu9saI9qclpbLx92oqvE/view?usp=sharing","N/A","STT: Deepgram, LLM: Google Gemini, TTS: Custom / Other, Squad Hotlines: LYRA ORDER TAKER (): +918065355944 | LYRA BUSINESS BRAIN (): +918065355944 | LYRA SUPPORT (): +918065355944","Lyra is an AI voice co-pilot that automates routine FMCG order-taking for distributors by calling kirana shops in colloquial Tamil/Tanglish/Hinglish, confirming repeat orders while checking live stock, credit limits, and blacklists, then sending WhatsApp confirmations — all orchestrated by a 4-agent SnapServe squad (Reception → Order Taker → Business Brain → Support) that seamlessly hands off mid-call across Tamil, Hindi, and English for migrant warehouse workers, updating a real-time distributor dashboard via Supabase.","Lyra solves the ""Salesman Trap"" in FMCG distribution:
+- Salesman time wasted — 80% of day spent traveling/waiting to take repetitive, predictable orders (same 10–15 SKUs weekly)
+- Stock-outs between visits — Shop runs out Wednesday, salesman visits Friday → lost revenue
+- Credit limit breaches — No real-time check; orders approved beyond limit → bad debt
+- Scheme blindness — Salesmen forget/miss active promotions (buy 10 get 1, % discounts, festival offers)
+- Blacklist ignorance — Rejected products (e.g., ""Lux soap sell aagala"") get re-pitched next visit
+- Complaints/returns ignored — Damaged goods, wrong items, late delivery → no logging, no credit note, no follow-up
+- Language barrier — Owner speaks Tamil, warehouse loader speaks Hindi/Bhojpuri, disputes need English
+- No audit trail — Orders, promises, complaints exist only in salesman's notebook (or memory)
+- Order errors — Wrong product, qty, unit, price, credit entry from manual writing
+- No consent management — Shops can't opt out, set preferred call times, or choose WhatsApp-only
+Result: Distributors lose money on stock-outs, bad debt, scheme leakage, and wasted salesman hours — while shops get poor service.","0.0","1"
+"270","Stormbreaker","1","Voice AI","D. Vishal","dvishaldharani@gmail.com","D. Vishal","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"271","Stormbreakerz","1","Voice AI","Gokul N","gokulmadhesh1230@gmail.com","Gokul N","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"272","Surakhshith","1","Voice AI","Koushik Bharadwaj S","skoushikbharadwaj@gmail.com","Koushik Bharadwaj S, Rohith Ram R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"273","Sustain X","1","Voice AI","Uthaya Lakshmi S","uthayal675@gmail.com","Uthaya Lakshmi S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"274","Synapse Squad","1","Voice AI","ABINAYA D A","720824108003@hit.edu.in","ABINAYA D A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"275","Synthosia","1","Voice AI","Premvignesh M","mpremvignesh@gmail.com","Premvignesh M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"276","TALKEON LABS","1","Voice AI","Harish Raghav","harish17raghav@gmail.com","Harish Raghav, Harish Raghav","TALKEON","TALKEON","+918071579694","https://drive.google.com/file/d/1fVL9xt4mWBQStKgZD7wLWtcXq9_so54x/view?usp=sharing","N/A","STT: Sarvam AI, LLM: OpenAI (GPT-4o), TTS: Cartesia","AI VOICE AGENT ","AI VOICE AGENT ","0.0","1"
+"277","TEAM DOOM","1","Voice AI","Meganathan S","720825108053@hit.edu.in","Meganathan S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"278","TEAM SOL","1","Voice AI","Neyan R","shaneya2004@gmail.com","Neyan R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"279","TEAM STRIVER'S","1","Voice AI","GOTTAPU YATISH","yatishgottapu2026@gmail.com","GOTTAPU YATISH, Dinesh Reddy","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"280","TEAM UNICORN","1","Voice AI","MUKESH M","mukeshmugi1114@gmail.com","MUKESH M, MUKESH M, HARISH C","Thenmozhi AI — A Multilingual Voice Banking Squad","THENMOZHI- BANKING CONCIERG","+918065354897","https://docs.google.com/presentation/d/17JNH7Ny_Ii_1X5Sl0nU0-u89AaqMjlK8/edit?usp=sharing&ouid=109817002658112199632&rtpof=true&sd=true","N/A","STT: Sarvam AI, LLM: OpenAI (GPT-4o), TTS: ElevenLabs","Thenmozhi AI is a multilingual voice banking concierge that connects customers with specialized AI agents for loans, insurance, government schemes, and customer support, while automating follow-ups through WhatsApp and Google Sheets.","Customers often struggle to access the right banking service through fragmented support channels, particularly when they prefer regional languages. Thenmozhi AI solves this by making voice the primary banking interface. Customers can call and speak naturally in Tamil, Hindi, English, or mixed languages. The AI understands their intent and seamlessly routes them to specialized agents for loans, insurance, schemes, or customer support. Instead of merely answering questions, the agents can perform workflows such as EMI reminders, eligibility guidance, support requests, and follow-ups, with outcomes recorded in Google Sheets and confirmations sent through WhatsApp.","0.0","1"
+"281","TEAM VAC","1","Voice AI","Varun Sd","varun.sd16@gmail.com","Varun Sd, DHIPHIKA S","VAC Solar AI Voice Sales & Site Survey Scheduler Team","SOLAR SALES ENGINEER","+918071581238","https://docs.google.com/presentation/d/1h9Y250O5ASJqRRtw62rPz3f5qo2gWMhL/edit?usp=sharing&ouid=113314560118772586893&rtpof=true&sd=true","N/A","STT: Deepgram, LLM: OpenAI (GPT-4o), TTS: ElevenLabs, Squad Hotlines: SOLAR CONSULTANT (): +918071581238 | SITE SURVEY SCHEDULER (): +918071581238","A multi-agent AI voice system for VAC Solar that handles the complete customer journey from initial solar enquiry and lead qualification to technical consultation and site survey scheduling. Agents share caller context during live handoffs, so customers do not have to repeat information, and the scheduling agent checks real calendar availability before confirming an appointment.","Solar enquiries often require multiple steps, from understanding the customer's requirement and qualifying the lead to answering technical questions and scheduling a site survey. This usually creates delays, repeated questions, and poor handoffs between teams. Our multi-agent voice system solves this by giving each AI agent a specialized role while maintaining shared caller context across handoffs. Priya handles lead qualification, Solar Consultant handles technical and pricing questions using the VAC Solar knowledge base, and Site Survey Scheduler handles real-time calendar availability and appointment booking. If a call is disconnected, the system is designed to resume from the existing conversation context instead of restarting the qualification.","0.0","1"
+"282","TEDA4DAWIN","1","Voice AI","Sai Charan","saicharan312008@gmail.com","Sai Charan, MANUSHREE, MERASHREE, MAHATHI","ReCall Me","RELIEFBOT","+918071581642","https://docs.google.com/presentation/d/15JRcAlW7Bqy5-v7CL4CS5cX5ZMrurqA9/edit?usp=drive_link&ouid=109245974626306727564&rtpof=true&sd=true","N/A","STT: Sarvam AI, LLM: Google Gemini, TTS: ElevenLabs","We’re building a voice-based post-call assistant that understands phone conversations, identifies important details like tasks, deadlines, payments, and commitments, and lets users ask questions about the call naturally. It then converts those details into clear answers and actionable reminders, helping users remember what was discussed and what they need to do next.","Our voice agent helps users remember important details from phone calls. With their consent, it analyses conversations and allows users to ask questions naturally, such as “What do I need to do?” It then identifies key information like deadlines, payments, and commitments and turns them into clear, actionable reminders.","0.0","1"
+"283","THE TEC CROWD","1","Voice AI","Sanjai L","sanjaioff@gmail.com","Sanjai L","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"284","THE TECH CROWD","1","Voice AI","SANJAYKUMAR N B","nbsanjay3664@gmail.com","SANJAYKUMAR N B","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"285","THRIFTY WARRIORS","1","Voice AI","SESH HARI NARAYANAN","seshhari2008@gmail.com","SESH HARI NARAYANAN","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"286","TOPTIER","1","Voice AI","Mohith Dande","mohithdande3@gmail.com","Mohith Dande","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"287","TSK","1","Voice AI","Sanjay S","sanjay20072k@gmail.com","Sanjay S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"288","TamilMind AI","1","Voice AI","Thirisha S","thirishasriram079@gmail.com","Thirisha S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"289","Tanglish Dial","1","Voice AI","Hashvanth M U","hashvanthh21@gmail.com","Hashvanth M U","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"290","Tanya and Anjali","1","Voice AI","Tanya Vijo","tanyavijo.olive@gmail.com","Tanya Vijo, Anjali Dias","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"291","Team Code Novas","1","Voice AI","Haridharshini.J","haridharshinijayaraj@gmail.com","Haridharshini.J, BALA SARAVANAN K","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"292","Team Duoo","1","Voice AI","Rahul Tej Mora","rahultejmora18@gmail.com","Rahul Tej Mora","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"293","Team GG","1","Voice AI","Gayathri Priyanka R","gayathripriyankaramesh@gmail.com","Gayathri Priyanka R, Gobi Jagadeesh","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"294","Team Nova","1","Voice AI","Thejas","310625104411@eec.srmrmp.edu.in","Thejas","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"295","Team QB","1","Voice AI","Vishal RK","vishalvrk97@gmail.com","Vishal RK","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"296","Team Shadow","1","Voice AI","M Kesavan","720824108049@hit.edu.in","M Kesavan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"297","Team Spark","1","Voice AI","RAMKUMAR S","720824108088@hit.edu.in","RAMKUMAR S, Suriyavanan S, VARUN M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"298","Team UFO","1","Voice AI","Vishwananth BS","bsvishwananth@gmail.com","Vishwananth BS","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"299","Team action","1","Voice AI","Koppolu Bala Gowtham","balukoppolu522@gmail.com","Koppolu Bala Gowtham, Gowshik P, Aathif, HARRY PRAKASH J, Aadil A, JEYA SARAN D T","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"300","Team avengers","1","Voice AI","Pawan El dorado","pawansrikumar.in@gmail.com","Pawan El dorado","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"301","Team cyberians","1","Voice AI","Nithish R K","rknithish2008@gmail.com","Nithish R K, Tharun Kumar, Nixon p","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"302","Team red","1","Voice AI","Vishal Vishal","vishalvikram2612008@gmail.com","Vishal Vishal","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"303","Team ss","1","Voice AI","SUKUMAR S","720825108108@hit.edu.in","SUKUMAR S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"304","Team superman","1","Voice AI","KEVIN RAJ.K","kamalkevinraj2008@gmail.com","KEVIN RAJ.K","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"305","Team with AI","1","Voice AI","Arun","arun@billiontags.co","Arun","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"306","Tech Innovators","1","Conversational AI","Priya, S","priya19072006@gmail.com","Priya, S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"307","Tech Legend","1","Voice AI","Karthik R","karthik23907@gmail.com","Karthik R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"308","Tech Mavericks","1","Voice AI","Sabari","theresilientks@gmail.com","Sabari","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"309","Tech Quanta","1","Voice AI","Divya V T","divyavt202006@gmail.com","Divya V T","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"310","Tech Slayers","1","Voice AI","Mohammed Riyas M","mohammedriyas3012008@gmail.com","Mohammed Riyas M, Venkateshwaran S, Rahuman T","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"311","Tech Tactix","1","Voice AI","U Harini","hariniudhayasankar@gmail.com","U Harini, Mohamed Thameem","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"312","Tech Titans","1","Voice AI","Ponmudi R","720824108077@hit.edu.in","Ponmudi R, Vignesh R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"313","TechAI","1","Voice AI","Santhoshkumar","sk6155937291@gmail.com","Santhoshkumar","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"314","TechGaint","1","Voice AI","Pavansai Chandra","pavan20053010@gmail.com","Pavansai Chandra","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"315","Techno game","1","Voice AI","Deepeksha Basin","deepekshabasin@gmail.com","Deepeksha Basin","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"316","TestDev","1","Voice AI","Nawin Viswajith","nawinviswajith@gmail.com","Nawin Viswajith","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"317","Thanos Ai","1","Voice AI","LAXMITHA S","720825108045@gmail.com","LAXMITHA S, Aravind S, ELANGO V","College Adimission Systerm","LAX","+918071581337","https://drive.google.com/drive/u/0/folders/1T4S0fKDxLMvziIvegz1j_1p1JSvpPRpX","N/A","STT: Sarvam AI, LLM: Custom / Other, TTS: Cartesia","Our team built an AI Voice Agent integrated with a web management portal that automates student onboarding and course inquiries for college admissions. The platform allows prospective students—including diploma and higher education applicants—to submit details, compare courses, and engage with interactive voice support around the clock.","Colleges face a huge surge in calls during admission season, leaving staff overwhelmed and forcing many prospective students to deal with unanswered calls or delayed responses. As a result, frustrated applicants often give up and enroll elsewhere. Our solution uses Voice AI to answer every incoming call instantly—even outside office hours—to collect essential details like student name, email, and preferred course, before letting the student pick a convenient time for a human counselor to follow up","0.0","1"
+"318","The AI Kings","1","Voice AI","Bharath Kumar S","sbharathkumar1425@gmail.com","Bharath Kumar S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"319","The APK'S","1","Voice AI","S Sharvrsh","supersharvesh5@gmail.com","S Sharvrsh","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"320","The Orchestrators","1","Voice AI","Salmon Angelo","salmonangelosam@gmail.com","Salmon Angelo","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"321","The Outliers","1","Voice AI","Aarthi GD","sec24am014@sairamtap.edu.in","Aarthi GD","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"322","The Targaryens","1","Voice AI","JOSHLIN","josh1906007@gmail.com","JOSHLIN, Karthick MK","N/A","DEAMOND","+918065354362","https://docs.google.com/presentation/d/1H1jVVIw_4AAaRJ5g3XBmOL76bDJfTB2L/edit?usp=drivesdk&ouid=101066628580529368914&rtpof=true&sd=true","N/A","STT: Deepgram, LLM: OpenAI (GPT-4o), TTS: ElevenLabs","N/A","N/A","0.0","1"
+"323","The Travellers","1","Voice AI","Krishna L","krishnaa667l@gmail.com","Krishna L","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"324","Think Trio","1","Voice AI","VIMALA RANI","vimalarani049@gmail.com","VIMALA RANI, NICKITA.P, SWATHI S","CAMPUS-CONNECT","SCOOBY","+918065355987","https://docs.google.com/presentation/d/1YXOp-Xav5GaqSVJHbn0y-hONGRYbmJZJ/edit?usp=sharing&ouid=105947844094986041883&rtpof=true&sd=true","N/A","STT: Deepgram, LLM: OpenAI (GPT-4o), TTS: ElevenLabs","CampusConnect is an AI-powered voice assistant that streamlines communication between students, parents, and educational institutions through automated updates, alerts, and support services.","CampusConnect solves communication gaps in educational institutions by providing timely updates, alerts, and support through AI-powered voice interactions.","0.0","1"
+"325","Thirisha","1","Voice AI","THIRISHAMANI A","720824108117@hit.edu.in","THIRISHAMANI A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"326","Titans","1","Voice AI","Tishaa V K","tishaabrindha272@gmail.com","Tishaa V K, Dhanyashri, Mohitha","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"327","Unica","1","Voice AI","Arjit jaiswal","jaiswalarjit071@gmail.com","Arjit jaiswal","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"328","Unicorn","1","Conversational AI","Mukesh, M","journeywithmugi@gmail.com","Mukesh, M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"329","Universe","1","Voice AI","ELAKIYA T","elakiyat1806@gmail.com","ELAKIYA T","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"330","VIRAXH","1","Voice AI","Vinish Enugula","vinishenugula2007@gmail.com","Vinish Enugula","Edu Receptionist ","VIRAXH","+918065356424","https://docs.google.com/presentation/d/1uSskANaojE3T4wklS_7ECk_5vA8bAf5LCCFNU_Kh7f4/edit?usp=drivesdk","N/A","STT: Sarvam AI, LLM: OpenAI (GPT-4o), TTS: ElevenLabs","Iam building and receptionist agent which can make calls and attend the calls and make them to do .And these agent will also says the students attendence and grades to parents in their native language itself only so it is a multilingual agent.","It will solve work load of institutions and make the people to call and it will reduce the time and less people to work in the institution and give more efficiency in work and it is a multilingual receptionist which can automatically detects the language and speaks in their language.","0.0","1"
+"331","VR GROUPS","1","Voice AI","KATHIRAVAN M","720824108046@hit.edu.in","KATHIRAVAN M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"332","VTF","1","Voice AI","Aravind S","aravind73205@gmail.com","Aravind S, Mohanaprasath S, Srivikkash G","PolicyPulse","VTF AGENT","+918040260659","https://drive.google.com/drive/folders/11G3CijptvrgHzi90jzvar-cQXvv4J-u8?usp=sharing","N/A","STT: Google Cloud STT, LLM: Google Gemini, TTS: Google Cloud TTS","We’re building an AI-powered insurance voice agent that acts as a virtual insurance representative. It can naturally interact with customers, understand their insurance needs, answer policy-related questions, handle follow-ups, and assist with tasks such as renewals, claims, and document requests.","Insurance agents spend significant time on repetitive customer follow-ups, policy queries, renewal reminders, and document requests. Our agent automates these conversations through natural voice interactions, ensuring customers are contacted on time, receive consistent support, and get their requests handled without requiring a human agent for every interaction.","0.0","1"
+"333","Vaimozhi","1","Voice AI","M.kunguma Sakthivel","kungumasakthivel25@gmail.com","M.kunguma Sakthivel","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"334","Viltrumite","1","Voice AI","N S MANISH BHALAJY","nsmanish2007@gmail.com","N S MANISH BHALAJY, Nevan R G, A.vishal","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"335","Vishnu pathy","1","Voice AI","Vishva S","720825108124@hit.edu.in","Vishva S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"336","Vishva","1","Voice AI","OVIYANATHAN P","720825108070@hit.edu.in","OVIYANATHAN P, RAJADURAI, NISHANTH N, VISHNU PATHY V","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"337","Viswa","1","Voice AI","SANTHAKUMAR R","720825108087@hit.edu.in","SANTHAKUMAR R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"338","Viv","1","Voice AI","Vignesh B","vigneshb.works@gmail.com","Vignesh B","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"339","Vocal vision","1","Voice AI","Pooja Sri S","sbpooj@gmail.com","Pooja Sri S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"340","Vocal visionaries","1","Voice AI","POOJA DRI S","720825108071@hit.edu.in","POOJA DRI S, Sivani.P, VENNILA A, SATHYA DURGA M, SATHYA DURGA M","AI Med assistant for pregnancy ","MEDI VOICE AI","+918071579442","https://drive.google.com/file/d/1m47880qdgLgpnsrymn5RZSt_zJnDMVMD/view?usp=drivesdk","N/A","STT: Deepgram, LLM: OpenAI (GPT-4o), TTS: ElevenLabs","MaternAI is a voice-based AI assistant that provides pregnancy-care guidance, reminders, and week-by-week information in Tamil and English.","It helps pregnant women overcome language barriers, missed care routines, and difficulty accessing basic pregnancy guidance through simple voice interaction.","0.0","1"
+"341","VocalMatrix","1","Voice AI","ADITYA GANESH","adityaganesh2007@gmail.com","ADITYA GANESH, B.Kanaiya Aswani, R.KAUSHIK","Factory Voice Agent","YANTRAMITRA","+917965854324","https://drive.google.com/file/d/15jVvQWL1EGGpPqsZrxrBMVvNho7vhCNl/view?usp=sharing","N/A","STT: Sarvam AI, LLM: OpenAI (GPT-4o), TTS: Cartesia","A multilingual AI voice agent (Tamil, Hindi, English) that factory workers call from their phone to log machine condition, check warranty and inventory, and get ranked live quotes from multiple dealers — all without any app or software training.","When machines need maintenance or parts, workers currently use paper logs (which get damaged and are hard to search) or clunky digital systems that break their workflow. Getting a replacement part involves slow, manual steps across warranty checks, inventory, dealers, and approvals — causing unnecessary downtime. Our agent turns this entire process into a single hands-free phone call while keeping workers and managers as the decision-makers.","0.0","1"
+"342","VocalVisionaries","1","Voice AI","Anish","anishr1604@gmail.com","Anish","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"343","Voice Auras","1","Voice AI","GAYATHRI M","gayathrimeganathan18@gmail.com","GAYATHRI M, Reshma M, DHIVYA DHARSHINI M","Aaradhya: AI-Powered Voice Automation for Jewellery Retail Customer Engagement","AARADHYA: THE GOLDEN VOICE","+918071579398","https://docs.google.com/presentation/d/1nT4uOPLRH7GS7uxhf4btP93kQsmv58yC/edit?usp=drivesdk&ouid=111381262834118362870&rtpof=true&sd=true","N/A","STT: Sarvam AI, LLM: OpenAI (GPT-4o), TTS: Cartesia","Aaradhya is a single multilingual voice AI agent for gold and jewellery showrooms that answers inbound calls about live gold rates, savings schemes and general store questions, and makes outbound calls to remind existing scheme members about due installments and to share festive offers. It detects the caller's intent from their own words, pulls the rate from a live source, and turns buying or 
+scheme enrolment interest into a scored lead with a callback slot for the sales team.","Jewellery showrooms often juggle three very different call needs with the same limited staff: 
+1. New customers asking about rates/schemes - need to become leads.
+2. Scheme members needing payment reminders, missed ones cause defaults.
+3. General callers asking about festive offers and collections.
+
+Staff can't keep up, so leads go cold and reminders get skipped.
+
+Aaradhya handles all three on one number, detects intent, pulls live 
+gold rates (never hardcoded), explains schemes, captures leads, sends 
+reminders, and shares offers.
+                                                                                                                                                                                    
+Voice is the right medium here  because gold buying is a trust-sensitive, high-value decision, customers want to hear a confirmed answer, not read one and a large share of jewellery buyers, particularly older and less tech comfortable customers, are simply more at ease speaking than typing into an app or chatbot.                                                                                                                                                                                 ","0.0","1"
+"344","Voice claw","1","Voice AI","Aravindan","aravindsriraj@gmail.com","Aravindan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"345","Voice commanders","1","Voice AI","LAXMITHA S","720825108045@hit.edu.in","LAXMITHA S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"346","Voice creators","1","Voice AI","Naveena Rose","naveenarose2007@gmail.com","Naveena Rose","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"347","Voice over","1","Voice AI","Dharshini T","dharshinit2410@gmail.com","Dharshini T, DHIVYA V","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"348","VoiceForge AI","1","Voice AI","Suchindhar RM","suchindharaws2000@gmail.com","Suchindhar RM","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"349","Voixo","1","Voice AI","Mohamed Afrith","mohamedafrith1504@gmail.com","Mohamed Afrith","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"350","VoxMasters","1","Voice AI","Ashika S","ashiashika2009@gmail.com","Ashika S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"351","VoxNova","1","Voice AI","SAVITHA V","720825108097@hit.edu.in","SAVITHA V, Sara, Shennon Olivia B, Roshini.C Roshini, Rohini PM, Revathi S, Sandhiya B","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"352","White Mountain","1","Voice AI","Aswanth GS","aswanthgs7@gmail.com","Aswanth GS","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"353","Whitespaces","1","Voice AI","Vendhan","etvendhan12@gmail.com","Vendhan, Sharventhran R, Dharunika K T, Aswanth Bathmakumar","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"354","WickTree","1","Voice AI","Jayanth K A","jayanth0710@gmail.com","Jayanth K A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"355","X Boys","1","Voice AI","S Sanjay Kumar","ssksmkss@gmail.com","S Sanjay Kumar","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"356","Xandar","1","Voice AI","PRANESH MOHAN R","praneshmohanr@gmail.com","PRANESH MOHAN R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"357","Yazhi","1","Voice AI","Hemachandiran R","hemachandiran3108@gmail.com","Hemachandiran R","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"358","apex warriors","1","Voice AI","GAYATHRI A","720824108026@hit.edu.in","GAYATHRI A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"359","black&white","1","Voice AI","Arul Manikandan","arulramalingam06@gmail.com","Arul Manikandan","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"360","clara","1","Voice AI","SANJITH S V","sanjith.sakthipriya@gmail.com","SANJITH S V","PROJECT CLARA","CLARA ","+917971543255","https://drive.google.com/file/d/1CToHLGM_fIu2mKTumKLWSq4bJCMmLbNt/view?usp=sharing","N/A","STT: Deepgram, LLM: OpenAI (GPT-4o), TTS: ElevenLabs","I AM BUILDING A AI VOICE ASSISTANT WHICH DEALS WITH INSURANCE COVERAGE AMBULANCE PROVOIDING SERVICE MEDICAL BILLS FEE TRANSACTIONS ETC","INSURANCE COVERAGE AMBULANCE PROVOIDING SERVICE MEDICAL BILLS FEE TRANSACTIONS ETC SO THIS REDUCES THE MAN POWER IN HEALTH CARE SERVICES ","0.0","1"
+"361","codeflow","1","Voice AI","bhavana R","720825108011@hit.edu.in","bhavana R, Manisha sree M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"362","copilotverse.io","1","Voice AI","Karthik Balaji","hello@copilotverse.io","Karthik Balaji","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"363","ctrlz","1","Voice AI","MURALEESWARAN M K","muraleeswaran01@gmail.com","MURALEESWARAN M K, Kerthikaa M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"364","cyberians","1","Voice AI","Yogesh N","720825108125@hit.edu.in","Yogesh N","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"365","deepvoice","1","Voice AI","G Arunachalam","phoenixdark318@gmail.com","G Arunachalam","ServiceFlow AI: A Multilingual Voice-Powered AC Service Coordinator","SERVICEFLOW AI","+917965854335","https://docs.google.com/presentation/d/1ZY9-JI7m-r4uDAwlxtm8oLbCio2J8mOp/edit?usp=drive_link&ouid=106657457798255801996&rtpof=true&sd=true","N/A","STT: Sarvam AI, LLM: Google Gemini, TTS: Cartesia","ServiceFlow AI is a multilingual voice-based AC service coordinator that understands natural Indian speech, including mixed-language conversations, and helps customers report AC issues, answer service questions, check availability, and book appointments. It automatically captures customer and service details while providing a natural, human-like support experience.","The problem is that AC service businesses often rely on rigid phone-based support, where customers must repeat information, navigate fixed questions, or struggle when speaking naturally in regional languages and mixed-language speech. ServiceFlow AI uses voice AI to understand natural Indian conversations including Tamil, Hindi, Telugu, Kannada, Malayalam, and code-switched speech while capturing the AC issue, location, preferred time, and other details, answering questions, checking availability, and handling appointment booking through a conversational voice interaction.","0.0","1"
+"366","dev","1","Voice AI","dev","xdevfaheem@gmail.com","dev","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","0"
+"367","echo rail solution","1","Voice AI","Simah Shareen","lamjathkhan@gmail.com","Simah Shareen","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"368","innovative stars","1","Conversational AI","Jeevitha, Suresh","jeevithasuresh296@gmail.com","Jeevitha, Suresh","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"369","kaviya","1","Voice AI","KAVIYA J","720824108047@hit.edu.in","KAVIYA J","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"370","krith","1","Voice AI","Krithika D","dkrithikaias@gmail.com","Krithika D","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"371","lazyB","1","Voice AI","GOKULAKRISHNAN S","gokuls2901@gmail.com","GOKULAKRISHNAN S, Harikrishnan B, SANTHOSH P","Veggies VoiceMart – AI Voice Ordering & Customer Support System","VEGGIES VOICEMART ","+917965854177","https://drive.google.com/drive/folders/1u5uky9IBSmEV8OSiIlgNlHnwKO2D_rxj?usp=sharing","N/A","STT: Sarvam AI, LLM: Google Gemini, TTS: Google Cloud TTS","An AI-powered voice agent for grocery stores that automates the complete customer-to-order workflow. Customers can call the agent to search for products, check price and stock availability, place orders, provide delivery details, and receive order confirmation through natural voice conversations. The system uses RAG and AI agents to retrieve product information and automate order processing.","Small grocery stores rely heavily on staff to answer repetitive customer calls, check product availability, take orders, collect delivery information, and confirm orders manually. This leads to staff workload, slower responses, and order errors. Veggies voicemart AI assistant automates these tasks through a multilingual AI voice agent, allowing customers to interact naturally while reducing manual effort and improving order accuracy and customer experience.","0.0","1"
+"372","matrixminds07","1","Voice AI","Trivikraman T S","sit23ad071@sairamtap.edu.in","Trivikraman T S, Sankara Narayana SV","H(AI)RE - smart Agentic end to end hiring Agent ","H(AI)RE","+918065354620","https://drive.google.com/drive/folders/1rnkRCw229Avqw8o_xutZO4fxoUIDdNpg?usp=sharing","N/A","STT: Sarvam AI, LLM: Groq / Llama 3, TTS: ElevenLabs","H(AI)RE is an agentic recruitment platform that automates the hiring journey from JD creation and candidate screening to personalized AI interviews and evaluation.
+It uses multilingual voice AI agents to reduce repetitive HR work while keeping humans in control of the final hiring decision.","H(AI)RE solves the manual and fragmented recruitment process where HR teams spend significant time screening candidates, making calls, scheduling interviews, and evaluating applicants.
+It automates these repetitive tasks with AI voice agents while providing consistent, JD- and resume-based candidate evaluation and keeping HR in control of the final decision.","0.0","1"
+"373","network squard","1","Voice AI","Meena S","720824108058@hit.edu.in","Meena S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"374","nsk","1","Voice AI","nithyavel","nithyavel13.olive@gmail.com","nithyavel, krithesh","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"375","single","1","Voice AI","Thangarasu","thangamani1128@gmail.com","Thangarasu","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"376","solo king","1","Voice AI","Sathiyanarayanan VS","sathyaviji2008@gmail.com","Sathiyanarayanan VS","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"377","speed","1","Voice AI","HEMARAJ E","720824108035@hit.edu.in","HEMARAJ E","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"378","tech Saviers","1","Voice AI","Jayashree s","jaima7010@gmail.com","Jayashree s","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"379","techhack","1","Voice AI","Darshinee M","darshineem10@gmail.com","Darshinee M","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"380","tux","1","Voice AI","Sai Shreyash","25ad135@rmkcet.ac.in","Sai Shreyash","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"381","visionX","1","Voice AI","Dinesh Kumar","dineshkumaras.aiml2024@citchennai.net","Dinesh Kumar, Poornima R, kirthana, Ragavi B","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"382","yaazhi","1","Voice AI","Dinesh S","ddineshsettu@gmail.com","Dinesh S","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
+"383","​EchoRail Solutions","1","Voice AI","kavinya","kavinya2010@gmail.com","kavinya","N/A","N/A","N/A","N/A","N/A","N/A","N/A","N/A","0.0","1"
