@@ -98,7 +98,7 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
     }
   }
 
-  // Called when Admin triggers specific step (e.g. Step 1 -> #3, Step 2 -> #2, Step 3 -> #1)
+  // Called when Admin triggers a finale step (1 = 5th … 5 = Grand Champion)
   async broadcastRevealStep(step: number, round: number = 3) {
     this.isRevealing = true
     this.revealRound = round || 3
@@ -116,11 +116,10 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
   // Called when Admin stops / closes reveal mode
   async broadcastStopReveal() {
     this.isRevealing = false
-    this.revealStep = 0
     try {
       if (!this.server) return
-      this.server.to('leaderboard').emit('leaderboard:reveal_stop', { isRevealing: false })
-      this.server.to('leaderboard').emit('leaderboard:reveal_state', { isRevealing: false, round: this.revealRound, step: 0 })
+      this.server.to('leaderboard').emit('leaderboard:reveal_stop', { isRevealing: false, round: this.revealRound, step: this.revealStep })
+      this.server.to('leaderboard').emit('leaderboard:reveal_state', { isRevealing: false, round: this.revealRound, step: this.revealStep })
       console.log('[WS] Stop reveal broadcast sent')
     } catch (err) {
       console.error('[WS] Stop reveal broadcast failed:', err)

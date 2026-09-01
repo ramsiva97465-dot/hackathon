@@ -152,25 +152,26 @@ export function LeaderboardAdminPage() {
             onClick={() => setActiveRound(3)}
             className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${activeRound === 3 ? 'bg-[#222] text-[#E83C00] shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
           >
-            Winners (Top 3)
+            Winners (Top 5)
           </button>
         </div>
 
-        {/* Top 3 podium */}
-        <div className="grid grid-cols-3 gap-4">
-          {display.slice(0, 3).map((_, i) => {
-            const podiumOrder = [1, 0, 2]
+        {/* Top 5 podium */}
+        <div className="grid grid-cols-5 gap-3">
+          {display.slice(0, 5).map((_, i) => {
+            const podiumOrder = [3, 1, 0, 2, 4]
             if (!display[podiumOrder[i]]) return <div key={i} />
             const entry = display[podiumOrder[i]]
+            const place = podiumOrder[i]
             return (
               <motion.div
                 key={entry.teamId}
-                initial={{ opacity: 0, y: i === 0 ? 20 : 40 }}
+                initial={{ opacity: 0, y: place === 0 ? 20 : 40 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 * i, duration: 0.5 }}
-                className={`bg-[#0A0A0A] border border-white/10 p-5 rounded-2xl text-center shadow-2xl ${
-                  podiumOrder[i] === 0 ? 'border-[rgba(245,158,11,0.4)] shadow-[0_0_30px_rgba(245,158,11,0.15)]' :
-                  podiumOrder[i] === 1 ? 'mt-4' : 'mt-8'
+                transition={{ delay: 0.08 * i, duration: 0.5 }}
+                className={`bg-[#0A0A0A] border border-white/10 p-4 rounded-2xl text-center shadow-2xl ${
+                  place === 0 ? 'border-[rgba(245,158,11,0.4)] shadow-[0_0_30px_rgba(245,158,11,0.15)]' :
+                  place === 1 ? 'mt-3' : 'mt-6'
                 }`}
               >
                 <RankBadge rank={entry.rank} />

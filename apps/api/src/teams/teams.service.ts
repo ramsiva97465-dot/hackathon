@@ -734,14 +734,14 @@ export class TeamsService {
 
       const sortedTeams = [...scoredTeams].sort((a, b) => b.overallScore - a.overallScore)
 
-      const top3 = sortedTeams.slice(0, 3)
-      if (top3.length === 0) {
+      const top5 = sortedTeams.slice(0, 5)
+      if (top5.length === 0) {
         throw new Error('No teams found in Round 2.')
       }
 
-      const top3Ids = top3.map(t => t.id)
+      const top5Ids = top5.map(t => t.id)
 
-      await Promise.all(top3.map((t) =>
+      await Promise.all(top5.map((t) =>
         this.prisma.team.update({
           where: { id: t.id },
           data: { round2Score: t.overallScore, round2JudgeCount: t.judgeCount },
@@ -749,8 +749,18 @@ export class TeamsService {
       ))
 
       await this.prisma.team.updateMany({
-        where: { id: { in: top3Ids } },
+        where: { id: { in: top5Ids } },
         data: { round: 3, adminScore: null }
+      })
+
+      await this.prisma.team.updateMany({
+        where: {
+          hackathonId: hackathon.id,
+          status: 'COMPETING',
+          round: { in: [2, 3] },
+          id: { notIn: top5Ids },
+        },
+        data: { round: 2 },
       })
 
       await this.prisma.judgeAssignment.deleteMany({})
@@ -759,7 +769,7 @@ export class TeamsService {
         console.error('[WS] Promote R2→R3 broadcast failed:', err)
       )
 
-      return { success: true, promotedCount: top3.length }
+      return { success: true, promotedCount: top5.length }
     }
 
 

@@ -14,6 +14,15 @@ import type { LeaderboardEntry } from '@hackathon/shared'
 import api from '@/lib/api'
 
 const ROUND2_CUTOFF = 20 // Top 20 advance to round 2
+const FINALE_CUTOFF = 5 // Top 5 Grand Finale winners
+
+function finalePlace(rank: number) {
+  if (rank === 1) return { title: 'Grand Champion', decrypt: 'Unsealing Grand Champion (1st Place)...', speak: 'Grand Champion, ', locked: '1st Place Champion' }
+  if (rank === 2) return { title: '1st Runner Up', decrypt: 'Decrypting 1st Runner Up (2nd Place)...', speak: '1st Runner Up, ', locked: '1st Runner Up' }
+  if (rank === 3) return { title: '2nd Runner Up', decrypt: 'Decrypting 2nd Runner Up (3rd Place)...', speak: '2nd Runner Up, ', locked: '2nd Runner Up' }
+  if (rank === 4) return { title: '4th Place', decrypt: 'Decrypting 4th Place...', speak: '4th Place, ', locked: '4th Place' }
+  return { title: '5th Place', decrypt: 'Decrypting 5th Place...', speak: '5th Place, ', locked: '5th Place' }
+}
 
 // ── Cinematic Confetti FX for Grand Finale ────────────────────────────────────
 function triggerFinaleConfetti(rank: number) {
@@ -33,6 +42,13 @@ function triggerFinaleConfetti(rank: number) {
         spread: 75,
         origin: { x: 0.2, y: 0.6 },
         colors: ['#94a3b8', '#cbd5e1', '#e2e8f0', '#38bdf8', '#ffffff']
+      })
+    } else if (rank === 4 || rank === 5) {
+      confetti({
+        particleCount: 55,
+        spread: 65,
+        origin: { y: 0.65 },
+        colors: ['#78716c', '#a8a29e', '#e7e5e4', '#ffffff']
       })
     } else if (rank === 1) {
       // 👑 GRAND CHAMPION DUAL CANNON & FIREWORKS SHOWER (3.5s celebration)
@@ -360,7 +376,7 @@ export function LeaderboardPage() {
 
   // ── Grand Reveal State ─────────────────────────────────────────────────────
   // For Round 2: revealedStep 0..20 (Rank 20 down to 1)
-  // For Round 3: revealedStep 0..3 (Rank 3 down to 1)
+  // For Round 3: revealedStep 0..5 (Rank 5 down to 1)
   const [revealRound, setRevealRound] = useState<number>(() => {
     const r = searchParams.get('round')
     return r ? Number(r) : 2
@@ -427,7 +443,8 @@ export function LeaderboardPage() {
         }
       }
     } else if (data && !data.isRevealing) {
-      stopGrandReveal()
+      if (typeof data.step === 'number') setRevealedStep(data.step)
+      stopGrandReveal(true)
     }
   })
 
@@ -479,8 +496,11 @@ export function LeaderboardPage() {
             setRevealedStep(res.data.step)
           }
         }
-      } else if (res.data && !res.data.isRevealing && isRevealing && !searchParams.get('reveal')) {
-        stopGrandReveal()
+      } else if (res.data && !res.data.isRevealing) {
+        if (typeof res.data.step === 'number') setRevealedStep(res.data.step)
+        if (isRevealing && !searchParams.get('reveal')) {
+          stopGrandReveal(true)
+        }
       }
     } catch (err) {
       // Ignore
@@ -606,24 +626,33 @@ export function LeaderboardPage() {
   const advancing = filtered.slice(0, ROUND2_CUTOFF)
   const notAdvancing = filtered.slice(ROUND2_CUTOFF)
 
-  // Official Top 3 for Grand Finale:
-  // If teams were promoted to Round 3 in database (team.round === 3), prioritize them; otherwise top 3 overall
+  // Official Top 5 for Grand Finale.
+  // If teams were promoted to Round 3, use those; otherwise fall back to overall ranking.
   const r3Teams = rawDisplay.filter(e => ((e as any).round || 1) === 3)
-  const top3 = ((r3Teams.length >= 3 ? r3Teams : rawDisplay).length > 0 ? (r3Teams.length >= 3 ? r3Teams : rawDisplay) : filtered)
+  const top5Source = r3Teams.length > 0 ? r3Teams : (filtered.length > 0 ? filtered : rawDisplay)
+  const top5 = top5Source
     .slice()
     .sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0))
-    .slice(0, 3)
+    .slice(0, FINALE_CUTOFF)
     .map((e, idx) => ({ ...e, rank: idx + 1 }))
 
   const restR2 = filtered.slice(3)
+  const r2Top3 = advancing.slice(0, 3)
   const podiumOrder = [
-    top3[1] || top3[0], // Rank 2 Silver (Left)
-    top3[0],            // Rank 1 Gold (Center)
-    top3[2] || top3[0], // Rank 3 Bronze (Right)
+    r2Top3[1] || r2Top3[0],
+    r2Top3[0],
+    r2Top3[2] || r2Top3[0],
+  ]
+  const finalePodiumOrder = [
+    top5[3],
+    top5[1],
+    top5[0],
+    top5[2],
+    top5[4],
   ]
 
   const isFinale = revealRound === 3
-  const maxSteps = isFinale ? 3 : Math.min(20, advancing.length || 20)
+  const maxSteps = isFinale ? FINALE_CUTOFF : Math.min(20, advancing.length || 20)
 
   // ── Grand Reveal Logic ─────────────────────────────────────────────────────
   const startGrandReveal = (round: number = 2) => {
@@ -635,9 +664,11 @@ export function LeaderboardPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const stopGrandReveal = () => {
+  const stopGrandReveal = (keepFinaleStep = false) => {
     setIsRevealing(false)
-    setRevealedStep(maxSteps)
+    if (!keepFinaleStep && revealRound !== 3) {
+      setRevealedStep(maxSteps)
+    }
     // Keep stage on the reveal round after exit (don't snap back to Round 1)
     if (revealRound >= 2) {
       setActiveRound(revealRound)
@@ -669,7 +700,7 @@ export function LeaderboardPage() {
     }
 
     const isFinaleStep = effectiveRound === 3
-    const currentRank = isFinaleStep ? (4 - targetStep) : (21 - targetStep)
+    const currentRank = isFinaleStep ? (FINALE_CUTOFF + 1 - targetStep) : (21 - targetStep)
 
     if (isFinaleStep) {
       setIsDecrypting(true)
@@ -689,8 +720,8 @@ export function LeaderboardPage() {
         }, speed)
       }
 
-      if (targetStep === 3) {
-        // 👑 STEP 3 GRAND CLIMAX: 10 ➔ 9 ➔ 8 ➔ 7 ➔ 6 ➔ 5 ➔ 4 ➔ 3 ➔ 2 ➔ 1 ➔ 👑 with VOCAL ANNOUNCER!
+      if (targetStep === FINALE_CUTOFF) {
+        // 👑 FINAL STEP GRAND CLIMAX: 10 ➔ 1 ➔ 👑 with VOCAL ANNOUNCER!
         setCountdownNum(10)
         speakCountdown('Ten')
         if (soundEnabled) playHeartbeatTick(1)
@@ -711,16 +742,16 @@ export function LeaderboardPage() {
           clearInterval(scrambleInterval)
           setIsDecrypting(false)
           setCountdownNum(null)
-          setRevealedStep(3)
+          setRevealedStep(FINALE_CUTOFF)
           if (soundEnabled) {
             playRevealChime(1)
           }
           triggerFinaleConfetti(1)
-          speakCountdown('Grand Champion, ' + (top3[0]?.teamName || 'Winner'))
+          speakCountdown('Grand Champion, ' + (top5[0]?.teamName || 'Winner'))
         }, 11300)
 
       } else {
-        // 🥉 🥈 STEPS 1 & 2: 5 ➔ 4 ➔ 3 ➔ 2 ➔ 1 with VOCAL ANNOUNCER!
+        // 🏅 STEPS 1–4: 5 ➔ 4 ➔ 3 ➔ 2 ➔ 1 with VOCAL ANNOUNCER!
         setCountdownNum(5)
         speakCountdown('Five')
         if (soundEnabled) playHeartbeatTick(1)
@@ -741,8 +772,9 @@ export function LeaderboardPage() {
             playRevealChime(currentRank)
           }
           triggerFinaleConfetti(currentRank)
-          const runnerUpName = currentRank === 2 ? top3[1]?.teamName : top3[2]?.teamName
-          speakCountdown((currentRank === 2 ? '1st Runner Up, ' : '2nd Runner Up, ') + (runnerUpName || ''))
+          const place = finalePlace(currentRank)
+          const winnerName = top5[currentRank - 1]?.teamName || ''
+          speakCountdown(place.speak + winnerName)
         }, 5700)
       }
 
@@ -782,7 +814,7 @@ export function LeaderboardPage() {
     if (!isRevealing) return
 
     if (isFinale) {
-      if (isDecrypting || revealedStep < 3) return
+      if (isDecrypting || revealedStep < FINALE_CUTOFF) return
       const timer = setTimeout(() => {
         rosterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       }, 7000)
@@ -860,11 +892,11 @@ export function LeaderboardPage() {
   }, [isRevealing, isPaused, isFinale, maxSteps, soundEnabled])
 
   // Current spotlight team during countdown
-  // For Round 2 (20 -> 1): Step 1 reveals rank 20 (advancing[19]), Step 20 reveals rank 1 (advancing[0])
-  // For Round 3 (3 -> 1): Step 1 reveals rank 3 (top3[2]), Step 2 reveals rank 2 (top3[1]), Step 3 reveals rank 1 (top3[0])
-  const currentSpotlightRank = isFinale ? (4 - revealedStep) : (21 - revealedStep)
+  // For Round 2 (20 -> 1): Step 1 reveals rank 20, Step 20 reveals rank 1
+  // For Round 3 (5 -> 1): Step 1 reveals rank 5, Step 5 reveals rank 1
+  const currentSpotlightRank = isFinale ? (FINALE_CUTOFF + 1 - revealedStep) : (21 - revealedStep)
   const currentSpotlightTeam = revealedStep > 0
-    ? (isFinale ? top3[3 - revealedStep] : advancing[20 - revealedStep])
+    ? (isFinale ? top5[FINALE_CUTOFF - revealedStep] : advancing[20 - revealedStep])
     : null
 
 
@@ -898,7 +930,7 @@ export function LeaderboardPage() {
           {/* Close button only visible when reveal mode is currently active */}
           {isRevealing && (
             <button
-              onClick={stopGrandReveal}
+              onClick={() => stopGrandReveal()}
               className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-all shadow-xs cursor-pointer"
               title="Exit Grand Reveal"
             >
@@ -927,7 +959,7 @@ export function LeaderboardPage() {
       </div>
 
       {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* 🎭 DRAMATIC GRAND REVEAL CEREMONY (Round 2: 20➔1 | Round 3: 3➔1)      */}
+      {/* 🎭 DRAMATIC GRAND REVEAL CEREMONY (Round 2: 20➔1 | Round 3: 5➔1)      */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {isRevealing ? (
         <div className="relative z-10 flex-1 flex flex-col items-center pt-8 pb-24 px-4 sm:px-6 max-w-6xl mx-auto w-full">
@@ -952,7 +984,7 @@ export function LeaderboardPage() {
               AI குரல் · VOICE FOR TAMIL NADU · 2026
             </h2>
             <h1 className="text-5xl sm:text-6xl font-black text-[#1A1A1A] tracking-tighter" style={{ textShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
-              {isFinale ? 'Top 3 Grand Finale Winners' : 'Top 20 Grand Reveal'}
+              {isFinale ? 'Top 5 Grand Finale Winners' : 'Top 20 Grand Reveal'}
             </h1>
           </motion.div>
 
@@ -979,7 +1011,11 @@ export function LeaderboardPage() {
                         ? '👑 Unsealing Grand Champion (1st Place)...'
                         : decryptingRank === 2
                         ? '🥈 Decrypting 1st Runner Up (2nd Place)...'
-                        : '🥉 Decrypting 2nd Runner Up (3rd Place)...'}
+                        : decryptingRank === 3
+                        ? '🥉 Decrypting 2nd Runner Up (3rd Place)...'
+                        : decryptingRank === 4
+                        ? 'Decrypting 4th Place...'
+                        : 'Decrypting 5th Place...'}
                     </span>
                   </div>
 
@@ -1051,7 +1087,7 @@ export function LeaderboardPage() {
                   </h3>
                   <p className={`max-w-lg mx-auto text-sm sm:text-base mb-6 font-medium ${isFinale ? 'text-slate-300' : 'text-slate-500'}`}>
                     {isFinale 
-                      ? 'The stage is set to unveil the 2nd Runner Up (#3), 1st Runner Up (#2), and crown the Grand Champion (#1) of Tamil Nadu!' 
+                      ? 'The stage is set to unveil 5th Place through 4th Place, 2nd Runner Up, 1st Runner Up, and crown the Grand Champion of Tamil Nadu!' 
                       : 'The ceremony will announce all 20 qualifying teams one by one, counting down from Rank #20 down to the #1 Leader!'}
                   </p>
                   <button
@@ -1059,7 +1095,7 @@ export function LeaderboardPage() {
                     className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-2xl font-black text-sm shadow-xl shadow-orange-950/40 cursor-pointer transition-all hover:scale-105"
                   >
                     <Play size={15} fill="white" />
-                    {isFinale ? '⚡ Begin Coronation Ceremony (#3 🥉)' : 'Start Announcement (#20)'}
+                    {isFinale ? '⚡ Begin Coronation Ceremony (#5)' : 'Start Announcement (#20)'}
                   </button>
                 </motion.div>
               ) : currentSpotlightTeam ? (
@@ -1105,6 +1141,16 @@ export function LeaderboardPage() {
                       <>
                         <Award size={14} className="text-amber-200 stroke-[2.5]" />
                         <span>{isFinale ? '🥉 2nd Runner Up · 3rd Place' : '3rd Place Finalist'}</span>
+                      </>
+                    ) : currentSpotlightRank === 4 && isFinale ? (
+                      <>
+                        <Medal size={14} className="text-slate-200 stroke-[2.5]" />
+                        <span>4th Place</span>
+                      </>
+                    ) : currentSpotlightRank === 5 && isFinale ? (
+                      <>
+                        <Medal size={14} className="text-stone-200 stroke-[2.5]" />
+                        <span>5th Place</span>
                       </>
                     ) : (
                       <>
@@ -1171,7 +1217,15 @@ export function LeaderboardPage() {
                       </button>
                     ) : (
                       <span className={isFinale ? 'text-amber-300 font-bold' : 'text-slate-700 font-bold'}>
-                        Next: {isFinale ? (currentSpotlightRank === 3 ? '1st Runner Up (#2 🥈)' : 'Grand Champion (#1 👑)') : `Rank #${currentSpotlightRank - 1}`}
+                        Next: {isFinale
+                          ? (currentSpotlightRank <= 1 ? 'Ceremony complete'
+                            : currentSpotlightRank === 2 ? 'Grand Champion (#1 👑)'
+                            : currentSpotlightRank === 3 ? '1st Runner Up (#2 🥈)'
+                            : currentSpotlightRank === 4 ? '2nd Runner Up (#3 🥉)'
+                            : currentSpotlightRank === 5 ? '4th Place'
+                            : currentSpotlightRank === 6 ? '5th Place'
+                            : `Rank #${currentSpotlightRank - 1}`)
+                          : `Rank #${currentSpotlightRank - 1}`}
                       </span>
                     )}
                   </div>
@@ -1189,26 +1243,29 @@ export function LeaderboardPage() {
               <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/5 text-slate-700 mb-6 shadow-sm">
                 <Trophy size={14} className="text-amber-500" />
                 <span className="text-xs font-bold uppercase tracking-widest">
-                  Official Stage 3 Podium · Top 3 Winners
+                  Official Stage 3 Podium · Top 5 Grand Finale Winners
                 </span>
               </div>
 
-              <div className="flex items-end justify-center gap-4 sm:gap-8 w-full max-w-4xl">
-                {podiumOrder.map((entry, idx) => {
+              <div className="flex items-end justify-center gap-2 sm:gap-3 w-full max-w-6xl">
+                {finalePodiumOrder.map((entry, idx) => {
                   if (!entry) return null
                   const isFirst = entry.rank === 1
-                  const heights = { 1: 'h-[400px] sm:h-[450px]', 2: 'h-[320px] sm:h-[360px]', 3: 'h-[280px] sm:h-[320px]' }
-                  const cardStyles = {
+                  const heights: Record<number, string> = { 1: 'h-[400px] sm:h-[430px]', 2: 'h-[330px] sm:h-[360px]', 3: 'h-[290px] sm:h-[320px]', 4: 'h-[240px] sm:h-[260px]', 5: 'h-[220px] sm:h-[240px]' }
+                  const cardStyles: Record<number, { bg: string; border: string; badge: string; shadow: string }> = {
                     1: { bg: '#F4ECE1', border: '#E83C00', badge: 'bg-[#E83C00] text-white', shadow: 'shadow-2xl shadow-orange-900/30 ring-4 ring-amber-400/60' },
                     2: { bg: '#F4ECE1', border: '#475569', badge: 'bg-slate-700 text-white', shadow: 'shadow-xl shadow-black/10 ring-2 ring-slate-400/40' },
                     3: { bg: '#F4ECE1', border: '#B45309', badge: 'bg-amber-800 text-white', shadow: 'shadow-xl shadow-black/10 ring-2 ring-amber-600/40' },
+                    4: { bg: '#F4ECE1', border: '#64748B', badge: 'bg-slate-600 text-white', shadow: 'shadow-lg shadow-black/10 ring-1 ring-slate-400/30' },
+                    5: { bg: '#F4ECE1', border: '#78716C', badge: 'bg-stone-600 text-white', shadow: 'shadow-lg shadow-black/10 ring-1 ring-stone-400/30' },
                   }
-                  const style = cardStyles[entry.rank as keyof typeof cardStyles]
-                  // Unlocked step condition: Step 1 reveals #3, Step 2 reveals #2, Step 3 reveals #1
-                  const isUnlocked = revealedStep >= (4 - entry.rank)
+                  const style = cardStyles[entry.rank]
+                  const place = finalePlace(entry.rank)
+                  // Step 1 reveals #5, Step 5 reveals #1
+                  const isUnlocked = revealedStep >= (FINALE_CUTOFF + 1 - entry.rank)
 
                   if (!isUnlocked) {
-                    const isNextToUnlock = revealedStep === (3 - entry.rank)
+                    const isNextToUnlock = revealedStep === (FINALE_CUTOFF - entry.rank)
                     const isCurrentlyDecrypting = isDecrypting && entry.rank === decryptingRank
 
                     return (
@@ -1224,7 +1281,7 @@ export function LeaderboardPage() {
                           repeat: isCurrentlyDecrypting || (isNextToUnlock && isFirst) ? Infinity : 0, 
                           duration: isCurrentlyDecrypting ? 0.7 : 1.8 
                         }}
-                        className={`relative flex flex-col items-center justify-between p-6 sm:p-8 rounded-[2.5rem] w-1/3 ${heights[entry.rank as keyof typeof heights]} shadow-2xl overflow-hidden border-2 transition-all`}
+                        className={`relative flex flex-col items-center justify-between p-4 sm:p-6 rounded-[2rem] flex-1 min-w-0 max-w-[210px] ${heights[entry.rank]} shadow-2xl overflow-hidden border-2 transition-all`}
                         style={{
                           background: isCurrentlyDecrypting
                             ? 'linear-gradient(180deg, #3d1b0a 0%, #170a04 100%)'
@@ -1264,11 +1321,9 @@ export function LeaderboardPage() {
                           <span>
                             {isCurrentlyDecrypting
                               ? `⚡ UNSEALING #${entry.rank} ⚡`
-                              : isFirst 
-                              ? '👑 1st Place Champion' 
-                              : entry.rank === 2 
-                              ? '🥈 1st Runner Up' 
-                              : '🥉 2nd Runner Up'}
+                              : isFirst
+                              ? '👑 1st Place Champion'
+                              : place.locked}
                           </span>
                         </div>
 
@@ -1285,7 +1340,7 @@ export function LeaderboardPage() {
                             <div className="absolute inset-0 rounded-3xl border border-amber-500/40 animate-ping opacity-40" />
                           </div>
                           <span className="text-xs sm:text-sm font-black text-white/90 tracking-wider">
-                            {isFirst ? '👑 GRAND CHAMPION' : entry.rank === 2 ? '🥈 1ST RUNNER UP' : '🥉 2ND RUNNER UP'}
+                            {isFirst ? '👑 GRAND CHAMPION' : place.title.toUpperCase()}
                           </span>
                           <span className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${isCurrentlyDecrypting ? 'text-amber-300 animate-bounce' : 'text-amber-400 animate-pulse'}`}>
                             {isCurrentlyDecrypting ? `⚡ DECIPHERING (${countdownNum}s) ⚡` : isNextToUnlock ? '⚡ Next To Crown ⚡' : '🔒 Awaiting Reveal...'}
@@ -1310,31 +1365,26 @@ export function LeaderboardPage() {
                       initial={{ opacity: 0, scale: 0.8, y: 40 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       transition={{ duration: 0.6, type: 'spring', bounce: 0.4 }}
-                      className={`relative flex flex-col items-center p-6 sm:p-8 rounded-[2.5rem] w-1/3 ${heights[entry.rank as keyof typeof heights]} ${style.shadow} transition-all`}
+                      className={`relative flex flex-col items-center p-4 sm:p-6 rounded-[2rem] flex-1 min-w-0 max-w-[210px] ${heights[entry.rank]} ${style?.shadow ?? ''} transition-all`}
                       style={{
-                        backgroundColor: style.bg,
-                        border: isFirst ? '3px solid #E83C00' : `2px solid ${style.border}`,
+                        backgroundColor: style?.bg,
+                        border: isFirst ? '3px solid #E83C00' : `2px solid ${style?.border ?? '#64748B'}`,
                         boxShadow: isFirst
                           ? '0 25px 60px -12px rgba(232, 60, 0, 0.4), 0 0 35px rgba(245, 158, 11, 0.35)'
-                          : style.shadow
+                          : undefined
                       }}
                     >
                       {/* Top Badge */}
-                      <div className={`absolute -top-6 px-4 sm:px-6 py-2 sm:py-2.5 rounded-2xl flex items-center gap-1.5 justify-center font-black text-sm sm:text-base shadow-xl ${style.badge}`}>
+                      <div className={`absolute -top-6 px-4 sm:px-6 py-2 sm:py-2.5 rounded-2xl flex items-center gap-1.5 justify-center font-black text-sm sm:text-base shadow-xl ${style?.badge ?? 'bg-slate-600 text-white'}`}>
                         {isFirst ? (
                           <>
                             <Crown size={18} className="text-amber-300 fill-amber-300 stroke-[2.5] animate-bounce" />
                             <span>👑 Grand Champion</span>
                           </>
-                        ) : entry.rank === 2 ? (
-                          <>
-                            <Medal size={18} className="text-slate-200 stroke-[2.5]" />
-                            <span>🥈 1st Runner Up</span>
-                          </>
                         ) : (
                           <>
-                            <Award size={18} className="text-amber-200 stroke-[2.5]" />
-                            <span>🥉 2nd Runner Up</span>
+                            <Medal size={16} className="text-slate-200 stroke-[2.5]" />
+                            <span>{place.title}</span>
                           </>
                         )}
                       </div>
@@ -1554,14 +1604,14 @@ export function LeaderboardPage() {
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/5 text-slate-700 mb-4 shadow-xl shadow-black/5">
                 <Trophy size={14} className="text-amber-500" />
                 <span className="text-xs font-bold uppercase tracking-widest">
-                  {activeRound === 3 ? 'Stage 3: Winners Podium' : activeRound === 2 ? 'Stage 2: Top 20 Shortlist' : 'Stage 1: Live Judging'}
+                  {activeRound === 3 ? 'Stage 3: Top 5 Grand Finale Podium' : activeRound === 2 ? 'Stage 2: Top 20 Shortlist' : 'Stage 1: Live Judging'}
                 </span>
               </div>
               <h2 className="text-[#E83C00] font-bold tracking-[0.2em] uppercase text-sm mb-2">
                 AI குரல் · VOICE FOR TAMIL NADU · 2026
               </h2>
               <h1 className="text-5xl sm:text-6xl font-black text-[#1A1A1A] tracking-tighter" style={{ textShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
-                {activeRound === 3 ? 'Final Winners' : activeRound === 2 ? 'Round 2 · Top 20' : 'Live Evaluation Status'}
+                {activeRound === 3 ? 'Top 5 Grand Finale Winners' : activeRound === 2 ? 'Round 2 · Top 20' : 'Live Evaluation Status'}
               </h1>
               <p className="text-slate-500 mt-2 text-sm font-medium">
                 {activeRound === 3
@@ -1618,10 +1668,10 @@ export function LeaderboardPage() {
                       initial={{ opacity: 0, y: 40 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.15, duration: 0.6, type: 'spring', bounce: 0.4 }}
-                      className={`relative flex flex-col items-center p-8 rounded-[2rem] w-1/3 ${heights[entry.rank as keyof typeof heights]} ${style.shadow}`}
-                      style={{ backgroundColor: style.bg, border: `2px solid ${style.border}` }}
+                      className={`relative flex flex-col items-center p-8 rounded-[2rem] w-1/3 ${heights[entry.rank as keyof typeof heights] ?? 'h-[220px]'} ${style?.shadow ?? ''}`}
+                      style={{ backgroundColor: style?.bg, border: `2px solid ${style?.border ?? 'transparent'}` }}
                     >
-                      <div className={`absolute -top-6 px-5 py-2.5 rounded-2xl flex items-center justify-center font-black text-xl shadow-lg ${style.badge}`}>
+                      <div className={`absolute -top-6 px-5 py-2.5 rounded-2xl flex items-center justify-center font-black text-xl shadow-lg ${style?.badge ?? 'bg-[#EAE4D8] text-slate-700'}`}>
                         {isFirst ? <span className="flex items-center gap-2"><Trophy size={20} /> 1st</span> : `#${entry.rank}`}
                       </div>
                       <div className="mt-8 flex flex-col items-center text-center flex-1 w-full">
@@ -1663,59 +1713,80 @@ export function LeaderboardPage() {
             </>
           )}
 
-          {/* ROUND 3 — Winners podium only */}
+          {/* ROUND 3 — Winners podium only (locked until admin reveal step) */}
           {activeRound === 3 && (
-            <div className="flex items-end justify-center gap-8 w-full max-w-4xl mt-4">
-              {podiumOrder.map((entry, idx) => {
+            <div className="flex items-end justify-center gap-3 w-full max-w-6xl mt-4">
+              {finalePodiumOrder.map((entry, idx) => {
                 if (!entry) return null
                 const isFirst = entry.rank === 1
-                const heights = { 1: 'h-[380px]', 2: 'h-[320px]', 3: 'h-[280px]' }
-                const cardStyles = {
+                const heights: Record<number, string> = { 1: 'h-[380px]', 2: 'h-[320px]', 3: 'h-[280px]', 4: 'h-[240px]', 5: 'h-[220px]' }
+                const cardStyles: Record<number, { bg: string; border: string; badge: string; shadow: string }> = {
                   1: { bg: '#F4ECE1', border: '#E83C00', badge: 'bg-[#E83C00] text-white', shadow: 'shadow-2xl shadow-orange-900/20' },
                   2: { bg: '#F4ECE1', border: 'transparent', badge: 'bg-slate-200 text-slate-700', shadow: 'shadow-xl shadow-black/5' },
                   3: { bg: '#F4ECE1', border: 'transparent', badge: 'bg-amber-100 text-amber-800', shadow: 'shadow-xl shadow-black/5' },
+                  4: { bg: '#F4ECE1', border: 'transparent', badge: 'bg-slate-100 text-slate-600', shadow: 'shadow-lg shadow-black/5' },
+                  5: { bg: '#F4ECE1', border: 'transparent', badge: 'bg-stone-100 text-stone-600', shadow: 'shadow-lg shadow-black/5' },
                 }
-                const style = cardStyles[entry.rank as keyof typeof cardStyles]
-                const medals = ['🥇', '🥈', '🥉']
+                const style = cardStyles[entry.rank]
+                const place = finalePlace(entry.rank)
+                const isUnlocked = revealedStep >= (FINALE_CUTOFF + 1 - entry.rank)
+                if (!isUnlocked) {
+                  return (
+                    <div
+                      key={`locked-${entry.rank}`}
+                      className={`relative flex flex-col items-center justify-between p-6 rounded-[2rem] flex-1 min-w-0 max-w-[210px] ${heights[entry.rank]} shadow-xl border-2 overflow-hidden`}
+                      style={{
+                        background: isFirst ? 'linear-gradient(180deg, #2A1408 0%, #120904 100%)' : 'linear-gradient(180deg, #1F1B16 0%, #0F0D0B 100%)',
+                        borderColor: isFirst ? 'rgba(232, 60, 0, 0.5)' : 'rgba(148, 163, 184, 0.25)',
+                      }}
+                    >
+                      <div className="px-4 py-2 rounded-2xl bg-amber-950 text-amber-300 border border-amber-500/40 text-xs font-black flex items-center gap-1.5">
+                        <Lock size={12} className="animate-pulse" />
+                        {place.locked}
+                      </div>
+                      <div className="my-auto flex flex-col items-center">
+                        {isFirst ? <Crown size={28} className="text-amber-400 animate-bounce mb-2" /> : <Lock size={24} className="text-amber-400/80 mb-2" />}
+                        <span className="text-xs font-black text-white/90 tracking-wider">{place.title.toUpperCase()}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest mt-1 text-amber-400">🔒 Awaiting admin reveal</span>
+                      </div>
+                      <div className="w-full pt-4 border-t border-white/10 text-center">
+                        <span className="text-2xl font-mono font-black text-white/40 tracking-widest">??.?</span>
+                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-0.5">Final Score</p>
+                      </div>
+                    </div>
+                  )
+                }
                 return (
                   <motion.div
                     key={entry.teamId}
                     layout
                     initial={{ opacity: 0, y: 60 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.2, duration: 0.7, type: 'spring', bounce: 0.35 }}
-                    className={`relative flex flex-col items-center p-10 rounded-[2.5rem] w-1/3 ${heights[entry.rank as keyof typeof heights]} ${style.shadow}`}
-                    style={{ backgroundColor: style.bg, border: `2px solid ${style.border}` }}
+                    transition={{ delay: idx * 0.12, duration: 0.7, type: 'spring', bounce: 0.35 }}
+                    className={`relative flex flex-col items-center p-6 rounded-[2rem] flex-1 min-w-0 max-w-[210px] ${heights[entry.rank]} ${style?.shadow ?? ''}`}
+                    style={{ backgroundColor: style?.bg, border: `2px solid ${style?.border}` }}
                   >
-                    <div className={`absolute -top-7 px-6 py-3 rounded-2xl flex items-center gap-2 justify-center font-black text-xl shadow-xl ${style.badge}`}>
+                    <div className={`absolute -top-6 px-4 py-2 rounded-2xl flex items-center gap-1.5 justify-center font-black text-sm shadow-xl ${style?.badge}`}>
                       {isFirst ? (
                         <>
-                          <Crown size={22} className="text-amber-300 fill-amber-300/30 stroke-[2.5]" />
-                          <span>1st Place</span>
-                        </>
-                      ) : entry.rank === 2 ? (
-                        <>
-                          <Medal size={22} className="text-slate-200 stroke-[2.5]" />
-                          <span>2nd Place</span>
+                          <Crown size={18} className="text-amber-300 fill-amber-300/30 stroke-[2.5]" />
+                          <span>Grand Champion</span>
                         </>
                       ) : (
-                        <>
-                          <Award size={22} className="text-amber-200 stroke-[2.5]" />
-                          <span>3rd Place</span>
-                        </>
+                        <span>{place.title}</span>
                       )}
                     </div>
-                    <div className="mt-10 flex flex-col items-center text-center flex-1 w-full">
-                      <Avatar name={entry.teamName} size="lg" className={`mb-5 shadow-lg ring-4 ${isFirst ? 'ring-orange-200' : 'ring-white/60'}`} />
-                      <h3 className="text-3xl font-black text-[#1A1A1A] mb-1 truncate w-full">{entry.teamName}</h3>
-                      <p className="text-slate-500 font-medium text-sm truncate w-full">{entry.college}</p>
+                    <div className="mt-8 flex flex-col items-center text-center flex-1 w-full">
+                      <Avatar name={entry.teamName} size="lg" className={`mb-4 shadow-lg ring-4 ${isFirst ? 'ring-orange-200' : 'ring-white/60'}`} />
+                      <h3 className="text-xl font-black text-[#1A1A1A] mb-1 truncate w-full">{entry.teamName}</h3>
+                      <p className="text-slate-500 font-medium text-xs truncate w-full">{entry.college}</p>
                     </div>
-                    <div className="w-full pt-6 mt-auto border-t border-black/5 text-center">
+                    <div className="w-full pt-4 mt-auto border-t border-black/5 text-center">
                       <motion.div key={entry.totalScore} initial={{ scale: 1.2 }} animate={{ scale: 1 }}
-                        className="text-5xl font-black text-[#1A1A1A]">
+                        className="text-3xl font-black text-[#1A1A1A]">
                         {entry.totalScore.toFixed(1)}
                       </motion.div>
-                      <p className="text-slate-400 text-xs mt-1 font-medium">Final Score</p>
+                      <p className="text-slate-400 text-[10px] mt-1 font-medium">Final Score</p>
                     </div>
                   </motion.div>
                 )
