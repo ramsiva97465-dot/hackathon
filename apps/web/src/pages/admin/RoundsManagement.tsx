@@ -178,7 +178,7 @@ export function RoundsManagement() {
       setIsStageRevealing(false)
       const res = await api.teams.resetRounds()
       if (res.data?.success) {
-        toast.success('All teams have been reset to Round 1!')
+        toast.success(res.data.message || 'Reset complete: teams back to Round 1, all judge assignments cleared.')
         setActiveTab(1)
         fetchLeaderboard()
       }

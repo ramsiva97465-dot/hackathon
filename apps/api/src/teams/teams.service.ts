@@ -727,20 +727,17 @@ export class TeamsService {
     const hackathon = await this.prisma.hackathon.findFirst()
     if (!hackathon) throw new Error('No hackathon found')
 
+    // Wipe ALL judging state (not filtered by hackathonId — orphan rows can linger)
     await this.prisma.score.deleteMany({})
     await this.prisma.scoreSheet.deleteMany({})
-    await this.prisma.judgeAssignment.deleteMany({
-      where: { hackathonId: hackathon.id }
-    })
-    await this.prisma.leaderboard.deleteMany({
-      where: { hackathonId: hackathon.id }
-    })
+    await this.prisma.judgeAssignment.deleteMany({})
+    await this.prisma.leaderboard.deleteMany({})
     await this.prisma.team.updateMany({
       where: { hackathonId: hackathon.id },
-      data: { round: 1, adminScore: null }
+      data: { round: 1, adminScore: null },
     })
 
-    return { success: true }
+    return { success: true, message: 'Reset complete: scores, score sheets, and judge assignments cleared. All teams back to Round 1.' }
   }
 
   async removeTeam(teamId: string) {
