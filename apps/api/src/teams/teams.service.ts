@@ -99,6 +99,7 @@ export class TeamsService {
         github: m.github
       })),
       judgesAssigned: t.assignments.length,
+      assignedJudgeIds: t.assignments.map(a => a.judgeId),
       totalJudges: 1, // 1 Judge per Team requirement
       avgScore: t.leaderboard[0]?.overallScore || null,
       rank: t.leaderboard[0]?.rank || null,
@@ -123,6 +124,20 @@ export class TeamsService {
   async assignJudge(teamId: string, judgeId: string) {
     const team = await this.prisma.team.findUnique({ where: { id: teamId } })
     if (!team) throw new Error('Team not found')
+
+    const judge = await this.prisma.judge.findUnique({ where: { id: judgeId } })
+    if (!judge) return { success: false, message: 'Judge not found.' }
+
+    const existingAssignment = await this.prisma.judgeAssignment.findFirst({
+      where: { teamId, judgeId },
+    })
+    if (existingAssignment) {
+      return {
+        success: true,
+        data: existingAssignment,
+        message: 'This judge is already assigned to this team.',
+      }
+    }
 
     const assignment = await this.prisma.judgeAssignment.create({
       data: {

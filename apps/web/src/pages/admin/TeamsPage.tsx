@@ -168,6 +168,7 @@ type Team = {
   round?: number
   members: { name: string; email?: string; phone?: string; role?: string; linkedin?: string; instagram?: string; github?: string; followedInstagram?: boolean; followedLinkedin?: boolean }[]
   judgesAssigned: number; totalJudges: number
+  assignedJudgeIds?: string[]
   avgScore: number | null; rank: number | null
   status: string; tableNumber: string | null
   projectTitle?: string | null
@@ -575,11 +576,18 @@ export function TeamsPage() {
     if (!assignTarget) return
     try {
       setAssigning(true)
-      await api.teams.assignJudge(assignTarget.id, judgeId, `round${assignTarget.round || 1}`)
-      toast.success(`Judge assigned for Round ${assignTarget.round || 1}`)
+      const res = await api.teams.assignJudge(assignTarget.id, judgeId, `round${assignTarget.round || 1}`)
+      if (res.data?.success === false) {
+        toast.error(res.data?.message || 'Failed to assign judge.')
+        return
+      }
+      toast.success(res.data?.message || `Judge assigned for Round ${assignTarget.round || 1}`)
       await fetchTeams()
       setAssignTarget(null)
-    } catch (err) { console.error('Failed to assign judge', err) }
+    } catch (err: any) {
+      console.error('Failed to assign judge', err)
+      toast.error(err?.response?.data?.message || 'Failed to assign judge.')
+    }
     finally { setAssigning(false) }
   }
 
@@ -1631,7 +1639,9 @@ export function TeamsPage() {
                     <Award size={28} className="mx-auto mb-3 text-slate-200" />
                     <p className="text-sm font-semibold text-slate-400">No judges available</p>
                   </div>
-                ) : judges.map(judge => (
+                ) : judges.map(judge => {
+                  const alreadyAssigned = (assignTarget.assignedJudgeIds || []).includes(judge.id)
+                  return (
                   <div
                     key={judge.id}
                     className="flex items-center justify-between p-3.5 rounded-xl border transition-all"
@@ -1650,16 +1660,19 @@ export function TeamsPage() {
                     </div>
                     <button
                       onClick={() => handleAssignJudge(judge.id)}
-                      disabled={assigning}
-                      className="text-[11px] font-bold px-3.5 py-1.5 rounded-lg transition-all disabled:opacity-50"
-                      style={{ color: '#E83C00', background: 'rgba(232,60,0,0.07)', border: '1px solid rgba(232,60,0,0.18)' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(232,60,0,0.14)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'rgba(232,60,0,0.07)')}
+                      disabled={assigning || alreadyAssigned}
+                      className="text-[11px] font-bold px-3.5 py-1.5 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={alreadyAssigned
+                        ? { color: '#16A34A', background: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.22)' }
+                        : { color: '#E83C00', background: 'rgba(232,60,0,0.07)', border: '1px solid rgba(232,60,0,0.18)' }}
+                      onMouseEnter={e => { if (!alreadyAssigned) e.currentTarget.style.background = 'rgba(232,60,0,0.14)' }}
+                      onMouseLeave={e => { if (!alreadyAssigned) e.currentTarget.style.background = 'rgba(232,60,0,0.07)' }}
                     >
-                      {assigning ? '…' : 'Assign'}
+                      {alreadyAssigned ? 'Assigned' : assigning ? '…' : 'Assign'}
                     </button>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </motion.div>
           </motion.div>
