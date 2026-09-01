@@ -1251,7 +1251,8 @@ export function LeaderboardPage() {
                 {finalePodiumOrder.map((entry, idx) => {
                   if (!entry) return null
                   const isFirst = entry.rank === 1
-                  const heights: Record<number, string> = { 1: 'h-[400px] sm:h-[430px]', 2: 'h-[330px] sm:h-[360px]', 3: 'h-[290px] sm:h-[320px]', 4: 'h-[240px] sm:h-[260px]', 5: 'h-[220px] sm:h-[240px]' }
+                  const heights: Record<number, string> = { 1: 'min-h-[400px] sm:min-h-[430px]', 2: 'min-h-[330px] sm:min-h-[360px]', 3: 'min-h-[290px] sm:min-h-[320px]', 4: 'min-h-[240px] sm:min-h-[260px]', 5: 'min-h-[220px] sm:min-h-[240px]' }
+                  const compact = entry.rank >= 4
                   const cardStyles: Record<number, { bg: string; border: string; badge: string; shadow: string }> = {
                     1: { bg: '#F4ECE1', border: '#E83C00', badge: 'bg-[#E83C00] text-white', shadow: 'shadow-2xl shadow-orange-900/30 ring-4 ring-amber-400/60' },
                     2: { bg: '#F4ECE1', border: '#475569', badge: 'bg-slate-700 text-white', shadow: 'shadow-xl shadow-black/10 ring-2 ring-slate-400/40' },
@@ -1390,18 +1391,18 @@ export function LeaderboardPage() {
                       </div>
 
                       {/* Avatar & Team Info */}
-                      <div className="mt-7 sm:mt-9 flex flex-col items-center text-center flex-1 w-full min-w-0">
+                      <div className={`${compact ? 'mt-6 sm:mt-7' : 'mt-7 sm:mt-9'} flex flex-col items-center text-center flex-1 w-full min-w-0`}>
                         <div className="relative">
-                          <Avatar name={entry.teamName} size="lg" className={`mb-3 shadow-lg ring-4 ${isFirst ? 'ring-[#E83C00] shadow-orange-500/40' : entry.rank === 2 ? 'ring-slate-400 shadow-slate-500/20' : 'ring-amber-600 shadow-amber-600/20'}`} />
+                          <Avatar name={entry.teamName} size={compact ? 'md' : 'lg'} className={`${compact ? 'mb-2' : 'mb-3'} shadow-lg ring-4 ${isFirst ? 'ring-[#E83C00] shadow-orange-500/40' : entry.rank === 2 ? 'ring-slate-400 shadow-slate-500/20' : 'ring-amber-600 shadow-amber-600/20'}`} />
                           {isFirst && (
                             <div className="absolute -top-3 -right-2 bg-amber-400 text-slate-900 rounded-full p-1 shadow-md animate-bounce">
                               <Crown size={14} className="fill-slate-900" />
                             </div>
                           )}
                         </div>
-                        <h3 className="text-lg sm:text-2xl font-black text-[#1A1A1A] mb-1 truncate w-full">{entry.teamName}</h3>
-                        <p className="text-slate-500 font-medium text-xs sm:text-sm truncate w-full">{entry.college}</p>
-                        <div className="mt-2">
+                        <h3 className={`${compact ? 'text-sm sm:text-base' : 'text-lg sm:text-2xl'} font-black text-[#1A1A1A] mb-1 truncate w-full`}>{entry.teamName}</h3>
+                        <p className={`text-slate-500 font-medium ${compact ? 'text-[11px]' : 'text-xs sm:text-sm'} truncate w-full`}>{entry.college}</p>
+                        <div className={compact ? 'mt-1.5' : 'mt-2'}>
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-white text-slate-800 border border-black/10 shadow-xs">
                             {getTrackConfig(entry.track).label}
                           </span>
@@ -1409,9 +1410,9 @@ export function LeaderboardPage() {
                       </div>
 
                       {/* Final Score */}
-                      <div className="w-full pt-4 mt-auto border-t border-black/10 text-center">
+                      <div className={`w-full ${compact ? 'pt-3' : 'pt-4'} mt-auto border-t border-black/10 text-center`}>
                         <motion.div key={entry.totalScore} initial={{ scale: 1.25 }} animate={{ scale: 1 }}
-                          className={`text-3xl sm:text-4xl font-black font-mono ${isFirst ? 'text-[#E83C00]' : 'text-[#1A1A1A]'}`}>
+                          className={`${compact ? 'text-2xl sm:text-3xl' : 'text-3xl sm:text-4xl'} font-black font-mono ${isFirst ? 'text-[#E83C00]' : 'text-[#1A1A1A]'}`}>
                           {entry.totalScore.toFixed(1)}
                         </motion.div>
                         <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mt-0.5">Final Score</p>
@@ -1719,7 +1720,8 @@ export function LeaderboardPage() {
               {finalePodiumOrder.map((entry, idx) => {
                 if (!entry) return null
                 const isFirst = entry.rank === 1
-                const heights: Record<number, string> = { 1: 'h-[380px]', 2: 'h-[320px]', 3: 'h-[280px]', 4: 'h-[240px]', 5: 'h-[220px]' }
+                const heights: Record<number, string> = { 1: 'min-h-[380px]', 2: 'min-h-[320px]', 3: 'min-h-[280px]', 4: 'min-h-[240px]', 5: 'min-h-[220px]' }
+                const compact = entry.rank >= 4
                 const cardStyles: Record<number, { bg: string; border: string; badge: string; shadow: string }> = {
                   1: { bg: '#F4ECE1', border: '#E83C00', badge: 'bg-[#E83C00] text-white', shadow: 'shadow-2xl shadow-orange-900/20' },
                   2: { bg: '#F4ECE1', border: 'transparent', badge: 'bg-slate-200 text-slate-700', shadow: 'shadow-xl shadow-black/5' },
@@ -1776,14 +1778,14 @@ export function LeaderboardPage() {
                         <span>{place.title}</span>
                       )}
                     </div>
-                    <div className="mt-8 flex flex-col items-center text-center flex-1 w-full">
-                      <Avatar name={entry.teamName} size="lg" className={`mb-4 shadow-lg ring-4 ${isFirst ? 'ring-orange-200' : 'ring-white/60'}`} />
-                      <h3 className="text-xl font-black text-[#1A1A1A] mb-1 truncate w-full">{entry.teamName}</h3>
-                      <p className="text-slate-500 font-medium text-xs truncate w-full">{entry.college}</p>
+                    <div className={`${compact ? 'mt-6' : 'mt-8'} flex flex-col items-center text-center flex-1 w-full`}>
+                      <Avatar name={entry.teamName} size={compact ? 'md' : 'lg'} className={`${compact ? 'mb-2.5' : 'mb-4'} shadow-lg ring-4 ${isFirst ? 'ring-orange-200' : 'ring-white/60'}`} />
+                      <h3 className={`${compact ? 'text-sm' : 'text-xl'} font-black text-[#1A1A1A] mb-1 truncate w-full`}>{entry.teamName}</h3>
+                      <p className={`text-slate-500 font-medium ${compact ? 'text-[11px]' : 'text-xs'} truncate w-full`}>{entry.college}</p>
                     </div>
-                    <div className="w-full pt-4 mt-auto border-t border-black/5 text-center">
+                    <div className={`w-full ${compact ? 'pt-3' : 'pt-4'} mt-auto border-t border-black/5 text-center`}>
                       <motion.div key={entry.totalScore} initial={{ scale: 1.2 }} animate={{ scale: 1 }}
-                        className="text-3xl font-black text-[#1A1A1A]">
+                        className={`${compact ? 'text-2xl' : 'text-3xl'} font-black text-[#1A1A1A]`}>
                         {entry.totalScore.toFixed(1)}
                       </motion.div>
                       <p className="text-slate-400 text-[10px] mt-1 font-medium">Final Score</p>
