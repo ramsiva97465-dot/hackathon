@@ -857,7 +857,7 @@ export function LeaderboardPage() {
       <div className="relative z-20 flex items-center justify-between px-6 sm:px-10 py-4 border-b backdrop-blur-md sticky top-0 transition-colors bg-[#EBE3D5]/80 border-black/5 text-[#1A1A1A]">
         <div className="flex items-end gap-4 sm:gap-6">
           <div className="flex items-end gap-2">
-            <SnapServeMark className="h-[24.32px] w-[24.32px] shrink-0 object-contain" />
+            <SnapServeMark className="h-[24.32px] w-[24.32px] shrink-0 object-contain translate-y-[4px]" />
             <span
               className="text-[19.456px] leading-none tracking-tight"
               style={{ fontFamily: "'Plus Jakarta Sans', 'Montserrat', system-ui, sans-serif" }}
