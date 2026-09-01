@@ -1009,8 +1009,8 @@ export function ParticipantDashboard() {
                     <div className="flex items-center gap-3">
                       <Award className="text-amber-600" size={20} />
                       <div>
-                        <p className="text-xs font-black uppercase tracking-wider">Admin Review &amp; Approval Preview</p>
-                        <p className="text-[11px] text-amber-700">Previewing official participation certificate design before enabling for participants.</p>
+                        <p className="text-xs font-black uppercase tracking-wider">Official Participation Certificate</p>
+                        <p className="text-[11px] text-amber-700">Select your name in Team Members on the left, then download. The certificate prints that exact name.</p>
                       </div>
                     </div>
                   </div>
