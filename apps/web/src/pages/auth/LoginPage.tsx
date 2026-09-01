@@ -244,8 +244,8 @@ export function LoginPage() {
               showPassword={!isParticipantPath}
             />
 
-            {/* Toggle Role Links */}
-            {!isParticipantPath && (
+            {/* Participant login link — admin portal only, not judge */}
+            {isAdminPath && (
               <div className="mt-4 text-center">
                 <Link
                   to="/login"
