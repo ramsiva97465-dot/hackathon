@@ -57,6 +57,14 @@ export class LeaderboardService {
       },
     })
 
+    // Until Round 2 judging starts, the Round 2 board is the Top 20 qualifier
+    // announcement — ranked by frozen Round 1 scores, not empty R2 sheets.
+    const round2JudgingStarted = targetRound === 2 && teams.some((team) => {
+      if (team.round2Score !== null && team.round2Score !== undefined) return true
+      if (team.adminScore !== null && team.adminScore !== undefined && (team.round || 1) === 2) return true
+      return sheetsForRound(team.scoreSheets, 2).length > 0
+    })
+
     const entries = teams.map((team) => {
       const bonus =
         (team as any).bonusVerifiedAt || (team as any).bonusVerifiedBy
@@ -84,6 +92,15 @@ export class LeaderboardService {
         if ((team.round || 1) >= 3 && team.round2Score !== null && team.round2Score !== undefined) {
           totalScore = team.round2Score
           judgeCount = team.round2JudgeCount ?? 0
+        } else if (!round2JudgingStarted) {
+          if (team.round1Score !== null && team.round1Score !== undefined) {
+            totalScore = team.round1Score
+            judgeCount = team.round1JudgeCount ?? 0
+          } else {
+            const r1Sheets = sheetsForRound(team.scoreSheets, 1)
+            judgeCount = r1Sheets.length
+            totalScore = averageFromSheets(r1Sheets) + bonus
+          }
         } else {
           const r2Sheets = sheetsForRound(team.scoreSheets, 2)
           judgeCount = r2Sheets.length
