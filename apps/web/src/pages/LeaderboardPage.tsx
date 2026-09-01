@@ -859,7 +859,7 @@ export function LeaderboardPage() {
           <div className="flex items-end gap-2">
             <SnapServeMark className="h-[24.32px] w-[24.32px] shrink-0 object-contain" />
             <span
-              className="text-[24.32px] leading-none tracking-tight"
+              className="text-[19.456px] leading-none tracking-tight"
               style={{ fontFamily: "'Plus Jakarta Sans', 'Montserrat', system-ui, sans-serif" }}
             >
               <span style={{ fontWeight: 800, color: '#0A0A0A' }}>Snap</span>
