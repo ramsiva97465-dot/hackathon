@@ -46,6 +46,7 @@ export class TeamsService {
         track: true,
         members: true,
         assignments: true,
+        scoreSheets: true,
         leaderboard: true,
       },
       orderBy: { createdAt: 'desc' }
@@ -100,6 +101,7 @@ export class TeamsService {
       })),
       judgesAssigned: t.assignments.length,
       assignedJudgeIds: t.assignments.map(a => a.judgeId),
+      scoresSubmitted: t.scoreSheets.filter(s => s.isSubmitted && (s.round || 1) === (t.round || 1)).length,
       totalJudges: 1, // 1 Judge per Team requirement
       avgScore: t.leaderboard[0]?.overallScore || null,
       rank: t.leaderboard[0]?.rank || null,

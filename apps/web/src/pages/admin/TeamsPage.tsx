@@ -169,6 +169,7 @@ type Team = {
   members: { name: string; email?: string; phone?: string; role?: string; linkedin?: string; instagram?: string; github?: string; followedInstagram?: boolean; followedLinkedin?: boolean }[]
   judgesAssigned: number; totalJudges: number
   assignedJudgeIds?: string[]
+  scoresSubmitted?: number
   avgScore: number | null; rank: number | null
   status: string; tableNumber: string | null
   projectTitle?: string | null
@@ -729,7 +730,7 @@ export function TeamsPage() {
     },
     { 
       label: 'Judging Complete', 
-      value: teams.filter(t => t.judgesAssigned >= t.totalJudges && t.totalJudges > 0).length, 
+      value: teams.filter(t => (t.scoresSubmitted ?? 0) >= t.totalJudges && t.totalJudges > 0).length, 
       icon: Award, 
       color: '#8B5CF6', 
       bg: 'rgba(139,92,246,0.07)', 
@@ -1072,7 +1073,7 @@ export function TeamsPage() {
               background: '#111',
               borderBottom: '1px solid rgba(255,255,255,0.05)',
             }}>
-            {['Team', 'Track', 'Table', 'Social Follows', 'Judging', 'Actions'].map(col => (
+            {['Team', 'Track', 'Table', 'Social Follows', 'Evaluation', 'Actions'].map(col => (
               <span key={col} className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{col}</span>
             ))}
           </div>
@@ -1097,7 +1098,8 @@ export function TeamsPage() {
               {filtered.map((team, idx) => {
                 const track = getTrackConfig(team.track)
                 const requiredJudges = 1
-                const judgeProgress = Math.min(100, (team.judgesAssigned / requiredJudges) * 100)
+                const scoresSubmitted = team.scoresSubmitted ?? 0
+                const judgeProgress = Math.min(100, (scoresSubmitted / requiredJudges) * 100)
                 const isLast = idx === filtered.length - 1
                 const rankStyle = team.rank && team.rank <= 3 ? RANK_STYLE[team.rank] : null
 
@@ -1270,23 +1272,15 @@ export function TeamsPage() {
                       )}
                     </div>
 
-                    {/* Judging */}
+                    {/* Evaluation */}
                     <div className="pr-3">
-                      {team.avgScore !== null ? (
-                        <div className="flex items-center gap-1.5">
-                          <Star size={13} className="text-amber-400 fill-amber-400" />
-                          <span className="text-sm font-black text-slate-200">{team.avgScore.toFixed(1)}</span>
-                          <span className="text-[10px] text-slate-500 font-medium">avg</span>
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-[10px] font-semibold text-slate-400">
+                          <span>Evaluated</span>
+                          <span>{scoresSubmitted}/{requiredJudges}</span>
                         </div>
-                      ) : (
-                        <div className="space-y-1.5">
-                          <div className="flex justify-between text-[10px] font-semibold text-slate-400">
-                            <span>Judges</span>
-                            <span>{team.judgesAssigned}/{requiredJudges}</span>
-                          </div>
-                          <Progress value={judgeProgress} variant={judgeProgress === 100 ? 'success' : 'primary'} size="sm" />
-                        </div>
-                      )}
+                        <Progress value={judgeProgress} variant={judgeProgress === 100 ? 'success' : 'primary'} size="sm" />
+                      </div>
                     </div>
 
                     {/* Actions */}
