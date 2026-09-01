@@ -185,19 +185,19 @@ type Team = {
 }
 
 const TEAM_COLUMNS = [
-  { key: 'Team', width: 'minmax(260px, 2.2fr)' },
-  { key: 'Track', width: '132px' },
-  { key: 'Table', width: '84px' },
-  { key: 'Social Follows', width: '210px' },
-  { key: 'Evaluation', width: '132px' },
-  { key: 'Assigned Judge', width: '190px' },
-  { key: 'Actions', width: '200px' },
+  { key: 'Team', width: 'minmax(0, 2.4fr)' },
+  { key: 'Track', width: 'minmax(0, 1fr)' },
+  { key: 'Table', width: '54px' },
+  { key: 'Social Follows', width: 'minmax(0, 1.35fr)' },
+  { key: 'Evaluation', width: '80px' },
+  { key: 'Assigned Judge', width: 'minmax(0, 1.2fr)' },
+  { key: 'Actions', width: 'minmax(0, 1.4fr)' },
 ] as const
 
 const TEAM_GRID_STYLE = {
   display: 'grid',
   gridTemplateColumns: TEAM_COLUMNS.map(c => c.width).join(' '),
-  columnGap: '24px',
+  columnGap: '12px',
   alignItems: 'center',
 } as const
 
@@ -1085,8 +1085,8 @@ export function TeamsPage() {
           </div>
 
           {/* Column Headers */}
-          <div className="overflow-x-auto">
-          <div className="px-5 py-3 min-w-[1320px]"
+          <div>
+          <div className="px-4 py-3"
             style={{
               ...TEAM_GRID_STYLE,
               background: '#111',
@@ -1126,7 +1126,7 @@ export function TeamsPage() {
                   <motion.div
                     key={team.id}
                     variants={itemVariants}
-                    className="px-5 py-4 transition-colors cursor-default min-w-[1320px]"
+                    className="px-4 py-4 transition-colors cursor-default"
                     style={{
                       ...TEAM_GRID_STYLE,
                       borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.02)',
@@ -1236,7 +1236,7 @@ export function TeamsPage() {
                         </div>
                       ) : (
                         <div
-                          className="flex items-center gap-1.5 group cursor-pointer w-fit px-2 py-1 rounded-lg transition-all"
+                          className="flex items-center gap-0.5 group cursor-pointer w-fit px-1.5 py-1 rounded-lg transition-all"
                           onClick={() => { setEditingTableId(team.id); setEditingTableValue(team.tableNumber || '') }}
                           style={{ border: '1px solid transparent' }}
                           onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(232,60,0,0.2)')}
@@ -1251,7 +1251,7 @@ export function TeamsPage() {
                     </div>
 
                     {/* Social Follows & Bonus Points */}
-                    <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                    <div className="flex items-center gap-1 flex-wrap min-w-0">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
                         team.followedInstagram ? 'bg-pink-500/10 text-pink-400 border border-pink-500/20' : 'bg-slate-800/80 text-slate-500 border border-slate-700/50'
                       }`}>
@@ -1295,16 +1295,15 @@ export function TeamsPage() {
                     </div>
 
                     {/* Evaluation */}
-                    <div className="min-w-0 space-y-1.5">
-                      <div className="flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-400">
-                        <span>Evaluated</span>
-                        <span className="tabular-nums">{scoresSubmitted}/{requiredJudges}</span>
+                    <div className="min-w-0 space-y-1" title={`${scoresSubmitted} of ${requiredJudges} evaluated`}>
+                      <div className="text-[10px] font-bold text-slate-400 tabular-nums">
+                        {scoresSubmitted}/{requiredJudges}
                       </div>
                       <Progress value={judgeProgress} variant={judgeProgress === 100 ? 'success' : 'primary'} size="sm" />
                     </div>
 
                     {/* Assigned Judge */}
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex items-center gap-1.5 min-w-0">
                       {team.judgesAssigned > 0 ? (
                         <>
                           <span
@@ -1315,39 +1314,42 @@ export function TeamsPage() {
                           </span>
                           <button
                             onClick={() => setAssignTarget(team)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 shrink-0 text-[11px] font-bold rounded-lg transition-all whitespace-nowrap bg-sky-500/15 text-sky-300 hover:bg-sky-500/25 border border-sky-400/30"
+                            title="Change assigned judge"
+                            className="inline-flex items-center justify-center w-7 h-7 shrink-0 rounded-lg transition-all bg-sky-500/15 text-sky-300 hover:bg-sky-500/25 border border-sky-400/30"
                           >
-                            <RefreshCw size={11} /> Update
+                            <RefreshCw size={12} />
                           </button>
                         </>
                       ) : (
-                        <span className="text-[11px] font-medium text-slate-500">Unassigned</span>
+                        <span className="text-[11px] font-medium text-slate-500 truncate">Unassigned</span>
                       )}
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-1.5 min-w-0">
+                    <div className="flex items-center gap-1 min-w-0">
                       {team.demoUrl && (
                         <a
                           href={team.demoUrl}
                           target="_blank"
                           rel="noreferrer"
                           title="Open Presentation Drive URL"
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-[11px] font-bold rounded-lg shadow-sm hover:shadow transition-all whitespace-nowrap"
+                          className="inline-flex items-center justify-center w-7 h-7 shrink-0 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg shadow-sm transition-all"
                         >
-                          <ExternalLink size={11} /> Drive
+                          <ExternalLink size={12} />
                         </a>
                       )}
                       <button
                         onClick={() => setViewTarget(team)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] font-bold rounded-lg transition-all whitespace-nowrap"
+                        title="View team details"
+                        className="inline-flex items-center gap-1 px-2 py-1.5 shrink-0 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[10px] font-bold rounded-lg transition-all whitespace-nowrap"
                       >
                         <Eye size={11} /> Details
                       </button>
                       {team.judgesAssigned === 0 && (
                         <button
                           onClick={() => setAssignTarget(team)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#E83C00]/10 text-[#E83C00] hover:bg-[#E83C00]/20 border border-[#E83C00]/20 text-[11px] font-bold rounded-lg transition-all whitespace-nowrap"
+                          title="Assign a judge"
+                          className="inline-flex items-center gap-1 px-2 py-1.5 shrink-0 bg-[#E83C00]/10 text-[#E83C00] hover:bg-[#E83C00]/20 border border-[#E83C00]/20 text-[10px] font-bold rounded-lg transition-all whitespace-nowrap"
                         >
                           <UserPlus size={11} /> Assign
                         </button>
