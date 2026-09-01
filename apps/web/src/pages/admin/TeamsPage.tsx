@@ -1311,6 +1311,9 @@ export function TeamsPage() {
                         {scoresSubmitted}/{requiredJudges}
                       </div>
                       <Progress value={judgeProgress} variant={judgeProgress === 100 ? 'success' : 'primary'} size="sm" />
+                      {scoresSubmitted >= requiredJudges && (
+                        <div className="text-[9px] font-semibold text-emerald-400 leading-none">(Evaluated)</div>
+                      )}
                     </div>
 
                     {/* Assigned Judge */}
