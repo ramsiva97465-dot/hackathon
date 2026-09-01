@@ -184,6 +184,23 @@ type Team = {
   bonusPoints: number; followedInstagram: boolean; followedLinkedin: boolean
 }
 
+const TEAM_COLUMNS = [
+  { key: 'Team', width: 'minmax(260px, 2.2fr)' },
+  { key: 'Track', width: '132px' },
+  { key: 'Table', width: '84px' },
+  { key: 'Social Follows', width: '210px' },
+  { key: 'Evaluation', width: '132px' },
+  { key: 'Assigned Judge', width: '190px' },
+  { key: 'Actions', width: '200px' },
+] as const
+
+const TEAM_GRID_STYLE = {
+  display: 'grid',
+  gridTemplateColumns: TEAM_COLUMNS.map(c => c.width).join(' '),
+  columnGap: '24px',
+  alignItems: 'center',
+} as const
+
 type Judge = {
   id: string; name: string; email: string; avatar: string | null
   company: string | null; designation: string | null; assignmentsCount: number
@@ -1068,14 +1085,15 @@ export function TeamsPage() {
           </div>
 
           {/* Column Headers */}
-          <div className="grid px-5 py-3"
+          <div className="overflow-x-auto">
+          <div className="px-5 py-3 min-w-[1320px]"
             style={{
-              gridTemplateColumns: '2.2fr 0.9fr 0.7fr 1.3fr 0.9fr 1.4fr 200px',
+              ...TEAM_GRID_STYLE,
               background: '#111',
               borderBottom: '1px solid rgba(255,255,255,0.05)',
             }}>
-            {['Team', 'Track', 'Table', 'Social Follows', 'Evaluation', 'Assigned Judge', 'Actions'].map(col => (
-              <span key={col} className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{col}</span>
+            {TEAM_COLUMNS.map(col => (
+              <span key={col.key} className="text-[10px] font-bold uppercase tracking-widest text-slate-500 truncate">{col.key}</span>
             ))}
           </div>
 
@@ -1108,9 +1126,9 @@ export function TeamsPage() {
                   <motion.div
                     key={team.id}
                     variants={itemVariants}
-                    className="grid px-5 py-4 items-center transition-colors cursor-default"
+                    className="px-5 py-4 transition-colors cursor-default min-w-[1320px]"
                     style={{
-                      gridTemplateColumns: '2.2fr 0.9fr 0.7fr 1.3fr 0.9fr 1.4fr 200px',
+                      ...TEAM_GRID_STYLE,
                       borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.02)',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
@@ -1187,13 +1205,16 @@ export function TeamsPage() {
                     </div>
 
                     {/* Track */}
-                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full w-fit"
-                      style={{ background: track.bg, color: track.color, border: `1px solid ${track.color}22` }}>
-                      {track.label}
-                    </span>
+                    <div className="min-w-0">
+                      <span className="inline-block max-w-full truncate text-[10px] font-bold px-2.5 py-1 rounded-full"
+                        style={{ background: track.bg, color: track.color, border: `1px solid ${track.color}22` }}
+                        title={track.label}>
+                        {track.label}
+                      </span>
+                    </div>
 
                     {/* Table Number */}
-                    <div>
+                    <div className="min-w-0">
                       {editingTableId === team.id ? (
                         <div className="flex items-center gap-1">
                           <input
@@ -1230,7 +1251,7 @@ export function TeamsPage() {
                     </div>
 
                     {/* Social Follows & Bonus Points */}
-                    <div className="flex items-center gap-1.5 flex-wrap">
+                    <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
                         team.followedInstagram ? 'bg-pink-500/10 text-pink-400 border border-pink-500/20' : 'bg-slate-800/80 text-slate-500 border border-slate-700/50'
                       }`}>
@@ -1274,22 +1295,20 @@ export function TeamsPage() {
                     </div>
 
                     {/* Evaluation */}
-                    <div className="pr-3">
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between text-[10px] font-semibold text-slate-400">
-                          <span>Evaluated</span>
-                          <span>{scoresSubmitted}/{requiredJudges}</span>
-                        </div>
-                        <Progress value={judgeProgress} variant={judgeProgress === 100 ? 'success' : 'primary'} size="sm" />
+                    <div className="min-w-0 space-y-1.5">
+                      <div className="flex items-center justify-between gap-2 text-[10px] font-semibold text-slate-400">
+                        <span>Evaluated</span>
+                        <span className="tabular-nums">{scoresSubmitted}/{requiredJudges}</span>
                       </div>
+                      <Progress value={judgeProgress} variant={judgeProgress === 100 ? 'success' : 'primary'} size="sm" />
                     </div>
 
                     {/* Assigned Judge */}
-                    <div className="flex items-center gap-2 min-w-0 pr-2">
+                    <div className="flex items-center gap-2 min-w-0">
                       {team.judgesAssigned > 0 ? (
                         <>
                           <span
-                            className="truncate text-[11px] font-bold text-emerald-400"
+                            className="min-w-0 flex-1 truncate text-[11px] font-bold text-emerald-400"
                             title={team.assignedJudgeName || 'Assigned'}
                           >
                             {team.assignedJudgeName || 'Assigned'}
@@ -1307,7 +1326,7 @@ export function TeamsPage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1.5 min-w-0">
                       {team.demoUrl && (
                         <a
                           href={team.demoUrl}
@@ -1339,6 +1358,7 @@ export function TeamsPage() {
               })}
             </motion.div>
           )}
+          </div>
         </div>
       </div>
 
