@@ -184,6 +184,11 @@ type Team = {
   bonusPoints: number; followedInstagram: boolean; followedLinkedin: boolean
 }
 
+const TEAM_TABLE_GRID = {
+  gridTemplateColumns: '2fr 0.9fr 0.7fr 1.2fr minmax(140px, 1fr) minmax(220px, 1.6fr) minmax(180px, 210px)',
+  columnGap: '28px',
+} as const
+
 type Judge = {
   id: string; name: string; email: string; avatar: string | null
   company: string | null; designation: string | null; assignmentsCount: number
@@ -1068,9 +1073,9 @@ export function TeamsPage() {
           </div>
 
           {/* Column Headers */}
-          <div className="grid px-5 py-3"
+          <div className="grid px-5 py-3 items-center"
             style={{
-              gridTemplateColumns: '2.2fr 0.9fr 0.7fr 1.3fr 0.9fr 1.4fr 200px',
+              ...TEAM_TABLE_GRID,
               background: '#111',
               borderBottom: '1px solid rgba(255,255,255,0.05)',
             }}>
@@ -1110,7 +1115,7 @@ export function TeamsPage() {
                     variants={itemVariants}
                     className="grid px-5 py-4 items-center transition-colors cursor-default"
                     style={{
-                      gridTemplateColumns: '2.2fr 0.9fr 0.7fr 1.3fr 0.9fr 1.4fr 200px',
+                      ...TEAM_TABLE_GRID,
                       borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.02)',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
@@ -1274,9 +1279,9 @@ export function TeamsPage() {
                     </div>
 
                     {/* Evaluation */}
-                    <div className="pr-3">
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between text-[10px] font-semibold text-slate-400">
+                    <div className="min-w-0">
+                      <div className="space-y-1.5 max-w-[140px]">
+                        <div className="flex items-center gap-2 text-[10px] font-semibold text-slate-400">
                           <span>Evaluated</span>
                           <span>{scoresSubmitted}/{requiredJudges}</span>
                         </div>
@@ -1285,7 +1290,7 @@ export function TeamsPage() {
                     </div>
 
                     {/* Assigned Judge */}
-                    <div className="flex items-center gap-2 min-w-0 pr-2">
+                    <div className="flex items-center gap-2 min-w-0">
                       {team.judgesAssigned > 0 ? (
                         <>
                           <span
