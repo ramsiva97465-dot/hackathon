@@ -65,6 +65,13 @@ export class LeaderboardService {
       return sheetsForRound(team.scoreSheets, 2).length > 0
     })
 
+    // Same for the Grand Finale: finalists carry their frozen Round 2 result
+    // until Round 3 judging produces its own scores.
+    const round3JudgingStarted = targetRound === 3 && teams.some((team) => {
+      if (team.adminScore !== null && team.adminScore !== undefined && (team.round || 1) === 3) return true
+      return sheetsForRound(team.scoreSheets, 3).length > 0
+    })
+
     const entries = teams.map((team) => {
       const bonus =
         (team as any).bonusVerifiedAt || (team as any).bonusVerifiedBy
@@ -109,6 +116,15 @@ export class LeaderboardService {
           } else {
             totalScore = averageFromSheets(r2Sheets)
           }
+        }
+      } else if (!round3JudgingStarted) {
+        if (team.round2Score !== null && team.round2Score !== undefined) {
+          totalScore = team.round2Score
+          judgeCount = team.round2JudgeCount ?? 0
+        } else {
+          const r2Sheets = sheetsForRound(team.scoreSheets, 2)
+          judgeCount = r2Sheets.length
+          totalScore = averageFromSheets(r2Sheets)
         }
       } else {
         const r3Sheets = sheetsForRound(team.scoreSheets, 3)
