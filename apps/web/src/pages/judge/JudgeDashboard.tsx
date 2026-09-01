@@ -19,6 +19,7 @@ const SCORING_RUBRIC = {
 type Team = {
   id: string
   teamName: string
+  round?: number
   college: string
   track: string
   projectTitle: string
@@ -452,6 +453,11 @@ export function JudgeDashboard() {
                           <span className={`font-display font-bold text-sm truncate block transition-colors ${active ? 'text-[#E83C00]' : 'text-slate-900'}`}>
                             {team.teamName}
                           </span>
+                          {team.round ? (
+                            <span className="px-1.5 py-0.5 rounded bg-slate-200 text-[9px] font-bold text-slate-500 shrink-0">
+                              R{team.round}
+                            </span>
+                          ) : null}
                           {team.tableNumber && (
                             <span className="px-1.5 py-0.5 rounded bg-slate-200 text-[9px] font-bold text-slate-500 shrink-0">
                               T-{team.tableNumber}

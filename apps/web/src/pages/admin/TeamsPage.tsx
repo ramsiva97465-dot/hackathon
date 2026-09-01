@@ -568,7 +568,12 @@ export function TeamsPage() {
   const fetchJudges = async () => {
     try {
       const res = await api.judges.list()
-      if (res.data?.success) setJudges(res.data.data)
+      if (res.data?.success) {
+        setJudges(res.data.data.map((j: any) => ({
+          ...j,
+          assignmentsCount: j.assignmentsCount ?? j.assignedTeams ?? 0,
+        })))
+      }
     } catch (err) { console.error('Failed to load judges', err) }
   }
 
@@ -583,6 +588,7 @@ export function TeamsPage() {
       }
       toast.success(res.data?.message || `Judge assigned for Round ${assignTarget.round || 1}`)
       await fetchTeams()
+      await fetchJudges()
       setAssignTarget(null)
     } catch (err: any) {
       console.error('Failed to assign judge', err)

@@ -24,6 +24,7 @@ export class JudgesService {
         company: j.company,
         title: j.designation,
         assignedTeams: j.assignments.length,
+        assignmentsCount: j.assignments.length,
         completedScores: j.scoreSheets.filter(s => s.isSubmitted).length,
         totalTeams: j.assignments.length,
         isActive: j.user.isActive,
@@ -100,11 +101,11 @@ export class JudgesService {
 
   async getAssignedTeams(userId: string) {
     const judgeRecord = await this.prisma.judge.findFirst({
-      where: { OR: [{ id: userId }, { id: userId }] }
+      where: { OR: [{ id: userId }, { user: { id: userId } }] },
     })
 
     if (!judgeRecord) {
-      return { success: true, data: [] }
+      return { success: true, data: [], activeRound: 1 }
     }
 
     const assignments = await this.prisma.judgeAssignment.findMany({
@@ -126,9 +127,15 @@ export class JudgesService {
 
     const r3Count = await this.prisma.team.count({ where: { status: 'COMPETING', round: 3 } })
     const r2Count = await this.prisma.team.count({ where: { status: 'COMPETING', round: 2 } })
-    // Any Round 3 finalist switches judges to Round 3; else Round 2 if Top 20 promoted
-    const activeJudgingRound = r3Count >= 1 ? 3 : r2Count >= 1 ? 2 : 1
-    const filteredAssignments = assignments.filter(a => a.team.round === activeJudgingRound)
+    const eventRound = r3Count >= 1 ? 3 : r2Count >= 1 ? 2 : 1
+
+    // Only this judge's competing teams. Do not hide Round 1 assignments just because
+    // other teams have been promoted to Round 2/3.
+    const filteredAssignments = assignments.filter(a => a.team.status === 'COMPETING')
+    const assignmentRounds = filteredAssignments.map(a => a.team.round || 1)
+    const activeJudgingRound = assignmentRounds.length > 0
+      ? Math.max(...assignmentRounds)
+      : eventRound
 
     return {
       success: true,
@@ -156,7 +163,7 @@ export class JudgesService {
         let isLocked = scoreSheet?.isSubmitted || false
 
         // Admin override scores only lock Round 1. Round 2+ needs a fresh judge pass.
-        if (activeJudgingRound === 1 && team.adminScore !== null && team.adminScore !== undefined) {
+        if ((team.round || 1) === 1 && team.adminScore !== null && team.adminScore !== undefined) {
           if (team.adminScore === 0) {
             totalScore = null
             isScored = false
@@ -171,6 +178,7 @@ export class JudgesService {
         return {
           id: team.id,
           teamName: team.name,
+          round: team.round || 1,
           college: team.application?.college || 'Unknown',
           track: team.track.slug === 'real-world-deployment' ? 'Real World Deployment' : 
                  team.track.slug === 'multimodal-ai' ? 'Multimodal AI' : 'Voice AI',
