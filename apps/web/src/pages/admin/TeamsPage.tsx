@@ -169,6 +169,7 @@ type Team = {
   members: { name: string; email?: string; phone?: string; role?: string; linkedin?: string; instagram?: string; github?: string; followedInstagram?: boolean; followedLinkedin?: boolean }[]
   judgesAssigned: number; totalJudges: number
   assignedJudgeIds?: string[]
+  assignedJudgeName?: string | null
   scoresSubmitted?: number
   avgScore: number | null; rank: number | null
   status: string; tableNumber: string | null
@@ -1069,7 +1070,7 @@ export function TeamsPage() {
           {/* Column Headers */}
           <div className="grid px-5 py-3"
             style={{
-              gridTemplateColumns: '2.5fr 1fr 0.8fr 1.6fr 1.1fr 220px',
+              gridTemplateColumns: '2.5fr 1fr 0.8fr 1.6fr 1.1fr 300px',
               background: '#111',
               borderBottom: '1px solid rgba(255,255,255,0.05)',
             }}>
@@ -1109,7 +1110,7 @@ export function TeamsPage() {
                     variants={itemVariants}
                     className="grid px-5 py-4 items-center transition-colors cursor-default"
                     style={{
-                      gridTemplateColumns: '2.5fr 1fr 0.8fr 1.6fr 1.1fr 220px',
+                      gridTemplateColumns: '2.5fr 1fr 0.8fr 1.6fr 1.1fr 300px',
                       borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.02)',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
@@ -1302,12 +1303,29 @@ export function TeamsPage() {
                       >
                         <Eye size={11} /> Details
                       </button>
-                      <button
-                        onClick={() => setAssignTarget(team)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#E83C00]/10 text-[#E83C00] hover:bg-[#E83C00]/20 border border-[#E83C00]/20 text-[11px] font-bold rounded-lg transition-all whitespace-nowrap"
-                      >
-                        <UserPlus size={11} /> {team.judgesAssigned > 0 ? 'Update' : 'Assign'}
-                      </button>
+                      {team.judgesAssigned > 0 ? (
+                        <>
+                          <span
+                            className="max-w-[88px] truncate text-[11px] font-bold text-emerald-400"
+                            title={team.assignedJudgeName || 'Assigned'}
+                          >
+                            {team.assignedJudgeName || 'Assigned'}
+                          </span>
+                          <button
+                            onClick={() => setAssignTarget(team)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#E83C00]/10 text-[#E83C00] hover:bg-[#E83C00]/20 border border-[#E83C00]/20 text-[11px] font-bold rounded-lg transition-all whitespace-nowrap"
+                          >
+                            <UserPlus size={11} /> Update
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => setAssignTarget(team)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#E83C00]/10 text-[#E83C00] hover:bg-[#E83C00]/20 border border-[#E83C00]/20 text-[11px] font-bold rounded-lg transition-all whitespace-nowrap"
+                        >
+                          <UserPlus size={11} /> Assign
+                        </button>
+                      )}
                     </div>
                   </motion.div>
                 )
