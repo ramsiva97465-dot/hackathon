@@ -8,7 +8,7 @@ import { containerVariants, itemVariants } from '@/lib/motion'
 import { getTrackConfig } from '@/lib/utils'
 import {
   Trophy, Users, Award, X, Check, Crown,
-  Search, Hash, Star, UserPlus, Download, Upload, AlertCircle, CheckCircle, Eye, ExternalLink, Github, Phone, Cpu, Layers, Instagram, Linkedin, Trash2, Clock, Zap, Filter
+  Search, Hash, Star, UserPlus, Download, Upload, AlertCircle, CheckCircle, Eye, ExternalLink, Github, Phone, Cpu, Layers, Instagram, Linkedin, Trash2, Clock, Zap, Filter, RefreshCw
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { toast } from 'sonner'
@@ -1070,11 +1070,11 @@ export function TeamsPage() {
           {/* Column Headers */}
           <div className="grid px-5 py-3"
             style={{
-              gridTemplateColumns: '2.5fr 1fr 0.8fr 1.6fr 1.1fr 300px',
+              gridTemplateColumns: '2.2fr 0.9fr 0.7fr 1.3fr 0.9fr 1.4fr 200px',
               background: '#111',
               borderBottom: '1px solid rgba(255,255,255,0.05)',
             }}>
-            {['Team', 'Track', 'Table', 'Social Follows', 'Evaluation', 'Actions'].map(col => (
+            {['Team', 'Track', 'Table', 'Social Follows', 'Evaluation', 'Assigned Judge', 'Actions'].map(col => (
               <span key={col} className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{col}</span>
             ))}
           </div>
@@ -1110,7 +1110,7 @@ export function TeamsPage() {
                     variants={itemVariants}
                     className="grid px-5 py-4 items-center transition-colors cursor-default"
                     style={{
-                      gridTemplateColumns: '2.5fr 1fr 0.8fr 1.6fr 1.1fr 300px',
+                      gridTemplateColumns: '2.2fr 0.9fr 0.7fr 1.3fr 0.9fr 1.4fr 200px',
                       borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.02)',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
@@ -1284,6 +1284,28 @@ export function TeamsPage() {
                       </div>
                     </div>
 
+                    {/* Assigned Judge */}
+                    <div className="flex items-center gap-2 min-w-0 pr-2">
+                      {team.judgesAssigned > 0 ? (
+                        <>
+                          <span
+                            className="truncate text-[11px] font-bold text-emerald-400"
+                            title={team.assignedJudgeName || 'Assigned'}
+                          >
+                            {team.assignedJudgeName || 'Assigned'}
+                          </span>
+                          <button
+                            onClick={() => setAssignTarget(team)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 shrink-0 text-[11px] font-bold rounded-lg transition-all whitespace-nowrap bg-sky-500/15 text-sky-300 hover:bg-sky-500/25 border border-sky-400/30"
+                          >
+                            <RefreshCw size={11} /> Update
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-[11px] font-medium text-slate-500">Unassigned</span>
+                      )}
+                    </div>
+
                     {/* Actions */}
                     <div className="flex items-center gap-1.5 shrink-0">
                       {team.demoUrl && (
@@ -1303,22 +1325,7 @@ export function TeamsPage() {
                       >
                         <Eye size={11} /> Details
                       </button>
-                      {team.judgesAssigned > 0 ? (
-                        <>
-                          <span
-                            className="max-w-[88px] truncate text-[11px] font-bold text-emerald-400"
-                            title={team.assignedJudgeName || 'Assigned'}
-                          >
-                            {team.assignedJudgeName || 'Assigned'}
-                          </span>
-                          <button
-                            onClick={() => setAssignTarget(team)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#E83C00]/10 text-[#E83C00] hover:bg-[#E83C00]/20 border border-[#E83C00]/20 text-[11px] font-bold rounded-lg transition-all whitespace-nowrap"
-                          >
-                            <UserPlus size={11} /> Update
-                          </button>
-                        </>
-                      ) : (
+                      {team.judgesAssigned === 0 && (
                         <button
                           onClick={() => setAssignTarget(team)}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-[#E83C00]/10 text-[#E83C00] hover:bg-[#E83C00]/20 border border-[#E83C00]/20 text-[11px] font-bold rounded-lg transition-all whitespace-nowrap"
