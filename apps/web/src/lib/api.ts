@@ -122,7 +122,9 @@ export const api = {
     getRevealState: () => apiClient.get('/leaderboard/reveal-state'),
     startReveal: (round?: number) =>
       apiClient.post('/leaderboard/reveal-start', { round }),
-    setRevealStep: (step: number, round: number = 3) =>
+    // `round` is required: a Round 2 step must never be published on the
+    // finale channel, or every LCD would unseal the Top 5 podium at once.
+    setRevealStep: (step: number, round: number) =>
       apiClient.post('/leaderboard/reveal-step', { step, round }),
     stopReveal: () => apiClient.post('/leaderboard/reveal-stop'),
   },

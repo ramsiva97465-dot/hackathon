@@ -125,4 +125,26 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
       console.error('[WS] Stop reveal broadcast failed:', err)
     }
   }
+
+  // Promotion must never leave a ceremony running. Clear leftover reveal so
+  // a later LCD poll cannot reopen Top 20 / Top 5 mode on its own.
+  async clearRevealOnPromote() {
+    this.isRevealing = false
+    this.revealStep = 0
+    try {
+      if (!this.server) return
+      this.server.to('leaderboard').emit('leaderboard:reveal_stop', {
+        isRevealing: false,
+        round: this.revealRound,
+        step: 0,
+      })
+      this.server.to('leaderboard').emit('leaderboard:reveal_state', {
+        isRevealing: false,
+        round: this.revealRound,
+        step: 0,
+      })
+    } catch (err) {
+      console.error('[WS] Clear reveal on promote failed:', err)
+    }
+  }
 }

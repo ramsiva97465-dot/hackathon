@@ -67,7 +67,9 @@ export function RoundsManagement() {
       if (Array.isArray(statsRes.data)) {
         const all: TeamOverview[] = statsRes.data
         setRound1Count(all.filter(t => (t.round || 1) === 1).length)
-        setRound2Count(all.filter(t => t.round === 2).length)
+        // Finalists sit in round 3 but still belong to the Top 20 qualifier list,
+        // so Round 2 stays at 20 after the Grand Finale promotion.
+        setRound2Count(all.filter(t => (t.round || 1) >= 2).length)
         setWinnersCount(all.filter(t => t.round === 3).length)
       }
     } catch (err) {
@@ -96,11 +98,10 @@ export function RoundsManagement() {
   const handleTriggerStep = async (step: number) => {
     try {
       setLoading(true)
-      if (!isStageRevealing) {
-        await api.leaderboard.startReveal(3)
-        setIsStageRevealing(true)
-      }
+      // Do not call startReveal here — that resets the ceremony to step 0
+      // and would re-broadcast a Top-20-style start. Each click is one place.
       await api.leaderboard.setRevealStep(step, 3)
+      setIsStageRevealing(true)
       setRevealStep(step)
       if (step === 1) toast.success('Triggered 5th Place reveal (countdown started on LCD)!')
       else if (step === 2) toast.success('Triggered 4th Place reveal (countdown started on LCD)!')
@@ -219,7 +220,7 @@ export function RoundsManagement() {
 
   const activeRoundNum = winnersCount > 0 ? 3 : round2Count > 0 ? 2 : 1
   const displayTeams = activeTab === 2
-    ? teams.filter(t => t.round === 2)
+    ? teams.filter(t => (t.round || 1) >= 2)
     : activeTab === 3
       ? teams.filter(t => t.round === 3)
       : teams
@@ -361,7 +362,7 @@ export function RoundsManagement() {
               </div>
 
               <a
-                href="/leaderboard?round=3&reveal=true"
+                href="/leaderboard"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-xs font-black text-amber-200 transition-all shadow-md shrink-0 self-start lg:self-center cursor-pointer"

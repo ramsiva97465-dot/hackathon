@@ -728,6 +728,9 @@ export class TeamsService {
       this.leaderboardGateway.broadcastLeaderboardUpdate().catch(err =>
         console.error('[WS] Promote R1→R2 broadcast failed:', err)
       )
+      this.leaderboardGateway.clearRevealOnPromote().catch(err =>
+        console.error('[WS] Promote R1→R2 clear reveal failed:', err)
+      )
 
       return { success: true, promotedCount: top20Ids.length }
     } else if (currentRound === 2) {
@@ -781,6 +784,9 @@ export class TeamsService {
 
       this.leaderboardGateway.broadcastLeaderboardUpdate().catch(err =>
         console.error('[WS] Promote R2→R3 broadcast failed:', err)
+      )
+      this.leaderboardGateway.clearRevealOnPromote().catch(err =>
+        console.error('[WS] Promote R2→R3 clear reveal failed:', err)
       )
 
       return { success: true, promotedCount: top5.length }

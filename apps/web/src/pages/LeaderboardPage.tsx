@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useSearchParams } from 'react-router-dom'
 import confetti from 'canvas-confetti'
 import { SnapServeMark, VobizLockup } from '@/components/brand/BrandLogos'
 import { Avatar } from '@/components/ui/Avatar'
@@ -8,7 +7,7 @@ import { getTrackConfig } from '@/lib/utils'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { 
   TrendingUp, TrendingDown, Minus, Trophy, ChevronRight, Monitor,
-  Play, Pause, SkipForward, RotateCcw, Sparkles, Star, CheckCircle2, Lock, Flame, Zap, Award, Crown, Medal, X, Layers, ShieldCheck
+  Sparkles, Star, CheckCircle2, Lock, Flame, Zap, Award, Crown, Medal, X, Layers, ShieldCheck
 } from 'lucide-react'
 import type { LeaderboardEntry } from '@hackathon/shared'
 import api from '@/lib/api'
@@ -378,11 +377,9 @@ function Round2Row({ entry }: { entry: LeaderboardEntry }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export function LeaderboardPage() {
-  const [searchParams, setSearchParams] = useSearchParams()
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
   const [clock, setClock] = useState(new Date())
   const [activeRound, setActiveRound] = useState<number>(1)
-  const [manualOverride, setManualOverride] = useState(false)
   const [tvMode, setTvMode] = useState(() => {
     return localStorage.getItem('snapserve_tv_mode') === 'true'
   })
@@ -390,11 +387,9 @@ export function LeaderboardPage() {
   // ── Grand Reveal State ─────────────────────────────────────────────────────
   // For Round 2: revealedStep 0..20 (Rank 20 down to 1)
   // For Round 3: revealedStep 0..5 (Rank 5 down to 1)
-  const [revealRound, setRevealRound] = useState<number>(() => {
-    const r = searchParams.get('round')
-    return r ? Number(r) : 2
-  })
-  const [isRevealing, setIsRevealing] = useState<boolean>(searchParams.get('reveal') === 'true')
+  // URL never starts a ceremony. Only admin reveal_start / reveal_step does.
+  const [revealRound, setRevealRound] = useState<number>(2)
+  const [isRevealing, setIsRevealing] = useState<boolean>(false)
   const [revealedStep, setRevealedStep] = useState<number>(0)
   const [isPaused, setIsPaused] = useState<boolean>(false)
   const [soundEnabled] = useState<boolean>(true)
@@ -409,7 +404,12 @@ export function LeaderboardPage() {
   // the poll from skipping an in-flight countdown via stale state.
   const revealedStepRef = useRef(revealedStep)
   const isDecryptingRef = useRef(false)
+  const isRevealingRef = useRef(false)
+  const revealRoundRef = useRef(2)
   const animatingStepRef = useRef(0)
+  // A countdown announces its winner up to 10s after it was triggered, so the
+  // name must be read when it is spoken, not when the trigger arrived.
+  const top5Ref = useRef<Array<LeaderboardEntry & { rank: number }>>([])
 
   useEffect(() => {
     activeRoundRef.current = activeRound
@@ -422,6 +422,14 @@ export function LeaderboardPage() {
   useEffect(() => {
     isDecryptingRef.current = isDecrypting
   }, [isDecrypting])
+
+  useEffect(() => {
+    isRevealingRef.current = isRevealing
+  }, [isRevealing])
+
+  useEffect(() => {
+    revealRoundRef.current = revealRound
+  }, [revealRound])
 
   const { emit } = useWebSocket<LeaderboardEntry[]>('leaderboard:update', async () => {
     try {
@@ -438,42 +446,22 @@ export function LeaderboardPage() {
   })
 
   useWebSocket<{ step: number; round?: number }>('leaderboard:reveal_step', (data) => {
-    if (typeof data?.step === 'number') {
-      const targetRound = data.round || 3
-      if (targetRound !== revealRound || !isRevealing) {
-        setRevealRound(targetRound)
-        setActiveRound(targetRound)
-        setIsRevealing(true)
-      }
-      executeRevealToStep(data.step, targetRound)
+    if (typeof data?.step !== 'number') return
+    const targetRound = data.round || 3
+    if (targetRound !== revealRoundRef.current || !isRevealingRef.current) {
+      setRevealRound(targetRound)
+      setActiveRound(targetRound)
+      setIsRevealing(true)
     }
+    executeRevealToStep(data.step, targetRound)
   })
 
   useWebSocket<{ isRevealing: boolean }>('leaderboard:reveal_stop', () => {
-    stopGrandReveal()
+    stopGrandReveal(true)
   })
 
   useWebSocket<{ isRevealing: boolean; round?: number; step?: number }>('leaderboard:reveal_state', (data) => {
-    if (data?.isRevealing) {
-      const targetRound = data.round || 2
-      if (!isRevealing || revealRound !== targetRound) {
-        startGrandReveal(targetRound)
-      }
-      if (typeof data.step === 'number') {
-        if (data.step === 0) {
-          resetRevealProgress()
-        } else {
-          // Play the countdown instead of snapping straight to the name.
-          executeRevealToStep(data.step, targetRound)
-        }
-      }
-    } else if (data && !data.isRevealing) {
-      if (typeof data.step === 'number') {
-        revealedStepRef.current = data.step
-        setRevealedStep(data.step)
-      }
-      stopGrandReveal(true)
-    }
+    applyServerRevealState(data, 'poll')
   })
 
   // Listen for broadcasted TV Mode toggles from admin panel
@@ -507,30 +495,47 @@ export function LeaderboardPage() {
     }
   }
 
+  const applyServerRevealState = (
+    data: { isRevealing?: boolean; round?: number; step?: number } | undefined,
+    source: 'poll' | 'event',
+  ) => {
+    if (!data) return
+    if (!data.isRevealing) {
+      if (isRevealingRef.current) stopGrandReveal(true)
+      return
+    }
+
+    const targetRound = data.round || 2
+    const serverStep = typeof data.step === 'number' ? data.step : 0
+
+    // Poll / reconnect may catch a late LCD up. It must never restart a
+    // ceremony (startGrandReveal resets to step 0) and must never animate
+    // several places from one leftover state payload.
+    if (!isRevealingRef.current || revealRoundRef.current !== targetRound) {
+      revealRoundRef.current = targetRound
+      isRevealingRef.current = true
+      setRevealRound(targetRound)
+      setActiveRound(targetRound)
+      setIsRevealing(true)
+      if (serverStep <= 0) {
+        resetRevealProgress()
+      } else {
+        executeRevealToStep(serverStep, targetRound, { catchUp: true })
+      }
+      return
+    }
+
+    // Top 20 auto-play lives on the LCD only (server stays at step 0).
+    // Never rewind that progress from a leftover step-0 poll.
+    if (serverStep > revealedStepRef.current) {
+      executeRevealToStep(serverStep, targetRound, { catchUp: source === 'poll' })
+    }
+  }
+
   const fetchRevealState = async () => {
     try {
       const res = await api.leaderboard.getRevealState()
-      if (res.data?.isRevealing) {
-        const targetRound = res.data.round || 2
-        if (!isRevealing || revealRound !== targetRound) {
-          startGrandReveal(targetRound)
-        }
-        if (typeof res.data?.step === 'number') {
-          if (res.data.step === 0 && revealedStepRef.current > 0) {
-            resetRevealProgress()
-          } else if (res.data.step > 0) {
-            executeRevealToStep(res.data.step, targetRound)
-          }
-        }
-      } else if (res.data && !res.data.isRevealing) {
-        if (typeof res.data.step === 'number') {
-          revealedStepRef.current = res.data.step
-          setRevealedStep(res.data.step)
-        }
-        if (isRevealing && !searchParams.get('reveal')) {
-          stopGrandReveal(true)
-        }
-      }
+      applyServerRevealState(res.data, 'poll')
     } catch (err) {
       // Ignore
     }
@@ -588,20 +593,12 @@ export function LeaderboardPage() {
       window.removeEventListener('tv_mode_toggled', handleUpdateEvent)
       window.removeEventListener('storage', handleUpdateEvent)
     }
-  }, [activeRound, isRevealing])
+  }, [activeRound])
 
   useEffect(() => {
     const t = setInterval(() => setClock(new Date()), 1000)
     return () => clearInterval(t)
   }, [])
-
-  // Check URL query for ?reveal=true
-  useEffect(() => {
-    if (searchParams.get('reveal') === 'true' && !isRevealing) {
-      const roundParam = Number(searchParams.get('round')) || 2
-      startGrandReveal(roundParam)
-    }
-  }, [searchParams])
 
   // TV Mode Auto-scroll logic
   useEffect(() => {
@@ -621,22 +618,6 @@ export function LeaderboardPage() {
     }, 50)
     return () => clearInterval(interval)
   }, [tvMode, isRevealing])
-
-  // Active round is controlled explicitly via search params or when reveal runs
-  useEffect(() => {
-    const r = searchParams.get('round')
-    if (r) {
-      setActiveRound(Number(r))
-    }
-  }, [searchParams])
-
-  // Auto-sync public leaderboard stage when teams are promoted (no ?round= yet)
-  useEffect(() => {
-    if (searchParams.get('round') || isRevealing) return
-    const maxRound = entries.reduce((max, e) => Math.max(max, (e as any).round || 1), 1)
-    if (maxRound >= 3 && activeRound !== 3) setActiveRound(3)
-    else if (maxRound === 2 && activeRound === 1) setActiveRound(2)
-  }, [entries, searchParams, isRevealing, activeRound])
 
   const rawDisplay = entries
 
@@ -665,6 +646,8 @@ export function LeaderboardPage() {
     .slice(0, FINALE_CUTOFF)
     .map((e, idx) => ({ ...e, rank: idx + 1 }))
 
+  top5Ref.current = top5
+
   const restR2 = filtered.slice(3)
   const r2Top3 = advancing.slice(0, 3)
   const podiumOrder = [
@@ -687,10 +670,13 @@ export function LeaderboardPage() {
   const startGrandReveal = (round: number = 2) => {
     // A late reveal_state / poll must never rewind a countdown that is already
     // playing on the LCD, otherwise the same slot would animate twice.
-    if (isDecryptingRef.current && round === revealRound) {
+    if (isDecryptingRef.current && round === revealRoundRef.current) {
+      isRevealingRef.current = true
       setIsRevealing(true)
       return
     }
+    revealRoundRef.current = round
+    isRevealingRef.current = true
     setRevealRound(round)
     setActiveRound(round)
     setIsRevealing(true)
@@ -704,17 +690,14 @@ export function LeaderboardPage() {
 
   const stopGrandReveal = (keepFinaleStep = false) => {
     setIsRevealing(false)
-    if (!keepFinaleStep && revealRound !== 3) {
+    isRevealingRef.current = false
+    if (!keepFinaleStep && revealRoundRef.current !== 3) {
       revealedStepRef.current = maxSteps
       setRevealedStep(maxSteps)
     }
-    // Keep stage on the reveal round after exit (don't snap back to Round 1)
-    if (revealRound >= 2) {
-      setActiveRound(revealRound)
-      searchParams.set('round', String(revealRound))
+    if (revealRoundRef.current >= 2) {
+      setActiveRound(revealRoundRef.current)
     }
-    searchParams.delete('reveal')
-    setSearchParams(searchParams, { replace: true })
   }
 
   const resetRevealProgress = () => {
@@ -726,26 +709,50 @@ export function LeaderboardPage() {
     setCountdownNum(null)
   }
 
-  const executeRevealToStep = (targetStep: number, targetRound?: number) => {
-    const effectiveRound = targetRound || revealRound || 3
-    if (targetRound && targetRound !== revealRound) {
+  const executeRevealToStep = (
+    requestedStep: number,
+    targetRound?: number,
+    options?: { catchUp?: boolean },
+  ) => {
+    const effectiveRound = targetRound || revealRoundRef.current || 3
+    if (targetRound && targetRound !== revealRoundRef.current) {
+      revealRoundRef.current = targetRound
       setRevealRound(targetRound)
       setActiveRound(targetRound)
     }
-    if (!isRevealing) {
+    if (!isRevealingRef.current) {
+      isRevealingRef.current = true
       setIsRevealing(true)
     }
 
-    if (targetStep <= 0) {
+    if (requestedStep <= 0) {
       resetRevealProgress()
       return
     }
 
     // Already unsealed, or this exact step is mid-countdown right now.
-    if (targetStep <= revealedStepRef.current) return
+    if (requestedStep <= revealedStepRef.current) return
     if (isDecryptingRef.current) return
 
+    // A late-joining screen (or poll) should land on the current place
+    // without replaying every earlier countdown.
+    if (options?.catchUp) {
+      revealedStepRef.current = requestedStep
+      setRevealedStep(requestedStep)
+      setIsDecrypting(false)
+      setCountdownNum(null)
+      return
+    }
+
     const isFinaleStep = effectiveRound === 3
+    const lastStep = isFinaleStep ? FINALE_CUTOFF : maxSteps
+    if (revealedStepRef.current >= lastStep) return
+
+    // One trigger unseals exactly one place. A skipped or out-of-range step
+    // (a stale broadcast, or a Round 2 step landing on the finale channel)
+    // must not cascade several podium slots open in a single countdown.
+    const targetStep = Math.min(requestedStep, revealedStepRef.current + 1, lastStep)
+
     const currentRank = isFinaleStep ? (FINALE_CUTOFF + 1 - targetStep) : (21 - targetStep)
 
     if (isFinaleStep) {
@@ -797,7 +804,7 @@ export function LeaderboardPage() {
             playRevealChime(1)
           }
           triggerFinaleConfetti(1)
-          speakCountdown('Grand Champion, ' + (top5[0]?.teamName || 'Winner'))
+          speakCountdown('Grand Champion, ' + (top5Ref.current[0]?.teamName || 'Winner'))
         }, (startFrom - 1) * tick + 1400)
 
       } else {
@@ -830,7 +837,7 @@ export function LeaderboardPage() {
           }
           triggerFinaleConfetti(currentRank)
           const place = finalePlace(currentRank)
-          const winnerName = top5[currentRank - 1]?.teamName || ''
+          const winnerName = top5Ref.current[currentRank - 1]?.teamName || ''
           speakCountdown(place.speak + winnerName)
         }, (startFrom - 1) * tick + 1400)
       }
@@ -844,17 +851,6 @@ export function LeaderboardPage() {
       }
     }
   }
-
-  const stepNextReveal = () => {
-    if (isDecrypting) return // Prevent clicking during active decryption
-
-    const next = Math.min(maxSteps, revealedStep + 1)
-    if (next === revealedStep) return
-
-    executeRevealToStep(next)
-    api.leaderboard.setRevealStep(next).catch(() => {})
-  }
-
 
   // Keep the LCD locked on the countdown card until the name is unsealed
   useEffect(() => {
@@ -1144,18 +1140,11 @@ export function LeaderboardPage() {
                   <h3 className={`text-2xl sm:text-3xl font-black mb-2 ${isFinale ? 'text-white' : 'text-[#1A1A1A]'}`}>
                     {isFinale ? '👑 Grand Finale Verdict Sealed!' : 'Round 1 Graded & Verified!'}
                   </h3>
-                  <p className={`max-w-lg mx-auto text-sm sm:text-base mb-6 font-medium ${isFinale ? 'text-slate-300' : 'text-slate-500'}`}>
-                    {isFinale 
-                      ? 'The stage is set to unveil 5th Place through 4th Place, 2nd Runner Up, 1st Runner Up, and crown the Grand Champion of Tamil Nadu!' 
-                      : 'The ceremony will announce all 20 qualifying teams one by one, counting down from Rank #20 down to the #1 Leader!'}
+                  <p className={`max-w-lg mx-auto text-sm sm:text-base font-medium ${isFinale ? 'text-slate-300' : 'text-slate-500'}`}>
+                    {isFinale
+                      ? 'Waiting for the admin to unseal 5th Place. Each place opens only when its controller button is pressed.'
+                      : 'Waiting for the admin to start the Top 20 announcement from the rounds console.'}
                   </p>
-                  <button
-                    onClick={stepNextReveal}
-                    className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-2xl font-black text-sm shadow-xl shadow-orange-950/40 cursor-pointer transition-all hover:scale-105"
-                  >
-                    <Play size={15} fill="white" />
-                    {isFinale ? '⚡ Begin Coronation Ceremony (#5)' : 'Start Announcement (#20)'}
-                  </button>
                 </motion.div>
               ) : currentSpotlightTeam ? (
 
@@ -1267,13 +1256,9 @@ export function LeaderboardPage() {
                       Progress: {revealedStep} of {maxSteps} revealed
                     </span>
                     {revealedStep === maxSteps ? (
-                      <button
-                        onClick={() => { resetRevealProgress() }}
-                        className="inline-flex items-center gap-1.5 text-amber-400 hover:text-amber-300 font-black cursor-pointer"
-                      >
-                        <RotateCcw size={13} />
-                        {isFinale ? '🔄 Replay Grand Finale Ceremony' : 'Replay Announcement'}
-                      </button>
+                      <span className={isFinale ? 'text-amber-300 font-bold' : 'text-slate-700 font-bold'}>
+                        {isFinale ? 'Ceremony complete' : 'Announcement complete'}
+                      </span>
                     ) : (
                       <span className={isFinale ? 'text-amber-300 font-bold' : 'text-slate-700 font-bold'}>
                         Next: {isFinale
