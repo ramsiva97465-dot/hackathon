@@ -3,7 +3,7 @@ import { Award, Download, Share2, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 
 const TEMPLATE_SRC = '/certificates/participation.jpg'
-const NAME_FONT = '"Playfair Display", "Times New Roman", Times, serif'
+const NAME_FONT = '"Libre Baskerville", Georgia, "Times New Roman", serif'
 
 interface ParticipantCertificateProps {
   participantName: string
@@ -38,11 +38,11 @@ async function ensureNameFont() {
   if (!('fonts' in document)) return
   try {
     await Promise.all([
-      document.fonts.load(`italic 700 72px ${NAME_FONT}`),
       document.fonts.load(`700 72px ${NAME_FONT}`),
+      document.fonts.load(`400 72px ${NAME_FONT}`),
     ])
   } catch {
-    // Canvas will fall back to Times New Roman
+    // Canvas will fall back to Arial
   }
 }
 
@@ -54,15 +54,16 @@ function drawFittedName(
   maxWidth: number,
   maxSize: number,
 ) {
+  const minSize = Math.max(16, Math.round(maxSize * 0.42))
   let size = maxSize
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillStyle = '#111111'
-  ctx.font = `italic 700 ${size}px ${NAME_FONT}`
+  ctx.font = `700 ${size}px ${NAME_FONT}`
 
-  while (size > 36 && ctx.measureText(name).width > maxWidth) {
-    size -= 2
-    ctx.font = `italic 700 ${size}px ${NAME_FONT}`
+  while (size > minSize && ctx.measureText(name).width > maxWidth) {
+    size -= 1
+    ctx.font = `700 ${size}px ${NAME_FONT}`
   }
 
   ctx.fillText(name, centerX, centerY)
@@ -96,7 +97,7 @@ export function ParticipantCertificate({
 
       // Name sits in the blank band above the orange underline on the template.
       const centerX = canvas.width * 0.5
-      const centerY = canvas.height * 0.535
+      const centerY = canvas.height * 0.522
       const maxWidth = canvas.width * 0.62
       const maxSize = Math.round(canvas.height * 0.072)
 
@@ -178,10 +179,10 @@ export function ParticipantCertificate({
         <div
           className="absolute left-[14%] right-[14%] text-center pointer-events-none"
           style={{
-            top: '53.5%',
+            top: '52.2%',
             transform: 'translateY(-50%)',
             fontFamily: NAME_FONT,
-            fontStyle: 'italic',
+            fontStyle: 'normal',
             fontWeight: 700,
             color: '#111111',
             fontSize: 'clamp(1.35rem, 4.2vw, 3.4rem)',
