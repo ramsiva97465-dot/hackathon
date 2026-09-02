@@ -102,7 +102,9 @@ export class TeamsService {
       judgesAssigned: t.assignments.length,
       assignedJudgeIds: t.assignments.map(a => a.judgeId),
       assignedJudgeName: t.assignments[0]?.judge?.user?.name || null,
-      scoresSubmitted: t.scoreSheets.filter(s => s.isSubmitted && (s.round || 1) === (t.round || 1)).length,
+      // Evaluation is a persistent team status across promotions. Scores remain
+      // round-specific, but once a judge has evaluated a team this stays 1/1.
+      scoresSubmitted: t.scoreSheets.some(s => s.isSubmitted) ? 1 : 0,
       totalJudges: 1, // 1 Judge per Team requirement
       avgScore: t.leaderboard[0]?.overallScore || null,
       rank: t.leaderboard[0]?.rank || null,
