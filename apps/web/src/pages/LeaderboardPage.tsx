@@ -1271,7 +1271,7 @@ export function LeaderboardPage() {
                         ? '#F59E0B'
                         : (currentSpotlightRank === 1 ? '#E83C00' : currentSpotlightRank === 2 ? '#334155' : currentSpotlightRank === 3 ? '#B45309' : '#047857')
                     }}>
-                    {isFinale && currentSpotlightRank === 1 ? '👑 GRAND CHAMPION' : `Top #${currentSpotlightRank}`}
+                    {isFinale && currentSpotlightRank === 1 ? '👑 GRAND CHAMPION' : `#${currentSpotlightRank}`}
                   </div>
 
                   {/* Team Name */}
@@ -1320,8 +1320,8 @@ export function LeaderboardPage() {
                             : currentSpotlightRank === 4 ? '2nd Runner Up (#3 🥉)'
                             : currentSpotlightRank === 5 ? '4th Place'
                             : currentSpotlightRank === 6 ? '5th Place'
-                            : `Top #${currentSpotlightRank - 1}`)
-                          : `Top #${currentSpotlightRank - 1}`}
+                            : `#${currentSpotlightRank - 1}`)
+                          : `#${currentSpotlightRank - 1}`}
                       </span>
                     )}
                   </div>
