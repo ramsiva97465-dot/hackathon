@@ -342,8 +342,32 @@ function Round1Row({ entry, index }: { entry: LeaderboardEntry; index: number })
 
 
 // ── Round 2 Table Row ─────────────────────────────────────────────────────────
-function Round2Row({ entry }: { entry: LeaderboardEntry }) {
+function Round2Row({ entry, hideStandings }: { entry: LeaderboardEntry; hideStandings?: boolean }) {
   const track = getTrackConfig(entry.track)
+  if (hideStandings) {
+    return (
+      <motion.div
+        key={entry.teamId}
+        layout
+        layoutId={`r2-${entry.teamId}`}
+        className="grid grid-cols-[1fr_200px] px-8 py-5 items-center border-b border-black/5 hover:bg-white/50 transition-colors"
+      >
+        <div className="flex items-center gap-4 min-w-0">
+          <Avatar name={entry.teamName} size="md" className="shadow-sm ring-2 ring-white" />
+          <div className="min-w-0">
+            <div className="text-lg font-bold text-slate-900 truncate">{entry.teamName}</div>
+            <div className="text-sm font-medium text-slate-500 truncate">{entry.college}</div>
+          </div>
+        </div>
+        <div>
+          <span className="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold border shadow-sm bg-white"
+            style={{ color: track.color, borderColor: `${track.color}40` }}>
+            {track.label}
+          </span>
+        </div>
+      </motion.div>
+    )
+  }
   return (
     <motion.div
       key={entry.teamId}
@@ -465,6 +489,13 @@ export function LeaderboardPage() {
   })
 
   // Listen for broadcasted TV Mode toggles from admin panel
+  useWebSocket<{ round?: number }>('leaderboard:stage', (data) => {
+    if (typeof data?.round !== 'number') return
+    isRevealingRef.current = false
+    setIsRevealing(false)
+    setActiveRound(data.round)
+  })
+
   useWebSocket<{ tvMode: boolean }>('leaderboard:tv_mode', (data) => {
     if (typeof data?.tvMode === 'boolean') {
       setTvMode(data.tvMode)
@@ -600,9 +631,21 @@ export function LeaderboardPage() {
     return () => clearInterval(t)
   }, [])
 
+  // After Top 5 promotion, keep the public board on the Top 20 list.
+  // Do not jump to the finale podium until an admin reveal step arrives.
+  useEffect(() => {
+    if (isRevealing) return
+    const hasFinalists = entries.some((e) => ((e as any).round || 1) === 3)
+    if (hasFinalists && activeRound !== 2) {
+      setActiveRound(2)
+    }
+  }, [entries, isRevealing, activeRound])
+
   // TV Mode Auto-scroll logic
   useEffect(() => {
-    if (!tvMode || isRevealing) return
+    const waitingForFinale = entries.some((e) => ((e as any).round || 1) === 3)
+    if (isRevealing) return
+    if (!tvMode && !waitingForFinale) return
     const scrollSpeed = 1
     let scrollingUp = false
     const interval = setInterval(() => {
@@ -617,7 +660,7 @@ export function LeaderboardPage() {
       }
     }, 50)
     return () => clearInterval(interval)
-  }, [tvMode, isRevealing])
+  }, [tvMode, isRevealing, entries])
 
   const rawDisplay = entries
 
@@ -648,13 +691,6 @@ export function LeaderboardPage() {
 
   top5Ref.current = top5
 
-  const restR2 = filtered.slice(3)
-  const r2Top3 = advancing.slice(0, 3)
-  const podiumOrder = [
-    r2Top3[1] || r2Top3[0],
-    r2Top3[0],
-    r2Top3[2] || r2Top3[0],
-  ]
   const finalePodiumOrder = [
     top5[3],
     top5[1],
@@ -1662,7 +1698,9 @@ export function LeaderboardPage() {
                 {activeRound === 3
                   ? `${filtered.length} finalists`
                   : activeRound === 2
-                  ? `${filtered.length} teams competing · judges scoring live`
+                  ? (r3Teams.length > 0
+                    ? `${advancing.length} shortlisted teams · waiting for admin to reveal the winners`
+                    : `${filtered.length} teams competing · judges scoring live`)
                   : `${filtered.length} teams · tracking live evaluation completion`}
               </p>
             </motion.div>
@@ -1691,53 +1729,28 @@ export function LeaderboardPage() {
             </div>
           )}
 
-          {/* ROUND 2 VIEW — Podium top 3 + table for rest */}
+          {/* ROUND 2 VIEW — full Top 20 list. No podium; winners stay sealed
+              until the admin clicks Reveal 5th / 4th / runner-up / champion. */}
           {activeRound === 2 && (
-            <>
-              {/* Podium (Top 3) */}
-              <div className="flex items-end justify-center gap-6 mb-16 w-full max-w-4xl">
-                {podiumOrder.map((entry, idx) => {
-                  if (!entry) return null
-                  const isFirst = entry.rank === 1
-                  const heights = { 1: 'h-[300px]', 2: 'h-[250px]', 3: 'h-[220px]' }
-                  const cardStyles = {
-                    1: { bg: '#F4ECE1', border: '#E83C00', badge: 'bg-[#E83C00] text-white', shadow: 'shadow-2xl shadow-orange-900/10' },
-                    2: { bg: '#F4ECE1', border: 'transparent', badge: 'bg-[#EAE4D8] text-slate-700', shadow: 'shadow-xl shadow-black/5' },
-                    3: { bg: '#F4ECE1', border: 'transparent', badge: 'bg-amber-100/60 text-amber-900', shadow: 'shadow-xl shadow-black/5' },
-                  }
-                  const style = cardStyles[entry.rank as keyof typeof cardStyles]
-                  return (
-                    <motion.div
-                      key={entry.teamId}
-                      layout
-                      initial={{ opacity: 0, y: 40 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.15, duration: 0.6, type: 'spring', bounce: 0.4 }}
-                      className={`relative flex flex-col items-center p-8 rounded-[2rem] w-1/3 ${heights[entry.rank as keyof typeof heights] ?? 'h-[220px]'} ${style?.shadow ?? ''}`}
-                      style={{ backgroundColor: style?.bg, border: `2px solid ${style?.border ?? 'transparent'}` }}
-                    >
-                      <div className={`absolute -top-6 px-5 py-2.5 rounded-2xl flex items-center justify-center font-black text-xl shadow-lg ${style?.badge ?? 'bg-[#EAE4D8] text-slate-700'}`}>
-                        {isFirst ? <span className="flex items-center gap-2"><Trophy size={20} /> 1st</span> : `#${entry.rank}`}
-                      </div>
-                      <div className="mt-8 flex flex-col items-center text-center flex-1 w-full">
-                        <Avatar name={entry.teamName} size="lg" className={`mb-4 shadow-md ring-4 ${isFirst ? 'ring-orange-100' : 'ring-white/50'}`} />
-                        <h3 className="text-2xl font-black text-[#1A1A1A] mb-1 truncate w-full">{entry.teamName}</h3>
-                        <p className="text-slate-500 font-medium text-sm truncate w-full">{entry.college}</p>
-                      </div>
-                      <div className="w-full pt-4 mt-auto border-t border-black/5 text-center">
-                        <motion.div key={entry.totalScore} initial={{ scale: 1.15 }} animate={{ scale: 1 }}
-                          className="text-4xl font-black text-[#1A1A1A]">
-                          {entry.totalScore.toFixed(1)}
-                        </motion.div>
-                      </div>
-                    </motion.div>
-                  )
-                })}
-              </div>
-
-              {/* Table (Rank 4+) */}
-              {restR2.length > 0 && (
-                <div className="w-full max-w-5xl rounded-[2rem] bg-[#F4ECE1] shadow-2xl shadow-black/10 overflow-hidden border border-black/5">
+            <div className="w-full max-w-5xl rounded-[2rem] bg-[#F4ECE1] shadow-2xl shadow-black/10 overflow-hidden border border-black/5">
+              {r3Teams.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-[1fr_200px] px-8 py-5 bg-[#EBE2D5] border-b border-black/5 text-xs font-bold text-slate-600 uppercase tracking-widest">
+                    <div>Team</div>
+                    <div>Track</div>
+                  </div>
+                  <div className="flex flex-col bg-[#F4ECE1]">
+                    <AnimatePresence>
+                      {[...advancing]
+                        .sort((a, b) => a.teamName.localeCompare(b.teamName))
+                        .map((entry) => (
+                          <Round2Row key={entry.teamId} entry={entry} hideStandings />
+                        ))}
+                    </AnimatePresence>
+                  </div>
+                </>
+              ) : (
+                <>
                   <div className="grid grid-cols-[80px_1fr_200px_120px_120px_80px] px-8 py-5 bg-[#EBE2D5] border-b border-black/5 text-xs font-bold text-slate-600 uppercase tracking-widest">
                     <div className="text-center">Rank</div>
                     <div>Team Details</div>
@@ -1748,14 +1761,14 @@ export function LeaderboardPage() {
                   </div>
                   <div className="flex flex-col bg-[#F4ECE1]">
                     <AnimatePresence>
-                      {restR2.map((entry) => (
+                      {advancing.map((entry) => (
                         <Round2Row key={entry.teamId} entry={entry} />
                       ))}
                     </AnimatePresence>
                   </div>
-                </div>
+                </>
               )}
-            </>
+            </div>
           )}
 
           {/* ROUND 3 — Winners podium only (locked until admin reveal step) */}

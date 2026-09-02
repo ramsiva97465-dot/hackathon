@@ -147,4 +147,28 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
       console.error('[WS] Clear reveal on promote failed:', err)
     }
   }
+
+  // After Top 5 promotion the public board should show the Top 20 shortlist
+  // as a scrolling list — not the finale podium — until admin reveal clicks.
+  async showTop20Shortlist() {
+    this.isRevealing = false
+    this.revealStep = 0
+    this.revealRound = 2
+    try {
+      if (!this.server) return
+      this.server.to('leaderboard').emit('leaderboard:reveal_stop', {
+        isRevealing: false,
+        round: 2,
+        step: 0,
+      })
+      this.server.to('leaderboard').emit('leaderboard:reveal_state', {
+        isRevealing: false,
+        round: 2,
+        step: 0,
+      })
+      this.server.to('leaderboard').emit('leaderboard:stage', { round: 2 })
+    } catch (err) {
+      console.error('[WS] Show Top 20 shortlist failed:', err)
+    }
+  }
 }

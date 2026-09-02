@@ -183,11 +183,14 @@ export function RoundsManagement() {
         toast.success(
           currentRound === 1
             ? `✅ Successfully promoted ${res.data.promotedCount} teams to Round 2! Click 'Broadcast Top 20 Grand Reveal' whenever you are ready to trigger the stage countdown.`
-            : `✅ Successfully promoted Top 5 winners to Round 3! Use the Top 5 Controller below to reveal 5th through 1st step-by-step on stage.`
+            : `✅ Promoted Top 5. The public board now shows the Top 20 list. Use Reveal 5th / 4th / … to announce winners.`
         )
         // Shift active view tab to next round
         setActiveTab(currentRound + 1)
         fetchLeaderboard()
+        if (currentRound === 2) {
+          window.open('/leaderboard', 'voiceathon-lcd')
+        }
       }
     } catch (err: any) {
       console.error(err)
@@ -310,7 +313,7 @@ export function RoundsManagement() {
                   className="flex items-center gap-1.5 px-4 py-2.5 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-[#E83C00]/15 cursor-pointer"
                 >
                   <Crown size={14} />
-                  <span>👑 Promote Top 5 Winners to Round 3</span>
+                  <span>👑 Promote Top 5</span>
                 </button>
               </>
             )}
