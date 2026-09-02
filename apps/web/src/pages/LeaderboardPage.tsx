@@ -481,7 +481,7 @@ export function LeaderboardPage() {
   })
 
   useWebSocket<{ isRevealing: boolean }>('leaderboard:reveal_stop', () => {
-    stopGrandReveal(true)
+    if (isRevealingRef.current) stopGrandReveal(true)
   })
 
   useWebSocket<{ isRevealing: boolean; round?: number; step?: number }>('leaderboard:reveal_state', (data) => {
@@ -725,13 +725,16 @@ export function LeaderboardPage() {
   }
 
   const stopGrandReveal = (keepFinaleStep = false) => {
+    const wasRevealing = isRevealingRef.current
     setIsRevealing(false)
     isRevealingRef.current = false
     if (!keepFinaleStep && revealRoundRef.current !== 3) {
       revealedStepRef.current = maxSteps
       setRevealedStep(maxSteps)
     }
-    if (revealRoundRef.current >= 2) {
+    // Stay on the ceremony round only if we were actually in a reveal.
+    // A leftover stop after Promote Top 20 must not flip the LCD to Round 2.
+    if (wasRevealing && revealRoundRef.current >= 2) {
       setActiveRound(revealRoundRef.current)
     }
   }

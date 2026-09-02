@@ -126,11 +126,14 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
     }
   }
 
-  // Promotion must never leave a ceremony running. Clear leftover reveal so
-  // a later LCD poll cannot reopen Top 20 / Top 5 mode on its own.
+  // Promotion must never leave a ceremony running. Only broadcast a stop
+  // when a ceremony is actually live — otherwise the public LCD treats the
+  // default revealRound (2) as a command to switch into the Top 20 board.
   async clearRevealOnPromote() {
+    const wasRevealing = this.isRevealing
     this.isRevealing = false
     this.revealStep = 0
+    if (!wasRevealing) return
     try {
       if (!this.server) return
       this.server.to('leaderboard').emit('leaderboard:reveal_stop', {

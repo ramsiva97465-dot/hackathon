@@ -346,8 +346,9 @@ export function RoundsManagement() {
           </div>
         </div>
 
-        {/* LIVE STAGE OPERATOR CONSOLE FOR TOP 5 GRAND FINALE */}
-        {(activeRoundNum === 3 || activeTab === 3 || isStageRevealing) && (
+        {/* LIVE STAGE OPERATOR CONSOLE FOR TOP 5 GRAND FINALE
+            Only after Promote Top 5. Reveal Top 20 must not open this. */}
+        {winnersCount > 0 && (
           <div className="p-6 sm:p-7 rounded-2xl border-2 border-amber-500/40 bg-gradient-to-br from-[#1e130a] via-[#120a05] to-[#0a0502] text-white shadow-2xl relative overflow-hidden">
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
