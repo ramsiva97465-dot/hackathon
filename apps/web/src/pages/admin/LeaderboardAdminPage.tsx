@@ -156,7 +156,8 @@ export function LeaderboardAdminPage() {
           </button>
         </div>
 
-        {/* Top 5 podium */}
+        {/* Top 5 podium — winners tab only */}
+        {activeRound === 3 && (
         <div className="grid grid-cols-5 gap-3">
           {display.slice(0, 5).map((_, i) => {
             const podiumOrder = [3, 1, 0, 2, 4]
@@ -186,6 +187,7 @@ export function LeaderboardAdminPage() {
             )
           })}
         </div>
+        )}
 
         {/* Full table */}
         <motion.div
