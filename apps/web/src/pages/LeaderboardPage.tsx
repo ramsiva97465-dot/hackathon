@@ -7,7 +7,7 @@ import { getTrackConfig } from '@/lib/utils'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { 
   TrendingUp, TrendingDown, Minus, Trophy, ChevronRight, Monitor,
-  Sparkles, Star, CheckCircle2, Lock, Flame, Zap, Award, Crown, Medal, X, Layers, ShieldCheck
+  Sparkles, Star, CheckCircle2, Lock, Flame, Zap, Award, Crown, Medal, Layers, ShieldCheck
 } from 'lucide-react'
 import type { LeaderboardEntry } from '@hackathon/shared'
 import api from '@/lib/api'
@@ -1021,18 +1021,6 @@ export function LeaderboardPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Close button only visible when reveal mode is currently active */}
-          {isRevealing && (
-            <button
-              onClick={() => stopGrandReveal()}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-all shadow-xs cursor-pointer"
-              title="Exit Grand Reveal"
-            >
-              <X size={13} className="text-rose-600 stroke-[2.5]" />
-              <span>Exit Announcement</span>
-            </button>
-          )}
-
           {/* Active TV Mode Indicator (Controlled by Admin Panel) */}
           {!isRevealing && tvMode && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 shadow-xs animate-pulse">
@@ -1258,7 +1246,7 @@ export function LeaderboardPage() {
                         ? '#F59E0B'
                         : (currentSpotlightRank === 1 ? '#E83C00' : currentSpotlightRank === 2 ? '#334155' : currentSpotlightRank === 3 ? '#B45309' : '#047857')
                     }}>
-                    {isFinale && currentSpotlightRank === 1 ? '👑 GRAND CHAMPION' : `RANK #${currentSpotlightRank}`}
+                    {isFinale && currentSpotlightRank === 1 ? '👑 GRAND CHAMPION' : `Top #${currentSpotlightRank}`}
                   </div>
 
                   {/* Team Name */}
@@ -1307,8 +1295,8 @@ export function LeaderboardPage() {
                             : currentSpotlightRank === 4 ? '2nd Runner Up (#3 🥉)'
                             : currentSpotlightRank === 5 ? '4th Place'
                             : currentSpotlightRank === 6 ? '5th Place'
-                            : `Rank #${currentSpotlightRank - 1}`)
-                          : `Rank #${currentSpotlightRank - 1}`}
+                            : `Top #${currentSpotlightRank - 1}`)
+                          : `Top #${currentSpotlightRank - 1}`}
                       </span>
                     )}
                   </div>

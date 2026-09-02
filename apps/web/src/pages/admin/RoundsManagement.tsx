@@ -5,7 +5,7 @@ import { api } from '@/lib/api'
 import { toast } from 'sonner'
 import { 
   Zap, Trophy, RefreshCw, AlertTriangle, Play,
-  Users, CheckCircle2, ChevronRight, Medal, Sparkles, ExternalLink, Crown
+  Users, CheckCircle2, ChevronRight, Medal, Sparkles, Crown
 } from 'lucide-react'
 
 type TeamOverview = {
@@ -362,15 +362,6 @@ export function RoundsManagement() {
                 </p>
               </div>
 
-              <a
-                href="/leaderboard"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-xs font-black text-amber-200 transition-all shadow-md shrink-0 self-start lg:self-center cursor-pointer"
-              >
-                <ExternalLink size={14} />
-                Open Live LCD Window ↗
-              </a>
             </div>
 
             {/* Step Buttons Grid */}
