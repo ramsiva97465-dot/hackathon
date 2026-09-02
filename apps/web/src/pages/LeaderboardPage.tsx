@@ -25,8 +25,10 @@ function finalePlace(rank: number) {
 
 const COUNTDOWN_WORDS: Record<number, string> = {
   10: 'Ten', 9: 'Nine', 8: 'Eight', 7: 'Seven', 6: 'Six',
-  5: 'Five', 4: 'Four', 3: 'Three', 2: 'Two', 1: 'One',
+  5: 'Five', 4: 'Four', 3: 'Three', 2: 'Two', 1: 'One', 0: 'Zero',
 }
+
+const ROUND2_COUNTDOWN_START = 5
 
 /** Step 1=5th, 2=4th, 3=2nd runner-up, 4=1st runner-up, 5=champion */
 function finaleCountdownStart(step: number) {
@@ -421,8 +423,10 @@ export function LeaderboardPage() {
   const [countdownNum, setCountdownNum] = useState<number | null>(null)
   const [scrambledName, setScrambledName] = useState<string>('')
   const [decryptingRank, setDecryptingRank] = useState<number | null>(null)
-  const timerRef = useRef<any>(null)
+  const [unlockedRanks, setUnlockedRanks] = useState<number[]>([])
+  const unlockedRanksRef = useRef<number[]>([])
   const rosterRef = useRef<HTMLDivElement>(null)
+  const rowRefs = useRef<Record<number, HTMLDivElement | null>>({})
   const activeRoundRef = useRef(activeRound)
   // Reveal progress is also polled every 3s. Refs keep the socket handler and
   // the poll from skipping an in-flight countdown via stale state.
@@ -434,6 +438,7 @@ export function LeaderboardPage() {
   // A countdown announces its winner up to 10s after it was triggered, so the
   // name must be read when it is spoken, not when the trigger arrived.
   const top5Ref = useRef<Array<LeaderboardEntry & { rank: number }>>([])
+  const advancingRef = useRef<Array<LeaderboardEntry & { rank: number }>>([])
 
   useEffect(() => {
     activeRoundRef.current = activeRound
@@ -446,6 +451,10 @@ export function LeaderboardPage() {
   useEffect(() => {
     isDecryptingRef.current = isDecrypting
   }, [isDecrypting])
+
+  useEffect(() => {
+    unlockedRanksRef.current = unlockedRanks
+  }, [unlockedRanks])
 
   useEffect(() => {
     isRevealingRef.current = isRevealing
@@ -572,8 +581,8 @@ export function LeaderboardPage() {
       return
     }
 
-    // Top 20 auto-play lives on the LCD only (server stays at step 0).
-    // Never rewind that progress from a leftover step-0 poll.
+    // A leftover step-0 poll (ceremony opened but no place clicked yet)
+    // must never rewind a place the LCD already unsealed.
     if (serverStep > revealedStepRef.current) {
       executeRevealToStep(serverStep, targetRound, { catchUp: source === 'poll' })
     }
@@ -694,6 +703,7 @@ export function LeaderboardPage() {
   // Advancing Top 20 (sorted 1 to 20)
   const advancing = filtered.slice(0, ROUND2_CUTOFF)
   const notAdvancing = filtered.slice(ROUND2_CUTOFF)
+  if (advancing.length > 0) advancingRef.current = advancing
 
   // Official Top 5 for Grand Finale.
   // If teams were promoted to Round 3, use those; otherwise fall back to overall ranking.
@@ -736,6 +746,8 @@ export function LeaderboardPage() {
     isDecryptingRef.current = false
     revealedStepRef.current = 0
     setRevealedStep(0)
+    setUnlockedRanks([])
+    unlockedRanksRef.current = []
     setIsPaused(false)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -762,6 +774,7 @@ export function LeaderboardPage() {
     setRevealedStep(0)
     setIsDecrypting(false)
     setCountdownNum(null)
+    setUnlockedRanks([])
   }
 
   const executeRevealToStep = (
@@ -789,9 +802,15 @@ export function LeaderboardPage() {
       return
     }
 
+    const isFinaleStep = effectiveRound === 3
+    const lastStep = isFinaleStep ? FINALE_CUTOFF : maxSteps
+    const requestedRank = isFinaleStep ? (FINALE_CUTOFF + 1 - requestedStep) : (21 - requestedStep)
+
     // Already unsealed, or this exact step is mid-countdown right now.
-    if (requestedStep <= revealedStepRef.current) return
+    if (isFinaleStep && requestedStep <= revealedStepRef.current) return
+    if (!isFinaleStep && unlockedRanksRef.current.includes(requestedRank) && !options?.catchUp) return
     if (isDecryptingRef.current) return
+    if (isFinaleStep && revealedStepRef.current >= lastStep) return
 
     // A late-joining screen (or poll) should land on the current place
     // without replaying every earlier countdown.
@@ -800,17 +819,19 @@ export function LeaderboardPage() {
       setRevealedStep(requestedStep)
       setIsDecrypting(false)
       setCountdownNum(null)
+      if (!isFinaleStep && requestedStep > 0) {
+        const recovered = Array.from({ length: requestedStep }, (_, i) => 21 - (i + 1))
+        unlockedRanksRef.current = recovered
+        setUnlockedRanks(recovered)
+      }
       return
     }
 
-    const isFinaleStep = effectiveRound === 3
-    const lastStep = isFinaleStep ? FINALE_CUTOFF : maxSteps
-    if (revealedStepRef.current >= lastStep) return
-
-    // One trigger unseals exactly one place. A skipped or out-of-range step
-    // (a stale broadcast, or a Round 2 step landing on the finale channel)
-    // must not cascade several podium slots open in a single countdown.
-    const targetStep = Math.min(requestedStep, revealedStepRef.current + 1, lastStep)
+    // Finale stays sequential so one click cannot unseal the whole podium.
+    // Round 2 announces the exact place the admin clicked (e.g. #15).
+    const targetStep = isFinaleStep
+      ? Math.min(requestedStep, revealedStepRef.current + 1, lastStep)
+      : Math.min(Math.max(requestedStep, 1), lastStep)
 
     const currentRank = isFinaleStep ? (FINALE_CUTOFF + 1 - targetStep) : (21 - targetStep)
 
@@ -902,12 +923,60 @@ export function LeaderboardPage() {
       }
 
     } else {
-      // Round 2 standard reveal
-      revealedStepRef.current = targetStep
-      setRevealedStep(targetStep)
-      if (soundEnabled) {
-        playRevealChime(currentRank)
+      // Round 2: one admin click unseals one place, with a 5→0 countdown.
+      animatingStepRef.current = targetStep
+      isDecryptingRef.current = true
+      setIsDecrypting(true)
+      setDecryptingRank(currentRank)
+
+      const candidateNames = (advancingRef.current.length > 0 ? advancingRef.current : filtered).map(t => t.teamName)
+      let scrambleIdx = 0
+      let scrambleInterval: any = null
+
+      const runScramble = (speed: number) => {
+        if (scrambleInterval) clearInterval(scrambleInterval)
+        scrambleInterval = setInterval(() => {
+          if (candidateNames.length > 0) {
+            setScrambledName(candidateNames[scrambleIdx % candidateNames.length])
+            scrambleIdx++
+          }
+        }, speed)
       }
+
+      const startFrom = ROUND2_COUNTDOWN_START
+      const tick = 1100
+      for (let n = startFrom; n >= 0; n--) {
+        const delay = (startFrom - n) * tick
+        const beat = startFrom - n + 1
+        const scrambleSpeed = 60 + (startFrom - n) * 70
+        const apply = () => {
+          setCountdownNum(n)
+          speakCountdown(COUNTDOWN_WORDS[n] || String(n))
+          if (soundEnabled) playHeartbeatTick(beat)
+          runScramble(scrambleSpeed)
+        }
+        if (delay === 0) apply()
+        else setTimeout(apply, delay)
+      }
+
+      setTimeout(() => {
+        clearInterval(scrambleInterval)
+        isDecryptingRef.current = false
+        animatingStepRef.current = 0
+        revealedStepRef.current = targetStep
+        setIsDecrypting(false)
+        setCountdownNum(null)
+        setRevealedStep(targetStep)
+        unlockedRanksRef.current = unlockedRanksRef.current.includes(currentRank)
+          ? unlockedRanksRef.current
+          : [...unlockedRanksRef.current, currentRank]
+        setUnlockedRanks(unlockedRanksRef.current)
+        if (soundEnabled) {
+          playRevealChime(currentRank)
+        }
+        const winnerName = advancingRef.current[currentRank - 1]?.teamName || ''
+        speakCountdown(`Number ${currentRank}, ` + winnerName)
+      }, startFrom * tick + 1400)
     }
   }
 
@@ -922,7 +991,7 @@ export function LeaderboardPage() {
     }
   }, [isDecrypting])
 
-  // Auto-scroll loop for Top 20 (Round 2) or Podium scroll (Round 3)
+  // After each Top 20 card, scroll the table to that team's row. Repeats every reveal.
   useEffect(() => {
     if (!isRevealing) return
 
@@ -934,76 +1003,22 @@ export function LeaderboardPage() {
       return () => clearTimeout(timer)
     }
 
-    if (revealedStep < 20) return
+    if (isDecrypting || unlockedRanks.length === 0) return
 
-    let isPausedAtBoundary = false
-    let scrollInterval: ReturnType<typeof setInterval> | null = null
-    let pauseTimeout: ReturnType<typeof setTimeout> | null = null
+    const rank = 21 - revealedStep
+    const timer = setTimeout(() => {
+      const row = rowRefs.current[rank]
+      if (row) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      } else {
+        rosterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 7000)
 
-    // Step 1: After initial 2.5s, scroll down to the Top 20 table
-    const initialScroll = setTimeout(() => {
-      rosterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    return () => clearTimeout(timer)
+  }, [isRevealing, revealedStep, isFinale, isDecrypting, unlockedRanks.length])
 
-      // Step 2: Start continuous looping scroll after table comes into view
-      pauseTimeout = setTimeout(() => {
-        scrollInterval = setInterval(() => {
-          if (isPausedAtBoundary) return
-
-          window.scrollBy({ top: 1, behavior: 'auto' })
-
-          const atBottom = (window.innerHeight + Math.ceil(window.scrollY)) >= document.body.offsetHeight - 12
-          if (atBottom) {
-            isPausedAtBoundary = true
-            // Pause at bottom for 2.5s so audience can read Rank #15-#20
-            pauseTimeout = setTimeout(() => {
-              // Smooth scroll back up to Rank #1 (Top of Table)
-              rosterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              // Pause at top for 2.5s so audience can read Rank #1-#5 before scrolling down again
-              pauseTimeout = setTimeout(() => {
-                isPausedAtBoundary = false
-              }, 2500)
-            }, 2500)
-          }
-        }, 32) // ~31px/sec smooth readable scroll speed
-      }, 1500)
-    }, 2500)
-
-    return () => {
-      clearTimeout(initialScroll)
-      if (pauseTimeout) clearTimeout(pauseTimeout)
-      if (scrollInterval) clearInterval(scrollInterval)
-    }
-  }, [isRevealing, revealedStep, isFinale, isDecrypting])
-
-  // Automatic Reveal Step Timer for Round 2 Auto-Play only (Round 3 Finale is 100% controlled by Admin Remote)
-  useEffect(() => {
-    if (!isRevealing || isPaused || isFinale) {
-      if (timerRef.current) clearInterval(timerRef.current)
-      return
-    }
-
-    const delay = 2400
-
-    timerRef.current = setInterval(() => {
-      setRevealedStep(prev => {
-        if (prev >= maxSteps) {
-          clearInterval(timerRef.current)
-          return prev
-        }
-        const next = prev + 1
-        const currentRank = 21 - next
-        if (soundEnabled) {
-          playRevealChime(currentRank)
-        }
-        revealedStepRef.current = next
-        return next
-      })
-    }, delay)
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
-  }, [isRevealing, isPaused, isFinale, maxSteps, soundEnabled])
+  // Round 2 is one-click-per-team from the admin table — never auto-play 20→1.
 
   // Current spotlight team during countdown
   // For Round 2 (20 -> 1): Step 1 reveals rank 20, Step 20 reveals rank 1
@@ -1114,15 +1129,17 @@ export function LeaderboardPage() {
                   <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest mb-6 bg-amber-950/90 border border-amber-500/60 text-amber-300 shadow-md">
                     <Sparkles size={14} className="text-amber-400 animate-spin" />
                     <span>
-                      {decryptingRank === 1
-                        ? '👑 Unsealing Grand Champion (1st Place)...'
-                        : decryptingRank === 2
-                        ? '🥈 Decrypting 1st Runner Up (2nd Place)...'
-                        : decryptingRank === 3
-                        ? '🥉 Decrypting 2nd Runner Up (3rd Place)...'
-                        : decryptingRank === 4
-                        ? 'Decrypting 4th Place...'
-                        : 'Decrypting 5th Place...'}
+                      {isFinale
+                        ? (decryptingRank === 1
+                          ? '👑 Unsealing Grand Champion (1st Place)...'
+                          : decryptingRank === 2
+                          ? '🥈 Decrypting 1st Runner Up (2nd Place)...'
+                          : decryptingRank === 3
+                          ? '🥉 Decrypting 2nd Runner Up (3rd Place)...'
+                          : decryptingRank === 4
+                          ? 'Decrypting 4th Place...'
+                          : 'Decrypting 5th Place...')
+                        : `Decrypting #${decryptingRank}...`}
                     </span>
                   </div>
 
@@ -1520,8 +1537,8 @@ export function LeaderboardPage() {
               </div>
             </div>
             ) : null
-          ) : (
-            /* ROUND 2: TOP 20 QUALIFIERS TABLE */
+          ) : !isDecrypting ? (
+            /* ROUND 2: TOP 20 QUALIFIERS TABLE — hidden during the countdown card */
             <div ref={rosterRef} className="w-full max-w-5xl rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1]">
               {/* Header with Title & Status Counter */}
               <div className="flex items-center justify-between px-6 py-4 bg-[#F4ECE1] border-b border-black/10">
@@ -1531,11 +1548,11 @@ export function LeaderboardPage() {
                   </div>
                   <div>
                     <h3 className="text-base sm:text-lg font-black text-[#1A1A1A]">Round 2 · Top 20 Qualifiers</h3>
-                    <p className="text-xs text-slate-500 font-medium">Official shortlisted teams advancing to Round 2</p>
+                    <p className="text-xs text-slate-500 font-medium">Announced teams appear here after each card</p>
                   </div>
                 </div>
                 <span className="text-xs font-black text-emerald-800 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-300 shadow-sm font-mono">
-                  {revealedStep} / {Math.min(20, advancing.length)} Unlocked
+                  {unlockedRanks.length} / {Math.min(20, advancing.length)} Unlocked
                 </span>
               </div>
 
@@ -1553,7 +1570,7 @@ export function LeaderboardPage() {
                 {Array.from({ length: Math.min(20, advancing.length || 20) }).map((_, idx) => {
                   const rankNum = idx + 1 // 1 to 20
                   const team = advancing[idx]
-                  const isRevealed = rankNum >= (21 - revealedStep)
+                  const isRevealed = unlockedRanks.includes(rankNum)
                   const isSpotlight = rankNum === currentSpotlightRank && revealedStep > 0
                   const track = team ? getTrackConfig(team.track) : null
 
@@ -1587,15 +1604,17 @@ export function LeaderboardPage() {
                     )
                   }
 
-                  return (
-                    <motion.div
-                      key={`slot-revealed-${rankNum}-${team.teamId}`}
-                      layout
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className={`grid grid-cols-[64px_1fr_170px_110px_120px] px-6 py-3.5 items-center border-b transition-colors ${
-                        isSpotlight
-                          ? 'bg-[#E83C00]/15 border-[#E83C00]/40 shadow-md ring-1 ring-[#E83C00]/30'
+                    return (
+                      <motion.div
+                        key={`slot-revealed-${rankNum}-${team.teamId}`}
+                        id={`r2-row-${rankNum}`}
+                        ref={(el) => { rowRefs.current[rankNum] = el }}
+                        layout
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className={`grid grid-cols-[64px_1fr_170px_110px_120px] px-6 py-3.5 items-center border-b transition-colors ${
+                          isSpotlight
+                            ? 'bg-[#E83C00]/15 border-[#E83C00]/40 shadow-md ring-1 ring-[#E83C00]/30'
                           : rankNum === 1
                           ? 'bg-orange-500/5 hover:bg-orange-500/10 border-black/5'
                           : 'bg-[#F4ECE1] hover:bg-white/60 border-black/5'
@@ -1680,7 +1699,7 @@ export function LeaderboardPage() {
                 })}
               </div>
             </div>
-          )}
+          ) : null}
         </div>
 
 

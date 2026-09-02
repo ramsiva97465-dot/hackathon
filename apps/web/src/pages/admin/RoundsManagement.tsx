@@ -24,6 +24,8 @@ export function RoundsManagement() {
   const [teams, setTeams] = useState<TeamOverview[]>([])
   const [isStageRevealing, setIsStageRevealing] = useState(false)
   const [revealStep, setRevealStep] = useState(0)
+  const [revealRound, setRevealRound] = useState(2)
+  const [revealedQualifierRanks, setRevealedQualifierRanks] = useState<number[]>([])
   
   // Stats
   const [round1Count, setRound1Count] = useState(0)
@@ -48,6 +50,13 @@ export function RoundsManagement() {
       }
       if (typeof res.data?.step === 'number') {
         setRevealStep(res.data.step)
+      }
+      if (typeof res.data?.round === 'number') {
+        setRevealRound(res.data.round)
+        if (res.data.round === 2 && typeof res.data?.step === 'number' && res.data.step > 0) {
+          const rank = 21 - res.data.step
+          setRevealedQualifierRanks((prev) => prev.includes(rank) ? prev : [...prev, rank])
+        }
       }
     } catch (err) {
       // Ignore
@@ -86,7 +95,11 @@ export function RoundsManagement() {
       await api.leaderboard.startReveal(round)
       setIsStageRevealing(true)
       setRevealStep(0)
-      toast.success(round === 3 ? 'Top 5 Grand Finale Reveal broadcasted to stage screens!' : 'Top 20 Grand Reveal broadcasted to stage screens!')
+      setRevealRound(round)
+      if (round === 2) setRevealedQualifierRanks([])
+      toast.success(round === 3
+        ? 'Top 5 Grand Finale Reveal broadcasted to stage screens!'
+        : 'Top 20 ceremony opened on the LCD. Use Reveal on each team in the Round 2 table (20 → 1).')
     } catch (err) {
       console.error(err)
       toast.error('Failed to start reveal.')
@@ -103,6 +116,7 @@ export function RoundsManagement() {
       await api.leaderboard.setRevealStep(step, 3)
       setIsStageRevealing(true)
       setRevealStep(step)
+      setRevealRound(3)
       if (step === 1) toast.success('Triggered 5th Place reveal (countdown started on LCD)!')
       else if (step === 2) toast.success('Triggered 4th Place reveal (countdown started on LCD)!')
       else if (step === 3) toast.success('Triggered 2nd Runner Up reveal (countdown started on LCD)!')
@@ -111,6 +125,24 @@ export function RoundsManagement() {
     } catch (err) {
       console.error(err)
       toast.error('Failed to trigger reveal step.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRevealQualifier = async (rank: number) => {
+    const step = 21 - rank
+    try {
+      setLoading(true)
+      await api.leaderboard.setRevealStep(step, 2)
+      setIsStageRevealing(true)
+      setRevealStep(step)
+      setRevealRound(2)
+      setRevealedQualifierRanks((prev) => prev.includes(rank) ? prev : [...prev, rank])
+      toast.success(`Triggered #${rank} reveal (5➔0 countdown started on LCD)!`)
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to trigger team reveal.')
     } finally {
       setLoading(false)
     }
@@ -145,6 +177,7 @@ export function RoundsManagement() {
       await api.leaderboard.startReveal(3)
       await api.leaderboard.setRevealStep(0, 3)
       setRevealStep(0)
+      setRevealRound(3)
       setIsStageRevealing(true)
       toast.success('Stage reset to Vault Locked mode (ready for 5th Place announcement).')
     } catch (err) {
@@ -182,7 +215,7 @@ export function RoundsManagement() {
       if (res.data?.success) {
         toast.success(
           currentRound === 1
-            ? `✅ Successfully promoted ${res.data.promotedCount} teams to Round 2! Click 'Broadcast Top 20 Grand Reveal' whenever you are ready to trigger the stage countdown.`
+            ? `✅ Successfully promoted ${res.data.promotedCount} teams to Round 2! Use Reveal on each team in the Round 2 table (20 → 1) when you are ready.`
             : `✅ Promoted Top 5. The public board now shows the Top 20 list. Use Reveal 5th / 4th / … to announce winners.`
         )
         // Shift active view tab to next round
@@ -224,6 +257,17 @@ export function RoundsManagement() {
     : activeTab === 3
       ? teams.filter(t => t.round === 3)
       : teams
+
+  const tableTeams = (activeTab === 2
+    ? displayTeams
+        .slice()
+        .sort((a, b) => Number(b.totalScore ?? b.overallScore ?? 0) - Number(a.totalScore ?? a.overallScore ?? 0))
+        .slice(0, 20)
+        .map((t, i) => ({ ...t, standing: i + 1 }))
+        .reverse()
+    : displayTeams.map((t, i) => ({ ...t, standing: i + 1 })))
+
+  const showRound2Reveals = activeTab === 2 && winnersCount === 0
 
   return (
     <DashboardLayout role="admin">
@@ -290,7 +334,7 @@ export function RoundsManagement() {
                   className="flex items-center gap-1.5 px-3.5 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
                 >
                   <Sparkles size={13} />
-                  <span>🎭 Broadcast Top 20 Reveal (20 ➔ 1)</span>
+                  <span>🎭 Open Top 20 Ceremony</span>
                 </button>
               </>
             )}
@@ -302,7 +346,7 @@ export function RoundsManagement() {
                   className="flex items-center gap-1.5 px-3.5 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
                 >
                   <Sparkles size={13} />
-                  <span>🎭 Reveal Top 20</span>
+                  <span>🎭 Open Top 20 Ceremony</span>
                 </button>
                 <button
                   onClick={() => handlePromote(2)}
@@ -494,11 +538,18 @@ export function RoundsManagement() {
         {/* Teams Table */}
         <div className="bg-[#0A0A0A] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
           <div className="px-6 py-4 border-b border-white/5 bg-[#111] flex items-center justify-between">
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-              {activeTab === 3 ? 'Winners Standings' : activeTab === 2 ? 'Round 2 Qualified Teams' : 'Round 1 Leaderboard'}
-            </h3>
+            <div>
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                {activeTab === 3 ? 'Winners Standings' : activeTab === 2 ? 'Round 2 Qualified Teams' : 'Round 1 Leaderboard'}
+              </h3>
+              {showRound2Reveals && (
+                <p className="text-[10px] text-slate-500 font-medium mt-1">
+                  Listed #20 → #1. Each Reveal unseals only that team on the live leaderboard (5➔0 countdown).
+                </p>
+              )}
+            </div>
             <div className="flex items-center gap-3">
-              {activeTab === 2 && displayTeams.length > 0 && (
+              {activeTab === 2 && tableTeams.length > 0 && (
                 <button
                   disabled={loading}
                   onClick={async () => {
@@ -524,12 +575,12 @@ export function RoundsManagement() {
                 </button>
               )}
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                {displayTeams.length} Teams
+                {tableTeams.length} Teams
               </span>
             </div>
           </div>
 
-          {displayTeams.length === 0 ? (
+          {tableTeams.length === 0 ? (
             <div className="p-8 text-center text-slate-500">
               <p className="text-xs font-medium">No teams are active or graded in this round yet.</p>
             </div>
@@ -543,13 +594,19 @@ export function RoundsManagement() {
                     <th className="px-6 py-3">Track</th>
                     <th className="px-6 py-3 text-center">Judges Graded</th>
                     <th className="px-6 py-3 text-right">Avg Score</th>
+                    {showRound2Reveals && (
+                      <th className="px-6 py-3 text-right">Reveal</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 text-xs">
-                  {displayTeams.map((t, idx) => (
+                  {tableTeams.map((t) => {
+                    const rank = t.standing
+                    const alreadyRevealed = revealedQualifierRanks.includes(rank)
+                    return (
                     <tr key={t.teamId} className="hover:bg-white/5 transition-colors">
                       <td className="px-6 py-4 font-bold text-slate-500">
-                        #{idx + 1}
+                        #{rank}
                       </td>
                       <td className="px-6 py-4 font-bold text-white">
                         {t.teamName}
@@ -563,8 +620,30 @@ export function RoundsManagement() {
                       <td className="px-6 py-4 text-right font-black text-white">
                         {t.totalScore ?? t.overallScore}
                       </td>
+                      {showRound2Reveals && (
+                        <td className="px-6 py-4 text-right">
+                          {alreadyRevealed ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-black uppercase tracking-wider text-emerald-300">
+                              <CheckCircle2 size={11} />
+                              Revealed
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleRevealQualifier(rank)}
+                              disabled={loading}
+                              title={`Reveal #${rank} on the live leaderboard`}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 cursor-pointer"
+                            >
+                              <Sparkles size={11} />
+                              Reveal
+                            </button>
+                          )}
+                        </td>
+                      )}
                     </tr>
-                  ))}
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
