@@ -130,7 +130,18 @@ export function RoundsManagement() {
     }
   }
 
+  const nextQualifierRank = (() => {
+    for (let r = 20; r >= 1; r--) {
+      if (!revealedQualifierRanks.includes(r)) return r
+    }
+    return 0
+  })()
+
   const handleRevealQualifier = async (rank: number) => {
+    if (rank !== nextQualifierRank) {
+      toast.error(`Reveal #${nextQualifierRank} first. Teams must be announced from #20 down to #1.`)
+      return
+    }
     const step = 21 - rank
     try {
       setLoading(true)
@@ -603,6 +614,7 @@ export function RoundsManagement() {
                   {tableTeams.map((t) => {
                     const rank = t.standing
                     const alreadyRevealed = revealedQualifierRanks.includes(rank)
+                    const isNext = rank === nextQualifierRank
                     return (
                     <tr key={t.teamId} className="hover:bg-white/5 transition-colors">
                       <td className="px-6 py-4 font-bold text-slate-500">
@@ -631,9 +643,13 @@ export function RoundsManagement() {
                             <button
                               type="button"
                               onClick={() => handleRevealQualifier(rank)}
-                              disabled={loading}
-                              title={`Reveal #${rank} on the live leaderboard`}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 cursor-pointer"
+                              disabled={loading || !isNext}
+                              title={isNext ? `Reveal #${rank} on the live leaderboard` : `Reveal #${nextQualifierRank} first`}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                                isNext
+                                  ? 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 cursor-pointer'
+                                  : 'bg-white/5 text-slate-500 border border-white/10 cursor-not-allowed opacity-50'
+                              }`}
                             >
                               <Sparkles size={11} />
                               Reveal

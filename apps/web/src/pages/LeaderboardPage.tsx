@@ -811,6 +811,16 @@ export function LeaderboardPage() {
     if (!isFinaleStep && unlockedRanksRef.current.includes(requestedRank) && !options?.catchUp) return
     if (isDecryptingRef.current) return
     if (isFinaleStep && revealedStepRef.current >= lastStep) return
+    if (!isFinaleStep && !options?.catchUp) {
+      let nextRank = 20
+      for (let r = 20; r >= 1; r--) {
+        if (!unlockedRanksRef.current.includes(r)) {
+          nextRank = r
+          break
+        }
+      }
+      if (requestedRank !== nextRank) return
+    }
 
     // A late-joining screen (or poll) should land on the current place
     // without replaying every earlier countdown.
@@ -827,11 +837,8 @@ export function LeaderboardPage() {
       return
     }
 
-    // Finale stays sequential so one click cannot unseal the whole podium.
-    // Round 2 announces the exact place the admin clicked (e.g. #15).
-    const targetStep = isFinaleStep
-      ? Math.min(requestedStep, revealedStepRef.current + 1, lastStep)
-      : Math.min(Math.max(requestedStep, 1), lastStep)
+    // Both ceremonies unseal exactly the next place: Top 20 is 20→1, finale is 5→1.
+    const targetStep = Math.min(requestedStep, revealedStepRef.current + 1, lastStep)
 
     const currentRank = isFinaleStep ? (FINALE_CUTOFF + 1 - targetStep) : (21 - targetStep)
 
