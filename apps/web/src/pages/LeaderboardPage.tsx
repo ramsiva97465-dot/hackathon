@@ -1106,7 +1106,7 @@ export function LeaderboardPage() {
             }`}>
               {isFinale ? <Crown size={15} className="text-amber-400 fill-amber-400/40" /> : <Trophy size={14} className="text-amber-500" />}
               <span className="text-xs font-black uppercase tracking-widest">
-                {isFinale ? '👑 Grand Finale · Champions Coronation' : 'Round 2 Qualifiers · Live Ceremony'}
+                {isFinale ? '👑 Grand Finale · Champions Coronation' : 'Round 1 Qualifiers - Live Ceremony'}
               </span>
             </div>
             <h2 className="text-[#E83C00] font-bold tracking-[0.2em] uppercase text-sm mb-2">
