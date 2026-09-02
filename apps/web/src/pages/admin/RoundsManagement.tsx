@@ -313,7 +313,7 @@ export function RoundsManagement() {
                   Top 5 Grand Finale Reveal Controller
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mt-1 font-medium">
-                  Click each button when the stage host speaks. The big LCD screen will synchronously run the <span className="text-amber-300 font-bold">5, 4, 3, 2, 1 slow countdown</span>, slot-machine name roll, sub-bass heartbeat ticks, and unseal that winner!
+                  Click each button when the stage host speaks. The LCD countdown is <span className="text-amber-300 font-bold">3 for 5th/4th</span>, <span className="text-amber-300 font-bold">5 for 2nd Runner Up</span>, <span className="text-amber-300 font-bold">7 for 1st Runner Up</span>, and <span className="text-amber-300 font-bold">10 for the Grand Champion</span>.
                 </p>
               </div>
 
@@ -331,12 +331,12 @@ export function RoundsManagement() {
             {/* Step Buttons Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               {([
-                { step: 1, label: 'Reveal 5th Place (#5)', done: '5th Unsealed', accent: 'amber' },
-                { step: 2, label: 'Reveal 4th Place (#4)', done: '4th Unsealed', accent: 'slate' },
-                { step: 3, label: 'Reveal 2nd Runner Up (#3)', done: '3rd Unsealed', accent: 'bronze' },
-                { step: 4, label: 'Reveal 1st Runner Up (#2)', done: '2nd Unsealed', accent: 'silver' },
-                { step: 5, label: 'CROWN GRAND CHAMPION (#1)', done: 'Champion Crowned!', accent: 'gold' },
-              ] as const).map(({ step, label, done, accent }) => {
+                { step: 1, label: 'Reveal 5th Place (#5)', done: '5th Unsealed', accent: 'amber', countdown: '3➔1 countdown & unseals this slot' },
+                { step: 2, label: 'Reveal 4th Place (#4)', done: '4th Unsealed', accent: 'slate', countdown: '3➔1 countdown & unseals this slot' },
+                { step: 3, label: 'Reveal 2nd Runner Up (#3)', done: '3rd Unsealed', accent: 'bronze', countdown: '5➔1 countdown & unseals this slot' },
+                { step: 4, label: 'Reveal 1st Runner Up (#2)', done: '2nd Unsealed', accent: 'silver', countdown: '7➔1 countdown & unseals this slot' },
+                { step: 5, label: 'CROWN GRAND CHAMPION (#1)', done: 'Champion Crowned!', accent: 'gold', countdown: '10➔1 countdown + confetti' },
+              ] as const).map(({ step, label, done, accent, countdown }) => {
                 const isGold = accent === 'gold'
                 const doneNow = revealStep >= step
                 return (
@@ -367,7 +367,7 @@ export function RoundsManagement() {
                   <span>{label}</span>
                 </div>
                 <p className="text-[11px] text-amber-400/90 mt-1.5 font-medium">
-                  {isGold ? '10➔1 countdown + confetti' : 'Triggers 5➔1 countdown & unseals this slot'}
+                  {countdown}
                 </p>
               </button>
                 )

@@ -24,6 +24,19 @@ function finalePlace(rank: number) {
   return { title: '5th Place', decrypt: 'Decrypting 5th Place...', speak: '5th Place, ', locked: '5th Place' }
 }
 
+const COUNTDOWN_WORDS: Record<number, string> = {
+  10: 'Ten', 9: 'Nine', 8: 'Eight', 7: 'Seven', 6: 'Six',
+  5: 'Five', 4: 'Four', 3: 'Three', 2: 'Two', 1: 'One',
+}
+
+/** Step 1=5th, 2=4th, 3=2nd runner-up, 4=1st runner-up, 5=champion */
+function finaleCountdownStart(step: number) {
+  if (step === 1 || step === 2) return 3
+  if (step === 3) return 5
+  if (step === 4) return 7
+  return 10
+}
+
 // ── Cinematic Confetti FX for Grand Finale ────────────────────────────────────
 function triggerFinaleConfetti(rank: number) {
   try {
@@ -721,23 +734,22 @@ export function LeaderboardPage() {
       }
 
       if (targetStep === FINALE_CUTOFF) {
-        // 👑 FINAL STEP GRAND CLIMAX: 10 ➔ 1 ➔ 👑 with VOCAL ANNOUNCER!
-        setCountdownNum(10)
-        speakCountdown('Ten')
-        if (soundEnabled) playHeartbeatTick(1)
-        runScramble(50)
+        const startFrom = finaleCountdownStart(targetStep)
+        const tick = 1100
+        for (let n = startFrom; n >= 1; n--) {
+          const delay = (startFrom - n) * tick
+          const beat = startFrom - n + 1
+          const scrambleSpeed = 50 + (startFrom - n) * 40
+          const apply = () => {
+            setCountdownNum(n)
+            speakCountdown(COUNTDOWN_WORDS[n] || String(n))
+            if (soundEnabled) playHeartbeatTick(beat)
+            runScramble(scrambleSpeed)
+          }
+          if (delay === 0) apply()
+          else setTimeout(apply, delay)
+        }
 
-        setTimeout(() => { setCountdownNum(9); speakCountdown('Nine'); if (soundEnabled) playHeartbeatTick(2); runScramble(65) }, 1100)
-        setTimeout(() => { setCountdownNum(8); speakCountdown('Eight'); if (soundEnabled) playHeartbeatTick(3); runScramble(80) }, 2200)
-        setTimeout(() => { setCountdownNum(7); speakCountdown('Seven'); if (soundEnabled) playHeartbeatTick(4); runScramble(100) }, 3300)
-        setTimeout(() => { setCountdownNum(6); speakCountdown('Six'); if (soundEnabled) playHeartbeatTick(5); runScramble(120) }, 4400)
-        setTimeout(() => { setCountdownNum(5); speakCountdown('Five'); if (soundEnabled) playHeartbeatTick(6); runScramble(150) }, 5500)
-        setTimeout(() => { setCountdownNum(4); speakCountdown('Four'); if (soundEnabled) playHeartbeatTick(7); runScramble(190) }, 6600)
-        setTimeout(() => { setCountdownNum(3); speakCountdown('Three'); if (soundEnabled) playHeartbeatTick(8); runScramble(240) }, 7700)
-        setTimeout(() => { setCountdownNum(2); speakCountdown('Two'); if (soundEnabled) playHeartbeatTick(9); runScramble(310) }, 8800)
-        setTimeout(() => { setCountdownNum(1); speakCountdown('One'); if (soundEnabled) playHeartbeatTick(10); runScramble(400) }, 9900)
-
-        // T = 11.3s: Unseal Grand Champion Climax!
         setTimeout(() => {
           clearInterval(scrambleInterval)
           setIsDecrypting(false)
@@ -748,21 +760,25 @@ export function LeaderboardPage() {
           }
           triggerFinaleConfetti(1)
           speakCountdown('Grand Champion, ' + (top5[0]?.teamName || 'Winner'))
-        }, 11300)
+        }, (startFrom - 1) * tick + 1400)
 
       } else {
-        // 🏅 STEPS 1–4: 5 ➔ 4 ➔ 3 ➔ 2 ➔ 1 with VOCAL ANNOUNCER!
-        setCountdownNum(5)
-        speakCountdown('Five')
-        if (soundEnabled) playHeartbeatTick(1)
-        runScramble(60)
+        const startFrom = finaleCountdownStart(targetStep)
+        const tick = 1100
+        for (let n = startFrom; n >= 1; n--) {
+          const delay = (startFrom - n) * tick
+          const beat = startFrom - n + 1
+          const scrambleSpeed = 60 + (startFrom - n) * 70
+          const apply = () => {
+            setCountdownNum(n)
+            speakCountdown(COUNTDOWN_WORDS[n] || String(n))
+            if (soundEnabled) playHeartbeatTick(beat)
+            runScramble(scrambleSpeed)
+          }
+          if (delay === 0) apply()
+          else setTimeout(apply, delay)
+        }
 
-        setTimeout(() => { setCountdownNum(4); speakCountdown('Four'); if (soundEnabled) playHeartbeatTick(2); runScramble(90) }, 1100)
-        setTimeout(() => { setCountdownNum(3); speakCountdown('Three'); if (soundEnabled) playHeartbeatTick(3); runScramble(140) }, 2200)
-        setTimeout(() => { setCountdownNum(2); speakCountdown('Two'); if (soundEnabled) playHeartbeatTick(4); runScramble(220) }, 3300)
-        setTimeout(() => { setCountdownNum(1); speakCountdown('One'); if (soundEnabled) playHeartbeatTick(5); runScramble(350) }, 4400)
-
-        // T = 5.7s: Unseal Runner Up!
         setTimeout(() => {
           clearInterval(scrambleInterval)
           setIsDecrypting(false)
@@ -775,7 +791,7 @@ export function LeaderboardPage() {
           const place = finalePlace(currentRank)
           const winnerName = top5[currentRank - 1]?.teamName || ''
           speakCountdown(place.speak + winnerName)
-        }, 5700)
+        }, (startFrom - 1) * tick + 1400)
       }
 
     } else {
