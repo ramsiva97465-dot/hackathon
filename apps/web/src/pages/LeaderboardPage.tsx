@@ -811,6 +811,7 @@ export function LeaderboardPage() {
     if (!isFinaleStep && unlockedRanksRef.current.includes(requestedRank) && !options?.catchUp) return
     if (isDecryptingRef.current) return
     if (isFinaleStep && revealedStepRef.current >= lastStep) return
+    if (isFinaleStep && !options?.catchUp && requestedStep !== revealedStepRef.current + 1) return
     if (!isFinaleStep && !options?.catchUp) {
       let nextRank = 20
       for (let r = 20; r >= 1; r--) {

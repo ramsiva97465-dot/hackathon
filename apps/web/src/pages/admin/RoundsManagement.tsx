@@ -109,6 +109,12 @@ export function RoundsManagement() {
   }
 
   const handleTriggerStep = async (step: number) => {
+    const finaleProgress = revealRound === 3 ? revealStep : 0
+    const nextStep = finaleProgress + 1
+    if (step !== nextStep) {
+      toast.error(`Reveal step ${nextStep} first. Unseal 5th, then 4th, then 3rd, then 2nd, then the Champion.`)
+      return
+    }
     try {
       setLoading(true)
       // Do not call startReveal here — that resets the ceremony to step 0
@@ -429,28 +435,35 @@ export function RoundsManagement() {
                 { step: 5, label: 'CROWN GRAND CHAMPION (#1)', done: 'Champion Crowned!', accent: 'gold', countdown: '10➔1 countdown + confetti' },
               ] as const).map(({ step, label, done, accent, countdown }) => {
                 const isGold = accent === 'gold'
-                const doneNow = revealStep >= step
+                const finaleProgress = revealRound === 3 ? revealStep : 0
+                const doneNow = revealRound === 3 && revealStep >= step
+                const isNext = step === finaleProgress + 1
                 return (
               <button
                 key={step}
                 onClick={() => handleTriggerStep(step)}
-                disabled={loading}
-                className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer relative overflow-hidden ${
+                disabled={loading || !isNext}
+                title={isNext ? label : doneNow ? done : `Reveal step ${finaleProgress + 1} first`}
+                className={`p-4 rounded-2xl border-2 text-left transition-all relative overflow-hidden ${
                   isGold
                     ? doneNow
                       ? 'border-[#E83C00] bg-gradient-to-br from-[#E83C00]/40 to-amber-500/30 text-white ring-2 ring-amber-400/60 shadow-2xl'
-                      : 'border-amber-500/60 bg-black/50 hover:bg-amber-500/20 text-white hover:border-amber-400 ring-2 ring-amber-500/30'
+                      : isNext
+                        ? 'border-amber-500/60 bg-black/50 hover:bg-amber-500/20 text-white hover:border-amber-400 ring-2 ring-amber-500/30 cursor-pointer'
+                        : 'border-amber-900/40 bg-black/30 text-slate-500 opacity-50 cursor-not-allowed'
                     : doneNow
                       ? 'border-amber-600/80 bg-amber-950/70 text-amber-200 shadow-lg'
-                      : 'border-amber-700/40 bg-black/50 hover:bg-amber-950/40 text-slate-200 hover:border-amber-500'
+                      : isNext
+                        ? 'border-amber-700/40 bg-black/50 hover:bg-amber-950/40 text-slate-200 hover:border-amber-500 cursor-pointer'
+                        : 'border-white/10 bg-black/30 text-slate-500 opacity-50 cursor-not-allowed'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wider ${isGold ? 'bg-gradient-to-r from-[#E83C00] to-amber-500 text-white' : 'bg-amber-800 text-amber-100'}`}>
                     {isGold ? '👑 Step 5' : `Step ${step}`}
                   </span>
-                  <span className={`text-[10px] font-bold ${doneNow ? 'text-emerald-400' : 'text-amber-400'}`}>
-                    {doneNow ? `✅ ${done}` : '⚡ Ready'}
+                  <span className={`text-[10px] font-bold ${doneNow ? 'text-emerald-400' : isNext ? 'text-amber-400' : 'text-slate-500'}`}>
+                    {doneNow ? `✅ ${done}` : isNext ? '⚡ Ready' : '🔒 Locked'}
                   </span>
                 </div>
                 <div className="font-black text-sm text-white flex items-center gap-1.5">
