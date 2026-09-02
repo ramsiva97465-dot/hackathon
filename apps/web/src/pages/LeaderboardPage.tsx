@@ -455,10 +455,16 @@ export function LeaderboardPage() {
     revealRoundRef.current = revealRound
   }, [revealRound])
 
+  const applyLeaderboardRows = (rows: unknown) => {
+    if (!Array.isArray(rows)) return
+    setEntries((prev) => (rows.length === 0 && prev.length > 0 ? prev : rows))
+  }
+
   const { emit } = useWebSocket<LeaderboardEntry[]>('leaderboard:update', async () => {
     try {
-      const res = await api.leaderboard.get({ round: activeRoundRef.current })
-      if (Array.isArray(res.data)) setEntries(res.data)
+      const fetchRound = activeRoundRef.current === 3 ? 2 : activeRoundRef.current
+      const res = await api.leaderboard.get({ round: fetchRound })
+      applyLeaderboardRows(res.data)
     } catch {
       // Ignore live refresh errors
     }
@@ -474,7 +480,9 @@ export function LeaderboardPage() {
     const targetRound = data.round || 3
     if (targetRound !== revealRoundRef.current || !isRevealingRef.current) {
       setRevealRound(targetRound)
-      setActiveRound(targetRound)
+      // Keep fetching the Top 20 payload (includes finalists). A round-3
+      // query can come back empty and wipe the winner card after countdown.
+      setActiveRound(targetRound === 3 ? 2 : targetRound)
       setIsRevealing(true)
     }
     executeRevealToStep(data.step, targetRound)
@@ -505,10 +513,9 @@ export function LeaderboardPage() {
 
   const fetchLiveLeaderboard = async () => {
     try {
-      const res = await api.leaderboard.get({ round: activeRound })
-      if (Array.isArray(res.data)) {
-        setEntries(res.data)
-      }
+      const fetchRound = activeRound === 3 ? 2 : activeRound
+      const res = await api.leaderboard.get({ round: fetchRound })
+      applyLeaderboardRows(res.data)
     } catch (err) {
       // Ignore poll error
     }
@@ -555,7 +562,7 @@ export function LeaderboardPage() {
       revealRoundRef.current = targetRound
       isRevealingRef.current = true
       setRevealRound(targetRound)
-      setActiveRound(targetRound)
+      setActiveRound(targetRound === 3 ? 2 : targetRound)
       setIsRevealing(true)
       if (serverStep <= 0) {
         resetRevealProgress()
@@ -643,7 +650,7 @@ export function LeaderboardPage() {
   // After Top 5 promotion, keep the public board on the Top 20 list.
   // Do not jump to the finale podium until an admin reveal step arrives.
   useEffect(() => {
-    if (isRevealing) return
+    if (isRevealing || isRevealingRef.current) return
     const hasFinalists = entries.some((e) => ((e as any).round || 1) === 3)
     if (hasFinalists && activeRound !== 2) {
       setActiveRound(2)
@@ -698,7 +705,7 @@ export function LeaderboardPage() {
     .slice(0, FINALE_CUTOFF)
     .map((e, idx) => ({ ...e, rank: idx + 1 }))
 
-  top5Ref.current = top5
+  if (top5.length > 0) top5Ref.current = top5
 
   const finalePodiumOrder = [
     top5[3],
@@ -723,7 +730,7 @@ export function LeaderboardPage() {
     revealRoundRef.current = round
     isRevealingRef.current = true
     setRevealRound(round)
-    setActiveRound(round)
+    setActiveRound(round === 3 ? 2 : round)
     setIsRevealing(true)
     animatingStepRef.current = 0
     isDecryptingRef.current = false
@@ -744,7 +751,7 @@ export function LeaderboardPage() {
     // Stay on the ceremony round only if we were actually in a reveal.
     // A leftover stop after Promote Top 20 must not flip the LCD to Round 2.
     if (wasRevealing && leavingRound >= 2) {
-      setActiveRound(leavingRound)
+      setActiveRound(leavingRound === 3 ? 2 : leavingRound)
     }
   }
 
@@ -770,7 +777,7 @@ export function LeaderboardPage() {
       resetRevealProgress()
       revealRoundRef.current = effectiveRound
       setRevealRound(effectiveRound)
-      setActiveRound(effectiveRound)
+      setActiveRound(effectiveRound === 3 ? 2 : effectiveRound)
     }
     if (!isRevealingRef.current) {
       isRevealingRef.current = true
@@ -1002,8 +1009,13 @@ export function LeaderboardPage() {
   // For Round 2 (20 -> 1): Step 1 reveals rank 20, Step 20 reveals rank 1
   // For Round 3 (5 -> 1): Step 1 reveals rank 5, Step 5 reveals rank 1
   const currentSpotlightRank = isFinale ? (FINALE_CUTOFF + 1 - revealedStep) : (21 - revealedStep)
+  const finaleRoster = top5.length > 0 ? top5 : top5Ref.current
+
+  // Keep a stable finale roster even if a later fetch returns no rows.
   const currentSpotlightTeam = revealedStep > 0
-    ? (isFinale ? top5[FINALE_CUTOFF - revealedStep] : advancing[20 - revealedStep])
+    ? (isFinale
+      ? (finaleRoster[FINALE_CUTOFF - revealedStep] || finaleRoster[finaleRoster.length - 1] || null)
+      : (advancing[20 - revealedStep] || advancing[advancing.length - 1] || null))
     : null
 
 
@@ -1286,7 +1298,7 @@ export function LeaderboardPage() {
                       {isFinale ? 'Final Score' : 'Round 1 Score'}
                     </span>
                     <span className={`text-3xl sm:text-4xl font-black font-mono ${isFinale ? 'text-amber-300' : 'text-[#1A1A1A]'}`}>
-                      {currentSpotlightTeam.totalScore.toFixed(1)}
+                      {Number(currentSpotlightTeam.totalScore || 0).toFixed(1)}
                     </span>
                   </div>
 
