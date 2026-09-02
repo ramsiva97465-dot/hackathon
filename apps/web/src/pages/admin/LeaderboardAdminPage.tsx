@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { Avatar } from '@/components/ui/Avatar'
@@ -52,29 +52,37 @@ function DeltaIcon({ curr, prev }: { curr: number; prev: number }) {
 export function LeaderboardAdminPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
   const [activeRound, setActiveRound] = useState<number>(1)
-  
-  // Real-time updates via WebSocket
-  const { emit } = useWebSocket<LeaderboardEntry[]>('leaderboard:update', (data) => {
-    setEntries(data)
-  })
+  const [loadingRound, setLoadingRound] = useState(true)
+  const activeRoundRef = useRef(activeRound)
 
-  const fetchLeaderboard = async () => {
+  useEffect(() => {
+    activeRoundRef.current = activeRound
+  }, [activeRound])
+
+  const fetchLeaderboard = async (round = activeRoundRef.current) => {
     try {
-      const res = await api.leaderboard.get({ round: activeRound })
-      if (Array.isArray(res.data)) {
-        setEntries(res.data)
-      }
-    } catch (err) {
-      // Ignore
+      const res = await api.leaderboard.get({ round })
+      if (round !== activeRoundRef.current) return
+      if (Array.isArray(res.data)) setEntries(res.data)
+    } catch {
+      // Ignore poll error
+    } finally {
+      if (round === activeRoundRef.current) setLoadingRound(false)
     }
   }
 
+  // Live socket payloads are always the default (Round 1) board. Refetch the
+  // selected round instead of painting those scores onto Round 2 / Winners.
+  const { emit } = useWebSocket<LeaderboardEntry[]>('leaderboard:update', () => {
+    fetchLeaderboard(activeRoundRef.current)
+  })
+
   useEffect(() => {
     emit('leaderboard:subscribe')
-    fetchLeaderboard()
+    fetchLeaderboard(activeRound)
 
-    const interval = setInterval(fetchLeaderboard, 3000)
-    const handleUpdate = () => fetchLeaderboard()
+    const interval = setInterval(() => fetchLeaderboard(activeRoundRef.current), 3000)
+    const handleUpdate = () => fetchLeaderboard(activeRoundRef.current)
 
     window.addEventListener('leaderboard_updated', handleUpdate)
     window.addEventListener('storage', handleUpdate)
@@ -85,6 +93,13 @@ export function LeaderboardAdminPage() {
       window.removeEventListener('storage', handleUpdate)
     }
   }, [emit, activeRound])
+
+  const handleRoundChange = (round: number) => {
+    if (round === activeRound) return
+    setActiveRound(round)
+    setEntries([])
+    setLoadingRound(true)
+  }
 
   const handleEditScore = async (teamId: string, currentScore: number) => {
     const newVal = prompt(`Override score for this team (current: ${currentScore}):\nLeave blank or cancel to keep current score.\nEnter 'clear' to remove the override.`)
@@ -137,19 +152,19 @@ export function LeaderboardAdminPage() {
         {/* Round Tab Selector */}
         <div className="flex bg-[#111] p-1 rounded-2xl gap-1 w-max border border-white/10">
           <button
-            onClick={() => setActiveRound(1)}
+            onClick={() => handleRoundChange(1)}
             className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${activeRound === 1 ? 'bg-[#222] text-[#E83C00] shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
           >
             Round 1 (All)
           </button>
           <button
-            onClick={() => setActiveRound(2)}
+            onClick={() => handleRoundChange(2)}
             className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${activeRound === 2 ? 'bg-[#222] text-[#E83C00] shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
           >
             Round 2 (Top 20)
           </button>
           <button
-            onClick={() => setActiveRound(3)}
+            onClick={() => handleRoundChange(3)}
             className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${activeRound === 3 ? 'bg-[#222] text-[#E83C00] shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
           >
             Winners (Top 5)
@@ -209,6 +224,13 @@ export function LeaderboardAdminPage() {
               </tr>
             </thead>
             <tbody>
+              {loadingRound && display.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-5 py-10 text-center text-sm text-slate-500 font-medium">
+                    Loading this round's scores...
+                  </td>
+                </tr>
+              )}
               {display.map((entry, i) => {
                 const track = getTrackConfig(entry.track)
                 return (
