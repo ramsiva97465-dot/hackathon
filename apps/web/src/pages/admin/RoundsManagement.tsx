@@ -188,9 +188,6 @@ export function RoundsManagement() {
         // Shift active view tab to next round
         setActiveTab(currentRound + 1)
         fetchLeaderboard()
-        if (currentRound === 2) {
-          window.open('/leaderboard', 'voiceathon-lcd')
-        }
       }
     } catch (err: any) {
       console.error(err)
