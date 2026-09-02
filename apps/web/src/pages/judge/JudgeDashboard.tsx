@@ -411,7 +411,7 @@ export function JudgeDashboard() {
                 <h2 className="text-sm font-bold text-[#1A1A1A] flex items-center gap-2">
                   Assigned Teams
                   <span className="px-2 py-0.5 rounded-full bg-[#E83C00]/10 text-[9px] text-[#E83C00] font-bold border border-[#E83C00]/20 tracking-wider uppercase">
-                    Round {activeRound}
+                    {activeRound === 3 ? 'Judging Complete' : `Round ${activeRound}`}
                   </span>
                 </h2>
                 <p className="text-[11px] text-slate-500 mt-0.5 font-medium">Evaluate your queue</p>
@@ -429,10 +429,22 @@ export function JudgeDashboard() {
                 <div className="py-12 text-center text-slate-500 text-sm flex flex-col items-center border border-dashed border-slate-300 rounded-2xl bg-white/40 p-6 space-y-2">
                   <Inbox className="mb-1 text-slate-400" size={36} />
                   <p className="font-bold text-slate-700">
-                    {searchQuery ? `No teams found matching "${searchQuery}".` : activeRound === 2 ? '🎯 Round 2 in Progress — Awaiting Team Assignments' : activeRound === 3 ? '👑 Round 3 Final Stage — Awaiting Team Assignments' : 'No teams assigned yet.'}
+                    {searchQuery
+                      ? `No teams found matching "${searchQuery}".`
+                      : activeRound === 3
+                        ? '👑 Judging Complete — Grand Finale Reveal Stage'
+                        : activeRound === 2
+                          ? '🎯 Round 2 in Progress — Awaiting Team Assignments'
+                          : 'No teams assigned yet.'}
                   </p>
                   <p className="text-xs text-slate-500 max-w-sm">
-                    {searchQuery ? 'Try clearing your search query.' : activeRound >= 2 ? 'The admin has advanced the stage. Your queue will appear here as soon as new round teams are assigned to you.' : 'Your queue will populate once an administrator assigns teams to your panel.'}
+                    {searchQuery
+                      ? 'Try clearing your search query.'
+                      : activeRound === 3
+                        ? 'All judging is finished. The Top 5 winners are decided by their Round 2 scores, so there is no scoring in Round 3 — the host now reveals the winners on stage.'
+                        : activeRound === 2
+                          ? 'The admin has advanced the stage. Your queue will appear here as soon as new round teams are assigned to you.'
+                          : 'Your queue will populate once an administrator assigns teams to your panel.'}
                   </p>
                 </div>
               ) : (

@@ -192,9 +192,21 @@ export class TeamsService {
   }
 
   async autoDistributeJudges(judgesPerTeam: number = 1, round?: number) {
+    // Round 3 is reveal-only. Winners come from frozen Round 2 scores, so no
+    // finale judging queue is ever created.
+    if (round !== undefined && round !== null && Number(round) === 3) {
+      return {
+        success: false,
+        message: 'Round 3 is reveal-only. The Top 5 winners are ranked by their Round 2 scores, so no judges are assigned for the finale.',
+      }
+    }
+
     const whereClause: any = { status: 'COMPETING' }
     if (round !== undefined && round !== null) {
       whereClause.round = Number(round)
+    } else {
+      // An "all rounds" auto-assign must still skip the finalists.
+      whereClause.round = { not: 3 }
     }
 
     const teams = await this.prisma.team.findMany({ where: whereClause })
@@ -778,6 +790,41 @@ export class TeamsService {
     throw new Error('Invalid round promotion request.')
   }
 
+
+  /**
+   * Send the current Round 3 finalists back to Round 2 without touching any
+   * score sheets. Used when the Top 5 was promoted before Round 2 judging had
+   * finished, so the qualifiers can be judged and re-promoted correctly.
+   */
+  async undoFinalistPromotion() {
+    const hackathon = await this.prisma.hackathon.findFirst()
+    if (!hackathon) throw new Error('No hackathon found')
+
+    const finalists = await this.prisma.team.findMany({
+      where: { hackathonId: hackathon.id, status: 'COMPETING', round: 3 },
+      select: { id: true, name: true },
+    })
+
+    if (finalists.length === 0) {
+      return { success: false, message: 'There are no Round 3 finalists to move back.' }
+    }
+
+    await this.prisma.team.updateMany({
+      where: { id: { in: finalists.map(t => t.id) } },
+      data: { round: 2, adminScore: null, round2Score: null, round2JudgeCount: null },
+    })
+
+    this.leaderboardGateway.broadcastLeaderboardUpdate().catch(err =>
+      console.error('[WS] Undo finalists broadcast failed:', err)
+    )
+
+    return {
+      success: true,
+      movedBack: finalists.length,
+      teams: finalists.map(t => t.name),
+      message: `Moved ${finalists.length} finalists back to Round 2. Assign judges and finish Round 2 scoring, then promote the Top 5 again.`,
+    }
+  }
 
   async resetRounds() {
     const hackathon = await this.prisma.hackathon.findFirst()

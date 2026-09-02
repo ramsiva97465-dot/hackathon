@@ -115,6 +115,29 @@ export function RoundsManagement() {
     }
   }
 
+  const handleUndoFinalists = async () => {
+    if (!window.confirm(
+      'Send the current Top 5 finalists back to Round 2?\n\nNo scores are deleted. Use this when the Top 5 was promoted before Round 2 judging finished, then assign judges, complete Round 2 scoring, and promote again.'
+    )) return
+
+    try {
+      setLoading(true)
+      const res = await api.teams.undoFinalists()
+      if (res.data?.success) {
+        toast.success(res.data.message || 'Finalists moved back to Round 2.')
+        setActiveTab(2)
+        fetchLeaderboard()
+      } else {
+        toast.error(res.data?.message || 'Nothing to move back.')
+      }
+    } catch (err: any) {
+      console.error(err)
+      toast.error(err.response?.data?.message || 'Could not move finalists back.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleResetStageToLocked = async () => {
     try {
       setLoading(true)
@@ -291,10 +314,30 @@ export function RoundsManagement() {
               </>
             )}
             {activeRoundNum === 3 && (
-              <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-black">
-                <Crown size={14} className="text-amber-400" />
-                Use Top 5 Controller Below ↓
-              </span>
+              <>
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-black">
+                  <Crown size={14} className="text-amber-400" />
+                  Use Top 5 Controller Below ↓
+                </span>
+                <button
+                  onClick={() => handlePromote(2)}
+                  disabled={loading}
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                  title="Re-run the Top 5 calculation using the latest Round 2 scores"
+                >
+                  <RefreshCw size={13} />
+                  <span>Recalculate Top 5</span>
+                </button>
+                <button
+                  onClick={handleUndoFinalists}
+                  disabled={loading}
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-500/10 hover:bg-slate-500/20 text-slate-300 border border-slate-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                  title="Move the current finalists back to Round 2 without deleting any scores"
+                >
+                  <ChevronRight size={13} className="rotate-180" />
+                  <span>Send Finalists Back to Round 2</span>
+                </button>
+              </>
             )}
           </div>
         </div>

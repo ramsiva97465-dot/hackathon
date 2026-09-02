@@ -120,6 +120,11 @@ export class TeamsController {
     return this.service.promoteTeams(Number(dto.currentRound))
   }
 
+  @Post('undo-finalists')
+  undoFinalists() {
+    return this.service.undoFinalistPromotion()
+  }
+
   @Post('reset-rounds')
   resetRounds() {
     return this.service.resetRounds()

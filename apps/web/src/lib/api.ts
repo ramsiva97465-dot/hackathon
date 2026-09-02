@@ -77,6 +77,8 @@ export const api = {
       apiClient.post('/teams/submit-project', data),
     promote: (currentRound: number) =>
       apiClient.post('/teams/promote', { currentRound }),
+    undoFinalists: () =>
+      apiClient.post('/teams/undo-finalists'),
     resetRounds: () =>
       apiClient.post('/teams/reset-rounds'),
     validateUrl: (url: string) =>

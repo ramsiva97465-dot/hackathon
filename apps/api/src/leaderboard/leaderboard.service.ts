@@ -65,13 +65,6 @@ export class LeaderboardService {
       return sheetsForRound(team.scoreSheets, 2).length > 0
     })
 
-    // Same for the Grand Finale: finalists carry their frozen Round 2 result
-    // until Round 3 judging produces its own scores.
-    const round3JudgingStarted = targetRound === 3 && teams.some((team) => {
-      if (team.adminScore !== null && team.adminScore !== undefined && (team.round || 1) === 3) return true
-      return sheetsForRound(team.scoreSheets, 3).length > 0
-    })
-
     const entries = teams.map((team) => {
       const bonus =
         (team as any).bonusVerifiedAt || (team as any).bonusVerifiedBy
@@ -117,7 +110,9 @@ export class LeaderboardService {
             totalScore = averageFromSheets(r2Sheets)
           }
         }
-      } else if (!round3JudgingStarted) {
+      } else {
+        // Round 3 is reveal-only. Final ranking is always the Round 2 score
+        // frozen at promotion. There is no third judging round.
         if (team.round2Score !== null && team.round2Score !== undefined) {
           totalScore = team.round2Score
           judgeCount = team.round2JudgeCount ?? 0
@@ -125,14 +120,6 @@ export class LeaderboardService {
           const r2Sheets = sheetsForRound(team.scoreSheets, 2)
           judgeCount = r2Sheets.length
           totalScore = averageFromSheets(r2Sheets)
-        }
-      } else {
-        const r3Sheets = sheetsForRound(team.scoreSheets, 3)
-        judgeCount = r3Sheets.length
-        if (team.adminScore !== null && team.adminScore !== undefined && (team.round || 1) === 3) {
-          totalScore = team.adminScore
-        } else {
-          totalScore = averageFromSheets(r3Sheets)
         }
       }
 

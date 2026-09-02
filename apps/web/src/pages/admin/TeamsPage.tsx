@@ -1072,13 +1072,13 @@ export function TeamsPage() {
               </button>
 
               <button
-                disabled={distributing || filtered.length === 0}
-                onClick={() => handleAutoDistribute(selectedRound !== 'all' ? selectedRound : undefined)}
+                disabled={distributing || filtered.length === 0 || selectedRound === 3}
+                onClick={() => handleAutoDistribute(selectedRound !== 'all' && selectedRound !== 3 ? selectedRound : undefined)}
                 className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-xl text-amber-300 transition-all bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 disabled:opacity-50 cursor-pointer"
-                title="Auto-distribute teams evenly across all confirmed judges"
+                title={selectedRound === 3 ? 'Round 3 is reveal-only. Rankings use Round 2 scores.' : 'Auto-distribute teams evenly across all confirmed judges'}
               >
                 <UserPlus size={14} className="text-amber-400" />
-                {distributing ? 'Assigning…' : selectedRound === 2 ? `⚡ Auto-Assign Round 2 (${round2Count})` : selectedRound === 3 ? `👑 Auto-Assign Round 3 (${round3Count})` : '⚡ Auto-Assign to Judges'}
+                {distributing ? 'Assigning…' : selectedRound === 2 ? `⚡ Auto-Assign Round 2 (${round2Count})` : selectedRound === 3 ? 'Reveal only — no Round 3 judging' : '⚡ Auto-Assign to Judges'}
               </button>
             </div>
             <span className="text-xs font-semibold text-slate-400">{filtered.length} teams shown</span>
