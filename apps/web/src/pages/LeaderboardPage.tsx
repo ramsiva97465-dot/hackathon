@@ -405,10 +405,23 @@ export function LeaderboardPage() {
   const timerRef = useRef<any>(null)
   const rosterRef = useRef<HTMLDivElement>(null)
   const activeRoundRef = useRef(activeRound)
+  // Reveal progress is also polled every 3s. Refs keep the socket handler and
+  // the poll from skipping an in-flight countdown via stale state.
+  const revealedStepRef = useRef(revealedStep)
+  const isDecryptingRef = useRef(false)
+  const animatingStepRef = useRef(0)
 
   useEffect(() => {
     activeRoundRef.current = activeRound
   }, [activeRound])
+
+  useEffect(() => {
+    revealedStepRef.current = revealedStep
+  }, [revealedStep])
+
+  useEffect(() => {
+    isDecryptingRef.current = isDecrypting
+  }, [isDecrypting])
 
   const { emit } = useWebSocket<LeaderboardEntry[]>('leaderboard:update', async () => {
     try {
@@ -448,15 +461,17 @@ export function LeaderboardPage() {
       }
       if (typeof data.step === 'number') {
         if (data.step === 0) {
-          setRevealedStep(0)
-          setIsDecrypting(false)
-          setCountdownNum(null)
-        } else if (data.step > revealedStep && !isDecrypting) {
-          setRevealedStep(data.step)
+          resetRevealProgress()
+        } else {
+          // Play the countdown instead of snapping straight to the name.
+          executeRevealToStep(data.step, targetRound)
         }
       }
     } else if (data && !data.isRevealing) {
-      if (typeof data.step === 'number') setRevealedStep(data.step)
+      if (typeof data.step === 'number') {
+        revealedStepRef.current = data.step
+        setRevealedStep(data.step)
+      }
       stopGrandReveal(true)
     }
   })
@@ -501,16 +516,17 @@ export function LeaderboardPage() {
           startGrandReveal(targetRound)
         }
         if (typeof res.data?.step === 'number') {
-          if (res.data.step === 0 && revealedStep > 0) {
-            setRevealedStep(0)
-            setIsDecrypting(false)
-            setCountdownNum(null)
-          } else if (res.data.step > revealedStep && !isDecrypting) {
-            setRevealedStep(res.data.step)
+          if (res.data.step === 0 && revealedStepRef.current > 0) {
+            resetRevealProgress()
+          } else if (res.data.step > 0) {
+            executeRevealToStep(res.data.step, targetRound)
           }
         }
       } else if (res.data && !res.data.isRevealing) {
-        if (typeof res.data.step === 'number') setRevealedStep(res.data.step)
+        if (typeof res.data.step === 'number') {
+          revealedStepRef.current = res.data.step
+          setRevealedStep(res.data.step)
+        }
         if (isRevealing && !searchParams.get('reveal')) {
           stopGrandReveal(true)
         }
@@ -669,9 +685,18 @@ export function LeaderboardPage() {
 
   // ── Grand Reveal Logic ─────────────────────────────────────────────────────
   const startGrandReveal = (round: number = 2) => {
+    // A late reveal_state / poll must never rewind a countdown that is already
+    // playing on the LCD, otherwise the same slot would animate twice.
+    if (isDecryptingRef.current && round === revealRound) {
+      setIsRevealing(true)
+      return
+    }
     setRevealRound(round)
     setActiveRound(round)
     setIsRevealing(true)
+    animatingStepRef.current = 0
+    isDecryptingRef.current = false
+    revealedStepRef.current = 0
     setRevealedStep(0)
     setIsPaused(false)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -680,6 +705,7 @@ export function LeaderboardPage() {
   const stopGrandReveal = (keepFinaleStep = false) => {
     setIsRevealing(false)
     if (!keepFinaleStep && revealRound !== 3) {
+      revealedStepRef.current = maxSteps
       setRevealedStep(maxSteps)
     }
     // Keep stage on the reveal round after exit (don't snap back to Round 1)
@@ -689,6 +715,15 @@ export function LeaderboardPage() {
     }
     searchParams.delete('reveal')
     setSearchParams(searchParams, { replace: true })
+  }
+
+  const resetRevealProgress = () => {
+    animatingStepRef.current = 0
+    isDecryptingRef.current = false
+    revealedStepRef.current = 0
+    setRevealedStep(0)
+    setIsDecrypting(false)
+    setCountdownNum(null)
   }
 
   const executeRevealToStep = (targetStep: number, targetRound?: number) => {
@@ -702,20 +737,20 @@ export function LeaderboardPage() {
     }
 
     if (targetStep <= 0) {
-      setRevealedStep(0)
-      setIsDecrypting(false)
-      setCountdownNum(null)
+      resetRevealProgress()
       return
     }
 
-    if (targetStep <= revealedStep && !isDecrypting) {
-      return
-    }
+    // Already unsealed, or this exact step is mid-countdown right now.
+    if (targetStep <= revealedStepRef.current) return
+    if (isDecryptingRef.current) return
 
     const isFinaleStep = effectiveRound === 3
     const currentRank = isFinaleStep ? (FINALE_CUTOFF + 1 - targetStep) : (21 - targetStep)
 
     if (isFinaleStep) {
+      animatingStepRef.current = targetStep
+      isDecryptingRef.current = true
       setIsDecrypting(true)
       setDecryptingRank(currentRank)
 
@@ -752,6 +787,9 @@ export function LeaderboardPage() {
 
         setTimeout(() => {
           clearInterval(scrambleInterval)
+          isDecryptingRef.current = false
+          animatingStepRef.current = 0
+          revealedStepRef.current = FINALE_CUTOFF
           setIsDecrypting(false)
           setCountdownNum(null)
           setRevealedStep(FINALE_CUTOFF)
@@ -781,6 +819,9 @@ export function LeaderboardPage() {
 
         setTimeout(() => {
           clearInterval(scrambleInterval)
+          isDecryptingRef.current = false
+          animatingStepRef.current = 0
+          revealedStepRef.current = targetStep
           setIsDecrypting(false)
           setCountdownNum(null)
           setRevealedStep(targetStep)
@@ -796,6 +837,7 @@ export function LeaderboardPage() {
 
     } else {
       // Round 2 standard reveal
+      revealedStepRef.current = targetStep
       setRevealedStep(targetStep)
       if (soundEnabled) {
         playRevealChime(currentRank)
@@ -898,6 +940,7 @@ export function LeaderboardPage() {
         if (soundEnabled) {
           playRevealChime(currentRank)
         }
+        revealedStepRef.current = next
         return next
       })
     }, delay)
@@ -1225,7 +1268,7 @@ export function LeaderboardPage() {
                     </span>
                     {revealedStep === maxSteps ? (
                       <button
-                        onClick={() => { setRevealedStep(0); }}
+                        onClick={() => { resetRevealProgress() }}
                         className="inline-flex items-center gap-1.5 text-amber-400 hover:text-amber-300 font-black cursor-pointer"
                       >
                         <RotateCcw size={13} />
