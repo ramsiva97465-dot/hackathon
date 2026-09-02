@@ -138,7 +138,7 @@ export class TeamsService {
       where: { teamId },
     })
     const alreadyThisJudge = currentAssignments.find(a => a.judgeId === judgeId)
-    if (alreadyThisJudge && currentAssignments.length === 1) {
+    if (alreadyThisJudge && (judgingRound === 2 || currentAssignments.length === 1)) {
       return {
         success: true,
         data: alreadyThisJudge,
@@ -146,19 +146,21 @@ export class TeamsService {
       }
     }
 
-    const replaced = currentAssignments.some(a => a.judgeId !== judgeId)
+    const replaced = judgingRound !== 2 && currentAssignments.some(a => a.judgeId !== judgeId)
 
-    // One judge per team: drop any other assignments and this round's leftover sheets
-    await this.prisma.judgeAssignment.deleteMany({
-      where: { teamId, judgeId: { not: judgeId } },
-    })
-    await this.prisma.scoreSheet.deleteMany({
-      where: {
-        teamId,
-        round: judgingRound,
-        judgeId: { not: judgeId },
-      },
-    })
+    // Round 1 stays one judge per team. Round 2 keeps every assigned judge.
+    if (judgingRound !== 2) {
+      await this.prisma.judgeAssignment.deleteMany({
+        where: { teamId, judgeId: { not: judgeId } },
+      })
+      await this.prisma.scoreSheet.deleteMany({
+        where: {
+          teamId,
+          round: judgingRound,
+          judgeId: { not: judgeId },
+        },
+      })
+    }
 
     const assignment = alreadyThisJudge || await this.prisma.judgeAssignment.create({
       data: {
@@ -187,7 +189,9 @@ export class TeamsService {
       data: assignment,
       message: replaced
         ? `Judge updated for Round ${judgingRound}.`
-        : `Judge assigned for Round ${judgingRound}.`,
+        : judgingRound === 2
+          ? `Judge added for Round 2. All assigned judges score this team (10 pts each).`
+          : `Judge assigned for Round ${judgingRound}.`,
     }
   }
 
@@ -214,6 +218,48 @@ export class TeamsService {
 
     if (teams.length === 0) return { success: false, message: `No active teams found${round ? ` in Round ${round}` : ''} to assign.` }
     if (judges.length === 0) return { success: false, message: 'No judges available.' }
+
+    // Round 2: every available judge scores every shortlisted team.
+    // Max score is 10 × judge count (5 judges → 50, 4 → 40, 3 → 30).
+    if (Number(round) === 2) {
+      let count = 0
+      for (const team of teams) {
+        for (const judge of judges) {
+          const existing = await this.prisma.judgeAssignment.findUnique({
+            where: { judgeId_teamId: { judgeId: judge.id, teamId: team.id } },
+          })
+          if (!existing) {
+            await this.prisma.judgeAssignment.create({
+              data: {
+                hackathonId: team.hackathonId,
+                judgeId: judge.id,
+                teamId: team.id,
+              },
+            })
+            count++
+          }
+          const existingSheet = await this.prisma.scoreSheet.findUnique({
+            where: {
+              judgeId_teamId_round: { judgeId: judge.id, teamId: team.id, round: 2 },
+            },
+          })
+          if (!existingSheet) {
+            await this.prisma.scoreSheet.create({
+              data: {
+                hackathonId: team.hackathonId,
+                judgeId: judge.id,
+                teamId: team.id,
+                round: 2,
+              },
+            })
+          }
+        }
+      }
+      return {
+        success: true,
+        message: `Assigned all ${judges.length} judges to all ${teams.length} Round 2 teams. Team totals are out of ${judges.length * 10}.`,
+      }
+    }
 
     let count = 0
     for (let i = 0; i < teams.length; i++) {
@@ -667,7 +713,8 @@ export class TeamsService {
           const sheetTotal = sheet.scores.reduce((sSum, sc) => sSum + sc.score, 0)
           return sum + sheetTotal
         }, 0)
-        overallScore = total / submittedSheets.length
+        // Round 1 stays a single-judge average. Round 2 sums every judge (10 × judges).
+        overallScore = round === 2 ? total : total / submittedSheets.length
       }
       if (round === 1 && (t.bonusVerifiedAt || t.bonusVerifiedBy)) {
         overallScore += t.bonusPoints || 0

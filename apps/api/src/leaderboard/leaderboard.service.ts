@@ -11,13 +11,16 @@ function sheetsForRound(sheets: ScoreSheetWithScores[], round: number) {
   return sheets.filter((s) => s.isSubmitted && (s.round || 1) === round)
 }
 
-function averageFromSheets(sheets: ScoreSheetWithScores[]) {
-  if (sheets.length === 0) return 0
-  const total = sheets.reduce((sum, sheet) => {
+function sumFromSheets(sheets: ScoreSheetWithScores[]) {
+  return sheets.reduce((sum, sheet) => {
     const sheetTotal = sheet.scores.reduce((sSum, sc) => sSum + sc.score, 0)
     return sum + sheetTotal
   }, 0)
-  return total / sheets.length
+}
+
+function averageFromSheets(sheets: ScoreSheetWithScores[]) {
+  if (sheets.length === 0) return 0
+  return sumFromSheets(sheets) / sheets.length
 }
 
 @Injectable()
@@ -107,7 +110,8 @@ export class LeaderboardService {
           if (team.adminScore !== null && team.adminScore !== undefined && (team.round || 1) === 2) {
             totalScore = team.adminScore
           } else {
-            totalScore = averageFromSheets(r2Sheets)
+            // Round 2: sum every judge's sheet. 5 judges → /50, 4 → /40, 3 → /30.
+            totalScore = sumFromSheets(r2Sheets)
           }
         }
       } else {
@@ -119,7 +123,7 @@ export class LeaderboardService {
         } else {
           const r2Sheets = sheetsForRound(team.scoreSheets, 2)
           judgeCount = r2Sheets.length
-          totalScore = averageFromSheets(r2Sheets)
+          totalScore = sumFromSheets(r2Sheets)
         }
       }
 

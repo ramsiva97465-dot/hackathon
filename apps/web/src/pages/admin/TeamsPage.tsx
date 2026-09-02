@@ -598,7 +598,7 @@ export function TeamsPage() {
 
   const handleAssignJudge = async (judgeId: string, isUpdate = false) => {
     if (!assignTarget) return
-    if (isUpdate) {
+    if (isUpdate && (assignTarget.round || 1) !== 2) {
       const ok = window.confirm(
         `This team already has one judge. Replace them with the selected judge for Round ${assignTarget.round || 1}?`
       )
@@ -913,7 +913,7 @@ export function TeamsPage() {
                     Viewing Round 2 Qualified Teams ({round2Count} Teams)
                   </p>
                   <p className="text-[11px] text-amber-300/70">
-                    Judges queue has been emptied for Round 2. Auto-assign or manually assign judges to the 20 qualifiers below.
+                    Every available judge is assigned to all 20 teams. Team totals are 10 × judge count (5 judges → 50).
                   </p>
                 </div>
               </div>
@@ -923,7 +923,7 @@ export function TeamsPage() {
                 className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-xs font-black transition-all flex items-center gap-1.5 shadow-md disabled:opacity-50 cursor-pointer"
               >
                 <UserPlus size={13} />
-                {distributing ? 'Assigning…' : '⚡ Auto-Assign Round 2 to Judges'}
+                {distributing ? 'Assigning…' : '⚡ Assign All Judges to Top 20'}
               </button>
             </div>
           )}
@@ -1672,10 +1672,16 @@ export function TeamsPage() {
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-900 text-sm">
-                      {(assignTarget.assignedJudgeIds || []).length > 0 ? 'Update Judge' : 'Assign Judge'}
+                      {(assignTarget.round || 1) === 2
+                        ? 'Assign Judges'
+                        : (assignTarget.assignedJudgeIds || []).length > 0 ? 'Update Judge' : 'Assign Judge'}
                     </h3>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      One judge per team · <span className="font-semibold text-slate-700">{assignTarget.name}</span>
+                      {(assignTarget.round || 1) === 2
+                        ? 'All judges score this team'
+                        : 'One judge per team'}
+                      {' · '}
+                      <span className="font-semibold text-slate-700">{assignTarget.name}</span>
                     </p>
                   </div>
                 </div>
@@ -1719,7 +1725,7 @@ export function TeamsPage() {
                       </div>
                     </div>
                     <button
-                      onClick={() => handleAssignJudge(judge.id, hasOtherJudge)}
+                      onClick={() => handleAssignJudge(judge.id, hasOtherJudge && (assignTarget.round || 1) !== 2)}
                       disabled={assigning || alreadyAssigned}
                       className="text-[11px] font-bold px-3.5 py-1.5 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       style={alreadyAssigned
@@ -1736,7 +1742,7 @@ export function TeamsPage() {
                         e.currentTarget.style.background = hasOtherJudge ? 'rgba(245,158,11,0.10)' : 'rgba(232,60,0,0.07)'
                       }}
                     >
-                      {alreadyAssigned ? 'Current' : assigning ? '…' : hasOtherJudge ? 'Update' : 'Assign'}
+                      {alreadyAssigned ? 'Current' : assigning ? '…' : hasOtherJudge && (assignTarget.round || 1) !== 2 ? 'Update' : 'Assign'}
                     </button>
                   </div>
                   )
