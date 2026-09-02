@@ -542,7 +542,16 @@ export function LeaderboardPage() {
     // Poll / reconnect may catch a late LCD up. It must never restart a
     // ceremony (startGrandReveal resets to step 0) and must never animate
     // several places from one leftover state payload.
-    if (!isRevealingRef.current || revealRoundRef.current !== targetRound) {
+    if (
+      !isRevealingRef.current
+      || revealRoundRef.current !== targetRound
+      || (targetRound === 3 && revealedStepRef.current > FINALE_CUTOFF)
+    ) {
+      // Top 20 auto-play leaves revealedStep at 20. That leftover must not
+      // unlock the finale podium or skip the 5th/4th countdown.
+      if (revealRoundRef.current !== targetRound || (targetRound === 3 && revealedStepRef.current > FINALE_CUTOFF)) {
+        resetRevealProgress()
+      }
       revealRoundRef.current = targetRound
       isRevealingRef.current = true
       setRevealRound(targetRound)
@@ -551,7 +560,7 @@ export function LeaderboardPage() {
       if (serverStep <= 0) {
         resetRevealProgress()
       } else {
-        executeRevealToStep(serverStep, targetRound, { catchUp: true })
+        executeRevealToStep(serverStep, targetRound)
       }
       return
     }
@@ -726,16 +735,16 @@ export function LeaderboardPage() {
 
   const stopGrandReveal = (keepFinaleStep = false) => {
     const wasRevealing = isRevealingRef.current
+    const leavingRound = revealRoundRef.current
     setIsRevealing(false)
     isRevealingRef.current = false
-    if (!keepFinaleStep && revealRoundRef.current !== 3) {
-      revealedStepRef.current = maxSteps
-      setRevealedStep(maxSteps)
+    if (!keepFinaleStep || leavingRound !== 3) {
+      resetRevealProgress()
     }
     // Stay on the ceremony round only if we were actually in a reveal.
     // A leftover stop after Promote Top 20 must not flip the LCD to Round 2.
-    if (wasRevealing && revealRoundRef.current >= 2) {
-      setActiveRound(revealRoundRef.current)
+    if (wasRevealing && leavingRound >= 2) {
+      setActiveRound(leavingRound)
     }
   }
 
@@ -754,10 +763,14 @@ export function LeaderboardPage() {
     options?: { catchUp?: boolean },
   ) => {
     const effectiveRound = targetRound || revealRoundRef.current || 3
-    if (targetRound && targetRound !== revealRoundRef.current) {
-      revealRoundRef.current = targetRound
-      setRevealRound(targetRound)
-      setActiveRound(targetRound)
+    if (
+      (targetRound && targetRound !== revealRoundRef.current)
+      || (effectiveRound === 3 && revealedStepRef.current > FINALE_CUTOFF)
+    ) {
+      resetRevealProgress()
+      revealRoundRef.current = effectiveRound
+      setRevealRound(effectiveRound)
+      setActiveRound(effectiveRound)
     }
     if (!isRevealingRef.current) {
       isRevealingRef.current = true
@@ -1309,7 +1322,8 @@ export function LeaderboardPage() {
           {/* BOTTOM VIEW: Top 20 Table (for Round 2) OR 3D Podium (for Round 3) */}
           {/* ══════════════════════════════════════════════════════════════════ */}
           {isFinale ? (
-            /* ROUND 3: WINNERS PODIUM */
+            !isDecrypting ? (
+            /* ROUND 3: WINNERS PODIUM — hidden during the countdown card */
             <div ref={rosterRef} className="w-full max-w-5xl flex flex-col items-center">
               <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/5 text-slate-700 mb-6 shadow-sm">
                 <Trophy size={14} className="text-amber-500" />
@@ -1493,6 +1507,7 @@ export function LeaderboardPage() {
                 })}
               </div>
             </div>
+            ) : null
           ) : (
             /* ROUND 2: TOP 20 QUALIFIERS TABLE */
             <div ref={rosterRef} className="w-full max-w-5xl rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1]">
