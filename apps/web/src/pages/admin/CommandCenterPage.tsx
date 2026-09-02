@@ -176,7 +176,10 @@ export function CommandCenterPage() {
   const totalJudges = judges.length
   const activeJudges = judges.filter((j: any) => j.isActive).length
   const scoringComplete = judges.filter((j: any) => j.completedScores >= j.totalTeams && j.totalTeams > 0).length
-  const totalScores = judges.reduce((sum: number, j: any) => sum + (j.completedScores || 0), 0)
+  const totalScores = judges.reduce(
+    (sum: number, j: any) => sum + Math.min(j.completedScores || 0, j.totalTeams || 0),
+    0,
+  )
   const totalPossible = judges.reduce((sum: number, j: any) => sum + (j.totalTeams || 0), 0)
   const scoringProgress = totalPossible > 0 ? Math.round((totalScores / totalPossible) * 100) : 0
 
@@ -661,7 +664,9 @@ export function CommandCenterPage() {
           {judges.length > 0 && (
             <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
               {judges.slice(0, 8).map((judge: any) => {
-                const prog = judge.totalTeams > 0 ? Math.round((judge.completedScores / judge.totalTeams) * 100) : 0
+                const prog = judge.totalTeams > 0
+                  ? Math.min(100, Math.round((judge.completedScores / judge.totalTeams) * 100))
+                  : 0
                 return (
                   <div
                     key={judge.id}

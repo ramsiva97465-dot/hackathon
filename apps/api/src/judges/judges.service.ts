@@ -9,7 +9,7 @@ export class JudgesService {
     const judges = await this.prisma.judge.findMany({
       include: {
         user: true,
-        assignments: true,
+        assignments: { include: { team: { select: { round: true } } } },
         scoreSheets: true,
       },
     })
@@ -25,7 +25,16 @@ export class JudgesService {
         title: j.designation,
         assignedTeams: j.assignments.length,
         assignmentsCount: j.assignments.length,
-        completedScores: j.scoreSheets.filter(s => s.isSubmitted).length,
+        // Only count submitted sheets for currently assigned teams in their
+        // current round, so Round 2 progress starts at 0/N after reassignment.
+        completedScores: j.assignments.filter((a) =>
+          j.scoreSheets.some(
+            (s) =>
+              s.isSubmitted &&
+              s.teamId === a.teamId &&
+              (s.round || 1) === (a.team.round || 1),
+          ),
+        ).length,
         totalTeams: j.assignments.length,
         isActive: j.user.isActive,
         expertise: [], // Kept empty as it's not in schema

@@ -134,7 +134,7 @@ export function JudgesPage() {
             {[
               { label: 'Total Judges', value: judges.length },
               { label: 'Active', value: judges.filter(j => j.isActive).length },
-              { label: 'Completed Scoring', value: judges.filter(j => j.completedScores >= j.totalTeams).length },
+              { label: 'Completed Scoring', value: judges.filter(j => j.totalTeams > 0 && j.completedScores >= j.totalTeams).length },
             ].map(s => (
               <div key={s.label} className="border p-4 rounded-2xl shadow-2xl" style={{ backgroundColor: '#0A0A0A', borderColor: 'rgba(255,255,255,0.1)' }}>
                 <p className="font-display text-3xl font-black text-white">{s.value}</p>
@@ -163,7 +163,9 @@ export function JudgesPage() {
             className="grid md:grid-cols-2 lg:grid-cols-3 gap-5"
           >
             {judges.map(judge => {
-              const progress = (judge.completedScores / judge.totalTeams) * 100 || 0
+              const progress = judge.totalTeams > 0
+                ? Math.min(100, (judge.completedScores / judge.totalTeams) * 100)
+                : 0
               return (
                 <motion.div key={judge.id} variants={itemVariants} whileHover={{ y: -4 }} transition={{ duration: 0.25 }}>
                   <div className="p-6 rounded-[1.5rem] shadow-2xl transition-all duration-300 h-full flex flex-col gap-5 border"
