@@ -977,45 +977,48 @@ export function LeaderboardPage() {
       {/* 🎭 DRAMATIC GRAND REVEAL CEREMONY (Round 2: 20➔1 | Round 3: 5➔1)      */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {isRevealing ? (
-        <div className="relative z-10 flex-1 flex flex-col items-center pt-4 pb-10 px-4 sm:px-8 w-full">
+        <div className="relative z-10 flex-1 flex flex-col items-center px-4 sm:px-8 w-full">
           
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-4"
-          >
-            <div className={`inline-flex items-center gap-2 px-5 py-2 rounded-full mb-2 shadow-xl ${
-              isFinale 
-                ? 'bg-amber-950/80 border border-amber-500/40 text-amber-300 shadow-amber-900/30' 
-                : 'bg-white border border-black/5 text-slate-700 shadow-black/5'
-            }`}>
-              {isFinale ? <Crown size={15} className="text-amber-400 fill-amber-400/40" /> : <Trophy size={14} className="text-amber-500" />}
-              <span className="text-xs font-black uppercase tracking-widest">
-                {isFinale ? '👑 Grand Finale · Champions Coronation' : 'Round 1 Qualifiers - Live Ceremony'}
-              </span>
-            </div>
-            <h2 className="text-[#E83C00] font-bold tracking-[0.2em] uppercase text-sm mb-1">
-              AI குரல் · VOICE FOR TAMIL NADU · 2026
-            </h2>
-            <h1 className="text-5xl sm:text-6xl font-black text-[#1A1A1A] tracking-tighter" style={{ textShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
-              {isFinale ? 'Top 5 Grand Finale Winners' : 'Top 20 Grand Reveal'}
-            </h1>
-          </motion.div>
+          {/* 🌟 FULL-VIEWPORT HERO SPOTLIGHT (keeps table below the fold) */}
+          <div className="min-h-[calc(100vh-100px)] w-full flex flex-col items-center justify-center py-6">
+            {/* Header */}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center mb-6"
+            >
+              <div className={`inline-flex items-center gap-2 px-5 py-2 rounded-full mb-2 shadow-xl ${
+                isFinale 
+                  ? 'bg-amber-950/80 border border-amber-500/40 text-amber-300 shadow-amber-900/30' 
+                  : 'bg-white border border-black/5 text-slate-700 shadow-black/5'
+              }`}>
+                {isFinale ? <Crown size={15} className="text-amber-400 fill-amber-400/40" /> : <Trophy size={14} className="text-amber-500" />}
+                <span className="text-xs font-black uppercase tracking-widest">
+                  {isFinale ? '👑 Grand Finale · Champions Coronation' : 'Round 1 Qualifiers - Live Ceremony'}
+                </span>
+              </div>
+              <h2 className="text-[#E83C00] font-bold tracking-[0.2em] uppercase text-sm mb-1">
+                AI குரல் · VOICE FOR TAMIL NADU · 2026
+              </h2>
+              <h1 className="text-5xl sm:text-6xl font-black text-[#1A1A1A] tracking-tighter" style={{ textShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
+                {isFinale ? 'Top 5 Grand Finale Winners' : 'Top 20 Grand Reveal'}
+              </h1>
+            </motion.div>
 
-          {/* 🌟 HERO SPOTLIGHT ANNOUNCEMENT CARD — 75% width for 24x10 LED */}
-          <div className="w-3/4 mx-auto mb-6">
-            <PremiumRevealCard
-              isFinale={isFinale}
-              currentSpotlightRank={currentSpotlightRank}
-              currentSpotlightTeam={currentSpotlightTeam}
-              revealedStep={revealedStep}
-              maxSteps={maxSteps}
-              isDecrypting={isDecrypting}
-              decryptingRank={decryptingRank}
-              revealingTeamName={revealingTeamName}
-              nameSpinMs={nameSpinMs}
-            />
+            {/* 🌟 HERO SPOTLIGHT ANNOUNCEMENT CARD — 75% width for 24x10 LED */}
+            <div className="w-3/4 mx-auto">
+              <PremiumRevealCard
+                isFinale={isFinale}
+                currentSpotlightRank={currentSpotlightRank}
+                currentSpotlightTeam={currentSpotlightTeam}
+                revealedStep={revealedStep}
+                maxSteps={maxSteps}
+                isDecrypting={isDecrypting}
+                decryptingRank={decryptingRank}
+                revealingTeamName={revealingTeamName}
+                nameSpinMs={nameSpinMs}
+              />
+            </div>
           </div>
 
           {/* ══════════════════════════════════════════════════════════════════ */}

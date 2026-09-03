@@ -373,7 +373,7 @@ export function PremiumRevealCard({
           y: 0,
         }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className={`relative px-10 py-12 rounded-[2.2rem] overflow-hidden border-2 transition-all
+        className={`relative px-10 py-16 sm:py-20 xl:py-24 rounded-[2.5rem] overflow-hidden border-2 transition-all
           ${rankTheme.cardBg}
           ${isDecrypting ? 'border-amber-500/80 shadow-[0_0_100px_rgba(245,158,11,0.45)]' : `${rankTheme.cardBorder} ${rankTheme.cardShadow}`}
         `}
@@ -399,7 +399,7 @@ export function PremiumRevealCard({
         )}
 
         {/* ─── HORIZONTAL 3-COLUMN LAYOUT for 24:10 wide LED ─────────────────── */}
-        <div className="flex items-center gap-6 w-full min-h-[200px]">
+        <div className="flex items-center gap-6 w-full min-h-[260px]">
 
           {/* ── LEFT: Badge + Rank ── */}
           <div className="flex flex-col items-center justify-center gap-2 shrink-0 w-[20%]">
