@@ -691,8 +691,8 @@ export function LeaderboardPage() {
 
       const el = scrollContainerRef.current
       if (el && !scrollingUp) {
-        // Smooth 50 pixels per second
-        currentScroll += 50 * dt
+        // Comfortable, readable speed: 24 pixels per second
+        currentScroll += 24 * dt
         el.scrollTop = Math.floor(currentScroll)
 
         // Check if reached the bottom
@@ -704,7 +704,7 @@ export function LeaderboardPage() {
             scrollingUp = false
             currentScroll = 0
             lastTime = performance.now()
-          }, 3000)
+          }, 3500)
         }
       }
 
@@ -1506,9 +1506,9 @@ export function LeaderboardPage() {
 
             {/* ROUND 1 VIEW — Live Judging Status (Scores Hidden, 0/1 -> 1/1) */}
             {activeRound === 1 && (
-              <div className="w-full rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1]">
-                {/* Table header (Pinned at top of table) */}
-                <div className="sticky top-0 z-10 grid grid-cols-[56px_1fr_170px_110px_110px] px-6 py-4 bg-[#1A1A1A] text-[10px] font-bold text-white/75 uppercase tracking-widest border-b border-white/10 shadow-sm">
+              <div className="w-full shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] rounded-[2rem]">
+                {/* Table header (Permanently pinned at top of table while rows scroll) */}
+                <div className="sticky top-0 z-20 grid grid-cols-[56px_1fr_170px_110px_110px] px-6 py-4 bg-[#1A1A1A] text-[10px] font-bold text-white/75 uppercase tracking-widest border-b border-white/10 shadow-md rounded-t-[2rem]">
                   <div className="text-center">#</div>
                   <div>Team</div>
                   <div>Track</div>
@@ -1517,7 +1517,7 @@ export function LeaderboardPage() {
                 </div>
 
                 {/* All teams listed with live 0/1 -> 1/1 evaluation status */}
-                <div className="flex flex-col">
+                <div className="flex flex-col rounded-b-[2rem] overflow-hidden">
                   <AnimatePresence>
                     {filtered.map((entry, idx) => (
                       <Round1Row key={entry.teamId} entry={entry} index={idx} />
@@ -1530,14 +1530,14 @@ export function LeaderboardPage() {
             {/* ROUND 2 VIEW — full Top 20 list. No podium; winners stay sealed
                 until the admin clicks Reveal 5th / 4th / runner-up / champion. */}
             {activeRound === 2 && (
-              <div className="w-full max-w-5xl rounded-[2rem] bg-[#F4ECE1] shadow-2xl shadow-black/10 overflow-hidden border border-black/5">
+              <div className="w-full max-w-5xl rounded-[2rem] bg-[#F4ECE1] shadow-2xl shadow-black/10 border border-black/5">
                 {r3Teams.length > 0 ? (
                   <>
-                    <div className="sticky top-0 z-10 grid grid-cols-[1fr_200px] px-8 py-5 bg-[#EBE2D5]/95 backdrop-blur-md border-b border-black/10 text-xs font-bold text-slate-700 uppercase tracking-widest shadow-xs">
+                    <div className="sticky top-0 z-20 grid grid-cols-[1fr_200px] px-8 py-5 bg-[#EBE2D5] border-b border-black/10 text-xs font-bold text-slate-700 uppercase tracking-widest shadow-md rounded-t-[2rem]">
                       <div>Team</div>
                       <div>Track</div>
                     </div>
-                    <div className="flex flex-col bg-[#F4ECE1]">
+                    <div className="flex flex-col bg-[#F4ECE1] rounded-b-[2rem] overflow-hidden">
                       <AnimatePresence>
                         {[...advancing]
                           .sort((a, b) => a.teamName.localeCompare(b.teamName))
@@ -1549,7 +1549,7 @@ export function LeaderboardPage() {
                   </>
                 ) : (
                   <>
-                    <div className="sticky top-0 z-10 grid grid-cols-[80px_1fr_200px_120px_120px_80px] px-8 py-5 bg-[#EBE2D5]/95 backdrop-blur-md border-b border-black/10 text-xs font-bold text-slate-700 uppercase tracking-widest shadow-xs">
+                    <div className="sticky top-0 z-20 grid grid-cols-[80px_1fr_200px_120px_120px_80px] px-8 py-5 bg-[#EBE2D5] border-b border-black/10 text-xs font-bold text-slate-700 uppercase tracking-widest shadow-md rounded-t-[2rem]">
                       <div className="text-center">Rank</div>
                       <div>Team Details</div>
                       <div>Track</div>
@@ -1557,7 +1557,7 @@ export function LeaderboardPage() {
                       <div className="text-right">Score</div>
                       <div className="text-right">Change</div>
                     </div>
-                    <div className="flex flex-col bg-[#F4ECE1]">
+                    <div className="flex flex-col bg-[#F4ECE1] rounded-b-[2rem] overflow-hidden">
                       <AnimatePresence>
                         {advancing.map((entry) => (
                           <Round2Row key={entry.teamId} entry={entry} />
