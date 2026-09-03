@@ -989,21 +989,38 @@ export function LeaderboardPage() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center mb-6"
             >
-              <div className={`inline-flex items-center gap-2 px-5 py-2 rounded-full mb-2 shadow-xl ${
+              <div className={`inline-flex items-center gap-2 px-5 py-1.5 rounded-full mb-2.5 shadow-xl ${
                 isFinale 
-                  ? 'bg-amber-950/80 border border-amber-500/40 text-amber-300 shadow-amber-900/30' 
-                  : 'bg-white border border-black/5 text-slate-700 shadow-black/5'
+                  ? 'bg-amber-950/90 border border-amber-500/50 text-amber-300 shadow-amber-900/30' 
+                  : 'bg-white/90 border border-amber-500/30 text-amber-950 shadow-amber-900/5 ring-1 ring-amber-500/10 backdrop-blur-md'
               }`}>
-                {isFinale ? <Crown size={15} className="text-amber-400 fill-amber-400/40" /> : <Trophy size={14} className="text-amber-500" />}
-                <span className="text-xs font-black uppercase tracking-widest">
-                  {isFinale ? '👑 Grand Finale · Champions Coronation' : 'Round 1 Qualifiers - Live Ceremony'}
+                {isFinale ? <Crown size={14} className="text-amber-400 fill-amber-400/40" /> : <Trophy size={14} className="text-amber-500" />}
+                <span className="text-[11px] font-black uppercase tracking-[0.16em]">
+                  {isFinale ? '👑 Grand Finale · Champions Coronation' : '⚡ Stage 1 Qualifiers · Live Ceremony'}
                 </span>
               </div>
-              <h2 className="text-[#E83C00] font-bold tracking-[0.2em] uppercase text-sm mb-1">
-                AI குரல் · VOICE FOR TAMIL NADU · 2026
-              </h2>
-              <h1 className="text-5xl sm:text-6xl font-black text-[#1A1A1A] tracking-tighter" style={{ textShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
-                {isFinale ? 'Top 5 Grand Finale Winners' : 'Top 20 Grand Reveal'}
+              <div className="flex items-center justify-center gap-3 mb-1.5">
+                <span className="h-px w-8 bg-gradient-to-r from-transparent to-[#E83C00]/40" />
+                <h2 className="text-[#E83C00] font-black tracking-[0.28em] uppercase text-xs">
+                  AI குரல் · VOICE FOR TAMIL NADU · 2026
+                </h2>
+                <span className="h-px w-8 bg-gradient-to-l from-transparent to-[#E83C00]/40" />
+              </div>
+              <h1 className="text-5xl sm:text-7xl font-black tracking-tight leading-none">
+                {isFinale ? (
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-300 to-orange-400 drop-shadow-md">
+                    Top 5 Grand Finale Winners
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-3 flex-wrap justify-center">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E83C00] via-amber-600 to-[#E83C00] drop-shadow-xs">
+                      Top 20
+                    </span>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#111111] via-[#2A241E] to-[#0A0A0A]">
+                      Grand Reveal
+                    </span>
+                  </span>
+                )}
               </h1>
             </motion.div>
 
@@ -1397,27 +1414,59 @@ export function LeaderboardPage() {
                   transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                   className="text-center"
                 >
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/5 text-slate-700 mb-2 shadow-xl shadow-black/5">
-                    <Trophy size={14} className="text-amber-500" />
-                    <span className="text-xs font-bold uppercase tracking-widest">
-                      {activeRound === 3 ? 'Stage 3: Top 5 Grand Finale Podium' : activeRound === 2 ? 'Stage 2: Top 20 Shortlist' : 'Stage 1: Live Judging'}
+                  {/* Luxury Pill Badge */}
+                  <div className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-amber-500/30 text-amber-900 mb-2.5 shadow-lg shadow-amber-900/5 ring-1 ring-amber-500/10">
+                    <Trophy size={13} className="text-amber-500" />
+                    <span className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-800">
+                      {activeRound === 3 ? '👑 Grand Finale · Champions Podium' : activeRound === 2 ? '⚡ Stage 2 · Top 20 Shortlist' : '🎯 Stage 1 · Live Judging'}
                     </span>
                   </div>
-                  <h2 className="text-[#E83C00] font-bold tracking-[0.2em] uppercase text-xs mb-1">
-                    AI குரல் · VOICE FOR TAMIL NADU · 2026
-                  </h2>
-                  <h1 className="text-4xl sm:text-5xl font-black text-[#1A1A1A] tracking-tighter" style={{ textShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
-                    {activeRound === 3 ? 'Top 5 Grand Finale Winners' : activeRound === 2 ? 'Round 2 · Top 20' : 'Live Evaluation Status'}
+
+                  {/* Tamil Brand Tag with Decorative Hairline Accents */}
+                  <div className="flex items-center justify-center gap-3 mb-1.5">
+                    <span className="h-px w-8 bg-gradient-to-r from-transparent to-[#E83C00]/40" />
+                    <h2 className="text-[#E83C00] font-black tracking-[0.28em] uppercase text-xs">
+                      AI குரல் · VOICE FOR TAMIL NADU · 2026
+                    </h2>
+                    <span className="h-px w-8 bg-gradient-to-l from-transparent to-[#E83C00]/40" />
+                  </div>
+
+                  {/* Ultra-Premium Dual-Tone Typography Title */}
+                  <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-none mb-2">
+                    {activeRound === 3 ? (
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1A0A02] via-[#E83C00] to-[#B45309] drop-shadow-sm">
+                        Top 5 Grand Finale Winners
+                      </span>
+                    ) : activeRound === 2 ? (
+                      <span className="inline-flex items-center gap-3 flex-wrap justify-center">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#111111] via-[#2A241E] to-[#0A0A0A]">
+                          Round 2
+                        </span>
+                        <span className="text-amber-500 font-light opacity-50 text-3xl sm:text-5xl">·</span>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E83C00] via-amber-600 to-[#E83C00] drop-shadow-xs font-black">
+                          Top 20
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#111111] via-[#2A241E] to-[#0A0A0A]">
+                        Live Evaluation Status
+                      </span>
+                    )}
                   </h1>
-                  <p className="text-slate-500 mt-1 text-xs sm:text-sm font-medium">
-                    {activeRound === 3
-                      ? `${filtered.length} finalists`
-                      : activeRound === 2
-                      ? (r3Teams.length > 0
-                        ? `${advancing.length} shortlisted teams · waiting for admin to reveal the winners`
-                        : `${filtered.length} teams competing · judges scoring live`)
-                      : `${filtered.length} teams · tracking live evaluation completion`}
-                  </p>
+
+                  {/* Refined Subtitle Pill */}
+                  <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-black/[0.03] border border-black/5 text-xs text-slate-600 font-semibold tracking-wide">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    <span>
+                      {activeRound === 3
+                        ? `${filtered.length} finalists competing for the crown`
+                        : activeRound === 2
+                        ? (r3Teams.length > 0
+                          ? `${advancing.length} shortlisted teams · official selection`
+                          : `${filtered.length} teams competing · judges scoring live`)
+                        : `${filtered.length} teams · live evaluation in progress`}
+                    </span>
+                  </div>
                 </motion.div>
               </AnimatePresence>
             </div>
