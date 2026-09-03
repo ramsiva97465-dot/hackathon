@@ -947,8 +947,6 @@ export function LeaderboardPage() {
   return (
     <div className="h-screen flex flex-col relative overflow-hidden" style={{
       backgroundColor: '#EBE3D5',
-      backgroundImage: 'radial-gradient(#d4caba 1px, transparent 1px)',
-      backgroundSize: '32px 32px',
       fontFamily: "'Space Grotesk', 'Inter', system-ui, sans-serif",
       color: '#1A1A1A'
     }}>
@@ -1418,7 +1416,7 @@ export function LeaderboardPage() {
         <div className="relative z-10 flex-1 min-h-0 flex flex-col items-center w-full overflow-hidden">
 
           {/* 📌 FIXED HEADER SECTION (Title + Subtitle + Fixed Table Column Headers) */}
-          <div className="shrink-0 z-20 w-full backdrop-blur-md bg-[#EBE3D5] pt-5 pb-0 border-b border-black/5 flex flex-col items-center">
+          <div className="shrink-0 z-20 w-full backdrop-blur-md bg-[#EBE3D5] pt-5 pb-0 flex flex-col items-center">
             <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 flex flex-col items-center">
               <AnimatePresence mode="wait">
                 <motion.div
