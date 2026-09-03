@@ -390,14 +390,10 @@ export function PremiumRevealCard({
       />
 
       <motion.div
-        key={`spotlight-card-${activeRank}-${isDecrypting ? 'spinning' : 'locked'}`}
-        initial={{ opacity: 0, scale: 0.96, y: 16 }}
-        animate={{
-          opacity: 1,
-          scale: justLocked ? [1, 1.03, 1] : 1,
-          y: 0,
-        }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
+        key={`spotlight-card-${activeRank}`}
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
         className={`relative px-10 pt-14 pb-8 sm:pt-16 sm:pb-10 xl:pt-20 xl:pb-12 rounded-[2.5rem] overflow-hidden border-2 transition-all
           ${rankTheme.cardBg}
           ${isDecrypting ? 'border-amber-500/80 shadow-[0_0_100px_rgba(245,158,11,0.45)]' : `${rankTheme.cardBorder} ${rankTheme.cardShadow}`}
@@ -462,7 +458,7 @@ export function PremiumRevealCard({
 
             {/* Rank Number — sized to fit column */}
             <div
-              className={`font-black tracking-tighter leading-none text-[4rem] xl:text-[5.5rem] ${
+              className={`font-black tracking-tighter leading-none text-[4rem] xl:text-[5.5rem] transition-colors duration-300 ${
                 isDecrypting
                   ? 'text-amber-400/90 font-mono animate-pulse'
                   : rankTheme.rankText
@@ -478,7 +474,7 @@ export function PremiumRevealCard({
           {/* ── CENTER: Team Name + College/Track ── */}
           <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center overflow-hidden px-6 min-h-[160px]">
             {isDecrypting ? (
-              <>
+              <div key="cipher-block" className="flex flex-col items-center justify-center gap-3 w-full">
                 {/* Cipher: nowrap keeps it on 1 line, text scales to fit */}
                 <span className="font-mono text-3xl xl:text-5xl font-black tracking-[0.15em] text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.9)] select-none whitespace-nowrap overflow-hidden max-w-full">
                   {scrambleDisplay || 'IDENTIFYING...'}
@@ -487,24 +483,22 @@ export function PremiumRevealCard({
                   <Lock size={12} className="text-amber-400 animate-spin shrink-0" />
                   <span>⚡ DECRYPTING VERIFIED SUBMISSION MARKS ⚡</span>
                 </div>
-              </>
+              </div>
             ) : (
-              <>
-                <motion.h2
-                  initial={{ scale: 0.85, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: 'spring', bounce: 0.4, duration: 0.65 }}
+              <motion.div
+                key="revealed-block"
+                initial={{ opacity: 0, scale: 0.97 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.35, ease: 'easeOut' }}
+                className="flex flex-col items-center justify-center gap-3 w-full"
+              >
+                <h2
                   className="font-mono text-4xl xl:text-6xl font-black tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.85)] leading-tight w-full"
                   style={{ wordBreak: 'break-word' }}
                 >
                   {(currentSpotlightTeam?.teamName || targetName).toUpperCase()}
-                </motion.h2>
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.18, duration: 0.35 }}
-                  className="flex items-center justify-center gap-3 flex-wrap text-lg xl:text-xl font-medium text-slate-300"
-                >
+                </h2>
+                <div className="flex items-center justify-center gap-3 flex-wrap text-lg xl:text-xl font-medium text-slate-300">
                   <span className="font-semibold text-white/90">
                     {currentSpotlightTeam?.college || 'Tamil Nadu'}
                   </span>
@@ -523,8 +517,8 @@ export function PremiumRevealCard({
                       </span>
                     </>
                   )}
-                </motion.div>
-              </>
+                </div>
+              </motion.div>
             )}
           </div>
 
