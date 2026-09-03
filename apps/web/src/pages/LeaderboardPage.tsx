@@ -1433,7 +1433,7 @@ export function LeaderboardPage() {
                   <div className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-amber-500/30 text-amber-900 mb-2 shadow-lg shadow-amber-900/5 ring-1 ring-amber-500/10">
                     <Trophy size={13} className="text-amber-500" />
                     <span className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-800">
-                      {activeRound === 3 ? '👑 Grand Finale · Champions Podium' : activeRound === 2 ? '⚡ Stage 2 · Top 20 Shortlist' : '🎯 Stage 1 · Live Judging'}
+                      {activeRound === 3 ? '👑 Grand Finale · Champions Podium' : activeRound === 2 ? '⚡ Stage 2 · Top 20 Shortlist' : '🎯 Stage 1 - Live Judging'}
                     </span>
                   </div>
 
