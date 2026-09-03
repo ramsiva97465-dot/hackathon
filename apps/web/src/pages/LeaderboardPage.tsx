@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { SnapServeMark, VobizLockup } from '@/components/brand/BrandLogos'
 import { PremiumRevealCard } from '@/components/reveal/PremiumRevealCard'
+import { GrandFinaleExperience } from '@/components/reveal/GrandFinaleExperience'
 import { Avatar } from '@/components/ui/Avatar'
 import { getTrackConfig } from '@/lib/utils'
 import { useWebSocket } from '@/hooks/useWebSocket'
@@ -418,6 +419,7 @@ export function LeaderboardPage() {
   const [decryptingRank, setDecryptingRank] = useState<number | null>(null)
   const [revealingTeamName, setRevealingTeamName] = useState('')
   const [nameSpinMs, setNameSpinMs] = useState(5000)
+  const [finaleStepStartedAt, setFinaleStepStartedAt] = useState(0)
   const [unlockedRanks, setUnlockedRanks] = useState<number[]>([])
   const unlockedRanksRef = useRef<number[]>([])
   const rosterRef = useRef<HTMLDivElement>(null)
@@ -435,6 +437,7 @@ export function LeaderboardPage() {
   // name must be read when it is spoken, not when the trigger arrived.
   const top5Ref = useRef<Array<LeaderboardEntry & { rank: number }>>([])
   const advancingRef = useRef<Array<LeaderboardEntry & { rank: number }>>([])
+  const revealCompletionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const autoScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasAutoScrolledRef = useRef(false)
   const holdStartedRef = useRef(false)
@@ -484,7 +487,7 @@ export function LeaderboardPage() {
     startGrandReveal(data?.round || 2)
   })
 
-  useWebSocket<{ step: number; round?: number }>('leaderboard:reveal_step', (data) => {
+  useWebSocket<{ step: number; round?: number; startedAt?: number }>('leaderboard:reveal_step', (data) => {
     if (typeof data?.step !== 'number') return
     const targetRound = data.round || 3
     if (targetRound !== revealRoundRef.current || !isRevealingRef.current) {
@@ -494,14 +497,14 @@ export function LeaderboardPage() {
       setActiveRound(targetRound === 3 ? 2 : targetRound)
       setIsRevealing(true)
     }
-    executeRevealToStep(data.step, targetRound)
+    executeRevealToStep(data.step, targetRound, { startedAt: data.startedAt })
   })
 
   useWebSocket<{ isRevealing: boolean }>('leaderboard:reveal_stop', () => {
     if (isRevealingRef.current) stopGrandReveal(true)
   })
 
-  useWebSocket<{ isRevealing: boolean; round?: number; step?: number }>('leaderboard:reveal_state', (data) => {
+  useWebSocket<{ isRevealing: boolean; round?: number; step?: number; startedAt?: number }>('leaderboard:reveal_state', (data) => {
     applyServerRevealState(data, 'poll')
   })
 
@@ -552,7 +555,7 @@ export function LeaderboardPage() {
   }
 
   const applyServerRevealState = (
-    data: { isRevealing?: boolean; round?: number; step?: number } | undefined,
+    data: { isRevealing?: boolean; round?: number; step?: number; startedAt?: number } | undefined,
     source: 'poll' | 'event',
   ) => {
     if (!data) return
@@ -585,7 +588,10 @@ export function LeaderboardPage() {
       if (serverStep <= 0) {
         resetRevealProgress()
       } else {
-        executeRevealToStep(serverStep, targetRound)
+        executeRevealToStep(serverStep, targetRound, {
+          catchUp: source === 'poll',
+          startedAt: data.startedAt,
+        })
         showRosterIfCeremonyComplete(serverStep, targetRound)
       }
       return
@@ -594,7 +600,10 @@ export function LeaderboardPage() {
     // A leftover step-0 poll (ceremony opened but no place clicked yet)
     // must never rewind a place the LCD already unsealed.
     if (serverStep > revealedStepRef.current) {
-      executeRevealToStep(serverStep, targetRound, { catchUp: source === 'poll' })
+      executeRevealToStep(serverStep, targetRound, {
+        catchUp: source === 'poll',
+        startedAt: data.startedAt,
+      })
       showRosterIfCeremonyComplete(serverStep, targetRound)
     }
   }
@@ -811,6 +820,13 @@ export function LeaderboardPage() {
   const stopGrandReveal = (keepFinaleStep = false) => {
     const wasRevealing = isRevealingRef.current
     const leavingRound = revealRoundRef.current
+    if (revealCompletionTimerRef.current) {
+      clearTimeout(revealCompletionTimerRef.current)
+      revealCompletionTimerRef.current = null
+    }
+    isDecryptingRef.current = false
+    animatingStepRef.current = 0
+    setIsDecrypting(false)
     setIsRevealing(false)
     isRevealingRef.current = false
     if (!keepFinaleStep || leavingRound !== 3) {
@@ -824,11 +840,16 @@ export function LeaderboardPage() {
   }
 
   const resetRevealProgress = () => {
+    if (revealCompletionTimerRef.current) {
+      clearTimeout(revealCompletionTimerRef.current)
+      revealCompletionTimerRef.current = null
+    }
     animatingStepRef.current = 0
     isDecryptingRef.current = false
     revealedStepRef.current = 0
     setRevealedStep(0)
     setIsDecrypting(false)
+    setFinaleStepStartedAt(0)
     setUnlockedRanks([])
     setRevealingTeamName('')
     hasAutoScrolledRef.current = false
@@ -843,7 +864,7 @@ export function LeaderboardPage() {
   const executeRevealToStep = (
     requestedStep: number,
     targetRound?: number,
-    options?: { catchUp?: boolean },
+    options?: { catchUp?: boolean; startedAt?: number },
   ) => {
     const effectiveRound = targetRound || revealRoundRef.current || 3
     if (
@@ -886,22 +907,10 @@ export function LeaderboardPage() {
       if (requestedRank !== nextRank) return
     }
 
-    // A late-joining screen (or poll) should land on the current place
-    // without replaying every earlier countdown.
-    if (options?.catchUp) {
-      revealedStepRef.current = requestedStep
-      setRevealedStep(requestedStep)
-      setIsDecrypting(false)
-      if (!isFinaleStep && requestedStep > 0) {
-        const recovered = Array.from({ length: requestedStep }, (_, i) => 21 - (i + 1))
-        unlockedRanksRef.current = recovered
-        setUnlockedRanks(recovered)
-      }
-      return
-    }
-
     // Both ceremonies unseal exactly the next place: Top 20 is 20→1, finale is 5→1.
-    const targetStep = Math.min(requestedStep, revealedStepRef.current + 1, lastStep)
+    const targetStep = options?.catchUp
+      ? Math.min(requestedStep, lastStep)
+      : Math.min(requestedStep, revealedStepRef.current + 1, lastStep)
 
     const currentRank = isFinaleStep ? (FINALE_CUTOFF + 1 - targetStep) : (21 - targetStep)
 
@@ -909,6 +918,25 @@ export function LeaderboardPage() {
       ? (top5Ref.current[currentRank - 1]?.teamName || '')
       : (advancingRef.current[currentRank - 1]?.teamName || '')
     const spinMs = isFinaleStep ? finaleCountdownStart(targetStep) * 1000 : 5000
+    const startedAt = isFinaleStep ? (options?.startedAt || Date.now()) : Date.now()
+    const elapsed = Math.max(0, Date.now() - startedAt)
+    const remainingMs = Math.max(0, spinMs - elapsed)
+
+    if (isFinaleStep) setFinaleStepStartedAt(startedAt)
+
+    // A late screen resumes an in-flight finale from the server timestamp.
+    // Completed steps catch up silently so refreshes never replay a winner.
+    if (options?.catchUp && (!isFinaleStep || remainingMs <= 0)) {
+      revealedStepRef.current = targetStep
+      setRevealedStep(targetStep)
+      setIsDecrypting(false)
+      if (!isFinaleStep && targetStep > 0) {
+        const recovered = Array.from({ length: targetStep }, (_, i) => 21 - (i + 1))
+        unlockedRanksRef.current = recovered
+        setUnlockedRanks(recovered)
+      }
+      return
+    }
 
     animatingStepRef.current = targetStep
     isDecryptingRef.current = true
@@ -919,7 +947,12 @@ export function LeaderboardPage() {
     setNameSpinMs(spinMs)
     setRevealedStep(targetStep)
 
-    window.setTimeout(() => {
+    if (revealCompletionTimerRef.current) {
+      clearTimeout(revealCompletionTimerRef.current)
+    }
+    revealCompletionTimerRef.current = window.setTimeout(() => {
+      revealCompletionTimerRef.current = null
+      if (!isRevealingRef.current || animatingStepRef.current !== targetStep) return
       isDecryptingRef.current = false
       animatingStepRef.current = 0
       setIsDecrypting(false)
@@ -939,7 +972,7 @@ export function LeaderboardPage() {
       } else {
         speakCountdown(`Number ${currentRank}, ` + winnerName)
       }
-    }, spinMs)
+    }, remainingMs)
   }
 
   const scrollQualifierRankIntoView = (rank: number, offset = 12) => {
@@ -1288,11 +1321,14 @@ export function LeaderboardPage() {
       {/* 🎭 DRAMATIC GRAND REVEAL CEREMONY (Round 2: 20➔1 | Round 3: 5➔1)      */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {isRevealing ? (
-        <div ref={scrollContainerRef} className="relative flex-1 min-h-0 h-0 overflow-y-auto w-full px-4 sm:px-8 pb-10">
+        <div ref={scrollContainerRef} className={`relative flex-1 min-h-0 h-0 overflow-y-auto w-full px-4 sm:px-8 pb-10 transition-colors duration-700 ${
+          isFinale && revealedStep === 5 ? 'bg-[#050302]' : ''
+        }`}>
           
           {!rosterShown && (
           <div className="w-full flex flex-col items-center justify-start shrink-0 min-h-full pt-4 sm:pt-6 pb-8">
             {/* Header */}
+            {!(isFinale && revealedStep === 5) && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1337,21 +1373,36 @@ export function LeaderboardPage() {
                 </>
               )}
             </motion.div>
+            )}
 
             {/* 🌟 HERO SPOTLIGHT ANNOUNCEMENT CARD — 75% width for 24x10 LED */}
-            <div className={`${isFinale && revealedStep === 0 ? 'w-[88%] max-w-7xl' : 'w-3/4'} mx-auto flex flex-col items-center`}>
-              <PremiumRevealCard
-                isFinale={isFinale}
-                currentSpotlightRank={currentSpotlightRank}
-                currentSpotlightTeam={currentSpotlightTeam}
-                revealedStep={revealedStep}
-                maxSteps={maxSteps}
-                isDecrypting={isDecrypting}
-                decryptingRank={decryptingRank}
-                revealingTeamName={revealingTeamName}
-                nameSpinMs={nameSpinMs}
-                settled={false}
-              />
+            <div className={`${
+              isFinale
+                ? revealedStep === 0 ? 'w-[88%] max-w-7xl' : 'w-[90%] max-w-7xl'
+                : 'w-3/4'
+            } mx-auto flex flex-col items-center`}>
+              {isFinale && revealedStep > 0 ? (
+                <GrandFinaleExperience
+                  finalists={finaleRoster}
+                  revealStep={revealedStep}
+                  isAnimating={isDecrypting}
+                  stepStartedAt={finaleStepStartedAt}
+                  stepDurationMs={nameSpinMs}
+                />
+              ) : (
+                <PremiumRevealCard
+                  isFinale={isFinale}
+                  currentSpotlightRank={currentSpotlightRank}
+                  currentSpotlightTeam={currentSpotlightTeam}
+                  revealedStep={revealedStep}
+                  maxSteps={maxSteps}
+                  isDecrypting={isDecrypting}
+                  decryptingRank={decryptingRank}
+                  revealingTeamName={revealingTeamName}
+                  nameSpinMs={nameSpinMs}
+                  settled={false}
+                />
+              )}
             </div>
           </div>
           )}
@@ -1361,7 +1412,7 @@ export function LeaderboardPage() {
           {/* ══════════════════════════════════════════════════════════════════ */}
           {isFinale && !isDecrypting && (
             /* ROUND 3: WINNERS PODIUM — hidden during the countdown card */
-            <div ref={rosterRef} className="w-full max-w-5xl mx-auto flex flex-col items-center mt-32 pb-32 shrink-0">
+            <div ref={rosterRef} className="hidden w-full max-w-5xl mx-auto flex-col items-center mt-32 pb-32 shrink-0">
               <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/5 text-slate-700 mb-6 shadow-sm">
                 <Trophy size={14} className="text-amber-500" />
                 <span className="text-xs font-bold uppercase tracking-widest">

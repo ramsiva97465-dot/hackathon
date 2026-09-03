@@ -5,6 +5,7 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets'
+import { BadRequestException } from '@nestjs/common'
 import { Server, Socket } from 'socket.io'
 import { LeaderboardService } from './leaderboard.service'
 
@@ -23,6 +24,18 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
   private isRevealing = false
   private revealRound = 2
   private revealStep = 0
+  private revealStepStartedAt = 0
+  private revealNextAllowedAt = 0
+
+  private getRevealStatePayload() {
+    return {
+      isRevealing: this.isRevealing,
+      round: this.revealRound,
+      step: this.revealStep,
+      startedAt: this.revealStepStartedAt,
+      nextAllowedAt: this.revealNextAllowedAt,
+    }
+  }
 
   constructor(private readonly leaderboardService: LeaderboardService) {}
 
@@ -33,7 +46,7 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
       const leaderboard = await this.leaderboardService.getLeaderboard()
       client.emit('leaderboard:update', leaderboard)
       client.emit('leaderboard:tv_mode', { tvMode: this.isTvMode })
-      client.emit('leaderboard:reveal_state', { isRevealing: this.isRevealing, round: this.revealRound, step: this.revealStep })
+      client.emit('leaderboard:reveal_state', this.getRevealStatePayload())
     } catch (err) {
       console.error('[WS] Error sending initial state on connection:', err)
     }
@@ -48,7 +61,7 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
     const leaderboard = await this.leaderboardService.getLeaderboard()
     client.emit('leaderboard:update', leaderboard)
     client.emit('leaderboard:tv_mode', { tvMode: this.isTvMode })
-    client.emit('leaderboard:reveal_state', { isRevealing: this.isRevealing, round: this.revealRound, step: this.revealStep })
+    client.emit('leaderboard:reveal_state', this.getRevealStatePayload())
   }
 
   getTvMode(): boolean {
@@ -56,7 +69,7 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
   }
 
   getRevealState() {
-    return { isRevealing: this.isRevealing, round: this.revealRound, step: this.revealStep }
+    return this.getRevealStatePayload()
   }
 
   // Called by ScoresService after score submission
@@ -88,10 +101,12 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
     this.isRevealing = true
     this.revealRound = payload.round || 2
     this.revealStep = 0
+    this.revealStepStartedAt = payload.timestamp || Date.now()
+    this.revealNextAllowedAt = this.revealStepStartedAt
     try {
       if (!this.server) return
       this.server.to('leaderboard').emit('leaderboard:reveal_start', payload)
-      this.server.to('leaderboard').emit('leaderboard:reveal_state', { isRevealing: true, round: this.revealRound, step: 0 })
+      this.server.to('leaderboard').emit('leaderboard:reveal_state', this.getRevealStatePayload())
       console.log('[WS] Reveal broadcast sent:', payload)
     } catch (err) {
       console.error('[WS] Reveal broadcast failed:', err)
@@ -100,13 +115,39 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
 
   // Called when Admin triggers a finale step (1 = 5th … 5 = Grand Champion)
   async broadcastRevealStep(step: number, round: number = 3) {
+    const normalizedRound = round || 3
+    const now = Date.now()
+    // Step 4 includes the 2nd-place reveal, verdict interruption, and a
+    // five-second Final Two hold before the Champion control unlocks.
+    const finaleDurations = [0, 6000, 7000, 8000, 22000, 12000]
+
+    if (normalizedRound === 3) {
+      if (step === this.revealStep && this.revealRound === 3) return
+      if (step !== 0 && step !== this.revealStep + 1) {
+        throw new BadRequestException(`Reveal step ${this.revealStep + 1} must run next.`)
+      }
+      if (step !== 0 && now < this.revealNextAllowedAt) {
+        const seconds = Math.ceil((this.revealNextAllowedAt - now) / 1000)
+        throw new BadRequestException(`Current finale animation is still running. Wait ${seconds} second${seconds === 1 ? '' : 's'}.`)
+      }
+    }
+
     this.isRevealing = true
-    this.revealRound = round || 3
+    this.revealRound = normalizedRound
     this.revealStep = step
+    this.revealStepStartedAt = now
+    this.revealNextAllowedAt = normalizedRound === 3
+      ? now + (finaleDurations[step] || 0)
+      : now
     try {
       if (!this.server) return
-      this.server.to('leaderboard').emit('leaderboard:reveal_step', { step, round: this.revealRound })
-      this.server.to('leaderboard').emit('leaderboard:reveal_state', { isRevealing: true, round: this.revealRound, step: this.revealStep })
+      this.server.to('leaderboard').emit('leaderboard:reveal_step', {
+        step,
+        round: this.revealRound,
+        startedAt: this.revealStepStartedAt,
+        nextAllowedAt: this.revealNextAllowedAt,
+      })
+      this.server.to('leaderboard').emit('leaderboard:reveal_state', this.getRevealStatePayload())
       console.log(`[WS] Reveal Step ${step} (Round ${this.revealRound}) broadcast sent`)
     } catch (err) {
       console.error('[WS] Reveal step broadcast failed:', err)
@@ -133,6 +174,8 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
     const wasRevealing = this.isRevealing
     this.isRevealing = false
     this.revealStep = 0
+    this.revealStepStartedAt = 0
+    this.revealNextAllowedAt = 0
     if (!wasRevealing) return
     try {
       if (!this.server) return
@@ -157,19 +200,17 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
     this.isRevealing = true
     this.revealStep = 0
     this.revealRound = 3
+    this.revealStepStartedAt = Date.now()
+    this.revealNextAllowedAt = this.revealStepStartedAt
     try {
       if (!this.server) return
       const payload = {
         round: 3,
         type: 'GRAND_FINALE_READY',
-        timestamp: Date.now(),
+        timestamp: this.revealStepStartedAt,
       }
       this.server.to('leaderboard').emit('leaderboard:reveal_start', payload)
-      this.server.to('leaderboard').emit('leaderboard:reveal_state', {
-        isRevealing: true,
-        round: 3,
-        step: 0,
-      })
+      this.server.to('leaderboard').emit('leaderboard:reveal_state', this.getRevealStatePayload())
     } catch (err) {
       console.error('[WS] Show Grand Finale ready screen failed:', err)
     }

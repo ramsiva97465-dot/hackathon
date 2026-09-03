@@ -25,6 +25,8 @@ export function RoundsManagement() {
   const [isStageRevealing, setIsStageRevealing] = useState(false)
   const [revealStep, setRevealStep] = useState(0)
   const [revealRound, setRevealRound] = useState(2)
+  const [revealNextAllowedAt, setRevealNextAllowedAt] = useState(0)
+  const [stageClock, setStageClock] = useState(() => Date.now())
   const [revealedQualifierRanks, setRevealedQualifierRanks] = useState<number[]>([])
   
   // Stats
@@ -42,6 +44,11 @@ export function RoundsManagement() {
     return () => clearInterval(interval)
   }, [activeTab])
 
+  useEffect(() => {
+    const timer = setInterval(() => setStageClock(Date.now()), 500)
+    return () => clearInterval(timer)
+  }, [])
+
   const fetchRevealState = async () => {
     try {
       const res = await api.leaderboard.getRevealState()
@@ -57,6 +64,9 @@ export function RoundsManagement() {
           const rank = 21 - res.data.step
           setRevealedQualifierRanks((prev) => prev.includes(rank) ? prev : [...prev, rank])
         }
+      }
+      if (typeof res.data?.nextAllowedAt === 'number') {
+        setRevealNextAllowedAt(res.data.nextAllowedAt)
       }
     } catch (err) {
       // Ignore
@@ -96,6 +106,7 @@ export function RoundsManagement() {
       setIsStageRevealing(true)
       setRevealStep(0)
       setRevealRound(round)
+      setRevealNextAllowedAt(Date.now())
       if (round === 2) setRevealedQualifierRanks([])
       toast.success(round === 3
         ? 'Top 5 Grand Finale stage is ready. All five identities are locked on every LCD!'
@@ -133,14 +144,16 @@ export function RoundsManagement() {
       setIsStageRevealing(true)
       setRevealStep(step)
       setRevealRound(3)
+      const stepLocks = [0, 6000, 7000, 8000, 22000, 12000]
+      setRevealNextAllowedAt(Date.now() + stepLocks[step])
       if (step === 1) toast.success('Triggered 5th Place reveal (countdown started on LCD)!')
       else if (step === 2) toast.success('Triggered 4th Place reveal (countdown started on LCD)!')
       else if (step === 3) toast.success('Triggered 2nd Runner Up reveal (countdown started on LCD)!')
       else if (step === 4) toast.success('Triggered 1st Runner Up reveal (countdown started on LCD)!')
       else if (step === 5) toast.success('Triggered Grand Champion coronation (countdown + confetti on LCD)!')
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
-      toast.error('Failed to trigger reveal step.')
+      toast.error(err.response?.data?.message || 'Failed to trigger reveal step.')
     } finally {
       setLoading(false)
     }
@@ -206,6 +219,7 @@ export function RoundsManagement() {
       setRevealStep(0)
       setRevealRound(3)
       setIsStageRevealing(true)
+      setRevealNextAllowedAt(Date.now())
       toast.success('Stage reset to Vault Locked mode (ready for 5th Place announcement).')
     } catch (err) {
       console.error(err)
@@ -438,7 +452,7 @@ export function RoundsManagement() {
                   Top 5 Grand Finale Reveal Controller
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mt-1 font-medium">
-                  Click each button when the stage host speaks. The LCD suspense sequence is <span className="text-amber-300 font-bold">6 seconds for 5th</span>, <span className="text-amber-300 font-bold">7 for 4th</span>, <span className="text-amber-300 font-bold">8 for 2nd Runner Up</span>, <span className="text-amber-300 font-bold">10 for 1st Runner Up</span>, and <span className="text-amber-300 font-bold">12 for the Grand Champion</span>.
+                  Click each button when the stage host speaks. The LCD suspense sequence is <span className="text-amber-300 font-bold">6 seconds for 5th</span>, <span className="text-amber-300 font-bold">7 for 4th</span>, <span className="text-amber-300 font-bold">8 for 2nd Runner Up</span>, <span className="text-amber-300 font-bold">10 for 1st Runner Up followed by the Final Vault twist</span>, and <span className="text-amber-300 font-bold">12 for the Grand Champion</span>.
                 </p>
               </div>
 
@@ -450,19 +464,21 @@ export function RoundsManagement() {
                 { step: 1, label: 'Reveal 5th Place (#5)', done: '5th Unsealed', accent: 'amber', countdown: '6-second cinematic unsealing' },
                 { step: 2, label: 'Reveal 4th Place (#4)', done: '4th Unsealed', accent: 'slate', countdown: '7-second cinematic unsealing' },
                 { step: 3, label: 'Reveal 2nd Runner Up (#3)', done: '3rd Unsealed', accent: 'bronze', countdown: '8-second cinematic unsealing' },
-                { step: 4, label: 'Reveal 1st Runner Up (#2)', done: '2nd Unsealed', accent: 'silver', countdown: '10-second cinematic unsealing' },
+                { step: 4, label: 'Reveal 1st Runner Up (#2)', done: '2nd Unsealed', accent: 'silver', countdown: '10-second reveal + Final Vault twist' },
                 { step: 5, label: 'CROWN GRAND CHAMPION (#1)', done: 'Champion Crowned!', accent: 'gold', countdown: '12-second coronation + confetti' },
               ] as const).map(({ step, label, done, accent, countdown }) => {
                 const isGold = accent === 'gold'
                 const finaleProgress = revealRound === 3 ? revealStep : 0
                 const doneNow = revealRound === 3 && revealStep >= step
                 const isNext = step === finaleProgress + 1
+                const waitSeconds = Math.max(0, Math.ceil((revealNextAllowedAt - stageClock) / 1000))
+                const isSequenceLocked = isNext && waitSeconds > 0
                 return (
               <button
                 key={step}
                 onClick={() => handleTriggerStep(step)}
-                disabled={loading || !isNext}
-                title={isNext ? label : doneNow ? done : `Reveal step ${finaleProgress + 1} first`}
+                disabled={loading || !isNext || isSequenceLocked}
+                title={isSequenceLocked ? `Current stage animation has ${waitSeconds}s remaining` : isNext ? label : doneNow ? done : `Reveal step ${finaleProgress + 1} first`}
                 className={`p-4 rounded-2xl border-2 text-left transition-all relative overflow-hidden ${
                   isGold
                     ? doneNow
@@ -482,7 +498,7 @@ export function RoundsManagement() {
                     {isGold ? '👑 Step 5' : `Step ${step}`}
                   </span>
                   <span className={`text-[10px] font-bold ${doneNow ? 'text-emerald-400' : isNext ? 'text-amber-400' : 'text-slate-500'}`}>
-                    {doneNow ? `✅ ${done}` : isNext ? '⚡ Ready' : '🔒 Locked'}
+                    {doneNow ? `✅ ${done}` : isSequenceLocked ? `⏳ Wait ${waitSeconds}s` : isNext ? '⚡ Ready' : '🔒 Locked'}
                   </span>
                 </div>
                 <div className="font-black text-sm text-white flex items-center gap-1.5">
