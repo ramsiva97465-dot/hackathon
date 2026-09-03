@@ -162,7 +162,7 @@ export function PremiumRevealCard({
   const activeRank = isDecrypting && decryptingRank != null ? decryptingRank : currentSpotlightRank
   const targetName = (revealingTeamName || currentSpotlightTeam?.teamName || '').toUpperCase()
 
-  const [scrambleDisplay, setScrambleDisplay] = useState('')
+  const [scrambleDisplay, setScrambleDisplay] = useState('VOICEATHON')
   const [rollingScore, setRollingScore] = useState('00.0')
   const [justLocked, setJustLocked] = useState(false)
   const prevDecrypting = useRef(isDecrypting)
@@ -190,7 +190,8 @@ export function PremiumRevealCard({
     prevDecrypting.current = true
     isDecryptingRef.current = true
     const startTime = Date.now()
-    const targetLen = Math.max(8, targetName.length || 10)
+    const initialWord = 'VOICEATHON'
+    const targetLen = Math.max(initialWord.length, targetName.length || initialWord.length)
     frameCountRef.current = 0
     lockedCharsRef.current = 0
     let timeoutId: ReturnType<typeof setTimeout>
@@ -207,20 +208,30 @@ export function PremiumRevealCard({
       const speedFactor = Math.pow(progress, 0.45)
       const nextMs = Math.round(16 + (170 - 16) * speedFactor)
 
-      // ── Character scramble ───────────────────────────────────────────────
-      const lockThreshold = 0.62
+      // ── Character scramble (Starts with VOICEATHON, scrolls through A-Z) ────
+      const lockThreshold = 0.50
       let chars = ''
       let newLockedCount = 0
-      for (let i = 0; i < targetLen; i++) {
-        const charProgress = (progress - lockThreshold) / (1 - lockThreshold)
-        const charLockIdx = Math.floor(charProgress * targetLen)
-        if (progress >= lockThreshold && i <= charLockIdx && targetName[i]) {
-          chars += targetName[i]
-          newLockedCount++
-        } else if (targetName[i] === ' ') {
-          chars += ' '
-        } else {
-          chars += randomChar()
+
+      if (progress < 0.12) {
+        // Initial glimpse of VOICEATHON before rapid A-Z scrolling begins
+        chars = initialWord
+      } else {
+        const rollProgress = (progress - 0.12) / (1 - 0.12)
+        const charProgress = (rollProgress - 0.40) / 0.60
+        const charLockIdx = Math.floor(charProgress * targetName.length)
+
+        for (let i = 0; i < (targetName.length || targetLen); i++) {
+          if (rollProgress >= 0.40 && i <= charLockIdx && targetName[i]) {
+            chars += targetName[i].toUpperCase()
+            newLockedCount++
+          } else if (targetName[i] === ' ') {
+            chars += ' '
+          } else {
+            // Clean A-Z alphabet cycling
+            const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+            chars += ALPHABET[(i * 3 + frameCountRef.current) % ALPHABET.length]
+          }
         }
       }
       setScrambleDisplay(chars)
@@ -482,7 +493,7 @@ export function PremiumRevealCard({
             {/* Team Name / Cipher (Persistent single line element, zero layout jump or popping) */}
             <h2 className="font-mono text-3xl xl:text-5xl font-black tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-white via-orange-100 to-amber-200 drop-shadow-[0_0_30px_rgba(232,60,0,0.6)] select-none whitespace-nowrap overflow-hidden max-w-full leading-tight">
               {isDecrypting
-                ? (scrambleDisplay || 'IDENTIFYING...')
+                ? (scrambleDisplay || 'VOICEATHON')
                 : (currentSpotlightTeam?.teamName || targetName).toUpperCase()
               }
             </h2>
