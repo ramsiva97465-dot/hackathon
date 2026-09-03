@@ -412,17 +412,21 @@ export function PremiumRevealCard({
 
           {/* ─── EXACT SAME HEIGHT & WIDTH INNER CONTAINER ─── */}
           <div className="flex flex-col items-center justify-center text-center w-full min-h-[260px] my-auto pt-1 pb-2">
-            {/* Trophy icon — elevated with clean breathing room */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-inner relative bg-amber-500/10 border border-amber-500/30 text-amber-400">
+            {/* Premium ceremonial emblem */}
+            <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center mx-auto mb-6">
+              <div className="absolute inset-1 rounded-full bg-amber-400/20 blur-xl" />
+              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-300/25 via-amber-950/60 to-orange-950/80 border border-amber-400/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_0_35px_rgba(245,158,11,0.22)]" />
+              <div className="absolute inset-2 rounded-full border border-amber-200/15" />
               {isFinale ? (
                 <>
-                  <Crown size={36} className="text-amber-400 animate-bounce" />
-                  <div className="absolute inset-0 rounded-2xl border border-amber-400/50 animate-ping opacity-30" />
+                  <Crown size={42} strokeWidth={1.7} className="relative z-10 text-amber-300 fill-amber-400/15 drop-shadow-[0_0_12px_rgba(251,191,36,0.55)]" />
+                  <Sparkles size={14} className="absolute right-0 top-1 text-amber-200 animate-pulse" />
+                  <Sparkles size={10} className="absolute left-1 bottom-2 text-orange-300 animate-pulse" />
                 </>
               ) : (
                 <>
-                  <Trophy size={36} className="text-amber-400" />
-                  <div className="absolute inset-0 rounded-2xl border border-amber-400/40 animate-ping opacity-25" />
+                  <Trophy size={40} strokeWidth={1.7} className="relative z-10 text-amber-300 fill-amber-400/10 drop-shadow-[0_0_12px_rgba(251,191,36,0.45)]" />
+                  <Sparkles size={12} className="absolute right-1 top-1 text-amber-200 animate-pulse" />
                 </>
               )}
             </div>
@@ -433,16 +437,16 @@ export function PremiumRevealCard({
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
               </span>
-              <span>STAGE READY · TOP 20 CEREMONY</span>
+              <span>{isFinale ? 'GRAND FINALE • WINNER REVEAL' : 'STAGE READY · TOP 20 CEREMONY'}</span>
             </div>
 
             {/* Heading */}
             <h3 className="text-3xl sm:text-4xl font-black mb-2.5 text-white tracking-tight">
-              {isFinale ? '👑 Grand Finale Verdict Sealed' : 'Round 1 Graded & Verified'}
+              {isFinale ? '👑 The Champions Await' : 'Round 1 Graded & Verified'}
             </h3>
             <p className="max-w-xl mx-auto text-xs sm:text-sm font-medium text-slate-300 leading-relaxed">
               {isFinale
-                ? 'Waiting for admin to unseal 5th Place. Each place opens only when triggered.'
+                ? '5 Winners. One Unforgettable Reveal !!'
                 : 'Waiting for admin to initiate the Top 20 announcement (#20 ➔ #1).'}
             </p>
           </div>
