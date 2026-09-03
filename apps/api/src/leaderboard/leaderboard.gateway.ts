@@ -117,9 +117,9 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
   async broadcastRevealStep(step: number, round: number = 3) {
     const normalizedRound = round || 3
     const now = Date.now()
-    // Step 4 includes the 2nd-place reveal, verdict interruption, and a
-    // five-second Final Two hold before the Champion control unlocks.
-    const finaleDurations = [0, 14000, 15000, 16000, 28000, 12000]
+    // Step 4 runs the Final Two face-off: a ~10s left↔right shuffle of the two
+    // remaining laurels before the runner-up locks in as 2nd place.
+    const finaleDurations = [0, 14000, 15000, 16000, 18000, 12000]
 
     if (normalizedRound === 3) {
       if (step === this.revealStep && this.revealRound === 3) return

@@ -586,99 +586,180 @@ function PlaceReveal({
   )
 }
 
-function Cut({ title, line }: { title: string; line?: string }) {
+function FinalTwoReveal({
+  secondEntry,
+  championEntry,
+  progress,
+  isAnimating,
+  completedSteps,
+}: {
+  secondEntry?: GrandFinaleEntry
+  championEntry?: GrandFinaleEntry
+  progress: number
+  isAnimating: boolean
+  completedSteps: number
+}) {
+  const p = isAnimating ? progress : 1
+  const SPREAD = 22 // % offset from centre for each slot
+  const SWAPS = 6 // number of left↔right crossings during the shuffle
+
+  // Horizontal position (in %) of each laurel plus depth cues.
+  let secondLeft = 50 + SPREAD
+  let champLeft = 50 - SPREAD
+  let secondFront = true
+  let backScale = 1
+  let pick = 0
+
+  if (p >= 0.06 && p < 0.64) {
+    // The 10-second face-off: both laurels orbit through the centre and swap sides.
+    const sT = (p - 0.06) / 0.58
+    const theta = sT * Math.PI * SWAPS
+    const c = Math.cos(theta)
+    secondLeft = 50 + SPREAD * c
+    champLeft = 50 - SPREAD * c
+    secondFront = Math.sin(theta) > 0
+    const near = 1 - Math.min(1, Math.abs(c) / 0.5) // 1 near the crossing, 0 at the slots
+    backScale = 1 - 0.2 * near
+  } else if (p >= 0.74) {
+    // Pick: the runner-up glides to centre, the champion recedes and dims.
+    pick = clamp((p - 0.74) / 0.16)
+    secondLeft = 50 + SPREAD + (0 - SPREAD) * pick
+    champLeft = 50 - SPREAD + (-34 - -SPREAD) * pick // slides out to the far left
+  }
+
+  const secondScale = p < 0.64 ? (secondFront ? 1 : backScale) : 1 + 0.12 * pick
+  const champScale = p < 0.64 ? (secondFront ? backScale : 1) : 1 - 0.12 * pick
+  const secondZ = secondFront ? 3 : 2
+  const champZ = secondFront ? 2 : 3
+  const secondOpacity = p < 0.64 ? (secondFront ? 1 : 0.72) : 1
+  const champOpacity = p < 0.64 ? (secondFront ? 0.72 : 1) : 1 - pick * 0.9
+
+  const numberOn = p >= 0.80
+  const titleSecond = p >= 0.74
+  const smallLabels = p < 0.80 ? 1 : clamp(1 - (p - 0.80) / 0.06)
+  const bigNameOn = p >= 0.86
+  const metaOn = p >= 0.90
+  const scoreOn = p >= 0.94
+  const scoreT = clamp((p - 0.94) / 0.06)
+  const score = Number(secondEntry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
+  const track = secondEntry?.track ? getTrackConfig(secondEntry.track) : null
+  const secondSweep = (() => {
+    const t = (p - 0.80) / 0.06
+    if (t <= 0 || t >= 1) return -1
+    return t
+  })()
+
+  const laurelCls = 'h-[200px] w-[220px] sm:h-[248px] sm:w-[272px] lg:h-[280px] lg:w-[308px]'
+
   return (
-    <Stage>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="relative z-10 px-8 text-center"
-      >
-        <motion.h2
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: EASE }}
-          className="text-5xl font-black tracking-tight text-white sm:text-7xl"
-        >
-          {title}
-        </motion.h2>
-        {line && (
+    <Stage cinematic progress={p}>
+      <div className="relative z-10 flex w-full max-w-6xl flex-col items-center px-6 text-center">
+        <AnimatePresence mode="wait">
           <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.35, duration: 0.6 }}
-            className="mt-5 text-base text-white/40 sm:text-lg"
+            key={titleSecond ? 'second' : 'final-two'}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.5, ease: EASE }}
+            className="text-sm font-medium tracking-[0.38em] text-white/50 uppercase sm:text-base"
           >
-            {line}
+            {titleSecond ? PLACE[2].kicker : 'The Final Two'}
           </motion.p>
-        )}
-      </motion.div>
-    </Stage>
-  )
-}
+        </AnimatePresence>
+        <span aria-hidden className="mt-3 h-px w-12 bg-amber-200/55" />
 
-function HoldBar() {
-  return (
-    <Stage>
-      <div className="relative z-10 flex flex-col items-center px-8 text-center">
-        <div className="h-[2px] w-56 overflow-hidden bg-white/10 sm:w-80">
-          <motion.div
-            className="h-full origin-left bg-amber-300"
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 1.15, ease: EASE }}
-          />
+        <div className="relative mt-8 h-[268px] w-full sm:h-[320px] lg:h-[356px]">
+          {/* Champion laurel — stays sealed until Step 5 */}
+          <div
+            className="absolute top-0 flex flex-col items-center"
+            style={{
+              left: `${champLeft}%`,
+              transform: 'translateX(-50%)',
+              zIndex: champZ,
+              opacity: champOpacity,
+              willChange: 'left, opacity',
+            }}
+          >
+            <div style={{ transform: `scale(${champScale})` }}>
+              <Wreath className={laurelCls} glyph="?" />
+            </div>
+            <motion.p
+              className="mt-2 max-w-[14ch] truncate text-lg font-bold tracking-tight text-white/70 sm:text-2xl"
+              style={{ opacity: (p < 0.64 ? 1 : 1 - pick) }}
+            >
+              {championEntry?.teamName || 'Finalist'}
+            </motion.p>
+          </div>
+
+          {/* Runner-up laurel — locks with "2" */}
+          <div
+            className="absolute top-0 flex flex-col items-center"
+            style={{
+              left: `${secondLeft}%`,
+              transform: 'translateX(-50%)',
+              zIndex: secondZ,
+              opacity: secondOpacity,
+              willChange: 'left',
+            }}
+          >
+            <div style={{ transform: `scale(${secondScale})` }}>
+              <Wreath
+                className={laurelCls}
+                glyph={numberOn ? '2' : '?'}
+                locked={numberOn}
+                sweep={secondSweep}
+                idle={!isAnimating}
+              />
+            </div>
+            <p
+              className="mt-2 max-w-[14ch] truncate text-lg font-bold tracking-tight text-white/70 sm:text-2xl"
+              style={{ opacity: smallLabels }}
+            >
+              {secondEntry?.teamName || 'Finalist'}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-2 flex min-h-[7rem] flex-col items-center justify-start sm:min-h-[8.5rem]">
+          {bigNameOn && (
+            <motion.h2
+              initial={{ opacity: 0, y: 14, filter: 'blur(8px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              transition={{ duration: 0.7, ease: EASE }}
+              className="max-w-[16ch] text-balance text-5xl font-black tracking-tight text-white sm:max-w-[20ch] sm:text-7xl lg:text-8xl"
+            >
+              {secondEntry?.teamName || 'Unavailable'}
+            </motion.h2>
+          )}
+          <div className="mt-3 h-6">
+            {metaOn && (
+              <motion.p
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: EASE }}
+                className="text-sm text-white/40 sm:text-base"
+              >
+                {secondEntry?.college || 'Tamil Nadu'}
+                {track ? ` · ${track.label}` : ''}
+              </motion.p>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-1 h-16 sm:h-20">
+          {scoreOn && (
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, ease: EASE }}
+              className="font-black tabular-nums leading-none text-amber-200 text-5xl sm:text-6xl lg:text-7xl"
+            >
+              {score.toFixed(1)}
+            </motion.p>
+          )}
         </div>
       </div>
-    </Stage>
-  )
-}
-
-function FinalTwo() {
-  return (
-    <Stage>
-      <div className="relative z-10 flex flex-col items-center px-6 text-center">
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-[13px] font-medium uppercase tracking-[0.34em] text-white/40"
-        >
-          Grand finale
-        </motion.p>
-        <motion.h2
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.75, ease: EASE }}
-          className="mt-4 text-4xl font-black text-white sm:text-6xl"
-        >
-          The final two
-        </motion.h2>
-        <div className="mt-12 flex items-center justify-center gap-6 sm:gap-16">
-          <motion.div
-            initial={{ x: -80, opacity: 0, rotateY: -78 }}
-            animate={{ x: 0, opacity: 1, rotateY: 0 }}
-            transition={{ duration: 1.55, ease: EASE }}
-            style={{ perspective: 1400, transformStyle: 'preserve-3d' }}
-          >
-            <Wreath className="h-[220px] w-[240px] sm:h-[280px] sm:w-[306px]" glyph="?" idle idleDelay={1.6} />
-          </motion.div>
-          <motion.span
-            initial={{ scaleY: 0, opacity: 0 }}
-            animate={{ scaleY: 1, opacity: 1 }}
-            transition={{ delay: 0.55, duration: 0.5, ease: EASE }}
-            className="h-16 w-px bg-white/25 sm:h-24"
-          />
-          <motion.div
-            initial={{ x: 80, opacity: 0, rotateY: 78 }}
-            animate={{ x: 0, opacity: 1, rotateY: 0 }}
-            transition={{ duration: 1.55, ease: EASE }}
-            style={{ perspective: 1400, transformStyle: 'preserve-3d' }}
-          >
-            <Wreath className="h-[220px] w-[240px] sm:h-[280px] sm:w-[306px]" glyph="?" idle idleDelay={1.75} />
-          </motion.div>
-        </div>
-      </div>
+      <Marks done={completedSteps} active={2} />
     </Stage>
   )
 }
@@ -854,34 +935,17 @@ export function GrandFinaleExperience({
   if (revealStep === 5) {
     scene = <Champion entry={entry} elapsed={elapsed} finished={!isAnimating} />
     sceneKey = 'champion'
-  } else if (revealStep === 4 && !isAnimating) {
-    const after = Math.max(0, elapsed - duration)
-    if (after < 1100) {
-      scene = (
-        <PlaceReveal
-          entry={entry}
-          rank={rank}
-          progress={1}
-          isAnimating={false}
-          tick={0}
-          elapsed={0}
-          completedSteps={completedSteps}
-        />
-      )
-      sceneKey = 'second-hold'
-    } else if (after < 2400) {
-      scene = <HoldBar />
-      sceneKey = 'hold'
-    } else if (after < 3600) {
-      scene = <Cut title="Not yet." line="Two names still remain." />
-      sceneKey = 'not-yet'
-    } else if (after < 5200) {
-      scene = <Cut title="Wait." />
-      sceneKey = 'wait'
-    } else {
-      scene = <FinalTwo />
-      sceneKey = 'final-two'
-    }
+  } else if (revealStep === 4) {
+    scene = (
+      <FinalTwoReveal
+        secondEntry={finalists.find((item) => item.rank === 2)}
+        championEntry={finalists.find((item) => item.rank === 1)}
+        progress={progress}
+        isAnimating={isAnimating}
+        completedSteps={completedSteps}
+      />
+    )
+    sceneKey = 'final-two'
   } else {
     scene = (
       <PlaceReveal
