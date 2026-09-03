@@ -208,41 +208,50 @@ export function PremiumRevealCard({
       const speedFactor = Math.pow(progress, 0.45)
       const nextMs = Math.round(16 + (170 - 16) * speedFactor)
 
-      // ── Character scramble (Transforms each letter of VOICEATHON -> A-Z -> Target Name) ────
+      // ── Character scramble (Always shows full VOICEATHON initially, then morphs to target team name) ────
       const initialWord = 'VOICEATHON'
       const target = (targetName || 'QUALIFIER').toUpperCase()
-      const displayLen = target.length
       const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
       let chars = ''
       let newLockedCount = 0
 
-      for (let i = 0; i < displayLen; i++) {
-        const targetChar = target[i]
-        if (targetChar === ' ') {
-          chars += ' '
-          continue
-        }
+      if (progress < 0.18) {
+        // 100% full complete VOICEATHON word shown initially
+        chars = initialWord
+      } else {
+        // Smoothly transition display length from initialWord.length (10) to target.length
+        const lenProgress = Math.min(1, Math.max(0, (progress - 0.18) / 0.40))
+        const currentLen = Math.round(initialWord.length + (target.length - initialWord.length) * lenProgress)
+        const displayLen = Math.max(1, currentLen)
 
-        const startChar = i < initialWord.length ? initialWord[i] : 'A'
-        const startIdx = ALPHABET.indexOf(startChar) >= 0 ? ALPHABET.indexOf(startChar) : 0
-        const targetIdx = ALPHABET.indexOf(targetChar) >= 0 ? ALPHABET.indexOf(targetChar) : 0
+        for (let i = 0; i < displayLen; i++) {
+          const targetChar = i < target.length ? target[i] : ''
+          const startChar = i < initialWord.length ? initialWord[i] : 'A'
 
-        // Column i lock-in timing: Progressive left-to-right
-        const colLockProgress = Math.min(1, Math.max(0, (progress - 0.20 - (i / displayLen) * 0.45) / 0.35))
+          if (targetChar === ' ') {
+            chars += ' '
+            continue
+          }
 
-        if (colLockProgress >= 1 || progress >= 0.98) {
-          chars += targetChar
-          newLockedCount++
-        } else if (progress < 0.15) {
-          // Hold the exact character from VOICEATHON at the start
-          chars += startChar
-        } else {
-          // Flip forward through A-Z starting from startChar towards targetChar
-          const totalCycles = 26 + ((targetIdx - startIdx + 26) % 26)
-          const currentStep = Math.floor(colLockProgress * totalCycles)
-          const currentLetter = ALPHABET[(startIdx + currentStep + (frameCountRef.current % 3)) % 26]
-          chars += currentLetter
+          const startIdx = ALPHABET.indexOf(startChar) >= 0 ? ALPHABET.indexOf(startChar) : 0
+          const targetIdx = targetChar && ALPHABET.indexOf(targetChar) >= 0 ? ALPHABET.indexOf(targetChar) : 0
+
+          // Column i lock-in timing: Progressive left-to-right
+          const colLockProgress = Math.min(1, Math.max(0, (progress - 0.25 - (i / Math.max(1, target.length)) * 0.45) / 0.30))
+
+          if (colLockProgress >= 1 || progress >= 0.98) {
+            if (targetChar) {
+              chars += targetChar
+              newLockedCount++
+            }
+          } else {
+            // Flip forward through A-Z starting from startChar towards targetChar
+            const totalCycles = 26 + ((targetIdx - startIdx + 26) % 26)
+            const currentStep = Math.floor(colLockProgress * totalCycles)
+            const currentLetter = ALPHABET[(startIdx + currentStep + (frameCountRef.current % 3)) % 26]
+            chars += currentLetter
+          }
         }
       }
       setScrambleDisplay(chars)
