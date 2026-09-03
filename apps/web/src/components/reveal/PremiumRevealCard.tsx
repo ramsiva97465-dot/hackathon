@@ -41,6 +41,95 @@ export function triggerQualifierConfetti(rank: number) {
   }
 }
 
+// ─── Web Audio helpers ───────────────────────────────────────────────────────
+
+let _sharedAudioCtx: AudioContext | null = null
+
+function getAudioCtx(): AudioContext | null {
+  try {
+    if (!_sharedAudioCtx || _sharedAudioCtx.state === 'closed') {
+      _sharedAudioCtx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
+    }
+    if (_sharedAudioCtx.state === 'suspended') _sharedAudioCtx.resume()
+    return _sharedAudioCtx
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Plays a mechanical tick / cipher-click sound.
+ * speedFactor: 0 = blazing fast (light tap), 1 = very slow (heavy clunk)
+ */
+function playTick(speedFactor: number) {
+  const ctx = getAudioCtx()
+  if (!ctx) return
+
+  const now = ctx.currentTime
+  const duration = 0.025 + speedFactor * 0.06  // 25–85 ms click length
+
+  // White-noise burst shaped into a sharp percussive tap
+  const bufLen = Math.ceil(ctx.sampleRate * duration)
+  const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate)
+  const data = buf.getChannelData(0)
+  for (let i = 0; i < bufLen; i++) {
+    // Exponential decay envelope on the noise
+    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufLen * 0.18))
+  }
+
+  const src = ctx.createBufferSource()
+  src.buffer = buf
+
+  // Band-pass filter: high-pitched fast clicks, lower "clunk" when slow
+  const bpf = ctx.createBiquadFilter()
+  bpf.type = 'bandpass'
+  bpf.frequency.value = 2200 - speedFactor * 1400   // 2200 Hz → 800 Hz
+  bpf.Q.value = 1.8
+
+  const gain = ctx.createGain()
+  gain.gain.setValueAtTime(0.12 + speedFactor * 0.22, now) // louder when slow
+
+  src.connect(bpf)
+  bpf.connect(gain)
+  gain.connect(ctx.destination)
+  src.start(now)
+}
+
+/**
+ * Dramatic reveal "lock-in" thud when the name is fully decrypted.
+ */
+function playRevealImpact() {
+  const ctx = getAudioCtx()
+  if (!ctx) return
+
+  const now = ctx.currentTime
+
+  // Low THUD — sine sweep down
+  const thud = ctx.createOscillator()
+  const thudGain = ctx.createGain()
+  thud.type = 'sine'
+  thud.frequency.setValueAtTime(180, now)
+  thud.frequency.exponentialRampToValueAtTime(55, now + 0.25)
+  thudGain.gain.setValueAtTime(0.7, now)
+  thudGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5)
+  thud.connect(thudGain)
+  thudGain.connect(ctx.destination)
+  thud.start(now)
+  thud.stop(now + 0.55)
+
+  // High metallic TING — decaying sine at 880 Hz
+  const ting = ctx.createOscillator()
+  const tingGain = ctx.createGain()
+  ting.type = 'sine'
+  ting.frequency.setValueAtTime(880, now)
+  tingGain.gain.setValueAtTime(0.35, now)
+  tingGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8)
+  ting.connect(tingGain)
+  tingGain.connect(ctx.destination)
+  ting.start(now + 0.02)
+  ting.stop(now + 0.85)
+}
+
 export interface PremiumRevealCardProps {
   isFinale: boolean
   currentSpotlightRank: number
@@ -77,11 +166,19 @@ export function PremiumRevealCard({
   const [rollingScore, setRollingScore] = useState('00.0')
   const [justLocked, setJustLocked] = useState(false)
   const prevDecrypting = useRef(isDecrypting)
+  const isDecryptingRef = useRef(isDecrypting)
+  const frameCountRef = useRef(0)
+  const lockedCharsRef = useRef(0)
+
+  // Keep ref in sync so the setTimeout closure always reads the latest value
+  useEffect(() => { isDecryptingRef.current = isDecrypting }, [isDecrypting])
 
   useEffect(() => {
     if (!isDecrypting) {
       if (prevDecrypting.current) {
+        // Just finished — dramatic lock-in
         setJustLocked(true)
+        playRevealImpact()
         triggerQualifierConfetti(activeRank)
         const t = setTimeout(() => setJustLocked(false), 1400)
         return () => clearTimeout(t)
@@ -91,20 +188,35 @@ export function PremiumRevealCard({
     }
 
     prevDecrypting.current = true
+    isDecryptingRef.current = true
     const startTime = Date.now()
     const targetLen = Math.max(8, targetName.length || 10)
+    frameCountRef.current = 0
+    lockedCharsRef.current = 0
+    let timeoutId: ReturnType<typeof setTimeout>
 
-    const interval = setInterval(() => {
+    const tick = () => {
+      if (!isDecryptingRef.current) return   // stopped externally
+
       const elapsed = Date.now() - startTime
       const progress = Math.min(1, elapsed / nameSpinMs)
 
-      const lockThreshold = 0.65
+      // ── Speed curve: fast → slow ─────────────────────────────────────────
+      // progress^0.45 gives strong deceleration (slot-machine feel)
+      // interval: 16 ms (60 fps blaze) → 170 ms (suspenseful crawl)
+      const speedFactor = Math.pow(progress, 0.45)
+      const nextMs = Math.round(16 + (170 - 16) * speedFactor)
+
+      // ── Character scramble ───────────────────────────────────────────────
+      const lockThreshold = 0.62
       let chars = ''
+      let newLockedCount = 0
       for (let i = 0; i < targetLen; i++) {
         const charProgress = (progress - lockThreshold) / (1 - lockThreshold)
         const charLockIdx = Math.floor(charProgress * targetLen)
         if (progress >= lockThreshold && i <= charLockIdx && targetName[i]) {
           chars += targetName[i]
+          newLockedCount++
         } else if (targetName[i] === ' ') {
           chars += ' '
         } else {
@@ -113,11 +225,35 @@ export function PremiumRevealCard({
       }
       setScrambleDisplay(chars)
 
-      const fakeScore = (Math.random() * 80 + 15).toFixed(1)
-      setRollingScore(fakeScore)
-    }, 45)
+      // Rolling fake score
+      setRollingScore((Math.random() * 80 + 15).toFixed(1))
 
-    return () => clearInterval(interval)
+      // ── Sound ─────────────────────────────────────────────────────────────
+      // Fast phase: play every 4th frame to avoid audio overload
+      // Slow phase: play every frame for maximum suspense
+      const fc = frameCountRef.current
+      const playEveryN = progress < 0.3 ? 4 : progress < 0.6 ? 2 : 1
+      if (fc % playEveryN === 0) {
+        playTick(speedFactor)
+      }
+      frameCountRef.current++
+
+      // Per-character lock-in click (heavier clunk each time a new letter resolves)
+      if (newLockedCount > lockedCharsRef.current) {
+        const extra = Math.min(newLockedCount - lockedCharsRef.current, 3)
+        for (let k = 0; k < extra; k++) {
+          setTimeout(() => playTick(0.95), k * 60)
+        }
+        lockedCharsRef.current = newLockedCount
+      }
+
+      if (progress < 1) {
+        timeoutId = setTimeout(tick, nextMs)
+      }
+    }
+
+    timeoutId = setTimeout(tick, 16)    // start immediately
+    return () => clearTimeout(timeoutId)
   }, [isDecrypting, targetName, nameSpinMs, activeRank])
 
   // ─── READY STATE ────────────────────────────────────────────────────────────
