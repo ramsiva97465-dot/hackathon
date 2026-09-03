@@ -21,7 +21,7 @@ const FINALIST_NODE_POSITIONS = [
 function FinalFiveVaultSeal() {
   return (
     <div
-      className="relative h-28 w-28 sm:h-32 sm:w-32"
+      className="relative h-24 w-24 sm:h-28 sm:w-28"
       role="img"
       aria-label="Five finalists secured for the winner reveal"
     >
@@ -50,27 +50,68 @@ function FinalFiveVaultSeal() {
         </motion.span>
       ))}
 
-      <div className="absolute inset-[18px] flex items-center justify-center rounded-full border border-amber-300/45 bg-gradient-to-br from-amber-700/35 via-[#1A0D04] to-black shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_0_30px_rgba(245,158,11,0.2)]">
-        <svg viewBox="0 0 100 100" className="h-16 w-16 drop-shadow-[0_0_12px_rgba(251,191,36,0.35)]" aria-hidden="true">
+      <div className="absolute inset-[14px] flex items-center justify-center rounded-full border border-amber-300/45 bg-gradient-to-br from-amber-700/35 via-[#1A0D04] to-black shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_0_30px_rgba(245,158,11,0.2)]">
+        <svg viewBox="0 0 100 100" className="absolute inset-1 h-[calc(100%-0.5rem)] w-[calc(100%-0.5rem)] text-amber-400/70" aria-hidden="true">
           <path
-            d="M50 12 78 24v25c0 19-10.8 32.5-28 40-17.2-7.5-28-21-28-40V24L50 12Z"
-            fill="rgba(245,158,11,0.08)"
-            stroke="rgba(252,211,77,0.85)"
-            strokeWidth="2"
-          />
-          <path
-            d="m34 36 16 30 16-30"
+            d="M37 78C24 69 18 56 20 40M63 78c13-9 19-22 17-38"
             fill="none"
-            stroke="#FCD34D"
-            strokeWidth="6"
+            stroke="currentColor"
+            strokeWidth="2.5"
             strokeLinecap="round"
-            strokeLinejoin="round"
           />
-          <circle cx="50" cy="53" r="4.5" fill="#FFF1B8" />
+          {[0, 1, 2, 3, 4].map((leaf) => (
+            <g key={leaf}>
+              <ellipse cx={22 + leaf * 2.8} cy={43 + leaf * 7.2} rx="2.2" ry="5" transform={`rotate(${-34 + leaf * 5} ${22 + leaf * 2.8} ${43 + leaf * 7.2})`} fill="currentColor" />
+              <ellipse cx={78 - leaf * 2.8} cy={43 + leaf * 7.2} rx="2.2" ry="5" transform={`rotate(${34 - leaf * 5} ${78 - leaf * 2.8} ${43 + leaf * 7.2})`} fill="currentColor" />
+            </g>
+          ))}
         </svg>
+        <Crown size={34} strokeWidth={1.8} className="relative z-10 text-amber-200 fill-amber-400/25 drop-shadow-[0_0_12px_rgba(251,191,36,0.65)]" />
       </div>
-      <div className="absolute inset-x-0 -bottom-3 text-center font-mono text-[8px] font-black tracking-[0.32em] text-amber-300/75">
-        FINAL FIVE
+    </div>
+  )
+}
+
+const READY_PARTICLES = [
+  ['7%', '18%', -18, 0], ['14%', '66%', 22, 0.4], ['23%', '12%', 35, 1.1],
+  ['32%', '73%', -28, 0.8], ['67%', '15%', 24, 0.2], ['76%', '70%', -32, 1.3],
+  ['86%', '24%', 18, 0.7], ['93%', '61%', -20, 1.6],
+] as const
+
+function FinaleReadyPodiums() {
+  return (
+    <div className="mt-6 w-full max-w-4xl">
+      <div className="mb-4 flex items-center justify-center gap-5">
+        <span className="h-px flex-1 bg-gradient-to-r from-transparent to-amber-400/30" />
+        <span className="font-mono text-[10px] font-black uppercase tracking-[0.35em] text-amber-300/85">
+          5 Champions · One Stage
+        </span>
+        <span className="h-px flex-1 bg-gradient-to-l from-transparent to-amber-400/30" />
+      </div>
+      <div className="grid grid-cols-5 gap-2 sm:gap-5">
+        {[1, 2, 3, 4, 5].map((place, index) => (
+          <motion.div
+            key={place}
+            className="flex flex-col items-center"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.08 * index }}
+          >
+            <span className="mb-1 font-mono text-[10px] font-black text-amber-200/85">{place}</span>
+            <div className="relative flex h-14 w-14 items-center justify-center rounded-full border border-amber-400/35 bg-gradient-to-b from-amber-900/30 to-black sm:h-16 sm:w-16">
+              <motion.div
+                className="absolute inset-1 rounded-full border border-amber-300/15"
+                animate={{ boxShadow: ['0 0 8px rgba(245,158,11,0.12)', '0 0 22px rgba(245,158,11,0.34)', '0 0 8px rgba(245,158,11,0.12)'] }}
+                transition={{ duration: 2.8, repeat: Infinity, delay: index * 0.25 }}
+              />
+              <span className="font-mono text-2xl font-black text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.45)]">?</span>
+              <Sparkles size={10} className="absolute -left-1 bottom-1 text-amber-500/60" />
+              <Sparkles size={9} className="absolute -right-1 top-2 text-amber-300/55" />
+            </div>
+            <div className="-mt-1 h-2 w-16 rounded-[50%] border border-amber-500/30 bg-amber-950/80 shadow-[0_0_14px_rgba(245,158,11,0.25)] sm:w-20" />
+            <div className="-mt-0.5 h-2 w-20 rounded-[50%] border border-amber-600/25 bg-black/80 sm:w-24" />
+          </motion.div>
+        ))}
       </div>
     </div>
   )
@@ -495,11 +536,23 @@ export function PremiumRevealCard({
               backgroundSize: '30px 30px',
             }}
           />
+          {isFinale && READY_PARTICLES.map(([left, top, rotate, delay], index) => (
+            <motion.span
+              key={`${left}-${top}`}
+              aria-hidden
+              className="pointer-events-none absolute h-1.5 w-1.5 rounded-sm bg-amber-400/45 shadow-[0_0_8px_rgba(245,158,11,0.45)]"
+              style={{ left, top, rotate }}
+              animate={{ y: [0, -10, 0], opacity: [0.2, 0.8, 0.2] }}
+              transition={{ duration: 3.2 + index * 0.12, repeat: Infinity, delay, ease: 'easeInOut' }}
+            />
+          ))}
 
           {/* ─── EXACT SAME HEIGHT & WIDTH INNER CONTAINER ─── */}
-          <div className="flex flex-col items-center justify-center text-center w-full min-h-[260px] my-auto pt-1 pb-2">
+          <div className={`relative z-10 flex flex-col items-center justify-center text-center w-full my-auto pt-1 pb-2 ${
+            isFinale ? 'min-h-[390px]' : 'min-h-[260px]'
+          }`}>
             {isFinale ? (
-              <div className="mb-7">
+              <div className="mb-5">
                 <FinalFiveVaultSeal />
               </div>
             ) : (
@@ -532,6 +585,7 @@ export function PremiumRevealCard({
                 ? '5 Winners. One Unforgettable Reveal !!'
                 : 'Waiting for admin to initiate the Top 20 announcement (#20 ➔ #1).'}
             </p>
+            {isFinale && <FinaleReadyPodiums />}
           </div>
 
           {/* Footnote divider */}

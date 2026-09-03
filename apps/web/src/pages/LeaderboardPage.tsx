@@ -1339,7 +1339,7 @@ export function LeaderboardPage() {
             </motion.div>
 
             {/* 🌟 HERO SPOTLIGHT ANNOUNCEMENT CARD — 75% width for 24x10 LED */}
-            <div className="w-3/4 mx-auto flex flex-col items-center">
+            <div className={`${isFinale && revealedStep === 0 ? 'w-[88%] max-w-7xl' : 'w-3/4'} mx-auto flex flex-col items-center`}>
               <PremiumRevealCard
                 isFinale={isFinale}
                 currentSpotlightRank={currentSpotlightRank}
