@@ -1013,7 +1013,7 @@ export function LeaderboardPage() {
   useEffect(() => {
     if (!isRevealing || !rosterShown || isFinale || isDecrypting) return
 
-    const SPEED_PX_PER_SEC = 16
+    const SPEED_PX_PER_SEC = 24
     const RANK_DWELL_MS = 2200
     const BOTTOM_PAUSE_MS = 2200
     const TOP_PAUSE_MS = 1800
@@ -1022,9 +1022,9 @@ export function LeaderboardPage() {
     let phase: 'wait' | 'down' | 'pause-bottom' | 'pause-top' = 'wait'
     let phaseUntil = Date.now() + 800
     let cancelled = false
-    let travelled = 0
     let rankIndex = 1
     let useRankFallback = false
+    let currentScroll = scrollContainerRef.current?.scrollTop || 0
     const totalRanks = Math.min(20, advancingRef.current.length || 20)
 
     const getMaxScroll = (el: HTMLDivElement) => Math.max(0, el.scrollHeight - el.clientHeight)
@@ -1050,7 +1050,7 @@ export function LeaderboardPage() {
         if (nowMs >= phaseUntil) {
           phase = 'down'
           rankIndex = 1
-          travelled = 0
+          currentScroll = el.scrollTop
           if (useRankFallback) {
             scrollQualifierRankIntoView(1)
             phaseUntil = nowMs + RANK_DWELL_MS
@@ -1070,9 +1070,12 @@ export function LeaderboardPage() {
           }
         } else {
           const before = el.scrollTop
-          el.scrollTop = Math.min(maxScroll, before + SPEED_PX_PER_SEC * dt)
-          travelled += Math.max(0, el.scrollTop - before)
-          if (travelled >= 40 && el.scrollTop >= maxScroll - 8) {
+          // Keep sub-pixel progress outside the DOM. Some Chrome/LED display
+          // combinations round scrollTop writes, otherwise a ~0.4px frame
+          // repeatedly becomes zero and the table appears frozen.
+          currentScroll = Math.min(maxScroll, Math.max(currentScroll, before) + SPEED_PX_PER_SEC * dt)
+          el.scrollTop = currentScroll
+          if (currentScroll >= maxScroll - 1) {
             phase = 'pause-bottom'
             phaseUntil = nowMs + BOTTOM_PAUSE_MS
           }
@@ -1080,7 +1083,7 @@ export function LeaderboardPage() {
       } else if (phase === 'pause-bottom') {
         if (nowMs >= phaseUntil) {
           scrollToFirstTeam()
-          travelled = 0
+          currentScroll = scrollContainerRef.current?.scrollTop || 0
           rankIndex = 1
           phase = 'pause-top'
           phaseUntil = nowMs + TOP_PAUSE_MS
@@ -1088,7 +1091,7 @@ export function LeaderboardPage() {
       } else if (phase === 'pause-top') {
         if (nowMs >= phaseUntil) {
           phase = 'down'
-          travelled = 0
+          currentScroll = el.scrollTop
           if (useRankFallback) {
             scrollQualifierRankIntoView(1)
             phaseUntil = nowMs + RANK_DWELL_MS
