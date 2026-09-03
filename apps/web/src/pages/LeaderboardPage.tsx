@@ -24,13 +24,6 @@ function finalePlace(rank: number) {
   return { title: '5th Place', decrypt: 'Decrypting 5th Place...', speak: '5th Place, ', locked: '5th Place' }
 }
 
-const COUNTDOWN_WORDS: Record<number, string> = {
-  10: 'Ten', 9: 'Nine', 8: 'Eight', 7: 'Seven', 6: 'Six',
-  5: 'Five', 4: 'Four', 3: 'Three', 2: 'Two', 1: 'One', 0: 'Zero',
-}
-
-const ROUND2_COUNTDOWN_START = 5
-
 /** Step 1=5th, 2=4th, 3=2nd runner-up, 4=1st runner-up, 5=champion */
 function finaleCountdownStart(step: number) {
   if (step === 1 || step === 2) return 3
@@ -421,10 +414,9 @@ export function LeaderboardPage() {
   const [isPaused, setIsPaused] = useState<boolean>(false)
   const [soundEnabled] = useState<boolean>(true)
   const [isDecrypting, setIsDecrypting] = useState<boolean>(false)
-  const [countdownNum, setCountdownNum] = useState<number | null>(null)
-  const [scrambledName, setScrambledName] = useState<string>('')
   const [decryptingRank, setDecryptingRank] = useState<number | null>(null)
   const [revealingTeamName, setRevealingTeamName] = useState('')
+  const [nameSpinMs, setNameSpinMs] = useState(5000)
   const [unlockedRanks, setUnlockedRanks] = useState<number[]>([])
   const unlockedRanksRef = useRef<number[]>([])
   const rosterRef = useRef<HTMLDivElement>(null)
@@ -775,7 +767,6 @@ export function LeaderboardPage() {
     revealedStepRef.current = 0
     setRevealedStep(0)
     setIsDecrypting(false)
-    setCountdownNum(null)
     setUnlockedRanks([])
     setRevealingTeamName('')
   }
@@ -832,7 +823,6 @@ export function LeaderboardPage() {
       revealedStepRef.current = requestedStep
       setRevealedStep(requestedStep)
       setIsDecrypting(false)
-      setCountdownNum(null)
       if (!isFinaleStep && requestedStep > 0) {
         const recovered = Array.from({ length: requestedStep }, (_, i) => 21 - (i + 1))
         unlockedRanksRef.current = recovered
@@ -846,151 +836,41 @@ export function LeaderboardPage() {
 
     const currentRank = isFinaleStep ? (FINALE_CUTOFF + 1 - targetStep) : (21 - targetStep)
 
-    if (isFinaleStep) {
-      animatingStepRef.current = targetStep
-      isDecryptingRef.current = true
-      setIsDecrypting(true)
-      setDecryptingRank(currentRank)
-      setRevealingTeamName(top5Ref.current[currentRank - 1]?.teamName || '')
+    const winnerName = isFinaleStep
+      ? (top5Ref.current[currentRank - 1]?.teamName || '')
+      : (advancingRef.current[currentRank - 1]?.teamName || '')
+    const spinMs = isFinaleStep ? finaleCountdownStart(targetStep) * 1000 : 5000
 
-      const candidateNames = filtered.map(t => t.teamName)
-      let scrambleIdx = 0
-      let scrambleInterval: any = null
+    animatingStepRef.current = targetStep
+    isDecryptingRef.current = true
+    revealedStepRef.current = targetStep
+    setIsDecrypting(true)
+    setDecryptingRank(currentRank)
+    setRevealingTeamName(winnerName)
+    setNameSpinMs(spinMs)
+    setRevealedStep(targetStep)
 
-      const runScramble = (speed: number) => {
-        if (scrambleInterval) clearInterval(scrambleInterval)
-        scrambleInterval = setInterval(() => {
-          if (candidateNames.length > 0) {
-            setScrambledName(candidateNames[scrambleIdx % candidateNames.length])
-            scrambleIdx++
-          }
-        }, speed)
-      }
-
-      if (targetStep === FINALE_CUTOFF) {
-        const startFrom = finaleCountdownStart(targetStep)
-        const tick = 1100
-        for (let n = startFrom; n >= 1; n--) {
-          const delay = (startFrom - n) * tick
-          const beat = startFrom - n + 1
-          const scrambleSpeed = 50 + (startFrom - n) * 40
-          const apply = () => {
-            setCountdownNum(n)
-            speakCountdown(COUNTDOWN_WORDS[n] || String(n))
-            if (soundEnabled) playHeartbeatTick(beat)
-            runScramble(scrambleSpeed)
-          }
-          if (delay === 0) apply()
-          else setTimeout(apply, delay)
-        }
-
-        setTimeout(() => {
-          clearInterval(scrambleInterval)
-          isDecryptingRef.current = false
-          animatingStepRef.current = 0
-          revealedStepRef.current = FINALE_CUTOFF
-          setIsDecrypting(false)
-          setCountdownNum(null)
-          setRevealedStep(FINALE_CUTOFF)
-          if (soundEnabled) {
-            playRevealChime(1)
-          }
-          triggerFinaleConfetti(1)
-          speakCountdown('Grand Champion, ' + (top5Ref.current[0]?.teamName || 'Winner'))
-        }, (startFrom - 1) * tick + 1400)
-
-      } else {
-        const startFrom = finaleCountdownStart(targetStep)
-        const tick = 1100
-        for (let n = startFrom; n >= 1; n--) {
-          const delay = (startFrom - n) * tick
-          const beat = startFrom - n + 1
-          const scrambleSpeed = 60 + (startFrom - n) * 70
-          const apply = () => {
-            setCountdownNum(n)
-            speakCountdown(COUNTDOWN_WORDS[n] || String(n))
-            if (soundEnabled) playHeartbeatTick(beat)
-            runScramble(scrambleSpeed)
-          }
-          if (delay === 0) apply()
-          else setTimeout(apply, delay)
-        }
-
-        setTimeout(() => {
-          clearInterval(scrambleInterval)
-          isDecryptingRef.current = false
-          animatingStepRef.current = 0
-          revealedStepRef.current = targetStep
-          setIsDecrypting(false)
-          setCountdownNum(null)
-          setRevealedStep(targetStep)
-          if (soundEnabled) {
-            playRevealChime(currentRank)
-          }
-          triggerFinaleConfetti(currentRank)
-          const place = finalePlace(currentRank)
-          const winnerName = top5Ref.current[currentRank - 1]?.teamName || ''
-          speakCountdown(place.speak + winnerName)
-        }, (startFrom - 1) * tick + 1400)
-      }
-
-    } else {
-      // Round 2: one admin click unseals one place, with a 5→0 countdown.
-      animatingStepRef.current = targetStep
-      isDecryptingRef.current = true
-      setIsDecrypting(true)
-      setDecryptingRank(currentRank)
-      setRevealingTeamName(advancingRef.current[currentRank - 1]?.teamName || '')
-
-      const candidateNames = (advancingRef.current.length > 0 ? advancingRef.current : filtered).map(t => t.teamName)
-      let scrambleIdx = 0
-      let scrambleInterval: any = null
-
-      const runScramble = (speed: number) => {
-        if (scrambleInterval) clearInterval(scrambleInterval)
-        scrambleInterval = setInterval(() => {
-          if (candidateNames.length > 0) {
-            setScrambledName(candidateNames[scrambleIdx % candidateNames.length])
-            scrambleIdx++
-          }
-        }, speed)
-      }
-
-      const startFrom = ROUND2_COUNTDOWN_START
-      const tick = 1100
-      for (let n = startFrom; n >= 0; n--) {
-        const delay = (startFrom - n) * tick
-        const beat = startFrom - n + 1
-        const scrambleSpeed = 60 + (startFrom - n) * 70
-        const apply = () => {
-          setCountdownNum(n)
-          speakCountdown(COUNTDOWN_WORDS[n] || String(n))
-          if (soundEnabled) playHeartbeatTick(beat)
-          runScramble(scrambleSpeed)
-        }
-        if (delay === 0) apply()
-        else setTimeout(apply, delay)
-      }
-
-      setTimeout(() => {
-        clearInterval(scrambleInterval)
-        isDecryptingRef.current = false
-        animatingStepRef.current = 0
-        revealedStepRef.current = targetStep
-        setIsDecrypting(false)
-        setCountdownNum(null)
-        setRevealedStep(targetStep)
+    window.setTimeout(() => {
+      isDecryptingRef.current = false
+      animatingStepRef.current = 0
+      setIsDecrypting(false)
+      if (!isFinaleStep) {
         unlockedRanksRef.current = unlockedRanksRef.current.includes(currentRank)
           ? unlockedRanksRef.current
           : [...unlockedRanksRef.current, currentRank]
         setUnlockedRanks(unlockedRanksRef.current)
-        if (soundEnabled) {
-          playRevealChime(currentRank)
-        }
-        const winnerName = advancingRef.current[currentRank - 1]?.teamName || ''
+      }
+      if (soundEnabled) {
+        playRevealChime(isFinaleStep && targetStep === FINALE_CUTOFF ? 1 : currentRank)
+      }
+      if (isFinaleStep) {
+        triggerFinaleConfetti(currentRank)
+        const place = finalePlace(currentRank)
+        speakCountdown((currentRank === 1 ? 'Grand Champion, ' : place.speak) + winnerName)
+      } else {
         speakCountdown(`Number ${currentRank}, ` + winnerName)
-      }, startFrom * tick + 1400)
-    }
+      }
+    }, spinMs)
   }
 
   // Keep the LCD locked on the countdown card until the name is unsealed
@@ -1126,69 +1006,7 @@ export function LeaderboardPage() {
           {/* 🌟 HERO SPOTLIGHT ANNOUNCEMENT CARD */}
           <div className="w-full max-w-3xl mb-10">
             <AnimatePresence mode="wait">
-              {isDecrypting ? (
-                <motion.div
-                  key="decrypting-lcd-card"
-                  initial={{ opacity: 0, scale: 0.92 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.08 }}
-                  transition={{ duration: 0.4 }}
-                  className="relative p-8 sm:p-12 rounded-[2.5rem] overflow-hidden shadow-2xl text-center border-2 bg-gradient-to-b from-[#241308] via-[#140b04] to-[#080402] border-amber-500 text-white ring-4 ring-amber-500/40 shadow-[0_0_80px_rgba(245,158,11,0.4)]"
-                >
-                  {/* Animated Background Laser Radar */}
-                  <div className="absolute inset-0 bg-radial from-amber-500/20 via-transparent to-transparent pointer-events-none animate-pulse" />
-
-                  {/* Top Decryption Tag */}
-                  <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest mb-6 bg-amber-950/90 border border-amber-500/60 text-amber-300 shadow-md">
-                    <Sparkles size={14} className="text-amber-400 animate-spin" />
-                    <span>
-                      {isFinale
-                        ? (decryptingRank === 1
-                          ? '👑 Unsealing Grand Champion (1st Place)...'
-                          : decryptingRank === 2
-                          ? '🥈 Decrypting 1st Runner Up (2nd Place)...'
-                          : decryptingRank === 3
-                          ? '🥉 Decrypting 2nd Runner Up (3rd Place)...'
-                          : decryptingRank === 4
-                          ? 'Decrypting 4th Place...'
-                          : 'Decrypting 5th Place...')
-                        : `Decrypting #${decryptingRank}...`}
-                    </span>
-                  </div>
-
-                  {/* Giant Countdown Pulse */}
-                  <div className="relative my-3 flex items-center justify-center">
-                    <motion.div
-                      key={countdownNum}
-                      initial={{ scale: 2.2, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.5, opacity: 0 }}
-                      transition={{ duration: 0.45, ease: 'easeOut' }}
-                      className="text-7xl sm:text-9xl font-black font-mono text-transparent bg-clip-text bg-gradient-to-b from-amber-100 via-amber-300 to-orange-500 drop-shadow-[0_0_40px_rgba(251,191,36,0.9)]"
-                    >
-                      {countdownNum}
-                    </motion.div>
-                  </div>
-
-                  {/* Slot reels built from the admin-selected team name */}
-                  <div className="min-h-16 flex items-center justify-center py-2">
-                    <WinnerLetterReels name={revealingTeamName} spinning={isDecrypting} />
-                  </div>
-
-                  {/* Decryption Progress Bar */}
-                  <div className="w-full max-w-md mx-auto mt-6 bg-black/60 rounded-full h-2.5 overflow-hidden border border-amber-500/40 shadow-inner">
-                    <motion.div
-                      initial={{ width: '0%' }}
-                      animate={{ width: '100%' }}
-                      transition={{ duration: 6, ease: 'linear' }}
-                      className="h-full bg-gradient-to-r from-amber-600 via-amber-400 to-orange-500 shadow-md"
-                    />
-                  </div>
-                  <p className="text-xs text-amber-400 font-mono font-bold uppercase tracking-widest mt-4 animate-pulse">
-                    ⚡ ANALYZING FINAL EVALUATION MARKS · STAND BY ⚡
-                  </p>
-                </motion.div>
-              ) : revealedStep === 0 ? (
+              {revealedStep === 0 && !isDecrypting ? (
                 <motion.div
                   key="ready-state"
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -1297,12 +1115,23 @@ export function LeaderboardPage() {
                     {isFinale && currentSpotlightRank === 1 ? '👑 GRAND CHAMPION' : `#${currentSpotlightRank}`}
                   </div>
 
-                  {/* Team Name */}
-                  <h2 className={`text-3xl sm:text-5xl font-black tracking-tight mb-2 truncate px-4 ${
-                    isFinale ? 'text-white' : 'text-[#1A1A1A]'
-                  }`}>
-                    {currentSpotlightTeam.teamName}
-                  </h2>
+                  {/* Team name: casino reels while spinning, then the real name */}
+                  {isDecrypting ? (
+                    <div className="mb-4 px-2">
+                      <WinnerLetterReels
+                        name={revealingTeamName || currentSpotlightTeam.teamName}
+                        spinning
+                        spinMs={nameSpinMs}
+                        dark={isFinale}
+                      />
+                    </div>
+                  ) : (
+                    <h2 className={`text-3xl sm:text-5xl font-black tracking-tight mb-2 truncate px-4 ${
+                      isFinale ? 'text-white' : 'text-[#1A1A1A]'
+                    }`}>
+                      {currentSpotlightTeam.teamName}
+                    </h2>
+                  )}
 
                   {/* College & Track */}
                   <div className={`flex items-center justify-center gap-2.5 flex-wrap text-sm sm:text-base font-medium mb-6 ${
@@ -1464,7 +1293,7 @@ export function LeaderboardPage() {
                             {isFirst ? '👑 GRAND CHAMPION' : place.title.toUpperCase()}
                           </span>
                           <span className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${isCurrentlyDecrypting ? 'text-amber-300 animate-bounce' : 'text-amber-400 animate-pulse'}`}>
-                            {isCurrentlyDecrypting ? `⚡ DECIPHERING (${countdownNum}s) ⚡` : isNextToUnlock ? '⚡ Next To Crown ⚡' : '🔒 Awaiting Reveal...'}
+                            {isCurrentlyDecrypting ? '⚡ REVEALING NAME ⚡' : isNextToUnlock ? '⚡ Next To Crown ⚡' : '🔒 Awaiting Reveal...'}
                           </span>
                         </div>
 
