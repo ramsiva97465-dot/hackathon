@@ -58,41 +58,78 @@ function getAudioCtx(): AudioContext | null {
 }
 
 /**
- * Plays a mechanical tick / cipher-click sound.
- * speedFactor: 0 = blazing fast (light tap), 1 = very slow (heavy clunk)
+ * Plays a realistic mechanical split-flap letter-flip sound.
+ * speedFactor: 0 = fast flutter, 1 = heavy tactile click
  */
-function playTick(speedFactor: number) {
+function playMechanicalFlap(speedFactor: number) {
   const ctx = getAudioCtx()
   if (!ctx) return
 
   const now = ctx.currentTime
-  const duration = 0.025 + speedFactor * 0.06  // 25–85 ms click length
+  const duration = 0.022 + speedFactor * 0.04
 
-  // White-noise burst shaped into a sharp percussive tap
+  // 1. Crisp tactile plastic/metal flap strike (bandpass noise burst)
   const bufLen = Math.ceil(ctx.sampleRate * duration)
   const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate)
   const data = buf.getChannelData(0)
   for (let i = 0; i < bufLen; i++) {
-    // Exponential decay envelope on the noise
-    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufLen * 0.18))
+    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufLen * 0.22))
   }
 
-  const src = ctx.createBufferSource()
-  src.buffer = buf
+  const noise = ctx.createBufferSource()
+  noise.buffer = buf
 
-  // Band-pass filter: high-pitched fast clicks, lower "clunk" when slow
-  const bpf = ctx.createBiquadFilter()
-  bpf.type = 'bandpass'
-  bpf.frequency.value = 2200 - speedFactor * 1400   // 2200 Hz → 800 Hz
-  bpf.Q.value = 1.8
+  const filter = ctx.createBiquadFilter()
+  filter.type = 'bandpass'
+  filter.frequency.setValueAtTime(3400 - speedFactor * 1400, now) // Crisp click
+  filter.Q.value = 2.8
 
+  const noiseGain = ctx.createGain()
+  noiseGain.gain.setValueAtTime(0.25 + speedFactor * 0.15, now)
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + duration)
+
+  noise.connect(filter)
+  filter.connect(noiseGain)
+  noiseGain.connect(ctx.destination)
+  noise.start(now)
+
+  // 2. Mechanical chassis body resonance ("tock")
+  const osc = ctx.createOscillator()
+  const oscGain = ctx.createGain()
+  osc.type = 'triangle'
+  osc.frequency.setValueAtTime(320 - speedFactor * 100, now)
+  osc.frequency.exponentialRampToValueAtTime(80, now + 0.03)
+
+  oscGain.gain.setValueAtTime(0.18 + speedFactor * 0.12, now)
+  oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.035)
+
+  osc.connect(oscGain)
+  oscGain.connect(ctx.destination)
+  osc.start(now)
+  osc.stop(now + 0.04)
+}
+
+/**
+ * Solid metallic latch lock sound when a letter locks into place.
+ */
+function playLatchLock() {
+  const ctx = getAudioCtx()
+  if (!ctx) return
+  const now = ctx.currentTime
+
+  const osc = ctx.createOscillator()
   const gain = ctx.createGain()
-  gain.gain.setValueAtTime(0.12 + speedFactor * 0.22, now) // louder when slow
+  osc.type = 'sine'
+  osc.frequency.setValueAtTime(560, now)
+  osc.frequency.exponentialRampToValueAtTime(120, now + 0.07)
 
-  src.connect(bpf)
-  bpf.connect(gain)
+  gain.gain.setValueAtTime(0.4, now)
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08)
+
+  osc.connect(gain)
   gain.connect(ctx.destination)
-  src.start(now)
+  osc.start(now)
+  osc.stop(now + 0.085)
 }
 
 /**
@@ -202,11 +239,10 @@ export function PremiumRevealCard({
       const elapsed = Date.now() - startTime
       const progress = Math.min(1, elapsed / nameSpinMs)
 
-      // ── Speed curve: fast → slow ─────────────────────────────────────────
-      // progress^0.45 gives strong deceleration (slot-machine feel)
-      // interval: 16 ms (60 fps blaze) → 170 ms (suspenseful crawl)
+      // ── Speed curve: fast → slow (Slower, tactile, suspenseful flip pace) ──
+      // interval: 45 ms (crisp visible rolling) → 220 ms (suspenseful slow-motion crawl)
       const speedFactor = Math.pow(progress, 0.45)
-      const nextMs = Math.round(16 + (170 - 16) * speedFactor)
+      const nextMs = Math.round(45 + (220 - 45) * speedFactor)
 
       // ── Character scramble (Always shows full VOICEATHON initially, then morphs to target team name) ────
       const initialWord = 'VOICEATHON'
@@ -246,10 +282,10 @@ export function PremiumRevealCard({
               newLockedCount++
             }
           } else {
-            // Flip forward through A-Z starting from startChar towards targetChar
+            // Flip forward through A-Z starting from startChar towards targetChar with independent rhythm
             const totalCycles = 26 + ((targetIdx - startIdx + 26) % 26)
             const currentStep = Math.floor(colLockProgress * totalCycles)
-            const currentLetter = ALPHABET[(startIdx + currentStep + (frameCountRef.current % 3)) % 26]
+            const currentLetter = ALPHABET[(startIdx + currentStep + (frameCountRef.current * 2 + i * 5)) % 26]
             chars += currentLetter
           }
         }
@@ -259,22 +295,14 @@ export function PremiumRevealCard({
       // Rolling fake score
       setRollingScore((Math.random() * 80 + 15).toFixed(1))
 
-      // ── Sound ─────────────────────────────────────────────────────────────
-      // Fast phase: play every 4th frame to avoid audio overload
-      // Slow phase: play every frame for maximum suspense
-      const fc = frameCountRef.current
-      const playEveryN = progress < 0.3 ? 4 : progress < 0.6 ? 2 : 1
-      if (fc % playEveryN === 0) {
-        playTick(speedFactor)
-      }
+      // ── Realistic Mechanical Sound Synthesis ──────────────────────────────
+      // Play crisp mechanical flap click on every active step
+      playMechanicalFlap(speedFactor)
       frameCountRef.current++
 
-      // Per-character lock-in click (heavier clunk each time a new letter resolves)
+      // Play metallic latch lock click whenever a new character locks in
       if (newLockedCount > lockedCharsRef.current) {
-        const extra = Math.min(newLockedCount - lockedCharsRef.current, 3)
-        for (let k = 0; k < extra; k++) {
-          setTimeout(() => playTick(0.95), k * 60)
-        }
+        playLatchLock()
         lockedCharsRef.current = newLockedCount
       }
 
