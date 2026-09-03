@@ -434,6 +434,8 @@ export function LeaderboardPage() {
   // name must be read when it is spoken, not when the trigger arrived.
   const top5Ref = useRef<Array<LeaderboardEntry & { rank: number }>>([])
   const advancingRef = useRef<Array<LeaderboardEntry & { rank: number }>>([])
+  const autoScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hasAutoScrolledRef = useRef(false)
 
   useEffect(() => {
     activeRoundRef.current = activeRound
@@ -777,6 +779,11 @@ export function LeaderboardPage() {
     setUnlockedRanks([])
     unlockedRanksRef.current = []
     setIsPaused(false)
+    hasAutoScrolledRef.current = false
+    if (autoScrollTimerRef.current) {
+      clearTimeout(autoScrollTimerRef.current)
+      autoScrollTimerRef.current = null
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -803,6 +810,11 @@ export function LeaderboardPage() {
     setIsDecrypting(false)
     setUnlockedRanks([])
     setRevealingTeamName('')
+    hasAutoScrolledRef.current = false
+    if (autoScrollTimerRef.current) {
+      clearTimeout(autoScrollTimerRef.current)
+      autoScrollTimerRef.current = null
+    }
   }
 
   const executeRevealToStep = (
@@ -917,15 +929,33 @@ export function LeaderboardPage() {
   // ONLY AFTER all 20 reveals are fully completed (or all 5 for Finale), hold the #1 card
   // for 20 seconds, then smoothly scroll down to show the full Top 20 table
   useEffect(() => {
-    if (!isRevealing) return
+    if (!isRevealing) {
+      hasAutoScrolledRef.current = false
+      if (autoScrollTimerRef.current) {
+        clearTimeout(autoScrollTimerRef.current)
+        autoScrollTimerRef.current = null
+      }
+      return
+    }
 
     const isAllAnnounced = isFinale
       ? revealedStep >= FINALE_CUTOFF
       : (revealedStep >= 20 || unlockedRanks.length >= 20)
 
-    if (isDecrypting || !isAllAnnounced) return
+    if (isDecrypting || !isAllAnnounced) {
+      if (autoScrollTimerRef.current) {
+        clearTimeout(autoScrollTimerRef.current)
+        autoScrollTimerRef.current = null
+      }
+      return
+    }
 
-    const timer = setTimeout(() => {
+    // Already scheduled or completed — avoid resetting timer on every 1s re-render
+    if (autoScrollTimerRef.current || hasAutoScrolledRef.current) return
+
+    autoScrollTimerRef.current = setTimeout(() => {
+      hasAutoScrolledRef.current = true
+      autoScrollTimerRef.current = null
       const roster = rosterRef.current
       const container = scrollContainerRef.current
       if (!roster) return
@@ -935,9 +965,7 @@ export function LeaderboardPage() {
         container.scrollTo({ top: Math.max(0, container.scrollTop + gap - 16), behavior: 'smooth' })
       }
       roster.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 20000) // 20 seconds gap after reveal completion
-
-    return () => clearTimeout(timer)
+    }, 20000)
   }, [isRevealing, revealedStep, isFinale, unlockedRanks.length, isDecrypting])
 
   // Round 2 is one-click-per-team from the admin table — never auto-play 20→1.
