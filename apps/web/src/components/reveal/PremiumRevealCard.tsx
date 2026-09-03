@@ -373,7 +373,7 @@ export function PremiumRevealCard({
           y: 0,
         }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className={`relative px-10 py-16 sm:py-20 xl:py-24 rounded-[2.5rem] overflow-hidden border-2 transition-all
+        className={`relative px-10 pt-14 pb-8 sm:pt-16 sm:pb-10 xl:pt-20 xl:pb-12 rounded-[2.5rem] overflow-hidden border-2 transition-all
           ${rankTheme.cardBg}
           ${isDecrypting ? 'border-amber-500/80 shadow-[0_0_100px_rgba(245,158,11,0.45)]' : `${rankTheme.cardBorder} ${rankTheme.cardShadow}`}
         `}
@@ -522,7 +522,7 @@ export function PremiumRevealCard({
         </div>
 
         {/* ── Progress Footnote ── */}
-        <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-sm font-semibold px-2 text-slate-400">
+        <div className="mt-8 pt-7 border-t border-white/10 flex items-center justify-between text-sm font-semibold px-4 text-slate-400">
           <span className="font-mono">
             Progress: {revealedStep} of {maxSteps} announced
           </span>
