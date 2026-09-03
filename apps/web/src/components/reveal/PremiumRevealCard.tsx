@@ -244,50 +244,51 @@ export function PremiumRevealCard({
       const speedFactor = Math.pow(progress, 0.45)
       const nextMs = Math.round(45 + (220 - 45) * speedFactor)
 
-      // ── Character scramble (Always shows full VOICEATHON initially, then morphs to target team name) ────
+      // ── Sequential Cascade Scramble (V scrolls first, then O, then I... in a cascading wave) ────
       const initialWord = 'VOICEATHON'
       const target = (targetName || 'QUALIFIER').toUpperCase()
+      const maxLen = Math.max(initialWord.length, target.length)
       const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
       let chars = ''
       let newLockedCount = 0
 
-      if (progress < 0.18) {
-        // 100% full complete VOICEATHON word shown initially
-        chars = initialWord
-      } else {
-        // Smoothly transition display length from initialWord.length (10) to target.length
-        const lenProgress = Math.min(1, Math.max(0, (progress - 0.18) / 0.40))
-        const currentLen = Math.round(initialWord.length + (target.length - initialWord.length) * lenProgress)
-        const displayLen = Math.max(1, currentLen)
+      // Length transition: stays 10 while scrolling through initial characters, then smoothly matches target length
+      const lengthProgress = Math.min(1, Math.max(0, (progress - 0.40) / 0.45))
+      const currentDisplayLen = Math.round(initialWord.length + (target.length - initialWord.length) * lengthProgress)
 
-        for (let i = 0; i < displayLen; i++) {
-          const targetChar = i < target.length ? target[i] : ''
-          const startChar = i < initialWord.length ? initialWord[i] : 'A'
+      for (let i = 0; i < currentDisplayLen; i++) {
+        const startChar = i < initialWord.length ? initialWord[i] : (target[i] || 'A')
+        const targetChar = i < target.length ? target[i] : ''
 
-          if (targetChar === ' ') {
-            chars += ' '
-            continue
+        if (targetChar === ' ' && progress >= (0.05 + (i / maxLen) * 0.50)) {
+          chars += ' '
+          continue
+        }
+
+        const startIdx = ALPHABET.indexOf(startChar) >= 0 ? ALPHABET.indexOf(startChar) : 0
+        const targetIdx = targetChar && ALPHABET.indexOf(targetChar) >= 0 ? ALPHABET.indexOf(targetChar) : 0
+
+        // Sequential timing: each letter i starts and finishes in a staggered wave from left to right
+        const charStart = 0.05 + (i / maxLen) * 0.52
+        const charLock = charStart + 0.25
+
+        if (progress >= charLock || progress >= 0.98) {
+          // Locked onto target team name character
+          if (targetChar) {
+            chars += targetChar
+            newLockedCount++
           }
-
-          const startIdx = ALPHABET.indexOf(startChar) >= 0 ? ALPHABET.indexOf(startChar) : 0
-          const targetIdx = targetChar && ALPHABET.indexOf(targetChar) >= 0 ? ALPHABET.indexOf(targetChar) : 0
-
-          // Column i lock-in timing: Progressive left-to-right
-          const colLockProgress = Math.min(1, Math.max(0, (progress - 0.25 - (i / Math.max(1, target.length)) * 0.45) / 0.30))
-
-          if (colLockProgress >= 1 || progress >= 0.98) {
-            if (targetChar) {
-              chars += targetChar
-              newLockedCount++
-            }
-          } else {
-            // Flip forward through A-Z starting from startChar towards targetChar with independent rhythm
-            const totalCycles = 26 + ((targetIdx - startIdx + 26) % 26)
-            const currentStep = Math.floor(colLockProgress * totalCycles)
-            const currentLetter = ALPHABET[(startIdx + currentStep + (frameCountRef.current * 2 + i * 5)) % 26]
-            chars += currentLetter
-          }
+        } else if (progress < charStart) {
+          // Untouched original letter from VOICEATHON waiting for its turn
+          chars += startChar
+        } else {
+          // Actively scrolling through A-Z starting from startChar towards targetChar
+          const spinProgress = (progress - charStart) / 0.25
+          const totalFlips = 26 + ((targetIdx - startIdx + 26) % 26)
+          const currentStep = Math.floor(spinProgress * totalFlips)
+          const currentLetter = ALPHABET[(startIdx + currentStep + (frameCountRef.current % 3)) % 26]
+          chars += currentLetter
         }
       }
       setScrambleDisplay(chars)
