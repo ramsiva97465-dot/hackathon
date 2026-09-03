@@ -666,7 +666,7 @@ export function LeaderboardPage() {
     const waitingForFinale = entries.some((e) => ((e as any).round || 1) === 3)
     if (isRevealing) return
     if (!tvMode && !waitingForFinale) return
-    const scrollSpeed = 1
+    const scrollSpeed = 1.2
     let scrollingUp = false
     const interval = setInterval(() => {
       if (scrollingUp || !scrollContainerRef.current) return
@@ -679,9 +679,9 @@ export function LeaderboardPage() {
         el.scrollTo({ top: 0, behavior: 'smooth' })
         setTimeout(() => { scrollingUp = false }, 2500)
       }
-    }, 50)
+    }, 30)
     return () => clearInterval(interval)
-  }, [tvMode, isRevealing, entries])
+  }, [tvMode, isRevealing, entries, activeRound])
 
   const rawDisplay = entries
 
@@ -979,7 +979,7 @@ export function LeaderboardPage() {
       {/* 🎭 DRAMATIC GRAND REVEAL CEREMONY (Round 2: 20➔1 | Round 3: 5➔1)      */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {isRevealing ? (
-        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto w-full flex flex-col items-center px-4 sm:px-8">
+        <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-y-auto w-full flex flex-col items-center px-4 sm:px-8">
           
           {/* 🌟 FULL-VIEWPORT HERO SPOTLIGHT (keeps table below the fold) */}
           <div className="min-h-[calc(100vh-70px)] w-full flex flex-col items-center justify-center py-4">
@@ -1400,7 +1400,7 @@ export function LeaderboardPage() {
         /* ════════════════════════════════════════════════════════════════════ */
         /* STANDARD STAGE 1 / 2 / 3 LEADERBOARDS                                */
         /* ════════════════════════════════════════════════════════════════════ */
-        <div className="relative z-10 flex-1 flex flex-col items-center w-full overflow-hidden">
+        <div className="relative z-10 flex-1 min-h-0 flex flex-col items-center w-full overflow-hidden">
 
           {/* 📌 FIXED HEADER (Permanently pinned, never scrolls) */}
           <div className="shrink-0 z-20 w-full backdrop-blur-md bg-[#EBE3D5]/95 border-b border-black/5 shadow-xs pt-5 pb-4">
@@ -1473,7 +1473,7 @@ export function LeaderboardPage() {
           </div>
 
           {/* 📜 SCROLLABLE CONTENT AREA (ONLY this area scrolls) */}
-          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto flex flex-col items-center pt-6 pb-24 px-6 max-w-6xl mx-auto w-full scrollbar-thin">
+          <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center pt-6 pb-24 px-6 max-w-6xl mx-auto w-full scrollbar-thin">
 
             {/* ROUND 1 VIEW — Live Judging Status (Scores Hidden, 0/1 -> 1/1) */}
             {activeRound === 1 && (
