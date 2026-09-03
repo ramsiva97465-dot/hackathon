@@ -239,7 +239,9 @@ export function PremiumRevealCard({
         // Just finished — dramatic lock-in
         setJustLocked(true)
         playRevealImpact()
-        triggerQualifierConfetti(activeRank)
+        if (isFinale) {
+          triggerQualifierConfetti(activeRank)
+        }
         const t = setTimeout(() => setJustLocked(false), 1400)
         return () => clearTimeout(t)
       }
