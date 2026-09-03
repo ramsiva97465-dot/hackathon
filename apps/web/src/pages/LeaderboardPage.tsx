@@ -980,7 +980,7 @@ export function LeaderboardPage() {
         <div className="relative z-10 flex-1 flex flex-col items-center px-4 sm:px-8 w-full">
           
           {/* 🌟 FULL-VIEWPORT HERO SPOTLIGHT (keeps table below the fold) */}
-          <div className="min-h-[calc(100vh-100px)] w-full flex flex-col items-center justify-center py-6">
+          <div className="min-h-[calc(100vh-70px)] w-full flex flex-col items-center justify-center py-4">
             {/* Header */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -1027,7 +1027,7 @@ export function LeaderboardPage() {
           {isFinale ? (
             !isDecrypting ? (
             /* ROUND 3: WINNERS PODIUM — hidden during the countdown card */
-            <div ref={rosterRef} className="w-full max-w-5xl flex flex-col items-center">
+            <div ref={rosterRef} className="w-full max-w-5xl flex flex-col items-center mt-32 pb-32">
               <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/5 text-slate-700 mb-6 shadow-sm">
                 <Trophy size={14} className="text-amber-500" />
                 <span className="text-xs font-bold uppercase tracking-widest">
@@ -1213,7 +1213,7 @@ export function LeaderboardPage() {
             ) : null
           ) : !isDecrypting && unlockedRanks.length > 0 ? (
             /* ROUND 2: TOP 20 QUALIFIERS TABLE — hidden before any team is announced */
-            <div ref={rosterRef} className="w-full max-w-5xl rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1]">
+            <div ref={rosterRef} className="w-full max-w-5xl rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] mt-32 pb-32">
               {/* Header with Title & Status Counter */}
               <div className="flex items-center justify-between px-6 py-4 bg-[#F4ECE1] border-b border-black/10">
                 <div className="flex items-center gap-3">
