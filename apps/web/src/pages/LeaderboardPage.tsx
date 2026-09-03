@@ -969,14 +969,6 @@ export function LeaderboardPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Active TV Mode Indicator (Controlled by Admin Panel) */}
-          {!isRevealing && tvMode && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 shadow-xs animate-pulse">
-              <Monitor size={13} className="text-emerald-600 stroke-[2.2]" />
-              <span className="text-[10px] font-black uppercase tracking-wider hidden sm:inline">TV Auto-Scroll</span>
-            </div>
-          )}
-
           <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 shadow-xs">
             <Flame size={13} className="text-orange-500 fill-orange-500/20" />
             <span className="text-[11px] font-black text-[#E83C00] tracking-widest uppercase">Live</span>
