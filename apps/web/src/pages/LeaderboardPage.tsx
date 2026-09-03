@@ -1115,9 +1115,9 @@ export function LeaderboardPage() {
                     {isFinale && currentSpotlightRank === 1 ? '👑 GRAND CHAMPION' : `#${currentSpotlightRank}`}
                   </div>
 
-                  {/* Team name: casino reels while spinning, then the real name */}
+                  {/* Team name: wordmark reels spin down to the winner, then the real name */}
                   {isDecrypting ? (
-                    <div className="mb-4 px-2">
+                    <div className="mb-5 px-2 min-h-[7.5rem] sm:min-h-[9rem] flex items-center justify-center">
                       <WinnerLetterReels
                         name={revealingTeamName || currentSpotlightTeam.teamName}
                         spinning
