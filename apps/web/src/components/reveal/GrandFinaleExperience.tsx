@@ -110,7 +110,7 @@ function Wreath({
         />
       )}
       <motion.div
-        className={`relative overflow-hidden ${className}`}
+        className={`relative ${className}`}
         style={
           idle
             ? { transformStyle: 'preserve-3d', filter: 'brightness(1)', willChange: 'transform' }
@@ -130,20 +130,50 @@ function Wreath({
       >
         <img src={PODIUM} alt="" className="absolute inset-0 h-full w-full object-contain" />
         {(locked || idle) && (
-          <motion.div
+          <div
             aria-hidden
             className="pointer-events-none absolute inset-0"
-            initial={{ x: '-85%', opacity: 0 }}
-            animate={{ x: '85%', opacity: [0, 0.85, 0] }}
-            transition={{ duration: 2.1, delay: 0.15 + idleDelay, repeat: Infinity, repeatDelay: 3.4, ease: [0.4, 0, 0.2, 1] }}
             style={{
-              background:
-                'linear-gradient(108deg, transparent 38%, rgba(255,245,210,0.0) 44%, rgba(255,255,255,0.42) 50%, rgba(255,214,120,0.12) 54%, transparent 62%)',
-              mixBlendMode: 'screen',
+              WebkitMaskImage: `url(${PODIUM})`,
+              maskImage: `url(${PODIUM})`,
+              WebkitMaskSize: 'contain',
+              maskSize: 'contain',
+              WebkitMaskRepeat: 'no-repeat',
+              maskRepeat: 'no-repeat',
+              WebkitMaskPosition: 'center',
+              maskPosition: 'center',
             }}
-          />
+          >
+            <motion.div
+              className="absolute top-[-20%] h-[140%] w-[18%]"
+              initial={{ x: '-120%', opacity: 0 }}
+              animate={{ x: '620%', opacity: [0, 1, 0] }}
+              transition={{
+                duration: 2.35,
+                delay: 0.2 + idleDelay,
+                repeat: Infinity,
+                repeatDelay: 3.6,
+                ease: [0.4, 0, 0.2, 1],
+              }}
+              style={{
+                background:
+                  'linear-gradient(105deg, transparent 0%, rgba(255,255,255,0.0) 38%, rgba(255,255,255,0.7) 50%, rgba(255,214,120,0.18) 58%, transparent 100%)',
+                filter: 'blur(8px)',
+                mixBlendMode: 'screen',
+              }}
+            />
+          </div>
         )}
-        <div className="pointer-events-none absolute inset-x-[16%] top-[9%] z-10 flex h-[48%] items-center justify-center">
+        <div
+          className="pointer-events-none absolute z-10 flex items-center justify-center"
+          style={{
+            left: '50%',
+            top: '42%',
+            width: '46%',
+            height: '32%',
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
           <AnimatePresence mode="wait">
             {showGlyph && (
               <motion.span
@@ -152,7 +182,7 @@ function Wreath({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.28, ease: EASE }}
-                className={`flex h-[1.05em] w-[1.05em] items-center justify-center font-serif font-black leading-none ${
+                className={`flex h-[1em] w-[1em] items-center justify-center text-center font-serif font-black leading-none ${
                   locked ? 'text-amber-200' : 'text-amber-200/40'
                 }`}
                 style={{ fontSize: '1.7em' }}
