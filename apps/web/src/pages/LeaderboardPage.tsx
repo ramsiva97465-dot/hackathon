@@ -7,7 +7,7 @@ import { Avatar } from '@/components/ui/Avatar'
 import { getTrackConfig } from '@/lib/utils'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { 
-  TrendingUp, TrendingDown, Minus, Trophy, ChevronRight, ChevronDown, Monitor,
+    TrendingUp, TrendingDown, Minus, Trophy, ChevronRight, Monitor,
   Sparkles, Star, CheckCircle2, Lock, Flame, Zap, Award, Crown, Medal, Layers, ShieldCheck
 } from 'lucide-react'
 import type { LeaderboardEntry } from '@hackathon/shared'
@@ -919,6 +919,22 @@ export function LeaderboardPage() {
     }, spinMs)
   }
 
+  const scrollRosterIntoView = () => {
+    const roster = rosterRef.current
+    const container = scrollContainerRef.current
+    if (!roster) return
+    if (container) {
+      const cRect = container.getBoundingClientRect()
+      const rRect = roster.getBoundingClientRect()
+      // Keep a slice of the #1 card visible; pin the table into the lower viewport.
+      const keepHeroPx = Math.min(200, Math.round(container.clientHeight * 0.26))
+      const top = container.scrollTop + (rRect.top - cRect.top) - keepHeroPx
+      container.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
+      return
+    }
+    roster.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   // When a new countdown/decrypt starts, immediately scroll the hero card back to top
   useEffect(() => {
     if (!isDecrypting) return
@@ -926,8 +942,8 @@ export function LeaderboardPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [isDecrypting])
 
-  // ONLY AFTER all 20 reveals are fully completed (or all 5 for Finale), hold the #1 card
-  // for 20 seconds, then smoothly scroll down to show the full Top 20 table
+  // After every place is announced, compact the hero and bring the Top 20 table
+  // into view below the #1 card. Do not wait 20s — the LCD must show the list.
   useEffect(() => {
     if (!isRevealing) {
       hasAutoScrolledRef.current = false
@@ -956,14 +972,8 @@ export function LeaderboardPage() {
     autoScrollTimerRef.current = setTimeout(() => {
       hasAutoScrolledRef.current = true
       autoScrollTimerRef.current = null
-      const roster = rosterRef.current
-      const container = scrollContainerRef.current
-      if (roster && container) {
-        container.scrollTo({ top: roster.offsetTop - 16, behavior: 'smooth' })
-      }
-      roster?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
-    }, 20000)
+      scrollRosterIntoView()
+    }, 1200)
   }, [isRevealing, revealedStep, isFinale, unlockedRanks.length, isDecrypting])
 
   // Round 2 is one-click-per-team from the admin table — never auto-play 20→1.
@@ -982,6 +992,11 @@ export function LeaderboardPage() {
     : null
 
   const qualifierCount = Math.min(20, advancing.length || advancingRef.current.length || 20)
+  const ceremonySettled = !isDecrypting && (
+    isFinale
+      ? revealedStep >= FINALE_CUTOFF
+      : (revealedStep >= 20 || unlockedRanks.length >= 20)
+  )
 
   // Single-column luxury row grid matching Stage 1 Leaderboard
   const QUALIFIER_GRID = 'grid grid-cols-[64px_1fr_170px_110px_120px] px-6 py-3.5 items-center'
@@ -1133,12 +1148,12 @@ export function LeaderboardPage() {
         <div ref={scrollContainerRef} className="relative flex-1 min-h-0 overflow-y-auto w-full flex flex-col items-center px-4 sm:px-8 pb-32 scroll-smooth">
           
           {/* 🌟 HERO SPOTLIGHT (Sleek, elevated vertical alignment for 24x10 LED) */}
-          <div className="w-full flex flex-col items-center justify-start pt-2 sm:pt-4 pb-6">
+          <div className={`w-full flex flex-col items-center justify-start ${ceremonySettled ? 'pt-1 pb-3' : 'pt-2 sm:pt-4 pb-6'}`}>
             {/* Header */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-center mb-3 sm:mb-4"
+              className={`text-center ${ceremonySettled ? 'mb-2' : 'mb-3 sm:mb-4'}`}
             >
               <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full mb-1.5 shadow-xl bg-white/90 border border-amber-500/30 text-amber-950 shadow-amber-900/5 ring-1 ring-amber-500/10 backdrop-blur-md">
                 {isFinale ? <Crown size={13} className="text-amber-500 fill-amber-500/40" /> : <Trophy size={13} className="text-amber-500" />}
@@ -1146,34 +1161,38 @@ export function LeaderboardPage() {
                   {isFinale ? '👑 Grand Finale · Champions Coronation' : '⚡ Stage 1 Qualifiers · Live Ceremony'}
                 </span>
               </div>
-              <div className="flex items-center justify-center gap-3 mb-1">
-                <span className="h-px w-8 bg-gradient-to-r from-transparent to-[#E83C00]/40" />
-                <h2 className="text-[#E83C00] font-black tracking-[0.28em] uppercase text-xs">
-                  AI குரல் · VOICE FOR TAMIL NADU · 2026
-                </h2>
-                <span className="h-px w-8 bg-gradient-to-l from-transparent to-[#E83C00]/40" />
-              </div>
-              <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight">
-                {isFinale ? (
-                  <span className="inline-flex items-center gap-3 flex-wrap justify-center">
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E83C00] via-amber-600 to-[#E83C00] drop-shadow-xs">
-                      Grand Finale
-                    </span>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#111111] via-[#2A241E] to-[#0A0A0A]">
-                      Winners
-                    </span>
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-3 flex-wrap justify-center">
-                    <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#111111] via-[#2A241E] to-[#0A0A0A]">
-                      Meet The
-                    </span>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E83C00] via-amber-600 to-[#E83C00] drop-shadow-xs">
-                      Top 20
-                    </span>
-                  </span>
-                )}
-              </h1>
+              {!ceremonySettled && (
+                <>
+                  <div className="flex items-center justify-center gap-3 mb-1">
+                    <span className="h-px w-8 bg-gradient-to-r from-transparent to-[#E83C00]/40" />
+                    <h2 className="text-[#E83C00] font-black tracking-[0.28em] uppercase text-xs">
+                      AI குரல் · VOICE FOR TAMIL NADU · 2026
+                    </h2>
+                    <span className="h-px w-8 bg-gradient-to-l from-transparent to-[#E83C00]/40" />
+                  </div>
+                  <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight">
+                    {isFinale ? (
+                      <span className="inline-flex items-center gap-3 flex-wrap justify-center">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E83C00] via-amber-600 to-[#E83C00] drop-shadow-xs">
+                          Grand Finale
+                        </span>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#111111] via-[#2A241E] to-[#0A0A0A]">
+                          Winners
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-3 flex-wrap justify-center">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#111111] via-[#2A241E] to-[#0A0A0A]">
+                          Meet The
+                        </span>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E83C00] via-amber-600 to-[#E83C00] drop-shadow-xs">
+                          Top 20
+                        </span>
+                      </span>
+                    )}
+                  </h1>
+                </>
+              )}
             </motion.div>
 
             {/* 🌟 HERO SPOTLIGHT ANNOUNCEMENT CARD — 75% width for 24x10 LED */}
@@ -1188,29 +1207,8 @@ export function LeaderboardPage() {
                 decryptingRank={decryptingRank}
                 revealingTeamName={revealingTeamName}
                 nameSpinMs={nameSpinMs}
+                settled={ceremonySettled && !isFinale}
               />
-
-              {/* View Top 20 Table Jump Button */}
-              {!isFinale && (revealedStep >= 20 || unlockedRanks.length >= 20) && !isDecrypting && (
-                <motion.button
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  onClick={() => {
-                    const roster = rosterRef.current
-                    const container = scrollContainerRef.current
-                    if (roster && container) {
-                      container.scrollTo({ top: roster.offsetTop - 16, behavior: 'smooth' })
-                    }
-                    roster?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
-                  }}
-                  className="mt-4 inline-flex items-center gap-2 px-6 py-2 rounded-full bg-[#1A1A1A] text-white border border-amber-500/40 text-xs font-black uppercase tracking-widest shadow-xl hover:bg-black transition-all cursor-pointer ring-1 ring-amber-400/20"
-                >
-                  <Trophy size={13} className="text-amber-400" />
-                  <span>View Top 20 Leaderboard</span>
-                  <ChevronDown size={14} className="text-amber-400 animate-bounce" />
-                </motion.button>
-              )}
             </div>
           </div>
 
@@ -1406,7 +1404,7 @@ export function LeaderboardPage() {
             ) : null
           ) : (
             /* ROUND 2: TOP 20 QUALIFIERS TABLE */
-            <div ref={rosterRef} className="w-full max-w-6xl rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] mt-8 mb-32">
+            <div ref={rosterRef} className={`w-full max-w-6xl rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] mb-32 ${ceremonySettled ? 'mt-4' : 'mt-8'}`}>
               {/* Header with Title & Status Counter */}
               <div className="flex items-center justify-between px-6 py-4 bg-[#F4ECE1] border-b border-black/10">
                 <div className="flex items-center gap-3">

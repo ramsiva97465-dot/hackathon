@@ -206,6 +206,8 @@ export interface PremiumRevealCardProps {
   decryptingRank: number | null
   revealingTeamName: string
   nameSpinMs: number
+  /** Shrink the hero card once every place is announced so the table can sit below it. */
+  settled?: boolean
 }
 
 export function PremiumRevealCard({
@@ -218,6 +220,7 @@ export function PremiumRevealCard({
   decryptingRank,
   revealingTeamName,
   nameSpinMs = 5000,
+  settled = false,
 }: PremiumRevealCardProps) {
   const activeRank = isDecrypting && decryptingRank != null ? decryptingRank : currentSpotlightRank
   const targetName = (revealingTeamName || currentSpotlightTeam?.teamName || '').toUpperCase()
@@ -514,10 +517,13 @@ export function PremiumRevealCard({
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
-        className={`relative px-10 pt-14 pb-8 sm:pt-16 sm:pb-10 xl:pt-20 xl:pb-12 rounded-[2.5rem] overflow-hidden border-2 transition-all
-          ${rankTheme.cardBg}
-          ${isDecrypting ? 'border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.9)]' : `${rankTheme.cardBorder} ${rankTheme.cardShadow}`}
-        `}
+        className={`relative rounded-[2.5rem] overflow-hidden border-2 transition-all ${
+          settled
+            ? 'px-8 pt-6 pb-4 sm:pt-7 sm:pb-5'
+            : 'px-10 pt-14 pb-8 sm:pt-16 sm:pb-10 xl:pt-20 xl:pb-12'
+        } ${rankTheme.cardBg} ${
+          isDecrypting ? 'border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.9)]' : `${rankTheme.cardBorder} ${rankTheme.cardShadow}`
+        }`}
       >
         {/* Dot-grid texture */}
         <div
@@ -540,7 +546,7 @@ export function PremiumRevealCard({
         )}
 
         {/* ─── HORIZONTAL 3-COLUMN LAYOUT for 24:10 wide LED ─────────────────── */}
-        <div className="flex items-center gap-6 w-full min-h-[260px]">
+        <div className={`flex items-center gap-6 w-full ${settled ? 'min-h-[140px]' : 'min-h-[260px]'}`}>
 
           {/* ── LEFT: Badge + Rank ── */}
           <div className="flex flex-col items-center justify-center gap-2 shrink-0 min-w-[160px] px-2">
@@ -583,7 +589,9 @@ export function PremiumRevealCard({
 
             {/* Rank Number — Crisp metallic gold typography */}
             <div
-              className={`font-black tracking-tighter leading-none text-[4.5rem] xl:text-[6rem] transition-colors duration-300 ${
+              className={`font-black tracking-tighter leading-none transition-colors duration-300 ${
+                settled ? 'text-[3.25rem] xl:text-[4rem]' : 'text-[4.5rem] xl:text-[6rem]'
+              } ${
                 isDecrypting
                   ? 'text-amber-400/90 font-mono animate-pulse'
                   : rankTheme.rankText
@@ -597,13 +605,15 @@ export function PremiumRevealCard({
           <div className="w-px self-stretch bg-white/10 shrink-0" />
 
           {/* ── CENTER: Team Name + College/Track ── */}
-          <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center overflow-hidden px-6 min-h-[160px]">
+          <div className={`flex-1 flex flex-col items-center justify-center gap-3 text-center overflow-hidden px-6 ${settled ? 'min-h-0' : 'min-h-[160px]'}`}>
             {/* Team Name / Cipher (Persistent single line element, zero layout jump or popping) */}
             <div ref={nameBoxRef} className="w-full flex justify-center overflow-hidden">
               <h2
                 ref={nameRef}
                 style={{ transform: `scale(${nameScale})`, transformOrigin: 'center' }}
-                className="font-mono text-3xl xl:text-5xl font-black tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-white via-orange-100 to-amber-200 drop-shadow-[0_0_30px_rgba(232,60,0,0.6)] select-none whitespace-nowrap w-max leading-tight"
+                className={`font-mono font-black tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-white via-orange-100 to-amber-200 drop-shadow-[0_0_30px_rgba(232,60,0,0.6)] select-none whitespace-nowrap w-max leading-tight ${
+                  settled ? 'text-2xl xl:text-4xl' : 'text-3xl xl:text-5xl'
+                }`}
               >
                 {displayedName}
               </h2>
@@ -658,9 +668,9 @@ export function PremiumRevealCard({
               {isDecrypting ? 'CALCULATING' : isFinale ? 'FINAL SCORE' : 'ROUND 1 SCORE'}
             </span>
             <span
-              className={`text-[3.5rem] xl:text-[5rem] font-black font-mono tracking-wider leading-none ${
-                isDecrypting ? 'text-amber-300/80 animate-pulse' : rankTheme.scoreTxt
-              }`}
+              className={`font-black font-mono tracking-wider leading-none ${
+                settled ? 'text-[2.5rem] xl:text-[3.5rem]' : 'text-[3.5rem] xl:text-[5rem]'
+              } ${isDecrypting ? 'text-amber-300/80 animate-pulse' : rankTheme.scoreTxt}`}
             >
               {isDecrypting ? rollingScore : Number(currentSpotlightTeam?.totalScore || 0).toFixed(1)}
             </span>
@@ -668,7 +678,7 @@ export function PremiumRevealCard({
         </div>
 
         {/* ── Progress Footnote ── */}
-        <div className="mt-8 pt-7 border-t border-white/10 flex items-center justify-between text-sm font-semibold px-4 text-slate-400">
+        <div className={`${settled ? 'mt-4 pt-3' : 'mt-8 pt-7'} border-t border-white/10 flex items-center justify-between text-sm font-semibold px-4 text-slate-400`}>
           <span className="font-mono">
             Progress: {revealedStep} of {maxSteps} announced
           </span>
