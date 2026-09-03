@@ -983,8 +983,8 @@ export function LeaderboardPage() {
 
   const qualifierCount = Math.min(20, advancing.length || advancingRef.current.length || 20)
 
-  // Compact enough that all 20 fit on a 24x10 LED when split across two columns.
-  const QUALIFIER_GRID = 'grid grid-cols-[46px_1fr_116px_74px_86px] px-4 py-2 items-center'
+  // Single-column luxury row grid matching Stage 1 Leaderboard
+  const QUALIFIER_GRID = 'grid grid-cols-[64px_1fr_170px_110px_120px] px-6 py-3.5 items-center'
 
   const renderQualifierRow = (rankNum: number) => {
     if (rankNum > qualifierCount) return null
@@ -1002,17 +1002,17 @@ export function LeaderboardPage() {
           className={`${QUALIFIER_GRID} border-b border-black/[0.04] bg-[#EBE3D5]/40 text-slate-400 opacity-60`}
         >
           <div className="flex items-center justify-center">
-            <span className="w-7 h-7 rounded-lg bg-black/5 flex items-center justify-center font-black text-[11px] text-slate-400">
-              {rankNum}
+            <span className="w-8 h-8 rounded-xl bg-black/5 flex items-center justify-center font-black text-xs text-slate-400">
+              #{rankNum}
             </span>
           </div>
           <div className="flex items-center gap-2 min-w-0">
-            <Lock size={12} className="animate-pulse text-slate-400 shrink-0" />
-            <span className="text-[11px] font-semibold tracking-wide truncate">Locked & Pending...</span>
+            <Lock size={13} className="animate-pulse text-slate-400 shrink-0" />
+            <span className="text-xs font-semibold tracking-wide truncate">Locked & Pending Announcement...</span>
           </div>
-          <div><div className="w-16 h-4 rounded bg-black/5 animate-pulse" /></div>
-          <div className="text-center"><span className="text-[11px] font-mono text-slate-300">--</span></div>
-          <div className="text-right"><span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Pending</span></div>
+          <div><div className="w-20 h-5 rounded bg-black/5 animate-pulse" /></div>
+          <div className="text-center"><span className="text-xs font-mono text-slate-300">--</span></div>
+          <div className="text-right"><span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pending</span></div>
         </motion.div>
       )
     }
@@ -1029,24 +1029,31 @@ export function LeaderboardPage() {
         animate={{ opacity: 1, x: 0 }}
         className={`${QUALIFIER_GRID} border-b transition-colors ${
           isSpotlight
-            ? 'bg-[#E83C00]/15 border-[#E83C00]/40 ring-1 ring-[#E83C00]/30'
+            ? 'bg-[#E83C00]/15 border-[#E83C00]/40 shadow-md ring-1 ring-[#E83C00]/30'
             : rankNum === 1
-            ? 'bg-orange-500/5 border-black/5'
-            : 'bg-[#F4ECE1] border-black/5'
+            ? 'bg-orange-500/5 hover:bg-orange-500/10 border-black/5'
+            : 'bg-[#F4ECE1] hover:bg-white/60 border-black/5'
         }`}
       >
         <div className="flex items-center justify-center">
           {rankNum === 1 ? (
-            <span className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-[11px] bg-[#E83C00] text-white ring-2 ring-[#E83C00]/30">
+            <span className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shadow-sm bg-[#E83C00] text-white ring-2 ring-[#E83C00]/30 gap-0.5">
               <Crown size={11} className="text-amber-200 fill-amber-200/20 stroke-[2.5]" />
+              1
             </span>
           ) : rankNum === 2 ? (
-            <span className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-[11px] bg-slate-300 text-slate-900 ring-1 ring-slate-400/40">2</span>
+            <span className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shadow-sm bg-slate-300 text-slate-900 ring-1 ring-slate-400/40 gap-0.5">
+              <Medal size={11} className="text-slate-700 stroke-[2.5]" />
+              2
+            </span>
           ) : rankNum === 3 ? (
-            <span className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-[11px] bg-amber-200 text-amber-900 ring-1 ring-amber-400/40">3</span>
+            <span className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shadow-sm bg-amber-200 text-amber-900 ring-1 ring-amber-400/40 gap-0.5">
+              <Award size={11} className="text-amber-800 stroke-[2.5]" />
+              3
+            </span>
           ) : (
-            <span className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-[11px] bg-emerald-100 text-emerald-800 border border-emerald-300">
-              {rankNum}
+            <span className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs">
+              #{rankNum}
             </span>
           )}
         </div>
@@ -1054,27 +1061,27 @@ export function LeaderboardPage() {
         <div className="flex items-center gap-2 min-w-0">
           <Avatar name={team.teamName} size="xs" className="shrink-0 ring-1 ring-white shadow-xs" />
           <div className="min-w-0 leading-tight">
-            <div className="font-bold truncate text-slate-900 text-[13px]">{team.teamName}</div>
-            <div className="text-[10px] text-slate-400 truncate">{team.college}</div>
+            <div className="font-bold truncate text-slate-900 text-sm">{team.teamName}</div>
+            <div className="text-xs text-slate-400 truncate">{team.college}</div>
           </div>
         </div>
 
         <div className="min-w-0">
           <span
-            className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold border bg-white truncate max-w-full"
+            className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold border bg-white truncate max-w-full"
             style={{ color: track.color, borderColor: `${track.color}30` }}
           >
             {track.label}
           </span>
         </div>
 
-        <div className="text-center font-mono font-black text-[13px] text-[#1A1A1A]">
+        <div className="text-center font-mono font-black text-sm text-[#1A1A1A]">
           {team.totalScore.toFixed(1)}
         </div>
 
         <div className="text-right">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 uppercase tracking-wide">
-            <CheckCircle2 size={10} className="text-emerald-600 stroke-[2.5]" />
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 uppercase tracking-wide">
+            <CheckCircle2 size={11} className="text-emerald-600 stroke-[2.5]" />
             Qualified
           </span>
         </div>
@@ -1123,7 +1130,7 @@ export function LeaderboardPage() {
       {/* 🎭 DRAMATIC GRAND REVEAL CEREMONY (Round 2: 20➔1 | Round 3: 5➔1)      */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {isRevealing ? (
-        <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-y-auto w-full flex flex-col items-center px-4 sm:px-8 pb-32 scroll-smooth">
+        <div ref={scrollContainerRef} className="relative flex-1 min-h-0 overflow-y-auto w-full flex flex-col items-center px-4 sm:px-8 pb-32 scroll-smooth">
           
           {/* 🌟 HERO SPOTLIGHT (Sleek, elevated vertical alignment for 24x10 LED) */}
           <div className="w-full flex flex-col items-center justify-start pt-2 sm:pt-4 pb-6">
@@ -1399,16 +1406,16 @@ export function LeaderboardPage() {
             ) : null
           ) : (
             /* ROUND 2: TOP 20 QUALIFIERS TABLE */
-            <div ref={rosterRef} className="w-full max-w-[1700px] rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] mt-8 mb-24">
+            <div ref={rosterRef} className="w-full max-w-6xl rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] mt-8 mb-32">
               {/* Header with Title & Status Counter */}
-              <div className="flex items-center justify-between px-6 py-3 bg-[#F4ECE1] border-b border-black/10">
+              <div className="flex items-center justify-between px-6 py-4 bg-[#F4ECE1] border-b border-black/10">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600">
                     <Trophy size={16} />
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-black text-[#1A1A1A] leading-tight">Round 2 · Top 20 Qualifiers</h3>
-                    <p className="text-[11px] text-slate-500 font-medium">Announced teams appear here after each card</p>
+                    <h3 className="text-base sm:text-lg font-black text-[#1A1A1A] leading-tight">Round 2 · Top 20 Qualifiers Leaderboard</h3>
+                    <p className="text-xs text-slate-500 font-medium">Official Qualified Teams Advancing to Round 2</p>
                   </div>
                 </div>
                 <span className="text-xs font-black text-emerald-800 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-300 shadow-sm font-mono">
@@ -1416,20 +1423,18 @@ export function LeaderboardPage() {
                 </span>
               </div>
 
-              {/* Ranks 1-10 and 11-20 side by side so all 20 fit the 24x10 display at once */}
-              <div className="grid grid-cols-2 divide-x divide-black/10">
-                {[0, 1].map((column) => (
-                  <div key={column} className="flex flex-col min-w-0">
-                    <div className={`${QUALIFIER_GRID} bg-[#1A1A1A] text-[10px] font-bold text-white/70 uppercase tracking-widest`}>
-                      <div className="text-center">Rank</div>
-                      <div>Team &amp; College</div>
-                      <div>Track</div>
-                      <div className="text-center">Score</div>
-                      <div className="text-right">Status</div>
-                    </div>
-                    {Array.from({ length: 10 }).map((_, i) => renderQualifierRow(column * 10 + i + 1))}
-                  </div>
-                ))}
+              {/* Table Column Headers */}
+              <div className={`${QUALIFIER_GRID} bg-[#1A1A1A] text-[10px] font-bold text-white/70 uppercase tracking-widest`}>
+                <div className="text-center">Rank</div>
+                <div>Team &amp; College</div>
+                <div>Track</div>
+                <div className="text-center">Score</div>
+                <div className="text-right">Status</div>
+              </div>
+
+              {/* Rows 1 to 20 Single Column Layout (matching Stage 1 Leaderboard) */}
+              <div className="flex flex-col">
+                {Array.from({ length: qualifierCount }).map((_, i) => renderQualifierRow(i + 1))}
               </div>
             </div>
           )}
