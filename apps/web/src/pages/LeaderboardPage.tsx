@@ -1019,11 +1019,11 @@ export function LeaderboardPage() {
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-3 flex-wrap justify-center">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#111111] via-[#2A241E] to-[#0A0A0A]">
+                      Meet The
+                    </span>
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E83C00] via-amber-600 to-[#E83C00] drop-shadow-xs">
                       Top 20
-                    </span>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#111111] via-[#2A241E] to-[#0A0A0A]">
-                      Grand Reveal
                     </span>
                   </span>
                 )}
