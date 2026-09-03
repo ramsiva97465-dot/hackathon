@@ -440,16 +440,16 @@ export function PremiumRevealCard({
           <div className="flex flex-col items-center justify-center gap-2 shrink-0 min-w-[160px] px-2">
             {/* Badge */}
             <div
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-[0.14em] shadow-lg ${
+              className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-[0.16em] shadow-xl transition-all ${
                 isDecrypting
-                  ? 'bg-gradient-to-r from-amber-950/90 via-[#1A0E05] to-amber-950/90 border border-amber-500/50 text-amber-300 ring-1 ring-amber-500/30'
+                  ? 'bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-amber-500/20 backdrop-blur-md border border-amber-400/60 text-amber-200 shadow-[0_0_20px_rgba(245,158,11,0.3)] ring-1 ring-amber-400/30'
                   : rankTheme.badge
               }`}
             >
               {isDecrypting ? (
-                <span className="relative flex h-2 w-2 mr-0.5 shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-80"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-gradient-to-r from-amber-300 to-orange-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"></span>
                 </span>
               ) : isChampion ? (
                 <Crown size={13} className="text-amber-200 fill-amber-200 shrink-0" />
@@ -460,7 +460,7 @@ export function PremiumRevealCard({
               ) : (
                 <ShieldCheck size={13} className="text-amber-400 shrink-0" />
               )}
-              <span className="whitespace-nowrap font-mono">
+              <span className="whitespace-nowrap tracking-[0.16em] font-extrabold">
                 {isDecrypting
                   ? `UNSEALING #${activeRank}`
                   : isChampion
