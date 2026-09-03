@@ -151,27 +151,27 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
     }
   }
 
-  // After Top 5 promotion the public board should show the Top 20 shortlist
-  // as a scrolling list — not the finale podium — until admin reveal clicks.
-  async showTop20Shortlist() {
-    this.isRevealing = false
+  // After Top 5 promotion, move every public display to the sealed Grand
+  // Finale ready screen. Step 0 keeps all finalist names and scores hidden.
+  async showFinaleReady() {
+    this.isRevealing = true
     this.revealStep = 0
-    this.revealRound = 2
+    this.revealRound = 3
     try {
       if (!this.server) return
-      this.server.to('leaderboard').emit('leaderboard:reveal_stop', {
-        isRevealing: false,
-        round: 2,
-        step: 0,
-      })
+      const payload = {
+        round: 3,
+        type: 'GRAND_FINALE_READY',
+        timestamp: Date.now(),
+      }
+      this.server.to('leaderboard').emit('leaderboard:reveal_start', payload)
       this.server.to('leaderboard').emit('leaderboard:reveal_state', {
-        isRevealing: false,
-        round: 2,
+        isRevealing: true,
+        round: 3,
         step: 0,
       })
-      this.server.to('leaderboard').emit('leaderboard:stage', { round: 2 })
     } catch (err) {
-      console.error('[WS] Show Top 20 shortlist failed:', err)
+      console.error('[WS] Show Grand Finale ready screen failed:', err)
     }
   }
 }

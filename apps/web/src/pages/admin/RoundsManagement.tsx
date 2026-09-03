@@ -233,7 +233,7 @@ export function RoundsManagement() {
         toast.success(
           currentRound === 1
             ? `✅ Successfully promoted ${res.data.promotedCount} teams to Round 2! Use Reveal on each team in the Round 2 table (20 → 1) when you are ready.`
-            : `✅ Promoted Top 5. The public board now shows the Top 20 list. Use Reveal 5th / 4th / … to announce winners.`
+            : `✅ Promoted Top 5. The public board is now on the sealed Grand Finale ready screen. Use Reveal 5th / 4th / … to announce winners.`
         )
         // Shift active view tab to next round
         setActiveTab(currentRound + 1)

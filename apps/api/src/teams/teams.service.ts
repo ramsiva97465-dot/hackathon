@@ -832,8 +832,8 @@ export class TeamsService {
       this.leaderboardGateway.broadcastLeaderboardUpdate().catch(err =>
         console.error('[WS] Promote R2→R3 broadcast failed:', err)
       )
-      this.leaderboardGateway.showTop20Shortlist().catch(err =>
-        console.error('[WS] Promote R2→R3 shortlist broadcast failed:', err)
+      this.leaderboardGateway.showFinaleReady().catch(err =>
+        console.error('[WS] Promote R2→R3 finale-ready broadcast failed:', err)
       )
 
       return { success: true, promotedCount: top5.length }
