@@ -264,7 +264,7 @@ export function PremiumRevealCard({
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.96 }}
-        className={`relative p-14 sm:p-20 rounded-[3rem] shadow-2xl text-center overflow-hidden border-2 transition-all ${
+        className={`relative py-8 px-10 sm:py-10 sm:px-12 rounded-[2.5rem] shadow-2xl text-center overflow-hidden border-2 transition-all ${
           isFinale
             ? 'bg-gradient-to-b from-[#1F140A] via-[#120B05] to-[#080503] border-amber-500/60 shadow-[0_30px_80px_rgba(0,0,0,0.9),0_0_80px_rgba(245,158,11,0.25)]'
             : 'bg-gradient-to-b from-[#1C1A17] via-[#11100E] to-[#0A0908] border-amber-500/50 shadow-[0_30px_80px_rgba(0,0,0,0.9),0_0_60px_rgba(232,60,0,0.25)]'
@@ -272,29 +272,29 @@ export function PremiumRevealCard({
       >
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.12)_0%,transparent_65%)] pointer-events-none" />
 
-        <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-inner relative bg-amber-500/10 border border-amber-500/30 text-amber-400">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner relative bg-amber-500/10 border border-amber-500/30 text-amber-400">
           {isFinale ? (
             <>
-              <Crown size={80} className="text-amber-400 animate-bounce" />
-              <div className="absolute inset-0 rounded-[2rem] border border-amber-400/50 animate-ping opacity-30" />
+              <Crown size={38} className="text-amber-400 animate-bounce" />
+              <div className="absolute inset-0 rounded-2xl border border-amber-400/50 animate-ping opacity-30" />
             </>
           ) : (
             <>
-              <Trophy size={76} className="text-amber-400" />
-              <div className="absolute inset-0 rounded-[2rem] border border-amber-400/40 animate-ping opacity-25" />
+              <Trophy size={36} className="text-amber-400" />
+              <div className="absolute inset-0 rounded-2xl border border-amber-400/40 animate-ping opacity-25" />
             </>
           )}
         </div>
 
-        <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-base font-black uppercase tracking-widest mb-6 bg-amber-500/15 border border-amber-500/30 text-amber-300">
-          <Sparkles size={18} className="text-amber-400 animate-spin" />
+        <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-3 bg-amber-500/15 border border-amber-500/30 text-amber-300">
+          <Sparkles size={13} className="text-amber-400 animate-spin" />
           <span>Stage Ready · Awaiting Announcement</span>
         </div>
 
-        <h3 className="text-6xl sm:text-8xl font-black mb-6 text-white tracking-tight">
+        <h3 className="text-3xl sm:text-4xl font-black mb-2 text-white tracking-tight">
           {isFinale ? '👑 Grand Finale Verdict Sealed' : 'Round 1 Graded & Verified'}
         </h3>
-        <p className="max-w-3xl mx-auto text-2xl sm:text-3xl font-medium text-slate-300">
+        <p className="max-w-xl mx-auto text-sm sm:text-base font-medium text-slate-300">
           {isFinale
             ? 'Waiting for admin to unseal 5th Place. Each place opens only when triggered.'
             : 'Waiting for admin to initiate the Top 20 announcement (#20 ➔ #1).'}
