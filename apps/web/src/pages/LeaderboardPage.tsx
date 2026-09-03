@@ -436,6 +436,7 @@ export function LeaderboardPage() {
   const advancingRef = useRef<Array<LeaderboardEntry & { rank: number }>>([])
   const autoScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasAutoScrolledRef = useRef(false)
+  const holdStartedRef = useRef(false)
   const [rosterShown, setRosterShown] = useState(false)
 
   useEffect(() => {
@@ -786,6 +787,7 @@ export function LeaderboardPage() {
     unlockedRanksRef.current = []
     setIsPaused(false)
     hasAutoScrolledRef.current = false
+    holdStartedRef.current = false
     setRosterShown(false)
     if (autoScrollTimerRef.current) {
       clearTimeout(autoScrollTimerRef.current)
@@ -818,6 +820,7 @@ export function LeaderboardPage() {
     setUnlockedRanks([])
     setRevealingTeamName('')
     hasAutoScrolledRef.current = false
+    holdStartedRef.current = false
     setRosterShown(false)
     if (autoScrollTimerRef.current) {
       clearTimeout(autoScrollTimerRef.current)
@@ -930,29 +933,38 @@ export function LeaderboardPage() {
   const scrollRosterIntoView = () => {
     const roster = rosterRef.current
     const container = scrollContainerRef.current
-    if (!roster) return
-    if (container) {
-      const cRect = container.getBoundingClientRect()
-      const rRect = roster.getBoundingClientRect()
-      const top = container.scrollTop + (rRect.top - cRect.top) - 12
-      container.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
-      return
-    }
-    roster.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (!roster || !container) return false
+    const top = Math.max(
+      0,
+      container.scrollTop + roster.getBoundingClientRect().top - container.getBoundingClientRect().top - 8,
+    )
+    container.scrollTo({ top, behavior: 'auto' })
+    container.scrollTop = top
+    return Math.abs(container.scrollTop - top) < 32 || container.scrollTop >= top - 32
+  }
+
+  const jumpToTop20Table = () => {
+    hasAutoScrolledRef.current = true
+    setRosterShown(true)
+    ;[0, 50, 200, 500, 1000, 2000].forEach((ms) => {
+      window.setTimeout(() => scrollRosterIntoView(), ms)
+    })
   }
 
   // When a new countdown/decrypt starts, immediately scroll the hero card back to top
   useEffect(() => {
     if (!isDecrypting) return
+    if (holdStartedRef.current || hasAutoScrolledRef.current) return
     scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [isDecrypting])
 
-  // After #1 is announced, hold that card for 15 seconds, then scroll down to
-  // the full Top 20 table. Clock ticks / polls must not reset this timer.
+  // After #1 is announced, hold that card for 15 seconds, then jump to the Top 20 table.
+  // Once the hold starts, polls / clock ticks must never cancel it.
   useEffect(() => {
     if (!isRevealing) {
       hasAutoScrolledRef.current = false
+      holdStartedRef.current = false
       setRosterShown(false)
       if (autoScrollTimerRef.current) {
         clearTimeout(autoScrollTimerRef.current)
@@ -966,6 +978,7 @@ export function LeaderboardPage() {
       : (revealedStep >= 20 || unlockedRanks.length >= 20)
 
     if (isDecrypting || !isAllAnnounced) {
+      if (holdStartedRef.current || hasAutoScrolledRef.current) return
       if (autoScrollTimerRef.current) {
         clearTimeout(autoScrollTimerRef.current)
         autoScrollTimerRef.current = null
@@ -973,17 +986,62 @@ export function LeaderboardPage() {
       return
     }
 
-    if (autoScrollTimerRef.current || hasAutoScrolledRef.current) return
+    if (hasAutoScrolledRef.current || holdStartedRef.current || autoScrollTimerRef.current) return
 
+    holdStartedRef.current = true
     autoScrollTimerRef.current = setTimeout(() => {
-      hasAutoScrolledRef.current = true
       autoScrollTimerRef.current = null
-      setRosterShown(true)
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => scrollRosterIntoView())
-      })
+      jumpToTop20Table()
     }, 15000)
   }, [isRevealing, revealedStep, isFinale, unlockedRanks.length, isDecrypting])
+
+  // After the jump, slowly crawl through all 20 rows so the LCD actually shows them.
+  useEffect(() => {
+    if (!isRevealing || !rosterShown || isFinale || isDecrypting) return
+
+    const startAt = Date.now()
+    let animId = 0
+    let current = scrollContainerRef.current?.scrollTop || 0
+    let lastTime = performance.now()
+    let looping = false
+
+    const step = (now: number) => {
+      const el = scrollContainerRef.current
+      if (!el) {
+        animId = requestAnimationFrame(step)
+        return
+      }
+
+      // Give the snap-to-table a moment to land before crawling.
+      if (Date.now() - startAt < 1800) {
+        lastTime = now
+        animId = requestAnimationFrame(step)
+        return
+      }
+
+      if (!looping) {
+        const dt = Math.min((now - lastTime) / 1000, 0.1)
+        lastTime = now
+        current = el.scrollTop + 36 * dt
+        el.scrollTop = current
+
+        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 12) {
+          looping = true
+          window.setTimeout(() => {
+            scrollRosterIntoView()
+            current = el.scrollTop
+            looping = false
+            lastTime = performance.now()
+          }, 3500)
+        }
+      }
+
+      animId = requestAnimationFrame(step)
+    }
+
+    animId = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(animId)
+  }, [isRevealing, rosterShown, isFinale, isDecrypting])
 
   // Round 2 is one-click-per-team from the admin table — never auto-play 20→1.
 

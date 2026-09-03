@@ -576,7 +576,7 @@ export function PremiumRevealCard({
                 {isDecrypting
                   ? `UNSEALING #${activeRank}`
                   : !isFinale
-                  ? '(Qualified)'
+                  ? 'Qualified'
                   : isChampion
                   ? '1ST PLACE'
                   : activeRank === 2
