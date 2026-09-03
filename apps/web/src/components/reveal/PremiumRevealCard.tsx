@@ -109,7 +109,7 @@ function FinaleReadyPodiums() {
               <motion.img
                 src="/images/finale-podium.webp"
                 alt=""
-                className="absolute inset-0 h-full w-full object-contain mix-blend-screen"
+                className="absolute inset-0 h-full w-full object-contain"
                 animate={{ filter: ['brightness(0.82)', 'brightness(1.12)', 'brightness(0.82)'] }}
                 transition={{ duration: 3, repeat: Infinity, delay: index * 0.22, ease: 'easeInOut' }}
               />
