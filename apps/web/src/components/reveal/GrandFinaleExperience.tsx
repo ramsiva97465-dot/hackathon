@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { CheckCircle2, Crown, Lock, ShieldCheck, Sparkles } from 'lucide-react'
+import { Crown, Lock, Sparkles } from 'lucide-react'
+import { getTrackConfig } from '@/lib/utils'
 
 export type GrandFinaleEntry = {
   teamId: string
@@ -27,20 +28,158 @@ const PLACE_LABELS: Record<number, string> = {
   5: '5th Place',
 }
 
-const CIPHER = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789#%&?'
+const CIPHER = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+const PODIUM_SRC = '/images/finale-podium-transparent.png'
+const DUST = [
+  ['6%', '78%', 0], ['12%', '62%', 0.6], ['19%', '84%', 1.1], ['28%', '70%', 0.3],
+  ['38%', '88%', 1.7], ['47%', '66%', 0.9], ['58%', '82%', 0.2], ['67%', '71%', 1.4],
+  ['76%', '86%', 0.5], ['84%', '64%', 1.8], ['91%', '79%', 0.8], ['94%', '58%', 1.3],
+] as const
+
+function GoldOrnament({ children }: { children: ReactNode }) {
+  return (
+    <div className="mb-5 flex items-center justify-center gap-3">
+      <span className="h-px w-10 bg-gradient-to-r from-transparent to-amber-300/70 sm:w-16" />
+      <span className="h-1 w-1 rotate-45 bg-amber-300/80" />
+      {children}
+      <span className="h-1 w-1 rotate-45 bg-amber-300/80" />
+      <span className="h-px w-10 bg-gradient-to-l from-transparent to-amber-300/70 sm:w-16" />
+    </div>
+  )
+}
+
+function CeremonyAtmosphere({ accent = 'rgba(245,158,11,0.22)' }: { accent?: string }) {
+  return (
+    <>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_-10%,rgba(251,191,36,0.18),transparent_42%)]" />
+      <div className="pointer-events-none absolute inset-0" style={{
+        background: `conic-gradient(from 210deg at 50% -8%, transparent 0deg, ${accent} 8deg, transparent 16deg, transparent 164deg, ${accent} 172deg, transparent 180deg)`,
+        opacity: 0.55,
+      }} />
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-0 h-[70%] w-[18%] -translate-x-1/2 bg-gradient-to-b from-amber-200/18 via-amber-500/6 to-transparent blur-2xl"
+        animate={{ opacity: [0.35, 0.7, 0.35] }}
+        transition={{ duration: 4.8, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-[18%] left-[-20%] w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-amber-100/14 to-transparent"
+        animate={{ x: ['0%', '220%'] }}
+        transition={{ duration: 7.5, repeat: Infinity, ease: 'linear' }}
+      />
+      {DUST.map(([left, top, delay]) => (
+        <motion.span
+          key={`${left}-${top}`}
+          aria-hidden
+          className="pointer-events-none absolute h-1 w-1 rounded-full bg-amber-200/70 shadow-[0_0_8px_rgba(251,191,36,0.7)]"
+          style={{ left, top }}
+          animate={{ y: [0, -46, -72], opacity: [0, 0.85, 0], scale: [0.6, 1, 0.4] }}
+          transition={{ duration: 5.4, repeat: Infinity, delay, ease: 'easeOut' }}
+        />
+      ))}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_46%,rgba(0,0,0,0.62)_100%)]" />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.07] mix-blend-overlay"
+        style={{
+          backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'.85\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\'/%3E%3C/svg%3E")',
+        }}
+      />
+    </>
+  )
+}
 
 function clamp(value: number) {
   return Math.min(1, Math.max(0, value))
 }
 
-function placeShortLabel(rank: number) {
-  if (rank === 1) return 'Champion'
-  if (rank === 2) return '2nd Place'
-  if (rank === 3) return '3rd Place'
-  return `${rank}th Place`
+function scramble(seed: number, length: number) {
+  return Array.from({ length }, (_, i) => CIPHER[(seed * 11 + i * 7) % CIPHER.length]).join('')
 }
 
-function PlaceProgress({
+function rankTheme(rank: number) {
+  if (rank === 2) {
+    return {
+      rank: 'text-slate-100 drop-shadow-[0_0_28px_rgba(226,232,240,0.35)]',
+      score: 'text-slate-100',
+      glow: 'rgba(203,213,225,0.16)',
+    }
+  }
+  if (rank === 3) {
+    return {
+      rank: 'text-orange-200 drop-shadow-[0_0_28px_rgba(232,60,0,0.35)]',
+      score: 'text-orange-200',
+      glow: 'rgba(245,158,11,0.16)',
+    }
+  }
+  return {
+    rank: 'text-amber-200 drop-shadow-[0_0_28px_rgba(251,191,36,0.4)]',
+    score: 'text-amber-200',
+    glow: 'rgba(245,158,11,0.18)',
+  }
+}
+
+function PodiumMark({
+  size = 'md',
+  glyph,
+  pulse = false,
+}: {
+  size?: 'sm' | 'md' | 'lg'
+  glyph: string
+  pulse?: boolean
+}) {
+  const frame = size === 'lg'
+    ? 'w-[168px] sm:w-[210px]'
+    : size === 'md'
+    ? 'w-[118px] sm:w-[148px]'
+    : 'w-[72px] sm:w-[88px]'
+  const type = size === 'lg'
+    ? 'text-4xl sm:text-5xl'
+    : size === 'md'
+    ? 'text-2xl sm:text-3xl'
+    : 'text-lg sm:text-xl'
+
+  return (
+    <div className={`relative aspect-[640/583] ${frame}`}>
+      <motion.img
+        src={PODIUM_SRC}
+        alt=""
+        className="absolute inset-0 h-full w-full object-contain"
+        animate={pulse ? { filter: ['brightness(0.84)', 'brightness(1.14)', 'brightness(0.84)'] } : undefined}
+        transition={pulse ? { duration: 2.6, repeat: Infinity, ease: 'easeInOut' } : undefined}
+      />
+      <motion.span
+        className={`absolute left-1/2 top-[43%] z-10 -translate-x-1/2 -translate-y-1/2 font-serif font-black text-amber-200 drop-shadow-[0_0_12px_rgba(251,191,36,0.7)] ${type}`}
+        animate={pulse ? { opacity: [0.55, 1, 0.55] } : undefined}
+        transition={pulse ? { duration: 2.1, repeat: Infinity } : undefined}
+      >
+        {glyph}
+      </motion.span>
+    </div>
+  )
+}
+
+function StageShell({ children, glow }: { children: ReactNode; glow: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.985 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 1.015 }}
+      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+      className="relative w-full overflow-hidden rounded-[2.5rem] border border-amber-400/35 bg-[#070402] px-6 py-8 shadow-[0_40px_120px_rgba(0,0,0,0.92),0_0_80px_rgba(245,158,11,0.16)] sm:px-10 sm:py-10"
+    >
+      <motion.div
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#1A1006] via-[#0C0703] to-[#040201]"
+        animate={{ scale: [1, 1.035, 1] }}
+        transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      <CeremonyAtmosphere accent={glow} />
+      <div className="relative z-10">{children}</div>
+    </motion.div>
+  )
+}
+
+function PersistentPodiums({
   finalists,
   completedSteps,
   activeRank,
@@ -50,43 +189,36 @@ function PlaceProgress({
   activeRank: number
 }) {
   return (
-    <div className="grid w-full grid-cols-5 gap-2">
-      {[5, 4, 3, 2, 1].map((rank, index) => {
-        const entry = finalists.find((team) => team.rank === rank)
-        const unlocked = completedSteps >= index + 1
-        const active = rank === activeRank && !unlocked
-        return (
-          <motion.div
-            key={rank}
-            layout
-            className={`min-w-0 rounded-2xl border px-2 py-2.5 text-center transition-colors sm:px-3 ${
-              unlocked
-                ? 'border-amber-400/35 bg-amber-400/10'
-                : active
-                ? 'border-amber-300/50 bg-amber-300/10'
-                : 'border-white/10 bg-black/20'
-            }`}
-          >
-            <div className="mb-1 flex items-center justify-center gap-1.5">
-              {unlocked ? (
-                <CheckCircle2 size={11} className="text-amber-300" />
-              ) : (
-                <Lock size={10} className={active ? 'text-amber-300' : 'text-white/25'} />
-              )}
-              <span className={`font-mono text-[9px] font-black uppercase tracking-widest ${
-                unlocked || active ? 'text-amber-200' : 'text-white/30'
+    <div className="mt-7">
+      <div className="mb-3 flex items-center gap-4">
+        <span className="h-px flex-1 bg-gradient-to-r from-transparent to-amber-400/25" />
+        <span className="font-mono text-[10px] font-black uppercase tracking-[0.32em] text-amber-300/80">
+          5 Champions · One Stage
+        </span>
+        <span className="h-px flex-1 bg-gradient-to-l from-transparent to-amber-400/25" />
+      </div>
+      <div className="grid grid-cols-5 gap-2 sm:gap-4">
+        {[1, 2, 3, 4, 5].map((rank) => {
+          const unlocked = completedSteps >= (6 - rank)
+          const active = rank === activeRank && !unlocked
+          const entry = finalists.find((team) => team.rank === rank)
+          return (
+            <div key={rank} className="flex min-w-0 flex-col items-center">
+              <span className="mb-0.5 font-mono text-[9px] font-black text-amber-200/80">{rank}</span>
+              <PodiumMark
+                size="sm"
+                pulse={active}
+                glyph={unlocked ? String(rank) : rank <= 2 ? '?' : String(rank)}
+              />
+              <p className={`mt-1 max-w-full truncate text-center text-[9px] font-bold uppercase tracking-wider sm:text-[10px] ${
+                unlocked ? 'text-amber-100' : active ? 'text-amber-300/80' : 'text-white/25'
               }`}>
-                {placeShortLabel(rank)}
-              </span>
+                {unlocked ? (entry?.teamName || '—') : active ? 'Unsealing' : 'Sealed'}
+              </p>
             </div>
-            <p className={`truncate text-[10px] font-bold sm:text-xs ${
-              unlocked ? 'text-white' : 'text-white/25'
-            }`}>
-              {unlocked ? (entry?.teamName || 'Result unavailable') : 'Identity sealed'}
-            </p>
-          </motion.div>
-        )
-      })}
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -96,184 +228,173 @@ function PlaceReveal({
   rank,
   progress,
   isAnimating,
+  completedSteps,
+  finalists,
 }: {
   entry?: GrandFinaleEntry
   rank: number
   progress: number
   isAnimating: boolean
+  completedSteps: number
+  finalists: GrandFinaleEntry[]
 }) {
   const identityVisible = !isAnimating || progress >= 0.64
   const scoreProgress = !isAnimating ? 1 : clamp((progress - 0.68) / 0.32)
-  const easedScoreProgress = 1 - Math.pow(1 - scoreProgress, 3)
-  const score = Number(entry?.totalScore || 0) * easedScoreProgress
-  const cipher = useMemo(() => {
-    const length = Math.max(10, Math.min(22, entry?.teamName?.length || 12))
-    return Array.from({ length }, (_, index) => CIPHER[(index * 7 + rank * 3) % CIPHER.length]).join('')
-  }, [entry?.teamName, rank])
-  const sweepFromLeft = rank % 2 === 1
+  const score = Number(entry?.totalScore || 0) * (1 - Math.pow(1 - scoreProgress, 3))
+  const cipher = scramble(Math.floor(progress * 48) + rank, Math.max(10, Math.min(16, entry?.teamName?.length || 12)))
+  const theme = rankTheme(rank)
+  const track = entry?.track ? getTrackConfig(entry.track) : null
+  const sweepMs = rank === 4 ? 2.9 : rank === 2 ? 2.1 : 2.4
 
   return (
-    <motion.div
-      key={`place-${rank}`}
-      initial={{ opacity: 0, scale: 0.975 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 1.015 }}
-      transition={{ duration: 0.55, ease: 'easeOut' }}
-      className="relative flex min-h-[390px] w-full flex-col items-center justify-center overflow-hidden rounded-[2.5rem] border border-amber-400/40 bg-gradient-to-b from-[#1D1207] via-[#0C0804] to-[#050302] px-6 py-8 text-center shadow-[0_30px_90px_rgba(0,0,0,0.75),0_0_55px_rgba(245,158,11,0.12)] sm:px-12"
-    >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(245,158,11,0.13),transparent_52%)]" />
-      {isAnimating && (
-        <motion.div
-          aria-hidden
-          initial={{ x: sweepFromLeft ? '-120%' : '220%' }}
-          animate={{ x: sweepFromLeft ? '220%' : '-120%' }}
-          transition={{ duration: rank === 4 ? 2.8 : 2.2, repeat: Infinity, ease: 'linear' }}
-          className="pointer-events-none absolute inset-y-0 w-1/4 -skew-x-12 bg-gradient-to-r from-transparent via-amber-200/20 to-transparent"
-        />
-      )}
+    <StageShell glow={theme.glow}>
+      <GoldOrnament>
+        <p className="text-[11px] font-black uppercase tracking-[0.32em] text-amber-300">
+          {identityVisible ? `${PLACE_LABELS[rank]} · Confirmed` : `Unsealing ${PLACE_LABELS[rank]}`}
+        </p>
+      </GoldOrnament>
 
-      <div className="relative z-10 flex w-full max-w-4xl flex-col items-center">
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-400/35 bg-black/45 px-4 py-1.5 font-mono text-[10px] font-black uppercase tracking-[0.2em] text-amber-200">
-          {identityVisible ? <ShieldCheck size={12} /> : <Lock size={12} />}
-          {identityVisible ? `${PLACE_LABELS[rank]} revealed` : `Unsealing ${PLACE_LABELS[rank]}`}
+      <div className="flex min-h-[220px] items-center gap-3 sm:gap-6">
+        <div className="flex w-[22%] shrink-0 flex-col items-center pt-2">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-300/80">{PLACE_LABELS[rank]}</p>
+          <p className={`mt-2 font-black leading-none tracking-tighter ${theme.rank} text-[4.2rem] sm:text-[5.5rem]`}>
+            #{rank}
+          </p>
         </div>
 
-        <p className="text-xs font-black uppercase tracking-[0.32em] text-amber-300/75">
-          {PLACE_LABELS[rank]}
-        </p>
-        <motion.div
-          className="my-5 flex h-24 w-24 items-center justify-center rounded-full border border-amber-400/30 bg-black/45 shadow-[inset_0_0_25px_rgba(245,158,11,0.08)]"
-          animate={isAnimating && !identityVisible
-            ? { scale: [0.96, 1.035, 0.96], borderColor: ['rgba(251,191,36,.2)', 'rgba(251,191,36,.6)', 'rgba(251,191,36,.2)'] }
-            : { scale: 1 }}
-          transition={{ duration: 1.8, repeat: isAnimating && !identityVisible ? Infinity : 0 }}
-        >
-          {identityVisible ? (
-            <CheckCircle2 size={38} className="text-amber-300 drop-shadow-[0_0_12px_rgba(251,191,36,0.55)]" />
-          ) : (
-            <Lock size={34} className="text-amber-300/80" />
-          )}
-        </motion.div>
+        <div className="w-px self-stretch bg-white/10" />
 
-        <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[0.28em] text-white/40">
-          {identityVisible ? 'Official finalist' : 'Identity sealed'}
-        </p>
-        <h2 className={`min-h-[52px] max-w-full truncate font-mono text-3xl font-black tracking-[0.09em] sm:text-5xl ${
-          identityVisible
-            ? 'text-transparent bg-clip-text bg-gradient-to-r from-white via-amber-100 to-amber-300'
-            : 'text-amber-200/55'
-        }`}>
-          {identityVisible ? (entry?.teamName || 'RESULT UNAVAILABLE') : cipher}
-        </h2>
-
-        <div className="mt-5 min-h-[84px]">
-          {identityVisible ? (
-            <>
-              <motion.p
-                className="font-mono text-4xl font-black tabular-nums text-amber-200 sm:text-6xl"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                {score.toFixed(1)}
-              </motion.p>
-              <p className="mt-1 text-[10px] font-black uppercase tracking-[0.24em] text-white/35">Final score</p>
-            </>
-          ) : (
-            <p className="pt-4 font-mono text-3xl font-black tracking-widest text-white/20">— — . —</p>
+        <div className="flex min-w-0 flex-1 flex-col items-center text-center">
+          <div className="relative">
+            {isAnimating && !identityVisible && (
+              <motion.div
+                aria-hidden
+                initial={{ x: '-130%' }}
+                animate={{ x: '180%' }}
+                transition={{ duration: sweepMs, repeat: Infinity, ease: 'linear' }}
+                className="pointer-events-none absolute inset-y-4 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-amber-200/25 to-transparent"
+              />
+            )}
+            <PodiumMark
+              size="md"
+              pulse={!identityVisible}
+              glyph={identityVisible ? String(rank) : '?'}
+            />
+          </div>
+          <p className="mt-1 font-mono text-[9px] font-bold uppercase tracking-[0.28em] text-white/35">
+            {identityVisible ? 'Official finalist' : 'Identity sealed'}
+          </p>
+          <h2 className={`mt-2 max-w-full truncate font-black tracking-tight ${
+            identityVisible
+              ? 'bg-gradient-to-b from-white via-amber-50 to-amber-200 bg-clip-text text-3xl text-transparent sm:text-5xl'
+              : 'font-mono text-2xl tracking-[0.14em] text-amber-200/50 sm:text-4xl'
+          }`}>
+            {identityVisible ? (entry?.teamName || 'RESULT UNAVAILABLE') : cipher}
+          </h2>
+          {identityVisible && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-3 flex flex-wrap items-center justify-center gap-2 text-sm text-slate-300"
+            >
+              <span className="font-medium text-white/80">{entry?.college || 'Tamil Nadu'}</span>
+              {track && (
+                <span
+                  className="rounded-md border px-2 py-0.5 text-[10px] font-black uppercase tracking-wider"
+                  style={{ color: track.color, borderColor: `${track.color}55`, backgroundColor: `${track.color}18` }}
+                >
+                  {track.label}
+                </span>
+              )}
+            </motion.div>
           )}
         </div>
 
-        {!isAnimating && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-4 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.22em] text-amber-300"
-          >
-            <CheckCircle2 size={14} />
-            {PLACE_LABELS[rank]} revealed
-          </motion.div>
-        )}
+        <div className="w-px self-stretch bg-white/10" />
+
+        <div className="flex w-[22%] shrink-0 flex-col items-center pt-2">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-300/80">
+            {identityVisible ? 'Final Score' : 'Calculating'}
+          </p>
+          <p className={`mt-2 font-mono text-[2.7rem] font-black leading-none tracking-wider sm:text-[4rem] ${
+            identityVisible ? theme.score : 'text-amber-300/50'
+          }`}>
+            {identityVisible ? score.toFixed(1) : '—.—'}
+          </p>
+        </div>
       </div>
-    </motion.div>
+
+      <PersistentPodiums finalists={finalists} completedSteps={completedSteps} activeRank={rank} />
+    </StageShell>
   )
 }
 
 function VerdictInterruption({ phase }: { phase: 'accessing' | 'denied' | 'wait' }) {
   return (
-    <motion.div
-      key={phase}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="flex min-h-[430px] w-full flex-col items-center justify-center rounded-[2.5rem] border border-amber-400/20 bg-[#050403] px-6 text-center shadow-[0_35px_100px_rgba(0,0,0,0.9)]"
-    >
-      <Lock size={30} className={phase === 'denied' ? 'text-orange-400' : 'text-amber-300'} />
-      <p className="mt-5 text-xs font-black uppercase tracking-[0.34em] text-amber-300/70">Final Vault</p>
-      {phase === 'accessing' && (
-        <>
-          <h2 className="mt-3 text-2xl font-black uppercase tracking-[0.12em] text-white sm:text-4xl">Accessing final verdict...</h2>
-          <div className="mt-8 h-1.5 w-full max-w-lg overflow-hidden rounded-full bg-white/10">
-            <motion.div
-              className="h-full origin-left bg-gradient-to-r from-amber-600 to-amber-200"
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 0.99 }}
-              transition={{ duration: 1.25, ease: [0.22, 1, 0.36, 1] }}
-            />
-          </div>
-          <p className="mt-3 font-mono text-lg font-black text-amber-200">99%</p>
-        </>
-      )}
-      {phase === 'denied' && (
-        <motion.h2
-          initial={{ scale: 0.9 }}
-          animate={{ scale: 1 }}
-          className="mt-5 text-4xl font-black uppercase tracking-[0.16em] text-orange-400 sm:text-6xl"
-        >
-          Access Denied
-        </motion.h2>
-      )}
-      {phase === 'wait' && (
-        <>
-          <motion.h2 initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-5 text-5xl font-black text-white sm:text-7xl">
-            WAIT.
+    <StageShell glow={phase === 'denied' ? 'rgba(232,60,0,0.18)' : 'rgba(245,158,11,0.14)'}>
+      <div className="flex min-h-[390px] flex-col items-center justify-center text-center">
+        <GoldOrnament>
+          <p className="text-[11px] font-black uppercase tracking-[0.32em] text-amber-300">Final Vault</p>
+        </GoldOrnament>
+        {phase === 'accessing' && (
+          <>
+            <h2 className="text-3xl font-black tracking-tight text-white sm:text-5xl">Accessing Final Verdict</h2>
+            <div className="mt-8 h-1.5 w-full max-w-xl overflow-hidden rounded-full bg-white/10">
+              <motion.div
+                className="h-full origin-left bg-gradient-to-r from-[#E83C00] via-amber-400 to-amber-200"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 0.99 }}
+                transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+              />
+            </div>
+            <p className="mt-3 font-mono text-sm font-black tracking-[0.28em] text-amber-200">99%</p>
+          </>
+        )}
+        {phase === 'denied' && (
+          <motion.h2
+            initial={{ opacity: 0, letterSpacing: '0.4em' }}
+            animate={{ opacity: 1, letterSpacing: '0.18em' }}
+            className="text-4xl font-black uppercase text-[#E83C00] sm:text-6xl"
+          >
+            Access Denied
           </motion.h2>
-          <p className="mt-4 text-sm font-black uppercase tracking-[0.24em] text-amber-200 sm:text-xl">
-            The final verdict is being verified.
-          </p>
-        </>
-      )}
-    </motion.div>
+        )}
+        {phase === 'wait' && (
+          <>
+            <h2 className="text-5xl font-black tracking-tight text-white sm:text-7xl">Wait.</h2>
+            <p className="mt-4 max-w-xl text-sm font-medium uppercase tracking-[0.22em] text-amber-200/90 sm:text-base">
+              The final verdict is being verified.
+            </p>
+          </>
+        )}
+      </div>
+    </StageShell>
   )
 }
 
 function FinalTwo() {
   return (
-    <motion.div
-      key="final-two"
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="flex min-h-[460px] w-full flex-col items-center justify-center rounded-[2.5rem] border border-amber-400/30 bg-gradient-to-b from-[#170F07] to-[#050302] px-6 py-8 text-center shadow-[0_35px_100px_rgba(0,0,0,0.85)]"
-    >
-      <p className="text-xs font-black uppercase tracking-[0.34em] text-amber-300/75">Grand Finale</p>
-      <h2 className="mt-2 text-4xl font-black text-white sm:text-6xl">THE FINAL TWO</h2>
-      <p className="mt-2 text-sm text-white/55 sm:text-lg">Two finalists remain. Only one will be crowned.</p>
-      <div className="mt-8 grid w-full max-w-4xl grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-8">
-        {[0, 1].map((slot) => (
-          <motion.div
-            key={slot}
-            animate={{ boxShadow: ['0 0 20px rgba(245,158,11,.08)', '0 0 45px rgba(245,158,11,.2)', '0 0 20px rgba(245,158,11,.08)'] }}
-            transition={{ duration: 3, repeat: Infinity, delay: slot * 0.55 }}
-            className="flex min-h-[190px] flex-col items-center justify-center rounded-[2rem] border border-amber-400/30 bg-black/35"
-          >
-            <Lock size={34} className="text-amber-300/80" />
-            <span className="mt-5 text-xs font-black uppercase tracking-[0.28em] text-amber-200">Finalist</span>
-            <span className="mt-2 font-mono text-[10px] uppercase tracking-widest text-white/30">Identity sealed</span>
-          </motion.div>
-        ))}
-        <span className="text-xl font-black italic text-amber-300 sm:text-3xl">VS</span>
+    <StageShell glow="rgba(245,158,11,0.16)">
+      <div className="flex min-h-[430px] flex-col items-center justify-center text-center">
+        <GoldOrnament>
+          <p className="text-[11px] font-black uppercase tracking-[0.32em] text-amber-300">Grand Finale</p>
+        </GoldOrnament>
+        <h2 className="mt-3 bg-gradient-to-b from-white via-amber-50 to-amber-200 bg-clip-text text-4xl font-black tracking-tight text-transparent sm:text-6xl">The Final Two</h2>
+        <p className="mt-2 text-sm text-slate-300 sm:text-base">Two finalists remain. Only one will be crowned.</p>
+        <div className="mt-8 grid w-full max-w-4xl grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6">
+          {[0, 1].map((slot) => (
+            <div key={slot} className="flex flex-col items-center">
+              <PodiumMark size="lg" pulse glyph="?" />
+              <span className="mt-2 text-[11px] font-black uppercase tracking-[0.28em] text-amber-200">Finalist</span>
+            </div>
+          ))}
+          <span className="text-2xl font-black italic text-amber-300 sm:text-4xl">VS</span>
+        </div>
+        <p className="mt-7 font-mono text-[11px] font-black uppercase tracking-[0.34em] text-amber-300/85">
+          One will be crowned
+        </p>
       </div>
-      <p className="mt-7 text-xs font-black uppercase tracking-[0.34em] text-amber-200">One will be crowned.</p>
-    </motion.div>
+    </StageShell>
   )
 }
 
@@ -302,23 +423,25 @@ function ChampionSequence({
   const count = Math.max(1, 5 - Math.floor(elapsed / 1_000))
   const winnerScoreProgress = finished ? 1 : clamp((elapsed - 11_000) / 1_000)
   const winnerScore = Number(entry?.totalScore || 0) * (1 - Math.pow(1 - winnerScoreProgress, 3))
+  const track = entry?.track ? getTrackConfig(entry.track) : null
 
   return (
-    <div className="relative min-h-[500px] w-full overflow-hidden rounded-[2.5rem] border border-amber-400/25 bg-black shadow-[0_40px_120px_rgba(0,0,0,0.95)]">
+    <div className="relative min-h-[520px] w-full overflow-hidden rounded-[2.5rem] border border-amber-400/35 bg-[#040201] shadow-[0_40px_120px_rgba(0,0,0,0.95)]">
+      <CeremonyAtmosphere accent="rgba(245,158,11,0.28)" />
       <AnimatePresence mode="wait">
         {(stage === 'countdown' || stage === 'freeze') && (
           <motion.div
             key={`count-${stage}-${count}`}
-            initial={{ opacity: 0, scale: 0.72 }}
-            animate={{ opacity: 1, scale: stage === 'freeze' ? 1.08 : 1 }}
-            exit={{ opacity: 0, scale: 1.24 }}
-            transition={{ duration: 0.35 }}
+            initial={{ opacity: 0, scale: 0.78 }}
+            animate={{ opacity: 1, scale: stage === 'freeze' ? 1.06 : 1 }}
+            exit={{ opacity: 0, scale: 1.18 }}
+            transition={{ duration: 0.32 }}
             className="absolute inset-0 flex flex-col items-center justify-center text-center"
           >
-            <p className="text-xs font-black uppercase tracking-[0.34em] text-amber-200/75 sm:text-base">
+            <p className="text-[11px] font-black uppercase tracking-[0.34em] text-amber-300/80 sm:text-sm">
               The champion will be revealed in
             </p>
-            <span className="mt-5 font-mono text-8xl font-black tabular-nums text-amber-200 drop-shadow-[0_0_32px_rgba(251,191,36,0.55)] sm:text-[11rem]">
+            <span className="mt-4 font-black tabular-nums text-amber-200 drop-shadow-[0_0_36px_rgba(251,191,36,0.55)] text-[7.5rem] sm:text-[11rem]">
               {String(count).padStart(2, '0')}
             </span>
           </motion.div>
@@ -328,42 +451,42 @@ function ChampionSequence({
           <motion.div key="light" className="absolute inset-0 flex items-center justify-center">
             <motion.span
               initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: [0, 1, 1.8], opacity: [0, 1, 0.75] }}
+              animate={{ scale: [0, 1, 2.2], opacity: [0, 1, 0.7] }}
               transition={{ duration: 1.1 }}
-              className="h-3 w-3 rounded-full bg-amber-100 shadow-[0_0_20px_8px_rgba(251,191,36,.8),0_0_90px_35px_rgba(245,158,11,.3)]"
+              className="h-3 w-3 rounded-full bg-amber-100 shadow-[0_0_24px_10px_rgba(251,191,36,.75),0_0_90px_40px_rgba(245,158,11,.28)]"
             />
           </motion.div>
         )}
 
         {stage === 'crown' && (
-          <motion.div key="crown" initial={{ opacity: 0, scale: 0.65 }} animate={{ opacity: 1, scale: 1 }} className="absolute inset-0 flex items-center justify-center">
-            <Crown size={110} strokeWidth={1.2} className="text-amber-300/80 fill-amber-500/10 drop-shadow-[0_0_35px_rgba(251,191,36,.45)]" />
+          <motion.div key="crown" initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} className="absolute inset-0 flex items-center justify-center">
+            <Crown size={120} strokeWidth={1.15} className="fill-amber-400/15 text-amber-200 drop-shadow-[0_0_40px_rgba(251,191,36,.5)]" />
           </motion.div>
         )}
 
         {stage === 'flash' && (
-          <motion.div key="flash" initial={{ opacity: 0 }} animate={{ opacity: [0, 1, 0.15] }} transition={{ duration: 0.6 }} className="absolute inset-0 bg-amber-100" />
+          <motion.div key="flash" initial={{ opacity: 0 }} animate={{ opacity: [0, 1, 0.12] }} transition={{ duration: 0.55 }} className="absolute inset-0 bg-amber-100" />
         )}
 
         {stage === 'winner' && (
           <motion.div
             key="winner"
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.94 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
-            className="absolute inset-0 flex flex-col items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_50%_46%,rgba(245,158,11,.25),transparent_52%)] px-6 text-center"
+            className="absolute inset-0 flex flex-col items-center justify-center bg-[radial-gradient(circle_at_50%_42%,rgba(245,158,11,.22),transparent_54%)] px-6 text-center"
           >
-            <motion.div animate={{ y: [0, -6, 0] }} transition={{ duration: 2.8, repeat: Infinity }}>
-              <Crown size={76} className="fill-amber-400/25 text-amber-200 drop-shadow-[0_0_28px_rgba(251,191,36,.65)]" />
-            </motion.div>
-            <p className="mt-3 text-xs font-black uppercase tracking-[0.38em] text-amber-300">Grand Champion</p>
-            <h2 className="mt-3 max-w-full truncate text-4xl font-black text-white sm:text-7xl">
+            <Sparkles size={16} className="absolute left-[16%] top-[24%] text-amber-300/70" />
+            <Sparkles size={14} className="absolute right-[18%] top-[30%] text-orange-300/65" />
+            <PodiumMark size="lg" glyph="1" />
+            <p className="mt-2 text-[11px] font-black uppercase tracking-[0.38em] text-amber-300">Grand Champion</p>
+            <h2 className="mt-2 max-w-full truncate bg-gradient-to-b from-white via-amber-50 to-amber-200 bg-clip-text text-4xl font-black text-transparent sm:text-6xl">
               {entry?.teamName || 'RESULT UNAVAILABLE'}
             </h2>
-            <p className="mt-3 font-mono text-4xl font-black tabular-nums text-amber-200 sm:text-6xl">{winnerScore.toFixed(1)}</p>
-            <p className="mt-5 text-xs font-black uppercase tracking-[0.3em] text-white/55 sm:text-sm">Voice for Tamil Nadu 2026</p>
-            <Sparkles size={22} className="absolute left-[18%] top-[28%] text-amber-300/70" />
-            <Sparkles size={18} className="absolute right-[20%] top-[35%] text-orange-300/65" />
+            <p className="mt-2 font-mono text-4xl font-black tabular-nums text-amber-200 sm:text-5xl">{winnerScore.toFixed(1)}</p>
+            {track && (
+              <span className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-white/50">{track.label}</span>
+            )}
+            <p className="mt-4 text-[10px] font-black uppercase tracking-[0.3em] text-white/45">Voice for Tamil Nadu 2026</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -396,7 +519,6 @@ export function GrandFinaleExperience({
   const completedSteps = revealStep === 5
     ? (isAnimating ? 4 : 5)
     : Math.max(0, revealStep - (isAnimating ? 1 : 0))
-  const isVerdictSequence = revealStep === 4 && !isAnimating && elapsed - duration >= 1_200
 
   let scene: ReactNode
   if (revealStep === 5) {
@@ -404,7 +526,7 @@ export function GrandFinaleExperience({
   } else if (revealStep === 4 && !isAnimating) {
     const postRevealElapsed = Math.max(0, elapsed - duration)
     scene = postRevealElapsed < 1_200
-      ? <PlaceReveal entry={activeEntry} rank={activeRank} progress={1} isAnimating={false} />
+      ? <PlaceReveal entry={activeEntry} rank={activeRank} progress={1} isAnimating={false} completedSteps={completedSteps} finalists={finalists} />
       : postRevealElapsed < 2_700
       ? <VerdictInterruption phase="accessing" />
       : postRevealElapsed < 4_200
@@ -413,17 +535,21 @@ export function GrandFinaleExperience({
       ? <VerdictInterruption phase="wait" />
       : <FinalTwo />
   } else {
-    scene = <PlaceReveal entry={activeEntry} rank={activeRank} progress={progress} isAnimating={isAnimating} />
+    scene = (
+      <PlaceReveal
+        entry={activeEntry}
+        rank={activeRank}
+        progress={progress}
+        isAnimating={isAnimating}
+        completedSteps={completedSteps}
+        finalists={finalists}
+      />
+    )
   }
 
   return (
-    <div className="flex w-full flex-col items-center gap-5">
+    <div className="flex w-full flex-col items-center">
       <AnimatePresence mode="wait">{scene}</AnimatePresence>
-      {revealStep < 5 && !isVerdictSequence && (
-        <div className="w-full rounded-[1.5rem] border border-amber-400/20 bg-[#0A0704] p-3 shadow-xl">
-          <PlaceProgress finalists={finalists} completedSteps={completedSteps} activeRank={activeRank} />
-        </div>
-      )}
     </div>
   )
 }
