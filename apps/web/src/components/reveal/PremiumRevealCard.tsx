@@ -285,9 +285,9 @@ export function PremiumRevealCard({
           />
 
           {/* ─── EXACT SAME HEIGHT & WIDTH INNER CONTAINER ─── */}
-          <div className="flex flex-col items-center justify-center text-center w-full min-h-[260px] my-auto">
-            {/* Trophy icon */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner relative bg-amber-500/10 border border-amber-500/30 text-amber-400">
+          <div className="flex flex-col items-center justify-center text-center w-full min-h-[260px] my-auto pt-1 pb-2">
+            {/* Trophy icon — elevated with clean breathing room */}
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-inner relative bg-amber-500/10 border border-amber-500/30 text-amber-400">
               {isFinale ? (
                 <>
                   <Crown size={36} className="text-amber-400 animate-bounce" />
@@ -302,16 +302,16 @@ export function PremiumRevealCard({
             </div>
 
             {/* Stage Ready Badge */}
-            <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-3 bg-amber-500/15 border border-amber-500/30 text-amber-300">
+            <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-4 bg-amber-500/15 border border-amber-500/30 text-amber-300">
               <Sparkles size={13} className="text-amber-400 animate-spin" />
               <span>Stage Ready · Awaiting Announcement</span>
             </div>
 
             {/* Heading */}
-            <h3 className="text-3xl sm:text-4xl font-black mb-1.5 text-white tracking-tight">
+            <h3 className="text-3xl sm:text-4xl font-black mb-2.5 text-white tracking-tight">
               {isFinale ? '👑 Grand Finale Verdict Sealed' : 'Round 1 Graded & Verified'}
             </h3>
-            <p className="max-w-xl mx-auto text-xs sm:text-sm font-medium text-slate-300">
+            <p className="max-w-xl mx-auto text-xs sm:text-sm font-medium text-slate-300 leading-relaxed">
               {isFinale
                 ? 'Waiting for admin to unseal 5th Place. Each place opens only when triggered.'
                 : 'Waiting for admin to initiate the Top 20 announcement (#20 ➔ #1).'}
