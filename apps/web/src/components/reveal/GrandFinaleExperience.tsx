@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { getTrackConfig } from '@/lib/utils'
+import { SnapServeMark } from '@/components/brand/BrandLogos'
 
 export type GrandFinaleEntry = {
   teamId: string
@@ -44,7 +45,7 @@ function scrambleName(target: string, progress: number, tick: number) {
       out += ' '
       continue
     }
-    const lockAt = 0.64 + (i / Math.max(name.length, 1)) * 0.24
+    const lockAt = 0.80 + (i / Math.max(name.length, 1)) * 0.10
     if (progress >= 1 || (progress >= lockAt && i !== hold)) out += name[i]
     else out += ALPHA[(tick + i * 5) % ALPHA.length]
   }
@@ -55,20 +56,27 @@ function easeOut(t: number, power = 3.4) {
   return 1 - Math.pow(1 - clamp(t), power)
 }
 
-/** Edge-on → face-on, with a last-moment settle. */
-function wreathYaw(progress: number, live: boolean) {
+/** Edge-on → face-on. `tease` turns it away once after they think it has landed. */
+function wreathYaw(progress: number, live: boolean, tease = false) {
   if (!live) return 0
-  if (progress <= 0.08) return 82
-  if (progress < 0.72) return 82 * (1 - easeOut((progress - 0.08) / 0.64, 3.6))
-  if (progress < 0.82) return -6 * Math.sin(Math.PI * ((progress - 0.72) / 0.1))
+  if (progress <= 0.10) return 82
+  if (!tease) {
+    if (progress < 0.56) return 82 * (1 - easeOut((progress - 0.10) / 0.46, 3.8))
+    if (progress < 0.64) return -5 * Math.sin(Math.PI * ((progress - 0.56) / 0.08))
+    return 0
+  }
+  if (progress < 0.46) return 82 * (1 - easeOut((progress - 0.10) / 0.36, 3.4))
+  if (progress < 0.52) return 0
+  if (progress < 0.62) return 78 * easeOut((progress - 0.52) / 0.10, 2.2)
+  if (progress < 0.73) return 78 * (1 - easeOut((progress - 0.62) / 0.11, 3.2))
   return 0
 }
 
 function wreathSlide(progress: number, live: boolean) {
   if (!live) return 0
-  if (progress <= 0.08) return -90
-  if (progress >= 0.42) return 0
-  return -90 * (1 - easeOut((progress - 0.08) / 0.34, 2.6))
+  if (progress <= 0.10) return -90
+  if (progress >= 0.38) return 0
+  return -90 * (1 - easeOut((progress - 0.10) / 0.28, 2.6))
 }
 
 function Wreath({
@@ -178,9 +186,33 @@ function Marks({ done, active }: { done: number; active: number }) {
   )
 }
 
+function SnapSeal({ slamming }: { slamming?: boolean }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.88, y: 8 }}
+      animate={
+        slamming
+          ? { opacity: [0, 1, 1], scale: [1.18, 0.96, 1], y: 0 }
+          : { opacity: 1, scale: 1, y: 0 }
+      }
+      exit={{ opacity: 0, scale: 1.12, y: -10, filter: 'blur(8px)' }}
+      transition={{ duration: slamming ? 0.45 : 0.55, ease: EASE }}
+      className="flex flex-col items-center gap-2.5"
+    >
+      <SnapServeMark
+        className="h-11 w-11 sm:h-14 sm:w-14 invert opacity-90"
+        title="SnapServe"
+      />
+      <span className="text-[10px] font-semibold uppercase tracking-[0.38em] text-white/40">
+        Sealed
+      </span>
+    </motion.div>
+  )
+}
+
 function Stage({ children }: { children: ReactNode }) {
   return (
-    <div className="relative flex min-h-[min(70vh,680px)] w-full items-center justify-center overflow-hidden">
+    <div className="relative flex min-h-[min(78vh,760px)] w-full items-center justify-center overflow-hidden">
       <motion.div
         aria-hidden
         className="pointer-events-none absolute inset-0"
@@ -192,6 +224,10 @@ function Stage({ children }: { children: ReactNode }) {
         }}
       />
       {children}
+      <div className="pointer-events-none absolute bottom-5 left-6 z-20 flex items-center gap-2.5 opacity-50">
+        <SnapServeMark className="h-[18px] w-[18px] invert" />
+        <span className="text-[10px] font-semibold tracking-[0.28em] text-white/70">SNAPSERVE</span>
+      </div>
     </div>
   )
 }
@@ -211,83 +247,90 @@ function PlaceReveal({
   tick: number
   completedSteps: number
 }) {
-  const revealed = !isAnimating || progress >= 0.88
-  const numberOn = revealed
-  const nameLive = progress >= 0.24
-  const scoreT = !isAnimating ? 1 : clamp((progress - 0.90) / 0.10)
+  const tease = rank === 4
+  const nameFakeOut = rank === 3 && isAnimating && progress >= 0.835 && progress < 0.88
+  const numberOn = !isAnimating || progress >= (tease ? 0.75 : 0.70)
+  const nameLive = (!isAnimating || progress >= 0.82) && !nameFakeOut
+  const nameLocked = !isAnimating || progress >= 0.91
+  const metaOn = !isAnimating || progress >= 0.94
+  const scoreOn = !isAnimating || progress >= 0.96
+  const scoreT = !isAnimating ? 1 : clamp((progress - 0.96) / 0.04)
   const score = Number(entry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
   const track = entry?.track ? getTrackConfig(entry.track) : null
   const liveName = useMemo(
     () => scrambleName(entry?.teamName || '', progress, tick),
     [entry?.teamName, progress, tick],
   )
-  const yaw = wreathYaw(progress, isAnimating)
+  const yaw = wreathYaw(progress, isAnimating, tease)
   const slide = wreathSlide(progress, isAnimating)
-  const wreathVisible = !isAnimating || progress >= 0.06
+  const wreathVisible = !isAnimating || progress >= 0.10
   const meta = PLACE[rank]
 
   return (
     <Stage>
       <motion.div
         key={`place-${rank}`}
-        className="relative z-10 flex w-full max-w-4xl flex-col items-center px-6 text-center"
-        animate={revealed && isAnimating ? { scale: [1.02, 1] } : { scale: 1 }}
-        transition={{ duration: 0.5, ease: EASE }}
+        className="relative z-10 flex w-full max-w-6xl flex-col items-center px-6 text-center"
       >
         <motion.p
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: EASE }}
-          className="text-[13px] font-medium tracking-[0.34em] text-white/45 uppercase"
+          transition={{ duration: 0.9, ease: EASE }}
+          className="text-sm font-medium tracking-[0.38em] text-white/50 uppercase sm:text-base"
         >
           {meta.kicker}
         </motion.p>
         <motion.span
           aria-hidden
-          className="mt-3 h-px w-9 origin-center bg-amber-200/55"
+          className="mt-3 h-px w-12 origin-center bg-amber-200/55"
           initial={{ scaleX: 0, opacity: 0 }}
           animate={{ scaleX: 1, opacity: 1 }}
-          transition={{ duration: 0.7, delay: 0.2, ease: EASE }}
+          transition={{ duration: 0.8, delay: 0.25, ease: EASE }}
         />
 
         <div
-          className={`mt-7 transition-opacity duration-500 ${wreathVisible ? 'opacity-100' : 'opacity-0'}`}
+          className={`mt-6 transition-opacity duration-700 ${wreathVisible ? 'opacity-100' : 'opacity-0'}`}
         >
           <Wreath
-            className="h-[210px] w-[230px] sm:h-[248px] sm:w-[272px]"
+            className="h-[300px] w-[328px] sm:h-[380px] sm:w-[416px] lg:h-[420px] lg:w-[460px]"
             glyph={numberOn ? String(rank) : '?'}
             locked={numberOn}
             rotateY={yaw}
             x={slide}
-            idle={revealed}
+            idle={nameLocked}
           />
         </div>
 
-        <div className="mt-5 flex h-[7.5rem] w-full flex-col items-center justify-start sm:h-[8.5rem]">
-          {nameLive ? (
-            <motion.h2
-              key={revealed ? 'locked' : 'spin'}
-              initial={revealed ? { opacity: 0, y: 14, filter: 'blur(6px)' } : { opacity: 0 }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              transition={{ duration: revealed ? 0.55 : 0.25, ease: EASE }}
-              className={`max-w-[18ch] text-balance font-black tracking-tight sm:max-w-[22ch] ${
-                revealed
-                  ? 'text-[2.35rem] text-white sm:text-6xl'
-                  : 'font-mono text-[1.65rem] text-white/35 sm:text-4xl'
-              }`}
-            >
-              {revealed ? (entry?.teamName || 'Unavailable') : liveName}
-            </motion.h2>
-          ) : (
-            <span className="mt-6 h-[2px] w-16 bg-white/15" />
-          )}
+        <div className="mt-4 flex h-[8.5rem] w-full flex-col items-center justify-start sm:h-[10.5rem]">
+          <AnimatePresence mode="wait">
+            {nameLive ? (
+              <motion.h2
+                key={nameLocked ? 'locked' : 'spin'}
+                initial={nameLocked ? { opacity: 0, y: 14, filter: 'blur(8px)' } : { opacity: 0 }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ duration: nameLocked ? 0.7 : 0.35, ease: EASE }}
+                className={`max-w-[16ch] text-balance font-black tracking-tight sm:max-w-[20ch] ${
+                  nameLocked
+                    ? 'text-5xl text-white sm:text-7xl lg:text-8xl'
+                    : 'font-mono text-3xl text-white/40 sm:text-5xl'
+                }`}
+              >
+                {nameLocked ? (entry?.teamName || 'Unavailable') : liveName}
+              </motion.h2>
+            ) : (
+              <motion.div key={`seal-${nameFakeOut ? 'slam' : 'hold'}`}>
+                <SnapSeal slamming={nameFakeOut} />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div className="mt-3 h-6">
-            {revealed && (
+            {metaOn && (
               <motion.p
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.45, delay: 0.12, ease: EASE }}
+                transition={{ duration: 0.5, ease: EASE }}
                 className="text-sm text-white/40 sm:text-base"
               >
                 {entry?.college || 'Tamil Nadu'}
@@ -297,13 +340,13 @@ function PlaceReveal({
           </div>
         </div>
 
-        <div className="mt-1 h-16">
-          {revealed && (
+        <div className="mt-1 h-16 sm:h-20">
+          {scoreOn && (
             <motion.p
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2, ease: EASE }}
-              className="font-black tabular-nums leading-none text-amber-200 text-[2.6rem] sm:text-5xl"
+              transition={{ duration: 0.55, ease: EASE }}
+              className="font-black tabular-nums leading-none text-amber-200 text-5xl sm:text-6xl lg:text-7xl"
             >
               {score.toFixed(1)}
             </motion.p>
@@ -390,7 +433,7 @@ function FinalTwo() {
             transition={{ duration: 1.55, ease: EASE }}
             style={{ perspective: 1400, transformStyle: 'preserve-3d' }}
           >
-            <Wreath className="h-[188px] w-[206px] sm:h-[220px] sm:w-[240px]" glyph="?" idle idleDelay={1.6} />
+            <Wreath className="h-[220px] w-[240px] sm:h-[280px] sm:w-[306px]" glyph="?" idle idleDelay={1.6} />
           </motion.div>
           <motion.span
             initial={{ scaleY: 0, opacity: 0 }}
@@ -404,7 +447,7 @@ function FinalTwo() {
             transition={{ duration: 1.55, ease: EASE }}
             style={{ perspective: 1400, transformStyle: 'preserve-3d' }}
           >
-            <Wreath className="h-[188px] w-[206px] sm:h-[220px] sm:w-[240px]" glyph="?" idle idleDelay={1.75} />
+            <Wreath className="h-[220px] w-[240px] sm:h-[280px] sm:w-[306px]" glyph="?" idle idleDelay={1.75} />
           </motion.div>
         </div>
       </div>
@@ -497,13 +540,13 @@ function Champion({
               className="mt-6"
               style={{ perspective: 1400, transformStyle: 'preserve-3d' }}
             >
-              <Wreath className="h-[230px] w-[252px] sm:h-[268px] sm:w-[294px]" glyph="1" locked idle idleDelay={1.2} />
+              <Wreath className="h-[320px] w-[350px] sm:h-[400px] sm:w-[438px] lg:h-[440px] lg:w-[482px]" glyph="1" locked idle idleDelay={1.2} />
             </motion.div>
             <motion.h2
               initial={{ opacity: 0, y: 16, filter: 'blur(8px)' }}
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
               transition={{ duration: 0.7, delay: 0.72, ease: EASE }}
-              className="mt-5 max-w-[18ch] text-balance text-[2.5rem] font-black tracking-tight text-white sm:max-w-[22ch] sm:text-6xl"
+              className="mt-5 max-w-[16ch] text-balance text-5xl font-black tracking-tight text-white sm:max-w-[20ch] sm:text-7xl lg:text-8xl"
             >
               {entry?.teamName || 'Unavailable'}
             </motion.h2>
