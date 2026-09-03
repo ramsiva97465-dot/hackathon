@@ -725,7 +725,12 @@ export function LeaderboardPage() {
     .filter(e => {
       const teamRound = (e as any).round || 1
       if (activeRound === 3) return teamRound === 3
-      if (activeRound === 2) return teamRound >= 2
+      if (activeRound === 2) {
+        // During the Top 20 ceremony keep every scored team so the table
+        // cannot go empty if a round-2 fetch has not landed yet.
+        if (isRevealingRef.current && revealRoundRef.current !== 3) return true
+        return teamRound >= 2
+      }
       return true // Round 1: show all
     })
     .sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0))
@@ -988,14 +993,24 @@ export function LeaderboardPage() {
   const currentSpotlightRank = isFinale ? (FINALE_CUTOFF + 1 - revealedStep) : (21 - revealedStep)
   const finaleRoster = top5.length > 0 ? top5 : top5Ref.current
 
+  const qualifierRoster = (
+    advancing.length > 0
+      ? advancing
+      : advancingRef.current.length > 0
+        ? advancingRef.current
+        : [...rawDisplay]
+            .sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0))
+            .slice(0, ROUND2_CUTOFF)
+            .map((e, idx) => ({ ...e, rank: idx + 1 }))
+  )
+
   // Keep a stable finale roster even if a later fetch returns no rows.
   const currentSpotlightTeam = revealedStep > 0
     ? (isFinale
       ? (finaleRoster[FINALE_CUTOFF - revealedStep] || finaleRoster[finaleRoster.length - 1] || null)
-      : (advancing[20 - revealedStep] || advancing[advancing.length - 1] || null))
+      : (qualifierRoster[20 - revealedStep] || qualifierRoster[qualifierRoster.length - 1] || null))
     : null
-
-  const qualifierCount = Math.min(20, advancing.length || advancingRef.current.length || 20)
+  const qualifierCount = Math.min(20, qualifierRoster.length || 20)
   const allPlacesAnnounced = !isDecrypting && (
     isFinale
       ? revealedStep >= FINALE_CUTOFF
@@ -1005,21 +1020,19 @@ export function LeaderboardPage() {
   const ceremonySettled = allPlacesAnnounced && rosterShown
 
   // Single-column luxury row grid matching Stage 1 Leaderboard
-  const QUALIFIER_GRID = 'grid grid-cols-[64px_1fr_170px_110px_120px] px-6 py-3.5 items-center'
+  const QUALIFIER_GRID = 'grid grid-cols-[64px_minmax(0,1fr)_170px_110px_120px] px-6 py-3.5 items-center min-h-[56px]'
 
   const renderQualifierRow = (rankNum: number) => {
     if (rankNum > qualifierCount) return null
 
-    const team = advancing[rankNum - 1] || advancingRef.current[rankNum - 1]
+    const team = qualifierRoster[rankNum - 1]
     const isRevealed = unlockedRanks.includes(rankNum) || revealedStep >= (21 - rankNum)
     const isSpotlight = rankNum === currentSpotlightRank && revealedStep > 0
 
     if (!isRevealed || !team) {
       return (
-        <motion.div
+        <div
           key={`slot-locked-${rankNum}`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
           className={`${QUALIFIER_GRID} border-b border-black/[0.04] bg-[#EBE3D5]/40 text-slate-400 opacity-60`}
         >
           <div className="flex items-center justify-center">
@@ -1034,20 +1047,18 @@ export function LeaderboardPage() {
           <div><div className="w-20 h-5 rounded bg-black/5 animate-pulse" /></div>
           <div className="text-center"><span className="text-xs font-mono text-slate-300">--</span></div>
           <div className="text-right"><span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pending</span></div>
-        </motion.div>
+        </div>
       )
     }
 
-    const track = getTrackConfig(team.track)
+    const trackKey = typeof team.track === 'string' ? team.track : ''
+    const track = getTrackConfig(trackKey)
 
     return (
-      <motion.div
+      <div
         key={`slot-revealed-${rankNum}-${team.teamId}`}
         id={`r2-row-${rankNum}`}
         ref={(el) => { rowRefs.current[rankNum] = el }}
-        layout
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
         className={`${QUALIFIER_GRID} border-b transition-colors ${
           isSpotlight
             ? 'bg-[#E83C00]/15 border-[#E83C00]/40 shadow-md ring-1 ring-[#E83C00]/30'
@@ -1097,7 +1108,7 @@ export function LeaderboardPage() {
         </div>
 
         <div className="text-center font-mono font-black text-sm text-[#1A1A1A]">
-          {team.totalScore.toFixed(1)}
+          {Number(team.totalScore || 0).toFixed(1)}
         </div>
 
         <div className="text-right">
@@ -1106,7 +1117,7 @@ export function LeaderboardPage() {
             Qualified
           </span>
         </div>
-      </motion.div>
+      </div>
     )
   }
 
@@ -1151,10 +1162,10 @@ export function LeaderboardPage() {
       {/* 🎭 DRAMATIC GRAND REVEAL CEREMONY (Round 2: 20➔1 | Round 3: 5➔1)      */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {isRevealing ? (
-        <div ref={scrollContainerRef} className="relative flex-1 min-h-0 overflow-y-auto w-full flex flex-col items-center px-4 sm:px-8 pb-32 scroll-smooth">
+        <div ref={scrollContainerRef} className="relative flex-1 min-h-0 overflow-y-auto w-full px-4 sm:px-8 pb-32 scroll-smooth">
           
           {/* 🌟 HERO SPOTLIGHT (Sleek, elevated vertical alignment for 24x10 LED) */}
-          <div className={`w-full flex flex-col items-center justify-start ${ceremonySettled ? 'pt-1 pb-3' : 'pt-2 sm:pt-4 pb-6'}`}>
+          <div className={`w-full flex flex-col items-center justify-start shrink-0 ${ceremonySettled ? 'pt-1 pb-3' : 'pt-2 sm:pt-4 pb-6'}`}>
             {/* Header */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -1224,7 +1235,7 @@ export function LeaderboardPage() {
           {isFinale ? (
             !isDecrypting ? (
             /* ROUND 3: WINNERS PODIUM — hidden during the countdown card */
-            <div ref={rosterRef} className="w-full max-w-5xl flex flex-col items-center mt-32 pb-32">
+            <div ref={rosterRef} className="w-full max-w-5xl mx-auto flex flex-col items-center mt-32 pb-32 shrink-0">
               <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/5 text-slate-700 mb-6 shadow-sm">
                 <Trophy size={14} className="text-amber-500" />
                 <span className="text-xs font-bold uppercase tracking-widest">
@@ -1410,7 +1421,7 @@ export function LeaderboardPage() {
             ) : null
           ) : (
             /* ROUND 2: TOP 20 QUALIFIERS TABLE */
-            <div ref={rosterRef} className={`w-full max-w-6xl rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] mb-32 ${ceremonySettled ? 'mt-4' : 'mt-8'}`}>
+            <div ref={rosterRef} className={`w-full max-w-6xl mx-auto rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] mb-32 shrink-0 ${ceremonySettled ? 'mt-4' : 'mt-8'}`}>
               {/* Header with Title & Status Counter */}
               <div className="flex items-center justify-between px-6 py-4 bg-[#F4ECE1] border-b border-black/10">
                 <div className="flex items-center gap-3">
