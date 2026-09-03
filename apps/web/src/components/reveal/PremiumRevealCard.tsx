@@ -208,30 +208,41 @@ export function PremiumRevealCard({
       const speedFactor = Math.pow(progress, 0.45)
       const nextMs = Math.round(16 + (170 - 16) * speedFactor)
 
-      // ── Character scramble (Starts with VOICEATHON, scrolls through A-Z) ────
-      const lockThreshold = 0.50
+      // ── Character scramble (Transforms each letter of VOICEATHON -> A-Z -> Target Name) ────
+      const initialWord = 'VOICEATHON'
+      const target = (targetName || 'QUALIFIER').toUpperCase()
+      const displayLen = target.length
+      const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
       let chars = ''
       let newLockedCount = 0
 
-      if (progress < 0.12) {
-        // Initial glimpse of VOICEATHON before rapid A-Z scrolling begins
-        chars = initialWord
-      } else {
-        const rollProgress = (progress - 0.12) / (1 - 0.12)
-        const charProgress = (rollProgress - 0.40) / 0.60
-        const charLockIdx = Math.floor(charProgress * targetName.length)
+      for (let i = 0; i < displayLen; i++) {
+        const targetChar = target[i]
+        if (targetChar === ' ') {
+          chars += ' '
+          continue
+        }
 
-        for (let i = 0; i < (targetName.length || targetLen); i++) {
-          if (rollProgress >= 0.40 && i <= charLockIdx && targetName[i]) {
-            chars += targetName[i].toUpperCase()
-            newLockedCount++
-          } else if (targetName[i] === ' ') {
-            chars += ' '
-          } else {
-            // Clean A-Z alphabet cycling
-            const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-            chars += ALPHABET[(i * 3 + frameCountRef.current) % ALPHABET.length]
-          }
+        const startChar = i < initialWord.length ? initialWord[i] : 'A'
+        const startIdx = ALPHABET.indexOf(startChar) >= 0 ? ALPHABET.indexOf(startChar) : 0
+        const targetIdx = ALPHABET.indexOf(targetChar) >= 0 ? ALPHABET.indexOf(targetChar) : 0
+
+        // Column i lock-in timing: Progressive left-to-right
+        const colLockProgress = Math.min(1, Math.max(0, (progress - 0.20 - (i / displayLen) * 0.45) / 0.35))
+
+        if (colLockProgress >= 1 || progress >= 0.98) {
+          chars += targetChar
+          newLockedCount++
+        } else if (progress < 0.15) {
+          // Hold the exact character from VOICEATHON at the start
+          chars += startChar
+        } else {
+          // Flip forward through A-Z starting from startChar towards targetChar
+          const totalCycles = 26 + ((targetIdx - startIdx + 26) % 26)
+          const currentStep = Math.floor(colLockProgress * totalCycles)
+          const currentLetter = ALPHABET[(startIdx + currentStep + (frameCountRef.current % 3)) % 26]
+          chars += currentLetter
         }
       }
       setScrambleDisplay(chars)
