@@ -436,6 +436,7 @@ export function LeaderboardPage() {
   const advancingRef = useRef<Array<LeaderboardEntry & { rank: number }>>([])
   const autoScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasAutoScrolledRef = useRef(false)
+  const [rosterShown, setRosterShown] = useState(false)
 
   useEffect(() => {
     activeRoundRef.current = activeRound
@@ -780,6 +781,7 @@ export function LeaderboardPage() {
     unlockedRanksRef.current = []
     setIsPaused(false)
     hasAutoScrolledRef.current = false
+    setRosterShown(false)
     if (autoScrollTimerRef.current) {
       clearTimeout(autoScrollTimerRef.current)
       autoScrollTimerRef.current = null
@@ -811,6 +813,7 @@ export function LeaderboardPage() {
     setUnlockedRanks([])
     setRevealingTeamName('')
     hasAutoScrolledRef.current = false
+    setRosterShown(false)
     if (autoScrollTimerRef.current) {
       clearTimeout(autoScrollTimerRef.current)
       autoScrollTimerRef.current = null
@@ -926,9 +929,7 @@ export function LeaderboardPage() {
     if (container) {
       const cRect = container.getBoundingClientRect()
       const rRect = roster.getBoundingClientRect()
-      // Keep a slice of the #1 card visible; pin the table into the lower viewport.
-      const keepHeroPx = Math.min(200, Math.round(container.clientHeight * 0.26))
-      const top = container.scrollTop + (rRect.top - cRect.top) - keepHeroPx
+      const top = container.scrollTop + (rRect.top - cRect.top) - 12
       container.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
       return
     }
@@ -942,11 +943,12 @@ export function LeaderboardPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [isDecrypting])
 
-  // After every place is announced, compact the hero and bring the Top 20 table
-  // into view below the #1 card. Do not wait 20s — the LCD must show the list.
+  // After #1 is announced, hold that card for 15 seconds, then scroll down to
+  // the full Top 20 table. Clock ticks / polls must not reset this timer.
   useEffect(() => {
     if (!isRevealing) {
       hasAutoScrolledRef.current = false
+      setRosterShown(false)
       if (autoScrollTimerRef.current) {
         clearTimeout(autoScrollTimerRef.current)
         autoScrollTimerRef.current = null
@@ -966,14 +968,16 @@ export function LeaderboardPage() {
       return
     }
 
-    // Already scheduled or completed — avoid resetting timer on every 1s re-render
     if (autoScrollTimerRef.current || hasAutoScrolledRef.current) return
 
     autoScrollTimerRef.current = setTimeout(() => {
       hasAutoScrolledRef.current = true
       autoScrollTimerRef.current = null
-      scrollRosterIntoView()
-    }, 1200)
+      setRosterShown(true)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => scrollRosterIntoView())
+      })
+    }, 15000)
   }, [isRevealing, revealedStep, isFinale, unlockedRanks.length, isDecrypting])
 
   // Round 2 is one-click-per-team from the admin table — never auto-play 20→1.
@@ -992,11 +996,13 @@ export function LeaderboardPage() {
     : null
 
   const qualifierCount = Math.min(20, advancing.length || advancingRef.current.length || 20)
-  const ceremonySettled = !isDecrypting && (
+  const allPlacesAnnounced = !isDecrypting && (
     isFinale
       ? revealedStep >= FINALE_CUTOFF
       : (revealedStep >= 20 || unlockedRanks.length >= 20)
   )
+  // Keep the #1 card full-size for the 15s hold; compact only after we scroll to the table.
+  const ceremonySettled = allPlacesAnnounced && rosterShown
 
   // Single-column luxury row grid matching Stage 1 Leaderboard
   const QUALIFIER_GRID = 'grid grid-cols-[64px_1fr_170px_110px_120px] px-6 py-3.5 items-center'
