@@ -216,24 +216,63 @@ function Marks({ done, active }: { done: number; active: number }) {
   )
 }
 
-function SnapSeal({ slamming }: { slamming?: boolean }) {
+function SnapSeal({
+  slamming,
+  progress,
+  elapsed,
+}: {
+  slamming?: boolean
+  progress: number
+  elapsed: number
+}) {
+  const tension = clamp((progress - 0.10) / 0.72)
+  const tSec = elapsed / 1000
+  const hz = 0.8 + tension * 2.8
+  const phase = tSec * hz * Math.PI * 2
+  const beat =
+    Math.pow(Math.max(0, Math.sin(phase)), 10) +
+    0.5 * Math.pow(Math.max(0, Math.sin(phase - 0.4)), 14)
+  const scale = slamming ? 1 : 1 + beat * (0.04 + tension * 0.1)
+  const shake = !slamming && tension > 0.42
+    ? Math.sin(tSec * 42) * (tension - 0.42) * 4.2
+    : 0
+  const glow = 0.12 + beat * (0.22 + tension * 0.5)
+
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.88, y: 8 }}
+      initial={{ opacity: 0, y: 14 }}
       animate={
         slamming
-          ? { opacity: [0, 1, 1], scale: [1.18, 0.96, 1], y: 0 }
-          : { opacity: 1, scale: 1, y: 0 }
+          ? { opacity: 1, y: 0, scale: [1.2, 0.94, 1] }
+          : { opacity: 1, y: 0 }
       }
-      exit={{ opacity: 0, scale: 1.12, y: -10, filter: 'blur(8px)' }}
-      transition={{ duration: slamming ? 0.45 : 0.55, ease: EASE }}
-      className="flex flex-col items-center gap-2.5"
+      exit={{ opacity: 0, scale: 1.22, y: -14, filter: 'blur(10px)' }}
+      transition={{ duration: slamming ? 0.42 : 0.55, ease: EASE }}
+      className="relative flex flex-col items-center gap-3"
     >
-      <SnapServeMark
-        className="h-11 w-11 sm:h-14 sm:w-14 invert opacity-90"
-        title="SnapServe"
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-4 h-[4.5rem] w-[4.5rem] -translate-x-1/2 rounded-full bg-amber-300 blur-2xl"
+        style={{ opacity: glow }}
       />
-      <span className="text-[10px] font-semibold uppercase tracking-[0.38em] text-white/40">
+      <div
+        style={{
+          transform: `translateX(${shake}px) scale(${scale})`,
+          transformOrigin: 'center center',
+        }}
+      >
+        <SnapServeMark
+          className="relative h-12 w-12 sm:h-16 sm:w-16 invert"
+          title="SnapServe"
+        />
+      </div>
+      <span
+        className="text-[10px] font-semibold uppercase text-white/45 sm:text-[11px]"
+        style={{
+          letterSpacing: `${0.34 + beat * 0.1}em`,
+          opacity: 0.32 + beat * 0.45,
+        }}
+      >
         Sealed
       </span>
     </motion.div>
@@ -254,10 +293,6 @@ function Stage({ children }: { children: ReactNode }) {
         }}
       />
       {children}
-      <div className="pointer-events-none absolute bottom-5 left-6 z-20 flex items-center gap-2.5 opacity-50">
-        <SnapServeMark className="h-[18px] w-[18px] invert" />
-        <span className="text-[10px] font-semibold tracking-[0.28em] text-white/70">SNAPSERVE</span>
-      </div>
     </div>
   )
 }
@@ -268,6 +303,7 @@ function PlaceReveal({
   progress,
   isAnimating,
   tick,
+  elapsed,
   completedSteps,
 }: {
   entry?: GrandFinaleEntry
@@ -275,6 +311,7 @@ function PlaceReveal({
   progress: number
   isAnimating: boolean
   tick: number
+  elapsed: number
   completedSteps: number
 }) {
   const tease = rank === 4
@@ -350,7 +387,7 @@ function PlaceReveal({
               </motion.h2>
             ) : (
               <motion.div key={`seal-${nameFakeOut ? 'slam' : 'hold'}`}>
-                <SnapSeal slamming={nameFakeOut} />
+                <SnapSeal slamming={nameFakeOut} progress={progress} elapsed={elapsed} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -652,6 +689,7 @@ export function GrandFinaleExperience({
           progress={1}
           isAnimating={false}
           tick={0}
+          elapsed={0}
           completedSteps={completedSteps}
         />
       )
@@ -677,6 +715,7 @@ export function GrandFinaleExperience({
         progress={progress}
         isAnimating={isAnimating}
         tick={tick}
+        elapsed={elapsed}
         completedSteps={completedSteps}
       />
     )
