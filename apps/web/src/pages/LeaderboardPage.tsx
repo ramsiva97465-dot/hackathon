@@ -1430,9 +1430,9 @@ export function LeaderboardPage() {
         /* ════════════════════════════════════════════════════════════════════ */
         <div className="relative z-10 flex-1 min-h-0 flex flex-col items-center w-full overflow-hidden">
 
-          {/* 📌 FIXED HEADER (Permanently pinned, never scrolls) */}
-          <div className="shrink-0 z-20 w-full backdrop-blur-md bg-[#EBE3D5]/95 border-b border-black/5 shadow-xs pt-5 pb-4">
-            <div className="max-w-6xl mx-auto px-6">
+          {/* 📌 FIXED HEADER SECTION (Title + Subtitle + Fixed Table Column Headers) */}
+          <div className="shrink-0 z-20 w-full backdrop-blur-md bg-[#EBE3D5] pt-5 pb-0 border-b border-black/5">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeRound}
@@ -1443,7 +1443,7 @@ export function LeaderboardPage() {
                   className="text-center"
                 >
                   {/* Luxury Pill Badge */}
-                  <div className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-amber-500/30 text-amber-900 mb-2.5 shadow-lg shadow-amber-900/5 ring-1 ring-amber-500/10">
+                  <div className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-amber-500/30 text-amber-900 mb-2 shadow-lg shadow-amber-900/5 ring-1 ring-amber-500/10">
                     <Trophy size={13} className="text-amber-500" />
                     <span className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-800">
                       {activeRound === 3 ? '👑 Grand Finale · Champions Podium' : activeRound === 2 ? '⚡ Stage 2 · Top 20 Shortlist' : '🎯 Stage 1 · Live Judging'}
@@ -1451,7 +1451,7 @@ export function LeaderboardPage() {
                   </div>
 
                   {/* Tamil Brand Tag with Decorative Hairline Accents */}
-                  <div className="flex items-center justify-center gap-3 mb-1.5">
+                  <div className="flex items-center justify-center gap-3 mb-1">
                     <span className="h-px w-8 bg-gradient-to-r from-transparent to-[#E83C00]/40" />
                     <h2 className="text-[#E83C00] font-black tracking-[0.28em] uppercase text-xs">
                       AI குரல் · VOICE FOR TAMIL NADU · 2026
@@ -1460,7 +1460,7 @@ export function LeaderboardPage() {
                   </div>
 
                   {/* Ultra-Premium Dual-Tone Typography Title */}
-                  <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-none mb-2">
+                  <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-none mb-2">
                     {activeRound === 3 ? (
                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1A0A02] via-[#E83C00] to-[#B45309] drop-shadow-sm">
                         Top 5 Grand Finale Winners
@@ -1470,7 +1470,7 @@ export function LeaderboardPage() {
                         <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#111111] via-[#2A241E] to-[#0A0A0A]">
                           Round 2
                         </span>
-                        <span className="text-amber-500 font-light opacity-50 text-3xl sm:text-5xl">·</span>
+                        <span className="text-amber-500 font-light opacity-50 text-2xl sm:text-4xl">·</span>
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E83C00] via-amber-600 to-[#E83C00] drop-shadow-xs font-black">
                           Top 20
                         </span>
@@ -1483,7 +1483,7 @@ export function LeaderboardPage() {
                   </h1>
 
                   {/* Refined Subtitle Pill */}
-                  <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-black/[0.03] border border-black/5 text-xs text-slate-600 font-semibold tracking-wide">
+                  <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-black/[0.03] border border-black/5 text-xs text-slate-600 font-semibold tracking-wide mb-3">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                     <span>
                       {activeRound === 3
@@ -1497,27 +1497,47 @@ export function LeaderboardPage() {
                   </div>
                 </motion.div>
               </AnimatePresence>
-            </div>
-          </div>
 
-          {/* 📜 SCROLLABLE CONTENT AREA (ONLY this area scrolls) */}
-          <div ref={scrollContainerRef} className="flex-1 min-h-0 w-full overflow-y-auto flex flex-col items-center pt-6 pb-24 px-4 sm:px-6 scrollbar-thin">
-            <div className="w-full max-w-6xl flex flex-col items-center">
-
-            {/* ROUND 1 VIEW — Live Judging Status (Scores Hidden, 0/1 -> 1/1) */}
-            {activeRound === 1 && (
-              <div className="w-full shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] rounded-[2rem]">
-                {/* Table header (Permanently pinned at top of table while rows scroll) */}
-                <div className="sticky top-0 z-20 grid grid-cols-[56px_1fr_170px_110px_110px] px-6 py-4 bg-[#1A1A1A] text-[10px] font-bold text-white/75 uppercase tracking-widest border-b border-white/10 shadow-md rounded-t-[2rem]">
+              {/* 🖤 PERMANENTLY FIXED TABLE COLUMN HEADER (ROUND 1) */}
+              {activeRound === 1 && (
+                <div className="w-full grid grid-cols-[56px_1fr_170px_110px_110px] px-6 py-3.5 bg-[#1A1A1A] text-[10px] font-bold text-white/75 uppercase tracking-widest border-b border-white/10 shadow-lg rounded-t-[2rem]">
                   <div className="text-center">#</div>
                   <div>Team</div>
                   <div>Track</div>
                   <div className="text-center">Evaluation</div>
                   <div className="text-right">Status</div>
                 </div>
+              )}
 
-                {/* All teams listed with live 0/1 -> 1/1 evaluation status */}
-                <div className="flex flex-col rounded-b-[2rem] overflow-hidden">
+              {/* 🖤 PERMANENTLY FIXED TABLE COLUMN HEADER (ROUND 2) */}
+              {activeRound === 2 && (
+                r3Teams.length > 0 ? (
+                  <div className="w-full max-w-5xl mx-auto grid grid-cols-[1fr_200px] px-8 py-3.5 bg-[#1A1A1A] text-white/75 border-b border-white/10 text-xs font-bold uppercase tracking-widest shadow-lg rounded-t-[2rem]">
+                    <div>Team</div>
+                    <div>Track</div>
+                  </div>
+                ) : (
+                  <div className="w-full max-w-5xl mx-auto grid grid-cols-[80px_1fr_200px_120px_120px_80px] px-8 py-3.5 bg-[#1A1A1A] text-white/75 border-b border-white/10 text-xs font-bold uppercase tracking-widest shadow-lg rounded-t-[2rem]">
+                    <div className="text-center">Rank</div>
+                    <div>Team Details</div>
+                    <div>Track</div>
+                    <div className="text-center">Judges</div>
+                    <div className="text-right">Score</div>
+                    <div className="text-right">Change</div>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+
+          {/* 📜 SCROLLABLE CONTENT AREA (Rows start immediately below the header and vanish underneath it cleanly) */}
+          <div ref={scrollContainerRef} className="flex-1 min-h-0 w-full overflow-y-auto flex flex-col items-center pb-24 px-4 sm:px-6 scrollbar-thin">
+            <div className="w-full max-w-6xl flex flex-col items-center">
+
+            {/* ROUND 1 VIEW — Scrollable Rows */}
+            {activeRound === 1 && (
+              <div className="w-full shadow-2xl shadow-black/10 border border-t-0 border-black/5 bg-[#F4ECE1] rounded-b-[2rem] overflow-hidden">
+                <div className="flex flex-col">
                   <AnimatePresence>
                     {filtered.map((entry, idx) => (
                       <Round1Row key={entry.teamId} entry={entry} index={idx} />
@@ -1527,44 +1547,27 @@ export function LeaderboardPage() {
               </div>
             )}
 
-            {/* ROUND 2 VIEW — full Top 20 list. No podium; winners stay sealed
-                until the admin clicks Reveal 5th / 4th / runner-up / champion. */}
+            {/* ROUND 2 VIEW — Scrollable Rows */}
             {activeRound === 2 && (
-              <div className="w-full max-w-5xl rounded-[2rem] bg-[#F4ECE1] shadow-2xl shadow-black/10 border border-black/5">
+              <div className="w-full max-w-5xl rounded-b-[2rem] bg-[#F4ECE1] shadow-2xl shadow-black/10 border border-t-0 border-black/5 overflow-hidden">
                 {r3Teams.length > 0 ? (
-                  <>
-                    <div className="sticky top-0 z-20 grid grid-cols-[1fr_200px] px-8 py-5 bg-[#EBE2D5] border-b border-black/10 text-xs font-bold text-slate-700 uppercase tracking-widest shadow-md rounded-t-[2rem]">
-                      <div>Team</div>
-                      <div>Track</div>
-                    </div>
-                    <div className="flex flex-col bg-[#F4ECE1] rounded-b-[2rem] overflow-hidden">
-                      <AnimatePresence>
-                        {[...advancing]
-                          .sort((a, b) => a.teamName.localeCompare(b.teamName))
-                          .map((entry) => (
-                            <Round2Row key={entry.teamId} entry={entry} hideStandings />
-                          ))}
-                      </AnimatePresence>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="sticky top-0 z-20 grid grid-cols-[80px_1fr_200px_120px_120px_80px] px-8 py-5 bg-[#EBE2D5] border-b border-black/10 text-xs font-bold text-slate-700 uppercase tracking-widest shadow-md rounded-t-[2rem]">
-                      <div className="text-center">Rank</div>
-                      <div>Team Details</div>
-                      <div>Track</div>
-                      <div className="text-center">Judges</div>
-                      <div className="text-right">Score</div>
-                      <div className="text-right">Change</div>
-                    </div>
-                    <div className="flex flex-col bg-[#F4ECE1] rounded-b-[2rem] overflow-hidden">
-                      <AnimatePresence>
-                        {advancing.map((entry) => (
-                          <Round2Row key={entry.teamId} entry={entry} />
+                  <div className="flex flex-col bg-[#F4ECE1]">
+                    <AnimatePresence>
+                      {[...advancing]
+                        .sort((a, b) => a.teamName.localeCompare(b.teamName))
+                        .map((entry) => (
+                          <Round2Row key={entry.teamId} entry={entry} hideStandings />
                         ))}
-                      </AnimatePresence>
-                    </div>
-                  </>
+                    </AnimatePresence>
+                  </div>
+                ) : (
+                  <div className="flex flex-col bg-[#F4ECE1]">
+                    <AnimatePresence>
+                      {advancing.map((entry) => (
+                        <Round2Row key={entry.teamId} entry={entry} />
+                      ))}
+                    </AnimatePresence>
+                  </div>
                 )}
               </div>
             )}
