@@ -1283,9 +1283,10 @@ export function LeaderboardPage() {
 
   return (
     <div className="h-screen flex flex-col relative overflow-hidden" style={{
-      backgroundColor: '#EBE3D5',
+      backgroundColor: isFinale && revealedStep > 0 ? '#070605' : '#EBE3D5',
       fontFamily: "'Space Grotesk', 'Inter', system-ui, sans-serif",
-      color: '#1A1A1A'
+      color: isFinale && revealedStep > 0 ? '#F5F5F5' : '#1A1A1A',
+      transition: 'background-color 700ms ease, color 700ms ease',
     }}>
 
       {/* ── Top Bar ── (Permanently FIXED, never scrolls) */}
@@ -1321,14 +1322,16 @@ export function LeaderboardPage() {
       {/* 🎭 DRAMATIC GRAND REVEAL CEREMONY (Round 2: 20➔1 | Round 3: 5➔1)      */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {isRevealing ? (
-        <div ref={scrollContainerRef} className={`relative flex-1 min-h-0 h-0 overflow-y-auto w-full px-4 sm:px-8 pb-10 transition-colors duration-700 ${
-          isFinale && revealedStep === 5 ? 'bg-[#050302]' : ''
+        <div ref={scrollContainerRef} className={`relative flex-1 min-h-0 h-0 overflow-y-auto w-full transition-colors duration-700 ${
+          isFinale && revealedStep > 0 ? 'bg-[#070605] px-0 pb-0' : 'px-4 sm:px-8 pb-10'
         }`}>
           
           {!rosterShown && (
-          <div className="w-full flex flex-col items-center justify-start shrink-0 min-h-full pt-4 sm:pt-6 pb-8">
+          <div className={`w-full flex flex-col items-center shrink-0 min-h-full ${
+            isFinale && revealedStep > 0 ? 'justify-center py-0' : 'justify-start pt-4 sm:pt-6 pb-8'
+          }`}>
             {/* Header */}
-            {!(isFinale && revealedStep === 5) && (
+            {!(isFinale && revealedStep > 0) && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1378,7 +1381,7 @@ export function LeaderboardPage() {
             {/* 🌟 HERO SPOTLIGHT ANNOUNCEMENT CARD — 75% width for 24x10 LED */}
             <div className={`${
               isFinale
-                ? revealedStep === 0 ? 'w-[88%] max-w-7xl' : 'w-[90%] max-w-7xl'
+                ? revealedStep === 0 ? 'w-[88%] max-w-7xl' : 'w-full'
                 : 'w-3/4'
             } mx-auto flex flex-col items-center`}>
               {isFinale && revealedStep > 0 ? (
