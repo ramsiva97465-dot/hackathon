@@ -579,10 +579,10 @@ export function PremiumRevealCard({
             {/* Subtitle Slot (Decrypting badge cross-fades into College & Track smoothly) */}
             <div className="min-h-[36px] flex items-center justify-center">
               {isDecrypting ? (
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/60 border border-amber-500/30 text-amber-300/90 text-xs font-mono tracking-[0.16em] uppercase shadow-sm">
+                <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 via-[#1A1208]/90 to-orange-500/15 backdrop-blur-md border border-amber-400/40 text-amber-200/95 text-[11px] sm:text-xs font-bold tracking-[0.18em] uppercase shadow-[0_0_20px_rgba(245,158,11,0.2)] ring-1 ring-amber-400/20">
                   <span className="relative flex h-2 w-2 shrink-0">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-80"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-gradient-to-r from-amber-300 to-orange-400 shadow-[0_0_8px_rgba(251,191,36,0.9)]"></span>
                   </span>
                   <span>VERIFYING OFFICIAL EVALUATION MARKS</span>
                 </div>
@@ -621,7 +621,7 @@ export function PremiumRevealCard({
 
           {/* ── RIGHT: Score ── */}
           <div className="flex flex-col items-center justify-center gap-2 shrink-0 w-[20%]">
-            <span className="text-xs font-bold uppercase tracking-widest text-amber-300/80 font-mono">
+            <span className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-amber-300/90">
               {isDecrypting ? 'CALCULATING' : isFinale ? 'FINAL SCORE' : 'ROUND 1 SCORE'}
             </span>
             <span
