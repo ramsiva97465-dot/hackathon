@@ -661,27 +661,59 @@ export function LeaderboardPage() {
     }
   }, [entries, isRevealing, activeRound])
 
-  // TV Mode Auto-scroll logic (scrolls ONLY the content area, Top bar & Header stay 100% fixed)
+  useEffect(() => {
+    const handleStorage = () => {
+      const val = localStorage.getItem('snapserve_tv_mode') === 'true'
+      setTvMode(val)
+    }
+    window.addEventListener('storage', handleStorage)
+    window.addEventListener('tv_mode_toggled', handleStorage)
+    return () => {
+      window.removeEventListener('storage', handleStorage)
+      window.removeEventListener('tv_mode_toggled', handleStorage)
+    }
+  }, [])
+
+  // TV Mode Auto-scroll logic (buttery smooth 60fps requestAnimationFrame with sub-pixel float accumulator)
   useEffect(() => {
     const waitingForFinale = entries.some((e) => ((e as any).round || 1) === 3)
     if (isRevealing) return
     if (!tvMode && !waitingForFinale) return
-    const scrollSpeed = 1.2
+
+    let animId: number
     let scrollingUp = false
-    const interval = setInterval(() => {
-      if (scrollingUp || !scrollContainerRef.current) return
+    let currentScroll = scrollContainerRef.current?.scrollTop || 0
+    let lastTime = performance.now()
+
+    const step = (now: number) => {
+      const dt = Math.min((now - lastTime) / 1000, 0.1)
+      lastTime = now
 
       const el = scrollContainerRef.current
-      el.scrollTop += scrollSpeed
-      
-      if ((el.clientHeight + Math.ceil(el.scrollTop)) >= el.scrollHeight - 30) {
-        scrollingUp = true
-        el.scrollTo({ top: 0, behavior: 'smooth' })
-        setTimeout(() => { scrollingUp = false }, 2500)
+      if (el && !scrollingUp) {
+        // Smooth 50 pixels per second
+        currentScroll += 50 * dt
+        el.scrollTop = Math.floor(currentScroll)
+
+        // Check if reached the bottom
+        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 15) {
+          scrollingUp = true
+          el.scrollTo({ top: 0, behavior: 'smooth' })
+          currentScroll = 0
+          setTimeout(() => {
+            scrollingUp = false
+            currentScroll = 0
+            lastTime = performance.now()
+          }, 3000)
+        }
       }
-    }, 30)
-    return () => clearInterval(interval)
-  }, [tvMode, isRevealing, entries, activeRound])
+
+      animId = requestAnimationFrame(step)
+    }
+
+    animId = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(animId)
+  }, [tvMode, isRevealing, entries.length, activeRound])
 
   const rawDisplay = entries
 
@@ -1473,7 +1505,8 @@ export function LeaderboardPage() {
           </div>
 
           {/* 📜 SCROLLABLE CONTENT AREA (ONLY this area scrolls) */}
-          <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center pt-6 pb-24 px-6 max-w-6xl mx-auto w-full scrollbar-thin">
+          <div ref={scrollContainerRef} className="flex-1 min-h-0 w-full overflow-y-auto flex flex-col items-center pt-6 pb-24 px-4 sm:px-6 scrollbar-thin">
+            <div className="w-full max-w-6xl flex flex-col items-center">
 
             {/* ROUND 1 VIEW — Live Judging Status (Scores Hidden, 0/1 -> 1/1) */}
             {activeRound === 1 && (
@@ -1622,6 +1655,7 @@ export function LeaderboardPage() {
             </div>
           )}
 
+            </div>
           </div>
         </div>
       )}
