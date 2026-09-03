@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { getTrackConfig } from '@/lib/utils'
-import { SnapServeMark } from '@/components/brand/BrandLogos'
 
 export type GrandFinaleEntry = {
   teamId: string
@@ -216,6 +215,12 @@ function Marks({ done, active }: { done: number; active: number }) {
   )
 }
 
+const SEAL_BARS = [
+  { x: 2, y: 2, fill: '#F4F4F4' },
+  { x: 11, y: 14, fill: '#A3A3A3' },
+  { x: 20, y: 26, fill: '#5C5C5C' },
+] as const
+
 function SnapSeal({
   slamming,
   progress,
@@ -225,7 +230,11 @@ function SnapSeal({
   progress: number
   elapsed: number
 }) {
-  const tension = clamp((progress - 0.10) / 0.72)
+  const barOn = (i: number) => progress >= 0.12 + i * 0.055 || progress >= 1
+  const dotOn = (i: number) => progress >= 0.30 + i * 0.028 || progress >= 1
+  const wordOn = progress >= 0.46 || progress >= 1
+  const built = progress >= 0.48 || progress >= 1
+  const tension = built ? clamp((progress - 0.48) / 0.34) : 0
   const tSec = elapsed / 1000
   const hz = 0.8 + tension * 2.8
   const phase = tSec * hz * Math.PI * 2
@@ -236,7 +245,7 @@ function SnapSeal({
   const shake = !slamming && tension > 0.42
     ? Math.sin(tSec * 42) * (tension - 0.42) * 4.2
     : 0
-  const glow = 0.12 + beat * (0.22 + tension * 0.5)
+  const glow = 0.08 + beat * (0.22 + tension * 0.5)
 
   return (
     <motion.div
@@ -248,11 +257,11 @@ function SnapSeal({
       }
       exit={{ opacity: 0, scale: 1.22, y: -14, filter: 'blur(10px)' }}
       transition={{ duration: slamming ? 0.42 : 0.55, ease: EASE }}
-      className="relative flex flex-col items-center gap-3"
+      className="relative flex flex-col items-center"
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-4 h-[4.5rem] w-[4.5rem] -translate-x-1/2 rounded-full bg-amber-300 blur-2xl"
+        className="pointer-events-none absolute left-1/2 top-5 h-[4.5rem] w-[4.5rem] -translate-x-1/2 rounded-full bg-amber-300 blur-2xl"
         style={{ opacity: glow }}
       />
       <div
@@ -260,21 +269,53 @@ function SnapSeal({
           transform: `translateX(${shake}px) scale(${scale})`,
           transformOrigin: 'center center',
         }}
+        className="flex flex-col items-center"
       >
-        <SnapServeMark
-          className="relative h-12 w-12 sm:h-16 sm:w-16 invert"
-          title="SnapServe"
-        />
+        <svg
+          viewBox="0 0 48 36"
+          className="relative h-12 w-16 sm:h-16 sm:w-[5.25rem]"
+          aria-hidden
+        >
+          {SEAL_BARS.map((bar, i) => (
+            <motion.rect
+              key={bar.fill}
+              x={bar.x}
+              y={bar.y}
+              height="8"
+              rx="4"
+              fill={bar.fill}
+              initial={{ width: 0, opacity: 0 }}
+              animate={barOn(i) ? { width: 26, opacity: 1 } : { width: 0, opacity: 0 }}
+              transition={{ duration: 0.34, ease: EASE }}
+            />
+          ))}
+        </svg>
+
+        <div className="mt-3 flex items-center justify-center gap-1.5">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <motion.span
+              key={i}
+              className="h-[5px] w-[5px] rounded-full bg-amber-200"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={dotOn(i) ? { scale: 1, opacity: 0.85 } : { scale: 0, opacity: 0 }}
+              transition={{ duration: 0.22, ease: EASE }}
+            />
+          ))}
+        </div>
+
+        <motion.span
+          className="mt-2.5 text-[10px] font-semibold uppercase tracking-[0.38em] text-white/50 sm:text-[11px]"
+          initial={{ opacity: 0, y: 6, letterSpacing: '0.55em' }}
+          animate={
+            wordOn
+              ? { opacity: 0.34 + beat * 0.42, y: 0, letterSpacing: `${0.34 + beat * 0.08}em` }
+              : { opacity: 0, y: 6 }
+          }
+          transition={{ duration: 0.4, ease: EASE }}
+        >
+          Sealed
+        </motion.span>
       </div>
-      <span
-        className="text-[10px] font-semibold uppercase text-white/45 sm:text-[11px]"
-        style={{
-          letterSpacing: `${0.34 + beat * 0.1}em`,
-          opacity: 0.32 + beat * 0.45,
-        }}
-      >
-        Sealed
-      </span>
     </motion.div>
   )
 }
