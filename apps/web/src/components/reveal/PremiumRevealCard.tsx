@@ -598,7 +598,7 @@ export function PremiumRevealCard({
             {/* Rank Number — Crisp metallic gold typography */}
             <div
               className={`font-black tracking-tighter leading-none transition-colors duration-300 ${
-                settled ? 'text-[3.25rem] xl:text-[4rem]' : 'text-[4.5rem] xl:text-[6rem]'
+                settled ? 'text-[3.25rem] xl:text-[4rem]' : 'mt-2 text-[4.5rem] xl:text-[6rem]'
               } ${
                 isDecrypting
                   ? 'text-amber-400/90 font-mono animate-pulse'
@@ -613,7 +613,9 @@ export function PremiumRevealCard({
           <div className="w-px self-stretch bg-white/10 shrink-0" />
 
           {/* ── CENTER: Team Name + College/Track ── */}
-          <div className={`flex-1 flex flex-col items-center justify-center gap-3 text-center overflow-hidden px-6 ${settled ? 'min-h-0' : 'min-h-[160px]'}`}>
+          <div className={`flex-1 flex flex-col items-center justify-center gap-3 text-center overflow-hidden px-6 ${
+            settled ? 'min-h-0' : 'min-h-[160px] translate-y-2'
+          }`}>
             {/* Team Name / Cipher (Persistent single line element, zero layout jump or popping) */}
             <div ref={nameBoxRef} className="w-full flex justify-center overflow-hidden">
               <h2
@@ -679,7 +681,7 @@ export function PremiumRevealCard({
             </span>
             <span
               className={`font-black font-mono tracking-wider leading-none ${
-                settled ? 'text-[2.5rem] xl:text-[3.5rem]' : 'text-[3.5rem] xl:text-[5rem]'
+                settled ? 'text-[2.5rem] xl:text-[3.5rem]' : 'mt-2 text-[3.5rem] xl:text-[5rem]'
               } ${isDecrypting ? 'text-amber-300/80 animate-pulse' : rankTheme.scoreTxt}`}
             >
               {isDecrypting ? rollingScore : Number(currentSpotlightTeam?.totalScore || 0).toFixed(1)}
