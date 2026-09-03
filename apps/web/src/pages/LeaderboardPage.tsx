@@ -922,7 +922,10 @@ export function LeaderboardPage() {
     if (isDecrypting || revealedStep < maxSteps) return
 
     const timer = setTimeout(() => {
-      if (rosterRef.current) {
+      if (rosterRef.current && scrollContainerRef.current) {
+        const topOffset = Math.max(0, rosterRef.current.offsetTop - 20)
+        scrollContainerRef.current.scrollTo({ top: topOffset, behavior: 'smooth' })
+      } else if (rosterRef.current) {
         rosterRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
     }, 20000) // 20 seconds gap after reveal completion
@@ -986,7 +989,7 @@ export function LeaderboardPage() {
       {/* 🎭 DRAMATIC GRAND REVEAL CEREMONY (Round 2: 20➔1 | Round 3: 5➔1)      */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {isRevealing ? (
-        <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-y-auto w-full flex flex-col items-center px-4 sm:px-8">
+        <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-y-auto w-full flex flex-col items-center px-4 sm:px-8 pb-32 scroll-smooth">
           
           {/* 🌟 HERO SPOTLIGHT (Sleek, elevated vertical alignment for 24x10 LED) */}
           <div className="w-full flex flex-col items-center justify-start pt-2 sm:pt-4 pb-6">
@@ -1240,7 +1243,7 @@ export function LeaderboardPage() {
             ) : null
           ) : (revealedStep >= 20 || unlockedRanks.length >= 20) ? (
             /* ROUND 2: TOP 20 QUALIFIERS TABLE — mounts ONLY after all 20 teams are announced */
-            <div ref={rosterRef} className="w-full max-w-5xl rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] mt-32 pb-32">
+            <div ref={rosterRef} className="w-full max-w-5xl rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] mt-8 mb-24">
               {/* Header with Title & Status Counter */}
               <div className="flex items-center justify-between px-6 py-4 bg-[#F4ECE1] border-b border-black/10">
                 <div className="flex items-center gap-3">
