@@ -337,14 +337,14 @@ export function PremiumRevealCard({
 
   const rankTheme = isChampion
     ? {
-        badge: 'bg-gradient-to-r from-amber-600 via-[#E83C00] to-amber-600 text-white border border-amber-300/60 ring-2 ring-amber-400/40 shadow-lg shadow-amber-900/40',
+        badge: 'bg-gradient-to-r from-orange-600 via-[#E83C00] to-orange-600 text-white border border-orange-400/60 ring-2 ring-orange-500/40 shadow-lg shadow-orange-900/40',
         rankText:
-          'text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-300 to-orange-400 drop-shadow-[0_0_60px_rgba(251,191,36,0.9)]',
-        cardBorder: 'border-[#E83C00] ring-4 ring-amber-400/70',
+          'text-transparent bg-clip-text bg-gradient-to-r from-white via-orange-100 to-amber-300 drop-shadow-[0_0_50px_rgba(232,60,0,0.8)]',
+        cardBorder: 'border-[#E83C00] ring-4 ring-orange-500/50',
         cardBg: 'bg-gradient-to-b from-[#2E1205] via-[#1A0A02] to-[#0D0501]',
-        glow: 'bg-gradient-to-r from-amber-500/50 via-[#E83C00]/60 to-amber-500/50',
-        scoreTxt: 'text-amber-300',
-        nameColor: 'text-amber-100',
+        glow: 'bg-gradient-to-r from-orange-500/40 via-[#E83C00]/50 to-orange-500/40',
+        scoreTxt: 'text-orange-200',
+        nameColor: 'text-white',
         cardShadow: 'shadow-[0_0_100px_rgba(232,60,0,0.6)]',
       }
     : activeRank === 2
@@ -361,11 +361,11 @@ export function PremiumRevealCard({
     : activeRank === 3
     ? {
         badge: 'bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 text-amber-200 border border-amber-600/50 ring-1 ring-amber-500/20 shadow-md',
-        rankText: 'text-amber-300 drop-shadow-[0_0_40px_rgba(245,158,11,0.6)]',
+        rankText: 'text-orange-200 drop-shadow-[0_0_40px_rgba(232,60,0,0.6)]',
         cardBorder: 'border-amber-700/60',
         cardBg: 'bg-gradient-to-b from-[#1F1508] via-[#110D05] to-[#080601]',
-        glow: 'bg-gradient-to-r from-amber-700/30 via-amber-400/25 to-amber-700/30',
-        scoreTxt: 'text-amber-300',
+        glow: 'bg-gradient-to-r from-amber-700/30 via-orange-500/25 to-amber-700/30',
+        scoreTxt: 'text-orange-200',
         nameColor: 'text-amber-100',
         cardShadow: 'shadow-[0_30px_80px_rgba(0,0,0,0.9)]',
       }
@@ -480,7 +480,7 @@ export function PremiumRevealCard({
           {/* ── CENTER: Team Name + College/Track ── */}
           <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center overflow-hidden px-6 min-h-[160px]">
             {/* Team Name / Cipher (Persistent single line element, zero layout jump or popping) */}
-            <h2 className="font-mono text-3xl xl:text-5xl font-black tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.9)] select-none whitespace-nowrap overflow-hidden max-w-full leading-tight">
+            <h2 className="font-mono text-3xl xl:text-5xl font-black tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-white via-orange-100 to-amber-200 drop-shadow-[0_0_30px_rgba(232,60,0,0.6)] select-none whitespace-nowrap overflow-hidden max-w-full leading-tight">
               {isDecrypting
                 ? (scrambleDisplay || 'IDENTIFYING...')
                 : (currentSpotlightTeam?.teamName || targetName).toUpperCase()

@@ -994,12 +994,8 @@ export function LeaderboardPage() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center mb-3 sm:mb-4"
             >
-              <div className={`inline-flex items-center gap-2 px-4 py-1 rounded-full mb-1.5 shadow-xl ${
-                isFinale 
-                  ? 'bg-amber-950/90 border border-amber-500/50 text-amber-300 shadow-amber-900/30' 
-                  : 'bg-white/90 border border-amber-500/30 text-amber-950 shadow-amber-900/5 ring-1 ring-amber-500/10 backdrop-blur-md'
-              }`}>
-                {isFinale ? <Crown size={13} className="text-amber-400 fill-amber-400/40" /> : <Trophy size={13} className="text-amber-500" />}
+              <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full mb-1.5 shadow-xl bg-white/90 border border-amber-500/30 text-amber-950 shadow-amber-900/5 ring-1 ring-amber-500/10 backdrop-blur-md">
+                {isFinale ? <Crown size={13} className="text-amber-500 fill-amber-500/40" /> : <Trophy size={13} className="text-amber-500" />}
                 <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.16em]">
                   {isFinale ? '👑 Grand Finale · Champions Coronation' : '⚡ Stage 1 Qualifiers · Live Ceremony'}
                 </span>
@@ -1013,8 +1009,13 @@ export function LeaderboardPage() {
               </div>
               <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight">
                 {isFinale ? (
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-300 to-orange-400 drop-shadow-md">
-                    Top 5 Grand Finale Winners
+                  <span className="inline-flex items-center gap-3 flex-wrap justify-center">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E83C00] via-amber-600 to-[#E83C00] drop-shadow-xs">
+                      Top 5
+                    </span>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#111111] via-[#2A241E] to-[#0A0A0A]">
+                      Grand Finale Winners
+                    </span>
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-3 flex-wrap justify-center">
