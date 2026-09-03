@@ -1,8 +1,8 @@
-﻿import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { SnapServeMark, VobizLockup } from '@/components/brand/BrandLogos'
-import { BRAND, RevealSpotlightCard } from '@/components/reveal/RevealSpotlightCard'
+import { PremiumRevealCard } from '@/components/reveal/PremiumRevealCard'
 import { Avatar } from '@/components/ui/Avatar'
 import { getTrackConfig } from '@/lib/utils'
 import { useWebSocket } from '@/hooks/useWebSocket'
@@ -1005,74 +1005,17 @@ export function LeaderboardPage() {
 
           {/* 🌟 HERO SPOTLIGHT ANNOUNCEMENT CARD */}
           <div className="w-full max-w-3xl mb-10">
-            <AnimatePresence mode="wait">
-              {revealedStep === 0 && !isDecrypting ? (
-                <motion.div
-                  key="ready-state"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="p-8 sm:p-10 rounded-[2.5rem] text-center relative overflow-hidden border-2"
-                  style={{
-                    background: isFinale
-                      ? `linear-gradient(180deg, #1C1917 0%, ${BRAND.inkDeep} 100%)`
-                      : `linear-gradient(180deg, ${BRAND.creamLit} 0%, ${BRAND.cream} 55%, ${BRAND.creamDeep} 100%)`,
-                    borderColor: isFinale ? 'rgba(255,122,26,0.35)' : 'rgba(26,26,26,0.10)',
-                    boxShadow: '0 28px 70px -32px rgba(0,0,0,0.45)',
-                  }}
-                >
-                  <div
-                    className="pointer-events-none absolute inset-x-0 top-0 h-1"
-                    style={{ background: `linear-gradient(90deg, transparent, ${BRAND.orangeLit}, ${BRAND.orange}, transparent)` }}
-                    aria-hidden
-                  />
-                  <div
-                    className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-4 relative border"
-                    style={{
-                      backgroundColor: 'rgba(232,60,0,0.10)',
-                      borderColor: 'rgba(232,60,0,0.25)',
-                      color: BRAND.orange,
-                    }}
-                  >
-                    {isFinale ? (
-                      <>
-                        <Crown size={40} className="animate-bounce" style={{ color: BRAND.orangeLit }} />
-                        <div className="absolute inset-0 rounded-3xl border animate-ping opacity-30" style={{ borderColor: BRAND.orangeLit }} />
-                      </>
-                    ) : (
-                      <Trophy size={38} />
-                    )}
-                  </div>
-                  <h3
-                    className="font-display text-2xl sm:text-3xl font-black tracking-[-0.03em] mb-2"
-                    style={{ color: isFinale ? '#FFFFFF' : BRAND.ink }}
-                  >
-                    {isFinale ? 'Grand Finale Verdict Sealed' : 'Round 1 Graded & Verified'}
-                  </h3>
-                  <p
-                    className="max-w-lg mx-auto text-sm sm:text-base font-medium"
-                    style={{ color: isFinale ? 'rgba(244,236,225,0.62)' : '#7A756E' }}
-                  >
-                    {isFinale
-                      ? 'Waiting for the admin to unseal 5th Place. Each place opens only when its controller button is pressed.'
-                      : 'Waiting for the admin to start the Top 20 announcement from the rounds console.'}
-                  </p>
-                </motion.div>
-              ) : currentSpotlightTeam ? (
-
-                <RevealSpotlightCard
-                  key={`spotlight-${currentSpotlightRank}-${currentSpotlightTeam.teamId}`}
-                  team={currentSpotlightTeam}
-                  rank={currentSpotlightRank}
-                  isFinale={isFinale}
-                  isDecrypting={isDecrypting}
-                  revealingTeamName={revealingTeamName}
-                  nameSpinMs={nameSpinMs}
-                  revealedStep={revealedStep}
-                  maxSteps={maxSteps}
-                />
-              ) : null}
-            </AnimatePresence>
+            <PremiumRevealCard
+              isFinale={isFinale}
+              currentSpotlightRank={currentSpotlightRank}
+              currentSpotlightTeam={currentSpotlightTeam}
+              revealedStep={revealedStep}
+              maxSteps={maxSteps}
+              isDecrypting={isDecrypting}
+              decryptingRank={decryptingRank}
+              revealingTeamName={revealingTeamName}
+              nameSpinMs={nameSpinMs}
+            />
           </div>
 
           {/* ══════════════════════════════════════════════════════════════════ */}
@@ -1265,8 +1208,8 @@ export function LeaderboardPage() {
               </div>
             </div>
             ) : null
-          ) : !isDecrypting ? (
-            /* ROUND 2: TOP 20 QUALIFIERS TABLE — hidden during the countdown card */
+          ) : !isDecrypting && unlockedRanks.length > 0 ? (
+            /* ROUND 2: TOP 20 QUALIFIERS TABLE — hidden before any team is announced */
             <div ref={rosterRef} className="w-full max-w-5xl rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1]">
               {/* Header with Title & Status Counter */}
               <div className="flex items-center justify-between px-6 py-4 bg-[#F4ECE1] border-b border-black/10">
