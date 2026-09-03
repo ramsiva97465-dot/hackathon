@@ -473,32 +473,28 @@ export function PremiumRevealCard({
 
           {/* ── CENTER: Team Name + College/Track ── */}
           <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center overflow-hidden px-6 min-h-[160px]">
-            {isDecrypting ? (
-              <div key="cipher-block" className="flex flex-col items-center justify-center gap-3 w-full">
-                {/* Cipher: nowrap keeps it on 1 line, text scales to fit */}
-                <span className="font-mono text-3xl xl:text-5xl font-black tracking-[0.15em] text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.9)] select-none whitespace-nowrap overflow-hidden max-w-full">
-                  {scrambleDisplay || 'IDENTIFYING...'}
-                </span>
+            {/* Team Name / Cipher (Persistent single line element, zero layout jump or popping) */}
+            <h2 className="font-mono text-3xl xl:text-5xl font-black tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.9)] select-none whitespace-nowrap overflow-hidden max-w-full leading-tight">
+              {isDecrypting
+                ? (scrambleDisplay || 'IDENTIFYING...')
+                : (currentSpotlightTeam?.teamName || targetName).toUpperCase()
+              }
+            </h2>
+
+            {/* Subtitle Slot (Decrypting badge cross-fades into College & Track smoothly) */}
+            <div className="min-h-[36px] flex items-center justify-center">
+              {isDecrypting ? (
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-white/5 border border-white/10 text-amber-300/80 text-xs sm:text-sm font-mono tracking-wider">
                   <Lock size={12} className="text-amber-400 animate-spin shrink-0" />
                   <span>⚡ DECRYPTING VERIFIED SUBMISSION MARKS ⚡</span>
                 </div>
-              </div>
-            ) : (
-              <motion.div
-                key="revealed-block"
-                initial={{ opacity: 0, scale: 0.97 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.35, ease: 'easeOut' }}
-                className="flex flex-col items-center justify-center gap-3 w-full"
-              >
-                <h2
-                  className="font-mono text-4xl xl:text-6xl font-black tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.85)] leading-tight w-full"
-                  style={{ wordBreak: 'break-word' }}
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, ease: 'easeOut' }}
+                  className="flex items-center justify-center gap-3 flex-wrap text-lg xl:text-xl font-medium text-slate-300"
                 >
-                  {(currentSpotlightTeam?.teamName || targetName).toUpperCase()}
-                </h2>
-                <div className="flex items-center justify-center gap-3 flex-wrap text-lg xl:text-xl font-medium text-slate-300">
                   <span className="font-semibold text-white/90">
                     {currentSpotlightTeam?.college || 'Tamil Nadu'}
                   </span>
@@ -517,9 +513,9 @@ export function PremiumRevealCard({
                       </span>
                     </>
                   )}
-                </div>
-              </motion.div>
-            )}
+                </motion.div>
+              )}
+            </div>
           </div>
 
           {/* ── DIVIDER ── */}
