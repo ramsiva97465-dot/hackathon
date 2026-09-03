@@ -914,7 +914,7 @@ export function LeaderboardPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [isDecrypting])
 
-  // ONLY AFTER all 20 reveals are fully completed (or all 5 for Finale), wait 10 seconds, then smoothly scroll down to show the full Top 20 table
+  // ONLY AFTER all 20 reveals are fully completed (or all 5 for Finale), wait 20 seconds, then smoothly scroll down to show the full Top 20 table
   useEffect(() => {
     if (!isRevealing) return
 
@@ -922,8 +922,10 @@ export function LeaderboardPage() {
     if (isDecrypting || revealedStep < maxSteps) return
 
     const timer = setTimeout(() => {
-      rosterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 10000)
+      if (rosterRef.current) {
+        rosterRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 20000) // 20 seconds gap after reveal completion
 
     return () => clearTimeout(timer)
   }, [isRevealing, revealedStep, isFinale, isDecrypting])
