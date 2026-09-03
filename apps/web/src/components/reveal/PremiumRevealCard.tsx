@@ -85,27 +85,9 @@ const READY_PARTICLES = [
   ['86%', '24%', 18, 0.7], ['93%', '61%', -20, 1.6],
 ] as const
 
-const PODIUM_LEAVES = [
-  [23, 72, -52], [17, 61, -62], [15, 49, -72], [18, 37, -82], [24, 27, -62],
-] as const
-
-function PodiumLaurel() {
-  return (
-    <svg viewBox="0 0 100 100" className="pointer-events-none absolute -inset-x-5 -top-3 h-24 w-[calc(100%+2.5rem)] text-amber-400/55" aria-hidden="true">
-      <path d="M40 91C18 81 8 56 18 29M60 91c22-10 32-35 22-62" fill="none" stroke="currentColor" strokeWidth="1.7" />
-      {PODIUM_LEAVES.map(([cx, cy, angle]) => (
-        <g key={`${cx}-${cy}`}>
-          <ellipse cx={cx} cy={cy} rx="3.2" ry="7" transform={`rotate(${angle} ${cx} ${cy})`} fill="currentColor" />
-          <ellipse cx={100 - cx} cy={cy} rx="3.2" ry="7" transform={`rotate(${-angle} ${100 - cx} ${cy})`} fill="currentColor" />
-        </g>
-      ))}
-    </svg>
-  )
-}
-
 function FinaleReadyPodiums() {
   return (
-    <div className="mt-6 w-full max-w-4xl">
+    <div className="mt-6 w-full max-w-5xl">
       <div className="mb-4 flex items-center justify-center gap-5">
         <span className="h-px flex-1 bg-gradient-to-r from-transparent to-amber-400/30" />
         <span className="font-mono text-[10px] font-black uppercase tracking-[0.35em] text-amber-300/85">
@@ -117,36 +99,27 @@ function FinaleReadyPodiums() {
         {[1, 2, 3, 4, 5].map((place, index) => (
           <motion.div
             key={place}
-            className="flex flex-col items-center pb-1"
+            className="flex min-w-0 flex-col items-center"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.08 * index }}
           >
-            <span className="mb-2 font-mono text-[10px] font-black text-amber-200/90 drop-shadow-[0_0_8px_rgba(251,191,36,0.45)]">{place}</span>
-            <div className="relative flex h-14 w-14 items-center justify-center rounded-full border border-amber-400/45 bg-gradient-to-b from-[#2A1906] via-[#120B03] to-black sm:h-20 sm:w-20">
-              <PodiumLaurel />
-              <motion.div
-                className="absolute inset-1 rounded-full border border-amber-300/20"
-                animate={{ boxShadow: ['0 0 8px rgba(245,158,11,0.12)', '0 0 22px rgba(245,158,11,0.34)', '0 0 8px rgba(245,158,11,0.12)'] }}
-                transition={{ duration: 2.8, repeat: Infinity, delay: index * 0.25 }}
+            <span className="mb-1 font-mono text-[10px] font-black text-amber-200/90 drop-shadow-[0_0_8px_rgba(251,191,36,0.45)]">{place}</span>
+            <div className="relative aspect-[640/583] w-full">
+              <motion.img
+                src="/images/finale-podium.webp"
+                alt=""
+                className="absolute inset-0 h-full w-full object-contain mix-blend-screen"
+                animate={{ filter: ['brightness(0.82)', 'brightness(1.12)', 'brightness(0.82)'] }}
+                transition={{ duration: 3, repeat: Infinity, delay: index * 0.22, ease: 'easeInOut' }}
               />
               <motion.span
-                className="relative z-10 font-mono text-2xl font-black text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.55)] sm:text-3xl"
+                className="absolute left-1/2 top-[43%] z-10 -translate-x-1/2 -translate-y-1/2 font-serif text-2xl font-black text-amber-200 drop-shadow-[0_0_12px_rgba(251,191,36,0.8)] sm:text-4xl"
                 animate={place <= 2 ? { opacity: [0.55, 1, 0.55] } : undefined}
                 transition={place <= 2 ? { duration: 2.2, repeat: Infinity, delay: index * 0.25 } : undefined}
               >
                 {place <= 2 ? '?' : place}
               </motion.span>
-            </div>
-            <div className="relative -mt-1 flex flex-col items-center">
-              <motion.div
-                className="absolute -top-6 h-7 w-1/2 bg-gradient-to-t from-amber-300/50 to-transparent blur-sm"
-                animate={{ opacity: [0.35, 0.9, 0.35] }}
-                transition={{ duration: 2.6, repeat: Infinity, delay: index * 0.2 }}
-              />
-              <div className="h-2 w-16 rounded-[50%] border border-amber-300/45 bg-gradient-to-r from-amber-950 via-amber-500/40 to-amber-950 shadow-[0_0_18px_rgba(245,158,11,0.45)] sm:w-24" />
-              <div className="-mt-0.5 h-2.5 w-20 rounded-[50%] border border-amber-500/30 bg-gradient-to-b from-amber-900/70 to-black sm:w-28" />
-              <div className="-mt-1 h-2.5 w-24 rounded-[50%] border border-amber-600/25 bg-black shadow-[0_5px_14px_rgba(0,0,0,0.8)] sm:w-32" />
             </div>
           </motion.div>
         ))}
