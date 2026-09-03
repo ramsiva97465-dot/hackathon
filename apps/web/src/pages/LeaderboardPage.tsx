@@ -996,32 +996,32 @@ export function LeaderboardPage() {
       {isRevealing ? (
         <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-y-auto w-full flex flex-col items-center px-4 sm:px-8">
           
-          {/* 🌟 FULL-VIEWPORT HERO SPOTLIGHT (keeps table below the fold) */}
-          <div className="min-h-[calc(100vh-70px)] w-full flex flex-col items-center justify-center py-4">
+          {/* 🌟 HERO SPOTLIGHT (Sleek, elevated vertical alignment for 24x10 LED) */}
+          <div className="w-full flex flex-col items-center justify-start pt-2 sm:pt-4 pb-6">
             {/* Header */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-center mb-6"
+              className="text-center mb-3 sm:mb-4"
             >
-              <div className={`inline-flex items-center gap-2 px-5 py-1.5 rounded-full mb-2.5 shadow-xl ${
+              <div className={`inline-flex items-center gap-2 px-4 py-1 rounded-full mb-1.5 shadow-xl ${
                 isFinale 
                   ? 'bg-amber-950/90 border border-amber-500/50 text-amber-300 shadow-amber-900/30' 
                   : 'bg-white/90 border border-amber-500/30 text-amber-950 shadow-amber-900/5 ring-1 ring-amber-500/10 backdrop-blur-md'
               }`}>
-                {isFinale ? <Crown size={14} className="text-amber-400 fill-amber-400/40" /> : <Trophy size={14} className="text-amber-500" />}
-                <span className="text-[11px] font-black uppercase tracking-[0.16em]">
+                {isFinale ? <Crown size={13} className="text-amber-400 fill-amber-400/40" /> : <Trophy size={13} className="text-amber-500" />}
+                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.16em]">
                   {isFinale ? '👑 Grand Finale · Champions Coronation' : '⚡ Stage 1 Qualifiers · Live Ceremony'}
                 </span>
               </div>
-              <div className="flex items-center justify-center gap-3 mb-1.5">
+              <div className="flex items-center justify-center gap-3 mb-1">
                 <span className="h-px w-8 bg-gradient-to-r from-transparent to-[#E83C00]/40" />
                 <h2 className="text-[#E83C00] font-black tracking-[0.28em] uppercase text-xs">
                   AI குரல் · VOICE FOR TAMIL NADU · 2026
                 </h2>
                 <span className="h-px w-8 bg-gradient-to-l from-transparent to-[#E83C00]/40" />
               </div>
-              <h1 className="text-5xl sm:text-7xl font-black tracking-tight leading-none">
+              <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight">
                 {isFinale ? (
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-300 to-orange-400 drop-shadow-md">
                     Top 5 Grand Finale Winners
