@@ -946,10 +946,13 @@ export function LeaderboardPage() {
   const jumpToTop20Table = () => {
     hasAutoScrolledRef.current = true
     setRosterShown(true)
-    ;[0, 50, 200, 500, 1000, 2000].forEach((ms) => {
-      window.setTimeout(() => scrollRosterIntoView(), ms)
-    })
   }
+
+  useEffect(() => {
+    if (!rosterShown) return
+    const ids = [50, 150, 400, 800].map((ms) => window.setTimeout(() => scrollRosterIntoView(), ms))
+    return () => ids.forEach((id) => clearTimeout(id))
+  }, [rosterShown])
 
   // When a new countdown/decrypt starts, immediately scroll the hero card back to top
   useEffect(() => {
@@ -1025,6 +1028,16 @@ export function LeaderboardPage() {
       el.scrollTo({ top, behavior: 'smooth' })
     }
 
+    const lastTeamVisible = (el: HTMLDivElement) => {
+      const lastRow = rowRefs.current[20] || rowRefs.current[19]
+      if (!lastRow) {
+        return el.scrollTop + el.clientHeight >= el.scrollHeight - 12
+      }
+      const cRect = el.getBoundingClientRect()
+      const rRect = lastRow.getBoundingClientRect()
+      return rRect.bottom <= cRect.bottom - 4
+    }
+
     const step = (now: number) => {
       const el = scrollContainerRef.current
       if (!el) {
@@ -1032,7 +1045,7 @@ export function LeaderboardPage() {
         return
       }
 
-      if (Date.now() - startAt < 1800) {
+      if (Date.now() - startAt < 900) {
         lastTime = now
         animId = requestAnimationFrame(step)
         return
@@ -1043,15 +1056,15 @@ export function LeaderboardPage() {
         lastTime = now
         el.scrollTop += SPEED_PX_PER_SEC * dt
 
-        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 12) {
+        if (lastTeamVisible(el)) {
           looping = true
           later(() => {
             scrollToFirstTeam()
             later(() => {
               looping = false
               lastTime = performance.now()
-            }, 2200)
-          }, 2500)
+            }, 1800)
+          }, 2000)
         }
       }
 
@@ -1243,10 +1256,14 @@ export function LeaderboardPage() {
       {/* 🎭 DRAMATIC GRAND REVEAL CEREMONY (Round 2: 20➔1 | Round 3: 5➔1)      */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {isRevealing ? (
-        <div ref={scrollContainerRef} className="relative flex-1 min-h-0 overflow-y-auto w-full px-4 sm:px-8 pb-32 scroll-smooth">
+        <div ref={scrollContainerRef} className="relative flex-1 min-h-0 overflow-y-auto w-full px-4 sm:px-8 pb-10">
           
           {/* 🌟 HERO SPOTLIGHT (Sleek, elevated vertical alignment for 24x10 LED) */}
-          <div className={`w-full flex flex-col items-center justify-start shrink-0 ${ceremonySettled ? 'pt-1 pb-3' : 'pt-2 sm:pt-4 pb-6'}`}>
+          <div className={`w-full flex flex-col items-center justify-start shrink-0 overflow-hidden ${
+            rosterShown
+              ? (ceremonySettled ? 'pt-1 pb-3' : 'pt-2 sm:pt-4 pb-6')
+              : 'min-h-full pt-2 sm:pt-4 pb-6'
+          }`}>
             {/* Header */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -1313,8 +1330,7 @@ export function LeaderboardPage() {
           {/* ══════════════════════════════════════════════════════════════════ */}
           {/* BOTTOM VIEW: Top 20 Table (for Round 2) OR 3D Podium (for Round 3) */}
           {/* ══════════════════════════════════════════════════════════════════ */}
-          {isFinale ? (
-            !isDecrypting ? (
+          {isFinale && !isDecrypting && (
             /* ROUND 3: WINNERS PODIUM — hidden during the countdown card */
             <div ref={rosterRef} className="w-full max-w-5xl mx-auto flex flex-col items-center mt-32 pb-32 shrink-0">
               <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/5 text-slate-700 mb-6 shadow-sm">
@@ -1499,10 +1515,10 @@ export function LeaderboardPage() {
                 })}
               </div>
             </div>
-            ) : null
-          ) : (
-            /* ROUND 2: TOP 20 QUALIFIERS TABLE */
-            <div ref={rosterRef} className={`w-full max-w-6xl mx-auto rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] mb-32 shrink-0 ${ceremonySettled ? 'mt-4' : 'mt-8'}`}>
+          )}
+          {!isFinale && rosterShown && (
+            /* ROUND 2: TOP 20 QUALIFIERS TABLE — hidden until #1 has been held 15s */
+            <div ref={rosterRef} className={`w-full max-w-6xl mx-auto rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] mb-10 shrink-0 ${ceremonySettled ? 'mt-4' : 'mt-8'}`}>
               {/* Header with Title & Status Counter */}
               <div className="flex items-center justify-between px-6 py-4 bg-[#F4ECE1] border-b border-black/10">
                 <div className="flex items-center gap-3">
