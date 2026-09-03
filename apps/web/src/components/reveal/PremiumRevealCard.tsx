@@ -589,7 +589,7 @@ export function PremiumRevealCard({
 
             {/* Heading */}
             <h3 className="text-3xl sm:text-4xl font-black mb-2.5 text-white tracking-tight">
-              {isFinale ? '👑 The Champions Await' : 'Round 1 Graded & Verified'}
+              {isFinale ? 'The Champions Await' : 'Round 1 Graded & Verified'}
             </h3>
             <p className="max-w-xl mx-auto text-xs sm:text-sm font-medium text-slate-300 leading-relaxed">
               {isFinale
