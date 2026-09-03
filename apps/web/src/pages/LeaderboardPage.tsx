@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { SnapServeMark, VobizLockup } from '@/components/brand/BrandLogos'
+import { WinnerLetterReels } from '@/components/reveal/WinnerLetterReels'
 import { Avatar } from '@/components/ui/Avatar'
 import { getTrackConfig } from '@/lib/utils'
 import { useWebSocket } from '@/hooks/useWebSocket'
@@ -423,6 +424,7 @@ export function LeaderboardPage() {
   const [countdownNum, setCountdownNum] = useState<number | null>(null)
   const [scrambledName, setScrambledName] = useState<string>('')
   const [decryptingRank, setDecryptingRank] = useState<number | null>(null)
+  const [revealingTeamName, setRevealingTeamName] = useState('')
   const [unlockedRanks, setUnlockedRanks] = useState<number[]>([])
   const unlockedRanksRef = useRef<number[]>([])
   const rosterRef = useRef<HTMLDivElement>(null)
@@ -775,6 +777,7 @@ export function LeaderboardPage() {
     setIsDecrypting(false)
     setCountdownNum(null)
     setUnlockedRanks([])
+    setRevealingTeamName('')
   }
 
   const executeRevealToStep = (
@@ -848,6 +851,7 @@ export function LeaderboardPage() {
       isDecryptingRef.current = true
       setIsDecrypting(true)
       setDecryptingRank(currentRank)
+      setRevealingTeamName(top5Ref.current[currentRank - 1]?.teamName || '')
 
       const candidateNames = filtered.map(t => t.teamName)
       let scrambleIdx = 0
@@ -936,6 +940,7 @@ export function LeaderboardPage() {
       isDecryptingRef.current = true
       setIsDecrypting(true)
       setDecryptingRank(currentRank)
+      setRevealingTeamName(advancingRef.current[currentRank - 1]?.teamName || '')
 
       const candidateNames = (advancingRef.current.length > 0 ? advancingRef.current : filtered).map(t => t.teamName)
       let scrambleIdx = 0
@@ -1165,16 +1170,9 @@ export function LeaderboardPage() {
                     </motion.div>
                   </div>
 
-                  {/* Slot Machine Scrambled Name Roll */}
-                  <div className="h-16 flex items-center justify-center">
-                    <motion.div
-                      key={scrambledName}
-                      initial={{ opacity: 0.4, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-2xl sm:text-4xl font-mono font-black text-amber-200/90 tracking-wider truncate px-4"
-                    >
-                      {scrambledName || 'IDENTIFYING WINNER...'}
-                    </motion.div>
+                  {/* Slot reels built from the admin-selected team name */}
+                  <div className="min-h-16 flex items-center justify-center py-2">
+                    <WinnerLetterReels name={revealingTeamName} spinning={isDecrypting} />
                   </div>
 
                   {/* Decryption Progress Bar */}
