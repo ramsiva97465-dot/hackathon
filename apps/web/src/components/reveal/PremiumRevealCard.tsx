@@ -426,10 +426,10 @@ export function PremiumRevealCard({
         <div className="flex items-center gap-6 w-full min-h-[260px]">
 
           {/* ── LEFT: Badge + Rank ── */}
-          <div className="flex flex-col items-center justify-center gap-2 shrink-0 w-[20%]">
+          <div className="flex flex-col items-center justify-center gap-2 shrink-0 min-w-[160px] px-2">
             {/* Badge */}
             <div
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-[0.14em] shadow-lg max-w-full ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-[0.14em] shadow-lg ${
                 isDecrypting
                   ? 'bg-gradient-to-r from-amber-950/90 via-[#1A0E05] to-amber-950/90 border border-amber-500/50 text-amber-300 ring-1 ring-amber-500/30'
                   : rankTheme.badge
@@ -441,36 +441,36 @@ export function PremiumRevealCard({
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
                 </span>
               ) : isChampion ? (
-                <Crown size={12} className="text-amber-200 fill-amber-200 animate-bounce shrink-0" />
+                <Crown size={13} className="text-amber-200 fill-amber-200 shrink-0" />
               ) : activeRank === 2 ? (
-                <Medal size={12} className="text-slate-200 shrink-0" />
+                <Medal size={13} className="text-slate-200 shrink-0" />
               ) : activeRank === 3 ? (
-                <Award size={12} className="text-amber-200 shrink-0" />
+                <Award size={13} className="text-amber-200 shrink-0" />
               ) : (
-                <ShieldCheck size={12} className="text-amber-400 shrink-0" />
+                <ShieldCheck size={13} className="text-amber-400 shrink-0" />
               )}
-              <span className="truncate font-mono">
+              <span className="whitespace-nowrap font-mono">
                 {isDecrypting
                   ? `UNSEALING #${activeRank}`
                   : isChampion
-                  ? (isFinale ? '👑 1st Place Champion' : '👑 #1 Qualifier')
+                  ? (isFinale ? '1ST PLACE' : '#1 SEED')
                   : activeRank === 2
-                  ? (isFinale ? '🥈 2nd Place Finalist' : '🥈 #2 Qualifier')
+                  ? (isFinale ? '2ND PLACE' : '#2 SEED')
                   : activeRank === 3
-                  ? (isFinale ? '🥉 3rd Place Finalist' : '🥉 #3 Qualifier')
-                  : 'Top 20 Qualifier'}
+                  ? (isFinale ? '3RD PLACE' : '#3 SEED')
+                  : 'QUALIFIED'}
               </span>
             </div>
 
-            {/* Rank Number — sized to fit column */}
+            {/* Rank Number — Crisp metallic gold typography */}
             <div
-              className={`font-black tracking-tighter leading-none text-[4rem] xl:text-[5.5rem] transition-colors duration-300 ${
+              className={`font-black tracking-tighter leading-none text-[4.5rem] xl:text-[6rem] transition-colors duration-300 ${
                 isDecrypting
                   ? 'text-amber-400/90 font-mono animate-pulse'
                   : rankTheme.rankText
               }`}
             >
-              {isFinale && activeRank === 1 ? '👑' : `#${activeRank}`}
+              #{activeRank}
             </div>
           </div>
 
