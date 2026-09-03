@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { SnapServeMark, VobizLockup } from '@/components/brand/BrandLogos'
@@ -915,34 +915,30 @@ export function LeaderboardPage() {
   }, [isDecrypting])
 
   // ONLY AFTER all 20 reveals are fully completed (or all 5 for Finale), hold the #1 card
-  // for 7 seconds, then smoothly scroll down to show the full Top 20 table
+  // for 20 seconds, then smoothly scroll down to show the full Top 20 table
   useEffect(() => {
     if (!isRevealing) return
 
-    if (isDecrypting || revealedStep < maxSteps) return
+    const isAllAnnounced = isFinale
+      ? revealedStep >= FINALE_CUTOFF
+      : (revealedStep >= 20 || unlockedRanks.length >= 20)
+
+    if (isDecrypting || !isAllAnnounced) return
 
     const timer = setTimeout(() => {
       const roster = rosterRef.current
       const container = scrollContainerRef.current
       if (!roster) return
-      if (!container) {
-        roster.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        return
+
+      if (container) {
+        const gap = roster.getBoundingClientRect().top - container.getBoundingClientRect().top
+        container.scrollTo({ top: Math.max(0, container.scrollTop + gap - 16), behavior: 'smooth' })
       }
-
-      // offsetTop resolves against the page root (the nearest positioned ancestor),
-      // not this scroll container, so measure the gap between the two directly.
-      const gap = roster.getBoundingClientRect().top - container.getBoundingClientRect().top
-      const rosterHeight = roster.getBoundingClientRect().height
-      const viewport = container.clientHeight
-      // Centre the table when all 20 rows fit, otherwise pin its header to the top.
-      const inset = rosterHeight <= viewport ? (viewport - rosterHeight) / 2 : 16
-
-      container.scrollTo({ top: Math.max(0, container.scrollTop + gap - inset), behavior: 'smooth' })
-    }, 7000) // hold on the #1 winner before revealing the full table
+      roster.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 20000) // 20 seconds gap after reveal completion
 
     return () => clearTimeout(timer)
-  }, [isRevealing, revealedStep, maxSteps, isDecrypting])
+  }, [isRevealing, revealedStep, isFinale, unlockedRanks.length, isDecrypting])
 
   // Round 2 is one-click-per-team from the admin table — never auto-play 20→1.
 
