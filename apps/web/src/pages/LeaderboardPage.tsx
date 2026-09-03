@@ -541,6 +541,15 @@ export function LeaderboardPage() {
     }
   }
 
+  const showRosterIfCeremonyComplete = (serverStep: number, targetRound: number) => {
+    if (targetRound === 3) return
+    if (serverStep >= 20 && !isDecryptingRef.current) {
+      hasAutoScrolledRef.current = true
+      holdStartedRef.current = true
+      setRosterShown(true)
+    }
+  }
+
   const applyServerRevealState = (
     data: { isRevealing?: boolean; round?: number; step?: number } | undefined,
     source: 'poll' | 'event',
@@ -576,6 +585,7 @@ export function LeaderboardPage() {
         resetRevealProgress()
       } else {
         executeRevealToStep(serverStep, targetRound)
+        showRosterIfCeremonyComplete(serverStep, targetRound)
       }
       return
     }
@@ -584,6 +594,7 @@ export function LeaderboardPage() {
     // must never rewind a place the LCD already unsealed.
     if (serverStep > revealedStepRef.current) {
       executeRevealToStep(serverStep, targetRound, { catchUp: source === 'poll' })
+      showRosterIfCeremonyComplete(serverStep, targetRound)
     }
   }
 
@@ -930,29 +941,29 @@ export function LeaderboardPage() {
     }, spinMs)
   }
 
-  const scrollRosterIntoView = () => {
-    const roster = rosterRef.current
+  const scrollQualifierRankIntoView = (rank: number, offset = 12) => {
     const container = scrollContainerRef.current
-    if (!roster || !container) return false
+    const row = rowRefs.current[rank]
+    if (!container) return
+    if (!row) {
+      container.scrollTop = 0
+      return
+    }
     const top = Math.max(
       0,
-      container.scrollTop + roster.getBoundingClientRect().top - container.getBoundingClientRect().top - 8,
+      container.scrollTop + row.getBoundingClientRect().top - container.getBoundingClientRect().top - offset,
     )
-    container.scrollTo({ top, behavior: 'auto' })
     container.scrollTop = top
-    return Math.abs(container.scrollTop - top) < 32 || container.scrollTop >= top - 32
   }
 
   const jumpToTop20Table = () => {
     hasAutoScrolledRef.current = true
     setRosterShown(true)
+    requestAnimationFrame(() => {
+      const el = scrollContainerRef.current
+      if (el) el.scrollTop = 0
+    })
   }
-
-  useEffect(() => {
-    if (!rosterShown) return
-    const ids = [80, 200, 400].map((ms) => window.setTimeout(() => scrollRosterIntoView(), ms))
-    return () => ids.forEach((id) => clearTimeout(id))
-  }, [rosterShown])
 
   // When a new countdown/decrypt starts, immediately scroll the hero card back to top
   useEffect(() => {
@@ -1003,33 +1014,22 @@ export function LeaderboardPage() {
     if (!isRevealing || !rosterShown || isFinale || isDecrypting) return
 
     const SPEED_PX_PER_SEC = 16
+    const RANK_DWELL_MS = 2200
+    const BOTTOM_PAUSE_MS = 2200
+    const TOP_PAUSE_MS = 1800
     let animId = 0
     let lastTime = performance.now()
     let phase: 'wait' | 'down' | 'pause-bottom' | 'pause-top' = 'wait'
-    let phaseUntil = Date.now() + 1000
+    let phaseUntil = Date.now() + 800
     let cancelled = false
     let travelled = 0
+    let rankIndex = 1
+    let useRankFallback = false
+    const totalRanks = Math.min(20, advancingRef.current.length || 20)
 
-    const scrollToFirstTeam = () => {
-      const row = rowRefs.current[1] || rosterRef.current
-      const el = scrollContainerRef.current
-      if (!el) return
-      if (!row) {
-        el.scrollTop = 0
-        return
-      }
-      const top = Math.max(
-        0,
-        el.scrollTop + row.getBoundingClientRect().top - el.getBoundingClientRect().top - 8,
-      )
-      el.scrollTop = top
-    }
+    const getMaxScroll = (el: HTMLDivElement) => Math.max(0, el.scrollHeight - el.clientHeight)
 
-    const atBottom = (el: HTMLDivElement) => {
-      if (el.scrollHeight <= el.clientHeight + 24) return false
-      if (travelled < 80) return false
-      return el.scrollTop + el.clientHeight >= el.scrollHeight - 16
-    }
+    const scrollToFirstTeam = () => scrollQualifierRankIntoView(1)
 
     const step = (now: number) => {
       if (cancelled) return
@@ -1039,28 +1039,61 @@ export function LeaderboardPage() {
         return
       }
 
+      const maxScroll = getMaxScroll(el)
+      useRankFallback = maxScroll <= 4
+
       const dt = Math.min((now - lastTime) / 1000, 0.1)
       lastTime = now
+      const nowMs = Date.now()
 
       if (phase === 'wait') {
-        if (Date.now() >= phaseUntil) phase = 'down'
+        if (nowMs >= phaseUntil) {
+          phase = 'down'
+          rankIndex = 1
+          travelled = 0
+          if (useRankFallback) {
+            scrollQualifierRankIntoView(1)
+            phaseUntil = nowMs + RANK_DWELL_MS
+          }
+        }
       } else if (phase === 'down') {
-        const before = el.scrollTop
-        el.scrollTop = before + SPEED_PX_PER_SEC * dt
-        travelled += Math.max(0, el.scrollTop - before)
-        if (atBottom(el)) {
-          phase = 'pause-bottom'
-          phaseUntil = Date.now() + 2200
+        if (useRankFallback) {
+          if (nowMs >= phaseUntil) {
+            if (rankIndex < totalRanks) {
+              rankIndex += 1
+              scrollQualifierRankIntoView(rankIndex)
+              phaseUntil = nowMs + RANK_DWELL_MS
+            } else {
+              phase = 'pause-bottom'
+              phaseUntil = nowMs + BOTTOM_PAUSE_MS
+            }
+          }
+        } else {
+          const before = el.scrollTop
+          el.scrollTop = Math.min(maxScroll, before + SPEED_PX_PER_SEC * dt)
+          travelled += Math.max(0, el.scrollTop - before)
+          if (travelled >= 40 && el.scrollTop >= maxScroll - 8) {
+            phase = 'pause-bottom'
+            phaseUntil = nowMs + BOTTOM_PAUSE_MS
+          }
         }
       } else if (phase === 'pause-bottom') {
-        if (Date.now() >= phaseUntil) {
+        if (nowMs >= phaseUntil) {
           scrollToFirstTeam()
           travelled = 0
+          rankIndex = 1
           phase = 'pause-top'
-          phaseUntil = Date.now() + 1800
+          phaseUntil = nowMs + TOP_PAUSE_MS
         }
       } else if (phase === 'pause-top') {
-        if (Date.now() >= phaseUntil) phase = 'down'
+        if (nowMs >= phaseUntil) {
+          phase = 'down'
+          travelled = 0
+          if (useRankFallback) {
+            scrollQualifierRankIntoView(1)
+            phaseUntil = nowMs + RANK_DWELL_MS
+          }
+        }
       }
 
       animId = requestAnimationFrame(step)
@@ -1121,6 +1154,7 @@ export function LeaderboardPage() {
       return (
         <div
           key={`slot-locked-${rankNum}`}
+          ref={(el) => { rowRefs.current[rankNum] = el }}
           className={`${QUALIFIER_GRID} border-b border-black/[0.04] bg-[#EBE3D5]/40 text-slate-400 opacity-60`}
         >
           <div className="flex items-center justify-center">
@@ -1250,17 +1284,17 @@ export function LeaderboardPage() {
       {/* 🎭 DRAMATIC GRAND REVEAL CEREMONY (Round 2: 20➔1 | Round 3: 5➔1)      */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {isRevealing ? (
-        <div ref={scrollContainerRef} className="relative flex-1 min-h-0 overflow-y-auto w-full px-4 sm:px-8 pb-10">
+        <div ref={scrollContainerRef} className="relative flex-1 min-h-0 h-0 overflow-y-auto w-full px-4 sm:px-8 pb-10">
           
           {!rosterShown && (
-          <div className="w-full flex flex-col items-center justify-start shrink-0 overflow-hidden min-h-full pt-2 sm:pt-4 pb-6">
+          <div className="w-full flex flex-col items-center justify-start shrink-0 min-h-full pt-4 sm:pt-6 pb-8">
             {/* Header */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`text-center ${ceremonySettled ? 'mb-2' : 'mb-3 sm:mb-4'}`}
+              className="text-center flex flex-col items-center gap-4 sm:gap-5 mb-10 sm:mb-14"
             >
-              <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full mb-1.5 shadow-xl bg-white/90 border border-amber-500/30 text-amber-950 shadow-amber-900/5 ring-1 ring-amber-500/10 backdrop-blur-md">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full shadow-xl bg-white/90 border border-amber-500/30 text-amber-950 shadow-amber-900/5 ring-1 ring-amber-500/10 backdrop-blur-md">
                 {isFinale ? <Crown size={13} className="text-amber-500 fill-amber-500/40" /> : <Trophy size={13} className="text-amber-500" />}
                 <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.16em]">
                   {isFinale ? '👑 Grand Finale · Champions Coronation' : '⚡ Stage 1 Qualifiers · Live Ceremony'}
@@ -1268,14 +1302,14 @@ export function LeaderboardPage() {
               </div>
               {!ceremonySettled && (
                 <>
-                  <div className="flex items-center justify-center gap-3 mb-1">
-                    <span className="h-px w-8 bg-gradient-to-r from-transparent to-[#E83C00]/40" />
+                  <div className="flex items-center justify-center gap-3">
+                    <span className="h-px w-10 sm:w-12 bg-gradient-to-r from-transparent to-[#E83C00]/40" />
                     <h2 className="text-[#E83C00] font-black tracking-[0.28em] uppercase text-xs">
                       AI குரல் · VOICE FOR TAMIL NADU · 2026
                     </h2>
-                    <span className="h-px w-8 bg-gradient-to-l from-transparent to-[#E83C00]/40" />
+                    <span className="h-px w-10 sm:w-12 bg-gradient-to-l from-transparent to-[#E83C00]/40" />
                   </div>
-                  <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight">
+                  <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-[1.1] pb-1">
                     {isFinale ? (
                       <span className="inline-flex items-center gap-3 flex-wrap justify-center">
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E83C00] via-amber-600 to-[#E83C00] drop-shadow-xs">

@@ -389,7 +389,7 @@ export function PremiumRevealCard({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96 }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
-          className={`relative px-10 pt-14 pb-8 sm:pt-16 sm:pb-10 xl:pt-20 xl:pb-12 rounded-[2.5rem] overflow-hidden border-2 transition-all shadow-[0_30px_80px_rgba(0,0,0,0.9)] ${
+          className={`relative px-10 py-8 sm:py-10 xl:py-12 rounded-[2.5rem] overflow-hidden border-2 transition-all shadow-[0_30px_80px_rgba(0,0,0,0.9)] ${
             isFinale
               ? 'bg-gradient-to-b from-[#1F140A] via-[#120B05] to-[#080503] border-amber-500/60 shadow-[0_30px_80px_rgba(0,0,0,0.9),0_0_80px_rgba(245,158,11,0.25)]'
               : 'bg-gradient-to-b from-[#1A1510] via-[#100D09] to-[#080604] border-amber-600/40 shadow-[0_30px_80px_rgba(0,0,0,0.9)]'
@@ -520,7 +520,7 @@ export function PremiumRevealCard({
         className={`relative rounded-[2.5rem] overflow-hidden border-2 transition-all ${
           settled
             ? 'px-8 pt-6 pb-4 sm:pt-7 sm:pb-5'
-            : 'px-10 pt-14 pb-8 sm:pt-16 sm:pb-10 xl:pt-20 xl:pb-12'
+            : 'px-10 py-8 sm:py-10 xl:py-12'
         } ${rankTheme.cardBg} ${
           isDecrypting ? 'border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.9)]' : `${rankTheme.cardBorder} ${rankTheme.cardShadow}`
         }`}
@@ -678,7 +678,7 @@ export function PremiumRevealCard({
         </div>
 
         {/* ── Progress Footnote ── */}
-        <div className={`${settled ? 'mt-4 pt-3' : 'mt-8 pt-7'} border-t border-white/10 flex items-center justify-between text-sm font-semibold px-4 text-slate-400`}>
+        <div className={`${settled ? 'mt-4 pt-3' : 'mt-6 pt-5'} border-t border-white/10 flex items-center justify-between text-sm font-semibold px-4 text-slate-400`}>
           <span className="font-mono">
             Progress: {revealedStep} of {maxSteps} announced
           </span>
