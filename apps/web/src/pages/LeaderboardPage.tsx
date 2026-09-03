@@ -914,32 +914,19 @@ export function LeaderboardPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [isDecrypting])
 
-  // After each Top 20 card reveals, wait 2.2s then smoothly scroll down to show the team in the table
+  // ONLY AFTER all 20 reveals are fully completed (or all 5 for Finale), wait 10 seconds, then smoothly scroll down to show the full Top 20 table
   useEffect(() => {
     if (!isRevealing) return
 
-    if (isFinale) {
-      if (isDecrypting || revealedStep < FINALE_CUTOFF) return
-      const timer = setTimeout(() => {
-        rosterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }, 2500)
-      return () => clearTimeout(timer)
-    }
+    const maxSteps = isFinale ? FINALE_CUTOFF : 20
+    if (isDecrypting || revealedStep < maxSteps) return
 
-    if (isDecrypting || unlockedRanks.length === 0) return
-
-    const rank = 21 - revealedStep
     const timer = setTimeout(() => {
-      const row = rowRefs.current[rank]
-      if (row) {
-        row.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      } else if (rosterRef.current) {
-        rosterRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }
-    }, 2200)
+      rosterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 10000)
 
     return () => clearTimeout(timer)
-  }, [isRevealing, revealedStep, isFinale, isDecrypting, unlockedRanks.length])
+  }, [isRevealing, revealedStep, isFinale, isDecrypting])
 
   // Round 2 is one-click-per-team from the admin table — never auto-play 20→1.
 
@@ -1258,8 +1245,8 @@ export function LeaderboardPage() {
               </div>
             </div>
             ) : null
-          ) : !isDecrypting && unlockedRanks.length > 0 ? (
-            /* ROUND 2: TOP 20 QUALIFIERS TABLE — hidden before any team is announced */
+          ) : (revealedStep >= 20 || unlockedRanks.length >= 20) ? (
+            /* ROUND 2: TOP 20 QUALIFIERS TABLE — mounts ONLY after all 20 teams are announced */
             <div ref={rosterRef} className="w-full max-w-5xl rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] mt-32 pb-32">
               {/* Header with Title & Status Counter */}
               <div className="flex items-center justify-between px-6 py-4 bg-[#F4ECE1] border-b border-black/10">
