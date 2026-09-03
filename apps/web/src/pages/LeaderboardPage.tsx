@@ -995,15 +995,35 @@ export function LeaderboardPage() {
     }, 15000)
   }, [isRevealing, revealedStep, isFinale, unlockedRanks.length, isDecrypting])
 
-  // After the jump, slowly crawl through all 20 rows so the LCD actually shows them.
+  // After the jump, slowly crawl #1 → #20, pause, then return to #1 and repeat.
   useEffect(() => {
     if (!isRevealing || !rosterShown || isFinale || isDecrypting) return
 
+    const SPEED_PX_PER_SEC = 14
     const startAt = Date.now()
     let animId = 0
-    let current = scrollContainerRef.current?.scrollTop || 0
     let lastTime = performance.now()
     let looping = false
+    let cancelled = false
+    const timers: number[] = []
+
+    const later = (fn: () => void, ms: number) => {
+      const id = window.setTimeout(() => {
+        if (!cancelled) fn()
+      }, ms)
+      timers.push(id)
+    }
+
+    const scrollToFirstTeam = () => {
+      const row = rowRefs.current[1] || rosterRef.current
+      const el = scrollContainerRef.current
+      if (!row || !el) return
+      const top = Math.max(
+        0,
+        el.scrollTop + row.getBoundingClientRect().top - el.getBoundingClientRect().top - 8,
+      )
+      el.scrollTo({ top, behavior: 'smooth' })
+    }
 
     const step = (now: number) => {
       const el = scrollContainerRef.current
@@ -1012,7 +1032,6 @@ export function LeaderboardPage() {
         return
       }
 
-      // Give the snap-to-table a moment to land before crawling.
       if (Date.now() - startAt < 1800) {
         lastTime = now
         animId = requestAnimationFrame(step)
@@ -1022,17 +1041,17 @@ export function LeaderboardPage() {
       if (!looping) {
         const dt = Math.min((now - lastTime) / 1000, 0.1)
         lastTime = now
-        current = el.scrollTop + 36 * dt
-        el.scrollTop = current
+        el.scrollTop += SPEED_PX_PER_SEC * dt
 
         if (el.scrollTop + el.clientHeight >= el.scrollHeight - 12) {
           looping = true
-          window.setTimeout(() => {
-            scrollRosterIntoView()
-            current = el.scrollTop
-            looping = false
-            lastTime = performance.now()
-          }, 3500)
+          later(() => {
+            scrollToFirstTeam()
+            later(() => {
+              looping = false
+              lastTime = performance.now()
+            }, 2200)
+          }, 2500)
         }
       }
 
@@ -1040,7 +1059,11 @@ export function LeaderboardPage() {
     }
 
     animId = requestAnimationFrame(step)
-    return () => cancelAnimationFrame(animId)
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(animId)
+      timers.forEach((id) => clearTimeout(id))
+    }
   }, [isRevealing, rosterShown, isFinale, isDecrypting])
 
   // Round 2 is one-click-per-team from the admin table — never auto-play 20→1.
