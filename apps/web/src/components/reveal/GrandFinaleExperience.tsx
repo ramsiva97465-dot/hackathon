@@ -55,27 +55,35 @@ function easeOut(t: number, power = 3.4) {
   return 1 - Math.pow(1 - clamp(t), power)
 }
 
-/** Edge-on → face-on. `tease` turns it away once after they think it has landed. */
+/** Rise first, still edge-on. Then turn to face. `tease` turns it away once. */
 function wreathYaw(progress: number, live: boolean, tease = false) {
   if (!live) return 0
-  if (progress <= 0.10) return 82
+  if (progress <= 0.30) return 82
   if (!tease) {
-    if (progress < 0.56) return 82 * (1 - easeOut((progress - 0.10) / 0.46, 3.8))
-    if (progress < 0.64) return -5 * Math.sin(Math.PI * ((progress - 0.56) / 0.08))
+    if (progress < 0.62) return 82 * (1 - easeOut((progress - 0.30) / 0.32, 3.8))
+    if (progress < 0.70) return -4 * Math.sin(Math.PI * ((progress - 0.62) / 0.08))
     return 0
   }
-  if (progress < 0.46) return 82 * (1 - easeOut((progress - 0.10) / 0.36, 3.4))
-  if (progress < 0.52) return 0
-  if (progress < 0.62) return 78 * easeOut((progress - 0.52) / 0.10, 2.2)
-  if (progress < 0.73) return 78 * (1 - easeOut((progress - 0.62) / 0.11, 3.2))
+  if (progress < 0.50) return 82 * (1 - easeOut((progress - 0.30) / 0.20, 3.4))
+  if (progress < 0.54) return 0
+  if (progress < 0.64) return 78 * easeOut((progress - 0.54) / 0.10, 2.2)
+  if (progress < 0.75) return 78 * (1 - easeOut((progress - 0.64) / 0.11, 3.2))
   return 0
 }
 
-function wreathSlide(progress: number, live: boolean) {
+function wreathRise(progress: number, live: boolean) {
   if (!live) return 0
-  if (progress <= 0.10) return -90
-  if (progress >= 0.38) return 0
-  return -90 * (1 - easeOut((progress - 0.10) / 0.28, 2.6))
+  if (progress <= 0.08) return 96
+  if (progress >= 0.34) return 0
+  return 96 * (1 - easeOut((progress - 0.08) / 0.26, 3.4))
+}
+
+function lockSweep(progress: number, live: boolean, tease: boolean) {
+  if (!live) return -1
+  const start = tease ? 0.72 : 0.66
+  const t = (progress - start) / 0.13
+  if (t <= 0 || t >= 1) return -1
+  return t
 }
 
 function Wreath({
@@ -83,7 +91,8 @@ function Wreath({
   className,
   locked,
   rotateY = 0,
-  x = 0,
+  y = 0,
+  sweep = -1,
   idle = false,
   idleDelay = 0,
 }: {
@@ -91,12 +100,23 @@ function Wreath({
   className: string
   locked?: boolean
   rotateY?: number
-  x?: number
+  y?: number
+  sweep?: number
   idle?: boolean
   idleDelay?: number
 }) {
   const facing = Math.abs(Math.cos((rotateY * Math.PI) / 180))
   const showGlyph = facing > 0.28
+  const mask = {
+    WebkitMaskImage: `url(${PODIUM})`,
+    maskImage: `url(${PODIUM})`,
+    WebkitMaskSize: 'contain',
+    maskSize: 'contain',
+    WebkitMaskRepeat: 'no-repeat',
+    maskRepeat: 'no-repeat',
+    WebkitMaskPosition: 'center',
+    maskPosition: 'center',
+  } as const
 
   return (
     <div className="relative" style={{ perspective: 1400 }}>
@@ -114,7 +134,7 @@ function Wreath({
           idle
             ? { transformStyle: 'preserve-3d', filter: 'brightness(1)', willChange: 'transform' }
             : {
-                transform: `translateX(${x}px) rotateY(${rotateY}deg)`,
+                transform: `translateY(${y}px) rotateY(${rotateY}deg)`,
                 transformStyle: 'preserve-3d',
                 filter: `brightness(${0.52 + 0.48 * facing})`,
                 willChange: 'transform',
@@ -128,21 +148,23 @@ function Wreath({
         }
       >
         <img src={PODIUM} alt="" className="absolute inset-0 h-full w-full object-contain" />
-        {(locked || idle) && (
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0"
-            style={{
-              WebkitMaskImage: `url(${PODIUM})`,
-              maskImage: `url(${PODIUM})`,
-              WebkitMaskSize: 'contain',
-              maskSize: 'contain',
-              WebkitMaskRepeat: 'no-repeat',
-              maskRepeat: 'no-repeat',
-              WebkitMaskPosition: 'center',
-              maskPosition: 'center',
-            }}
-          >
+        {sweep >= 0 && (
+          <div aria-hidden className="pointer-events-none absolute inset-0" style={mask}>
+            <div
+              className="absolute top-[-20%] h-[140%] w-[16%]"
+              style={{
+                left: `${-28 + sweep * 148}%`,
+                background:
+                  'linear-gradient(105deg, transparent 0%, rgba(255,255,255,0) 36%, rgba(255,255,255,0.72) 50%, rgba(255,214,120,0.2) 58%, transparent 100%)',
+                filter: 'blur(8px)',
+                mixBlendMode: 'screen',
+                opacity: sweep < 0.1 || sweep > 0.9 ? 0.4 : 1,
+              }}
+            />
+          </div>
+        )}
+        {(locked || idle) && sweep < 0 && (
+          <div aria-hidden className="pointer-events-none absolute inset-0" style={mask}>
             <motion.div
               className="absolute top-[-20%] h-[140%] w-[18%]"
               initial={{ x: '-120%', opacity: 0 }}
@@ -373,17 +395,52 @@ function NameWait({
   )
 }
 
-function Stage({ children }: { children: ReactNode }) {
+function Stage({
+  children,
+  progress = 1,
+  cinematic = false,
+}: {
+  children: ReactNode
+  progress?: number
+  cinematic?: boolean
+}) {
+  const open = cinematic ? clamp((progress - 0.02) / 0.26) : 1
+  const settled = !cinematic || progress >= 0.94
+
   return (
     <div className="relative flex min-h-[min(78vh,760px)] w-full items-center justify-center overflow-hidden">
+      {cinematic && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(ellipse 78% 88% at 50% 46%, transparent 8%, rgba(0,0,0,0.88) 100%)',
+            opacity: 1 - open * 0.45,
+          }}
+        />
+      )}
+      {cinematic && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-[-14%] h-[80%] w-[min(54%,30rem)] -translate-x-1/2"
+          style={{
+            opacity: open * 0.88,
+            background:
+              'linear-gradient(180deg, rgba(245,214,140,0.15) 0%, rgba(232,197,71,0.06) 40%, transparent 100%)',
+            clipPath: 'polygon(38% 0%, 62% 0%, 96% 100%, 4% 100%)',
+            filter: 'blur(22px)',
+          }}
+        />
+      )}
       <motion.div
         aria-hidden
         className="pointer-events-none absolute inset-0"
-        animate={{ opacity: [0.72, 1, 0.72] }}
-        transition={{ duration: 8.5, repeat: Infinity, ease: 'easeInOut' }}
+        animate={settled ? { opacity: [0.8, 1, 0.8] } : undefined}
+        transition={settled ? { duration: 8, repeat: Infinity, ease: 'easeInOut' } : undefined}
         style={{
-          background:
-            'radial-gradient(ellipse 42% 48% at 50% 44%, rgba(245,158,11,0.16), transparent 68%)',
+          opacity: settled ? undefined : 0.18 + open * 0.82,
+          background: `radial-gradient(ellipse ${32 + open * 14}% ${38 + open * 14}% at 50% 40%, rgba(232,197,71,${0.05 + open * 0.11}), transparent 70%)`,
         }}
       />
       {children}
@@ -423,20 +480,23 @@ function PlaceReveal({
     [entry?.teamName, progress, tick],
   )
   const yaw = wreathYaw(progress, isAnimating, tease)
-  const slide = wreathSlide(progress, isAnimating)
-  const wreathVisible = !isAnimating || progress >= 0.10
+  const rise = wreathRise(progress, isAnimating)
+  const sweep = lockSweep(progress, isAnimating, tease)
+  const wreathOpacity = !isAnimating ? 1 : progress < 0.07 ? 0 : clamp((progress - 0.07) / 0.14)
+  const titleOn = !isAnimating || progress >= 0.03
+  const lineOn = !isAnimating || progress >= 0.10
   const meta = PLACE[rank]
 
   return (
-    <Stage>
+    <Stage cinematic progress={isAnimating ? progress : 1}>
       <motion.div
         key={`place-${rank}`}
         className="relative z-10 flex w-full max-w-6xl flex-col items-center px-6 text-center"
       >
         <motion.p
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, ease: EASE }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: titleOn ? 1 : 0, y: titleOn ? 0 : 10 }}
+          transition={{ duration: 0.85, ease: EASE }}
           className="text-sm font-medium tracking-[0.38em] text-white/50 uppercase sm:text-base"
         >
           {meta.kicker}
@@ -445,19 +505,18 @@ function PlaceReveal({
           aria-hidden
           className="mt-3 h-px w-12 origin-center bg-amber-200/55"
           initial={{ scaleX: 0, opacity: 0 }}
-          animate={{ scaleX: 1, opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.25, ease: EASE }}
+          animate={{ scaleX: lineOn ? 1 : 0, opacity: lineOn ? 1 : 0 }}
+          transition={{ duration: 0.7, ease: EASE }}
         />
 
-        <div
-          className={`mt-6 transition-opacity duration-700 ${wreathVisible ? 'opacity-100' : 'opacity-0'}`}
-        >
+        <div className="mt-6" style={{ opacity: wreathOpacity }}>
           <Wreath
             className="h-[300px] w-[328px] sm:h-[380px] sm:w-[416px] lg:h-[420px] lg:w-[460px]"
             glyph={numberOn ? String(rank) : '?'}
             locked={numberOn}
             rotateY={yaw}
-            x={slide}
+            y={rise}
+            sweep={sweep}
             idle={nameLocked}
           />
         </div>
@@ -648,9 +707,16 @@ function Champion({
   const scoreT = finished ? 1 : clamp((elapsed - 11_000) / 700)
   const score = Number(entry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
   const track = entry?.track ? getTrackConfig(entry.track) : null
+  const winOpen = finished ? 1 : clamp((elapsed - 11_000) / 900)
+  const champSweep = (() => {
+    if (stage !== 'winner' || finished) return -1
+    const t = (elapsed - 11_080) / 800
+    if (t <= 0 || t >= 1) return -1
+    return t
+  })()
 
   return (
-    <Stage>
+    <Stage cinematic={stage === 'winner'} progress={stage === 'winner' ? winOpen : 1}>
       <AnimatePresence mode="wait">
         {(stage === 'count' || stage === 'hold') && (
           <motion.div
@@ -703,13 +769,20 @@ function Champion({
               Grand Champion
             </p>
             <motion.div
-              initial={{ rotateY: 74, scale: 0.94 }}
-              animate={{ rotateY: 0, scale: 1 }}
-              transition={{ duration: 1.15, ease: EASE }}
+              initial={{ rotateY: 72, y: 72, opacity: 0.2 }}
+              animate={{ rotateY: 0, y: 0, opacity: 1 }}
+              transition={{ duration: 1.35, ease: EASE }}
               className="mt-6"
               style={{ perspective: 1400, transformStyle: 'preserve-3d' }}
             >
-              <Wreath className="h-[320px] w-[350px] sm:h-[400px] sm:w-[438px] lg:h-[440px] lg:w-[482px]" glyph="1" locked idle idleDelay={1.2} />
+              <Wreath
+                className="h-[320px] w-[350px] sm:h-[400px] sm:w-[438px] lg:h-[440px] lg:w-[482px]"
+                glyph="1"
+                locked
+                idle
+                idleDelay={1.2}
+                sweep={champSweep}
+              />
             </motion.div>
             <motion.h2
               initial={{ opacity: 0, y: 16, filter: 'blur(8px)' }}
