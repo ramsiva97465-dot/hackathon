@@ -44,40 +44,79 @@ function scrambleName(target: string, progress: number, tick: number) {
       out += ' '
       continue
     }
-    const lockAt = 0.52 + (i / Math.max(name.length, 1)) * 0.32
+    const lockAt = 0.64 + (i / Math.max(name.length, 1)) * 0.24
     if (progress >= 1 || (progress >= lockAt && i !== hold)) out += name[i]
     else out += ALPHA[(tick + i * 5) % ALPHA.length]
   }
   return out
 }
 
+function easeOut(t: number, power = 3.4) {
+  return 1 - Math.pow(1 - clamp(t), power)
+}
+
+/** Edge-on → face-on, with a last-moment settle. */
+function wreathYaw(progress: number, live: boolean) {
+  if (!live) return 0
+  if (progress <= 0.08) return 82
+  if (progress < 0.72) return 82 * (1 - easeOut((progress - 0.08) / 0.64, 3.6))
+  if (progress < 0.82) return -6 * Math.sin(Math.PI * ((progress - 0.72) / 0.1))
+  return 0
+}
+
+function wreathSlide(progress: number, live: boolean) {
+  if (!live) return 0
+  if (progress <= 0.08) return -90
+  if (progress >= 0.42) return 0
+  return -90 * (1 - easeOut((progress - 0.08) / 0.34, 2.6))
+}
+
 function Wreath({
   glyph,
   className,
   locked,
+  rotateY = 0,
+  x = 0,
 }: {
   glyph: string
   className: string
   locked?: boolean
+  rotateY?: number
+  x?: number
 }) {
+  const facing = Math.abs(Math.cos((rotateY * Math.PI) / 180))
+  const showGlyph = facing > 0.28
+
   return (
-    <div className={`relative ${className}`} style={{ perspective: 900 }}>
-      <img src={PODIUM} alt="" className="absolute inset-0 h-full w-full object-contain" />
-      <AnimatePresence mode="wait">
-        <motion.span
-          key={glyph}
-          initial={{ rotateX: 70, opacity: 0, y: 10 }}
-          animate={{ rotateX: 0, opacity: 1, y: 0 }}
-          exit={{ rotateX: -70, opacity: 0, y: -8 }}
-          transition={{ duration: 0.48, ease: EASE }}
-          className={`absolute left-1/2 top-[43%] -translate-x-1/2 -translate-y-1/2 font-serif font-black ${
-            locked ? 'text-amber-200' : 'text-amber-200/55'
-          }`}
-          style={{ fontSize: '1.7em', transformStyle: 'preserve-3d' }}
-        >
-          {glyph}
-        </motion.span>
-      </AnimatePresence>
+    <div className="relative" style={{ perspective: 1400 }}>
+      <div
+        className={`relative ${className}`}
+        style={{
+          transform: `translateX(${x}px) rotateY(${rotateY}deg)`,
+          transformStyle: 'preserve-3d',
+          filter: `brightness(${0.52 + 0.48 * facing})`,
+          willChange: 'transform',
+        }}
+      >
+        <img src={PODIUM} alt="" className="absolute inset-0 h-full w-full object-contain" />
+        <AnimatePresence mode="wait">
+          {showGlyph && (
+            <motion.span
+              key={glyph}
+              initial={{ opacity: 0, scale: 0.86 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.28, ease: EASE }}
+              className={`absolute left-1/2 top-[43%] -translate-x-1/2 -translate-y-1/2 font-serif font-black ${
+                locked ? 'text-amber-200' : 'text-amber-200/40'
+              }`}
+              style={{ fontSize: '1.7em' }}
+            >
+              {glyph}
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   )
 }
@@ -132,16 +171,19 @@ function PlaceReveal({
   tick: number
   completedSteps: number
 }) {
-  const revealed = !isAnimating || progress >= 0.86
-  const nameLive = progress >= 0.18
-  const scoreT = !isAnimating ? 1 : clamp((progress - 0.86) / 0.14)
+  const revealed = !isAnimating || progress >= 0.88
+  const numberOn = revealed
+  const nameLive = progress >= 0.24
+  const scoreT = !isAnimating ? 1 : clamp((progress - 0.90) / 0.10)
   const score = Number(entry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
   const track = entry?.track ? getTrackConfig(entry.track) : null
   const liveName = useMemo(
     () => scrambleName(entry?.teamName || '', progress, tick),
     [entry?.teamName, progress, tick],
   )
-  const wreathIn = !isAnimating || progress >= 0.08
+  const yaw = wreathYaw(progress, isAnimating)
+  const slide = wreathSlide(progress, isAnimating)
+  const wreathVisible = !isAnimating || progress >= 0.06
   const meta = PLACE[rank]
 
   return (
@@ -149,8 +191,8 @@ function PlaceReveal({
       <motion.div
         key={`place-${rank}`}
         className="relative z-10 flex w-full max-w-4xl flex-col items-center px-6 text-center"
-        animate={revealed && isAnimating ? { scale: [1.025, 1] } : { scale: 1 }}
-        transition={{ duration: 0.55, ease: EASE }}
+        animate={revealed && isAnimating ? { scale: [1.02, 1] } : { scale: 1 }}
+        transition={{ duration: 0.5, ease: EASE }}
       >
         <motion.p
           initial={{ opacity: 0, y: 8 }}
@@ -161,18 +203,17 @@ function PlaceReveal({
           {meta.kicker}
         </motion.p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 48, scale: 0.92 }}
-          animate={wreathIn ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 48, scale: 0.92 }}
-          transition={{ duration: 0.9, ease: EASE }}
-          className="mt-7"
+        <div
+          className={`mt-7 transition-opacity duration-500 ${wreathVisible ? 'opacity-100' : 'opacity-0'}`}
         >
           <Wreath
             className="h-[210px] w-[230px] sm:h-[248px] sm:w-[272px]"
-            glyph={revealed ? String(rank) : '?'}
-            locked={revealed}
+            glyph={numberOn ? String(rank) : '?'}
+            locked={numberOn}
+            rotateY={yaw}
+            x={slide}
           />
-        </motion.div>
+        </div>
 
         <div className="mt-5 flex h-[7.5rem] w-full flex-col items-center justify-start sm:h-[8.5rem]">
           {nameLive ? (
@@ -296,22 +337,24 @@ function FinalTwo() {
         </motion.h2>
         <div className="mt-12 flex items-center justify-center gap-6 sm:gap-16">
           <motion.div
-            initial={{ x: -64, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.95, ease: EASE }}
+            initial={{ x: -80, opacity: 0, rotateY: -78 }}
+            animate={{ x: 0, opacity: 1, rotateY: 0 }}
+            transition={{ duration: 1.55, ease: EASE }}
+            style={{ perspective: 1400, transformStyle: 'preserve-3d' }}
           >
             <Wreath className="h-[188px] w-[206px] sm:h-[220px] sm:w-[240px]" glyph="?" />
           </motion.div>
           <motion.span
             initial={{ scaleY: 0, opacity: 0 }}
             animate={{ scaleY: 1, opacity: 1 }}
-            transition={{ delay: 0.35, duration: 0.5, ease: EASE }}
+            transition={{ delay: 0.55, duration: 0.5, ease: EASE }}
             className="h-16 w-px bg-white/25 sm:h-24"
           />
           <motion.div
-            initial={{ x: 64, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.95, ease: EASE }}
+            initial={{ x: 80, opacity: 0, rotateY: 78 }}
+            animate={{ x: 0, opacity: 1, rotateY: 0 }}
+            transition={{ duration: 1.55, ease: EASE }}
+            style={{ perspective: 1400, transformStyle: 'preserve-3d' }}
           >
             <Wreath className="h-[188px] w-[206px] sm:h-[220px] sm:w-[240px]" glyph="?" />
           </motion.div>
@@ -400,17 +443,18 @@ function Champion({
               Grand Champion
             </p>
             <motion.div
-              initial={{ y: 24, scale: 0.94 }}
-              animate={{ y: 0, scale: 1 }}
-              transition={{ duration: 0.9, ease: EASE }}
+              initial={{ rotateY: 74, scale: 0.94 }}
+              animate={{ rotateY: 0, scale: 1 }}
+              transition={{ duration: 1.15, ease: EASE }}
               className="mt-6"
+              style={{ perspective: 1400, transformStyle: 'preserve-3d' }}
             >
               <Wreath className="h-[230px] w-[252px] sm:h-[268px] sm:w-[294px]" glyph="1" locked />
             </motion.div>
             <motion.h2
               initial={{ opacity: 0, y: 16, filter: 'blur(8px)' }}
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              transition={{ duration: 0.7, delay: 0.18, ease: EASE }}
+              transition={{ duration: 0.7, delay: 0.72, ease: EASE }}
               className="mt-5 max-w-[18ch] text-balance text-[2.5rem] font-black tracking-tight text-white sm:max-w-[22ch] sm:text-6xl"
             >
               {entry?.teamName || 'Unavailable'}
@@ -418,7 +462,7 @@ function Champion({
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
+              transition={{ delay: 0.95, duration: 0.5 }}
               className="mt-3 text-sm text-white/40 sm:text-base"
             >
               {entry?.college || 'Tamil Nadu'}
@@ -427,7 +471,7 @@ function Champion({
             <motion.p
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.52, duration: 0.5, ease: EASE }}
+              transition={{ delay: 1.1, duration: 0.5, ease: EASE }}
               className="mt-5 font-black tabular-nums leading-none text-amber-200 text-[2.8rem] sm:text-5xl"
             >
               {score.toFixed(1)}
@@ -452,8 +496,13 @@ export function GrandFinaleExperience({
   useEffect(() => {
     setNow(Date.now())
     if (!(isAnimating || revealStep === 4 || revealStep === 5)) return
-    const id = window.setInterval(() => setNow(Date.now()), 80)
-    return () => window.clearInterval(id)
+    let raf = 0
+    const loop = () => {
+      setNow(Date.now())
+      raf = window.requestAnimationFrame(loop)
+    }
+    raf = window.requestAnimationFrame(loop)
+    return () => window.cancelAnimationFrame(raf)
   }, [isAnimating, revealStep, stepStartedAt])
 
   const elapsed = Math.max(0, now - (stepStartedAt || now))
