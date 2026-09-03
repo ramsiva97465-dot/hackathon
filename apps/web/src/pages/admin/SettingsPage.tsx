@@ -1,41 +1,14 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { Button } from '@/components/ui/Button'
-import { Save, Monitor, Sparkles } from 'lucide-react'
+import { Save, Monitor } from 'lucide-react'
 import { toast } from 'sonner'
-import { api } from '@/lib/api'
 
 export function SettingsPage() {
   const [saving, setSaving] = useState(false)
-  const [tvMode, setTvMode] = useState(() => {
-    return localStorage.getItem('snapserve_tv_mode') === 'true'
-  })
   const [certificatesReleased, setCertificatesReleased] = useState(() => {
     return localStorage.getItem('snapserve_certificates_released') === 'true'
   })
-
-  useEffect(() => {
-    api.leaderboard.getTvMode()
-      .then(res => {
-        if (typeof res.data?.tvMode === 'boolean') {
-          setTvMode(res.data.tvMode)
-          localStorage.setItem('snapserve_tv_mode', res.data.tvMode ? 'true' : 'false')
-        }
-      })
-      .catch(() => {})
-  }, [])
-
-  const handleToggleTvMode = async (val: boolean) => {
-    setTvMode(val)
-    localStorage.setItem('snapserve_tv_mode', val ? 'true' : 'false')
-    window.dispatchEvent(new Event('tv_mode_toggled'))
-    try {
-      await api.leaderboard.setTvMode(val)
-      toast.success(val ? '📺 TV Mode ENABLED on Leaderboard (Auto-Scroll Active)!' : '📺 TV Mode DISABLED on Leaderboard!')
-    } catch (err) {
-      toast.success(val ? '📺 TV Mode ENABLED locally!' : '📺 TV Mode DISABLED locally!')
-    }
-  }
 
   const handleToggleCertificates = (val: boolean) => {
     setCertificatesReleased(val)
@@ -75,30 +48,9 @@ export function SettingsPage() {
               Open Leaderboard Screen ↗
             </a>
           </div>
-
-          {/* TV Mode Toggle Card */}
-          <div className="flex items-center justify-between p-4 rounded-xl bg-[#111] border border-emerald-500/30">
-            <div>
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-bold text-white">Leaderboard TV Mode (Auto-Scroll)</p>
-                <span className={`px-2.5 py-0.5 text-[10px] font-black uppercase rounded-full ${tvMode ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>
-                  {tvMode ? 'TV MODE: ON (AUTO-SCROLLING)' : 'TV MODE: OFF'}
-                </span>
-              </div>
-              <p className="text-xs text-slate-400 mt-1">
-                When switched ON, the public Leaderboard will automatically scroll top-to-bottom continuously for stage projectors & TV screens.
-              </p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer ml-4 shrink-0">
-              <input
-                type="checkbox"
-                checked={tvMode}
-                onChange={(e) => handleToggleTvMode(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-emerald-500 transition-all peer-checked:after:translate-x-5 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all shadow-inner" />
-            </label>
-          </div>
+          <p className="text-xs text-slate-400">
+            Leaderboard TV Mode is controlled from the <span className="text-emerald-400 font-bold">TV Mode</span> button in the top bar.
+          </p>
         </div>
 
         {/* ── Registration & Release Control ── */}
