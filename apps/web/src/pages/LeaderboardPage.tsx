@@ -27,10 +27,10 @@ function finalePlace(rank: number) {
 
 /** Step 1=5th, 2=4th, 3=2nd runner-up, 4=1st runner-up, 5=champion */
 function finaleCountdownStart(step: number) {
-  if (step === 1) return 10
-  if (step === 2) return 11
-  if (step === 3) return 12
-  if (step === 4) return 12
+  if (step === 1) return 14
+  if (step === 2) return 15
+  if (step === 3) return 16
+  if (step === 4) return 16
   return 12
 }
 

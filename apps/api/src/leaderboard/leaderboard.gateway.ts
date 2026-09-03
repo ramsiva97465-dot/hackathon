@@ -119,7 +119,7 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
     const now = Date.now()
     // Step 4 includes the 2nd-place reveal, verdict interruption, and a
     // five-second Final Two hold before the Champion control unlocks.
-    const finaleDurations = [0, 10000, 11000, 12000, 24000, 12000]
+    const finaleDurations = [0, 14000, 15000, 16000, 28000, 12000]
 
     if (normalizedRound === 3) {
       if (step === this.revealStep && this.revealRound === 3) return
