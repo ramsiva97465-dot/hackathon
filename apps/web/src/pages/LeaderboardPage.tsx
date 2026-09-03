@@ -1477,68 +1477,68 @@ export function LeaderboardPage() {
 
             {/* ROUND 1 VIEW — Live Judging Status (Scores Hidden, 0/1 -> 1/1) */}
             {activeRound === 1 && (
-              <div className="w-full rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5">
-                {/* Table header */}
-                <div className="grid grid-cols-[56px_1fr_170px_110px_110px] px-6 py-4 bg-[#1A1A1A] text-[10px] font-bold text-white/60 uppercase tracking-widest">
-                <div className="text-center">#</div>
-                <div>Team</div>
-                <div>Track</div>
-                <div className="text-center">Evaluation</div>
-                <div className="text-right">Status</div>
-              </div>
+              <div className="w-full rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1]">
+                {/* Table header (Pinned at top of table) */}
+                <div className="sticky top-0 z-10 grid grid-cols-[56px_1fr_170px_110px_110px] px-6 py-4 bg-[#1A1A1A] text-[10px] font-bold text-white/75 uppercase tracking-widest border-b border-white/10 shadow-sm">
+                  <div className="text-center">#</div>
+                  <div>Team</div>
+                  <div>Track</div>
+                  <div className="text-center">Evaluation</div>
+                  <div className="text-right">Status</div>
+                </div>
 
-              {/* All teams listed with live 0/1 -> 1/1 evaluation status */}
-              <div className="flex flex-col">
-                <AnimatePresence>
-                  {filtered.map((entry, idx) => (
-                    <Round1Row key={entry.teamId} entry={entry} index={idx} />
-                  ))}
-                </AnimatePresence>
+                {/* All teams listed with live 0/1 -> 1/1 evaluation status */}
+                <div className="flex flex-col">
+                  <AnimatePresence>
+                    {filtered.map((entry, idx) => (
+                      <Round1Row key={entry.teamId} entry={entry} index={idx} />
+                    ))}
+                  </AnimatePresence>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* ROUND 2 VIEW — full Top 20 list. No podium; winners stay sealed
-              until the admin clicks Reveal 5th / 4th / runner-up / champion. */}
-          {activeRound === 2 && (
-            <div className="w-full max-w-5xl rounded-[2rem] bg-[#F4ECE1] shadow-2xl shadow-black/10 overflow-hidden border border-black/5">
-              {r3Teams.length > 0 ? (
-                <>
-                  <div className="grid grid-cols-[1fr_200px] px-8 py-5 bg-[#EBE2D5] border-b border-black/5 text-xs font-bold text-slate-600 uppercase tracking-widest">
-                    <div>Team</div>
-                    <div>Track</div>
-                  </div>
-                  <div className="flex flex-col bg-[#F4ECE1]">
-                    <AnimatePresence>
-                      {[...advancing]
-                        .sort((a, b) => a.teamName.localeCompare(b.teamName))
-                        .map((entry) => (
-                          <Round2Row key={entry.teamId} entry={entry} hideStandings />
+            {/* ROUND 2 VIEW — full Top 20 list. No podium; winners stay sealed
+                until the admin clicks Reveal 5th / 4th / runner-up / champion. */}
+            {activeRound === 2 && (
+              <div className="w-full max-w-5xl rounded-[2rem] bg-[#F4ECE1] shadow-2xl shadow-black/10 overflow-hidden border border-black/5">
+                {r3Teams.length > 0 ? (
+                  <>
+                    <div className="sticky top-0 z-10 grid grid-cols-[1fr_200px] px-8 py-5 bg-[#EBE2D5]/95 backdrop-blur-md border-b border-black/10 text-xs font-bold text-slate-700 uppercase tracking-widest shadow-xs">
+                      <div>Team</div>
+                      <div>Track</div>
+                    </div>
+                    <div className="flex flex-col bg-[#F4ECE1]">
+                      <AnimatePresence>
+                        {[...advancing]
+                          .sort((a, b) => a.teamName.localeCompare(b.teamName))
+                          .map((entry) => (
+                            <Round2Row key={entry.teamId} entry={entry} hideStandings />
+                          ))}
+                      </AnimatePresence>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="sticky top-0 z-10 grid grid-cols-[80px_1fr_200px_120px_120px_80px] px-8 py-5 bg-[#EBE2D5]/95 backdrop-blur-md border-b border-black/10 text-xs font-bold text-slate-700 uppercase tracking-widest shadow-xs">
+                      <div className="text-center">Rank</div>
+                      <div>Team Details</div>
+                      <div>Track</div>
+                      <div className="text-center">Judges</div>
+                      <div className="text-right">Score</div>
+                      <div className="text-right">Change</div>
+                    </div>
+                    <div className="flex flex-col bg-[#F4ECE1]">
+                      <AnimatePresence>
+                        {advancing.map((entry) => (
+                          <Round2Row key={entry.teamId} entry={entry} />
                         ))}
-                    </AnimatePresence>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="grid grid-cols-[80px_1fr_200px_120px_120px_80px] px-8 py-5 bg-[#EBE2D5] border-b border-black/5 text-xs font-bold text-slate-600 uppercase tracking-widest">
-                    <div className="text-center">Rank</div>
-                    <div>Team Details</div>
-                    <div>Track</div>
-                    <div className="text-center">Judges</div>
-                    <div className="text-right">Score</div>
-                    <div className="text-right">Change</div>
-                  </div>
-                  <div className="flex flex-col bg-[#F4ECE1]">
-                    <AnimatePresence>
-                      {advancing.map((entry) => (
-                        <Round2Row key={entry.teamId} entry={entry} />
-                      ))}
-                    </AnimatePresence>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+                      </AnimatePresence>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
 
           {/* ROUND 3 — Winners podium only (locked until admin reveal step) */}
           {activeRound === 3 && (
