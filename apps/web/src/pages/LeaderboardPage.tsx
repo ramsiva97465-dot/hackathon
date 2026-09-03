@@ -950,7 +950,7 @@ export function LeaderboardPage() {
 
   useEffect(() => {
     if (!rosterShown) return
-    const ids = [50, 150, 400, 800].map((ms) => window.setTimeout(() => scrollRosterIntoView(), ms))
+    const ids = [80, 200, 400].map((ms) => window.setTimeout(() => scrollRosterIntoView(), ms))
     return () => ids.forEach((id) => clearTimeout(id))
   }, [rosterShown])
 
@@ -1002,70 +1002,65 @@ export function LeaderboardPage() {
   useEffect(() => {
     if (!isRevealing || !rosterShown || isFinale || isDecrypting) return
 
-    const SPEED_PX_PER_SEC = 14
-    const startAt = Date.now()
+    const SPEED_PX_PER_SEC = 16
     let animId = 0
     let lastTime = performance.now()
-    let looping = false
+    let phase: 'wait' | 'down' | 'pause-bottom' | 'pause-top' = 'wait'
+    let phaseUntil = Date.now() + 1000
     let cancelled = false
-    const timers: number[] = []
-
-    const later = (fn: () => void, ms: number) => {
-      const id = window.setTimeout(() => {
-        if (!cancelled) fn()
-      }, ms)
-      timers.push(id)
-    }
+    let travelled = 0
 
     const scrollToFirstTeam = () => {
       const row = rowRefs.current[1] || rosterRef.current
       const el = scrollContainerRef.current
-      if (!row || !el) return
+      if (!el) return
+      if (!row) {
+        el.scrollTop = 0
+        return
+      }
       const top = Math.max(
         0,
         el.scrollTop + row.getBoundingClientRect().top - el.getBoundingClientRect().top - 8,
       )
-      el.scrollTo({ top, behavior: 'smooth' })
+      el.scrollTop = top
     }
 
-    const lastTeamVisible = (el: HTMLDivElement) => {
-      const lastRow = rowRefs.current[20] || rowRefs.current[19]
-      if (!lastRow) {
-        return el.scrollTop + el.clientHeight >= el.scrollHeight - 12
-      }
-      const cRect = el.getBoundingClientRect()
-      const rRect = lastRow.getBoundingClientRect()
-      return rRect.bottom <= cRect.bottom - 4
+    const atBottom = (el: HTMLDivElement) => {
+      if (el.scrollHeight <= el.clientHeight + 24) return false
+      if (travelled < 80) return false
+      return el.scrollTop + el.clientHeight >= el.scrollHeight - 16
     }
 
     const step = (now: number) => {
+      if (cancelled) return
       const el = scrollContainerRef.current
       if (!el) {
         animId = requestAnimationFrame(step)
         return
       }
 
-      if (Date.now() - startAt < 900) {
-        lastTime = now
-        animId = requestAnimationFrame(step)
-        return
-      }
+      const dt = Math.min((now - lastTime) / 1000, 0.1)
+      lastTime = now
 
-      if (!looping) {
-        const dt = Math.min((now - lastTime) / 1000, 0.1)
-        lastTime = now
-        el.scrollTop += SPEED_PX_PER_SEC * dt
-
-        if (lastTeamVisible(el)) {
-          looping = true
-          later(() => {
-            scrollToFirstTeam()
-            later(() => {
-              looping = false
-              lastTime = performance.now()
-            }, 1800)
-          }, 2000)
+      if (phase === 'wait') {
+        if (Date.now() >= phaseUntil) phase = 'down'
+      } else if (phase === 'down') {
+        const before = el.scrollTop
+        el.scrollTop = before + SPEED_PX_PER_SEC * dt
+        travelled += Math.max(0, el.scrollTop - before)
+        if (atBottom(el)) {
+          phase = 'pause-bottom'
+          phaseUntil = Date.now() + 2200
         }
+      } else if (phase === 'pause-bottom') {
+        if (Date.now() >= phaseUntil) {
+          scrollToFirstTeam()
+          travelled = 0
+          phase = 'pause-top'
+          phaseUntil = Date.now() + 1800
+        }
+      } else if (phase === 'pause-top') {
+        if (Date.now() >= phaseUntil) phase = 'down'
       }
 
       animId = requestAnimationFrame(step)
@@ -1075,7 +1070,6 @@ export function LeaderboardPage() {
     return () => {
       cancelled = true
       cancelAnimationFrame(animId)
-      timers.forEach((id) => clearTimeout(id))
     }
   }, [isRevealing, rosterShown, isFinale, isDecrypting])
 
@@ -1258,12 +1252,8 @@ export function LeaderboardPage() {
       {isRevealing ? (
         <div ref={scrollContainerRef} className="relative flex-1 min-h-0 overflow-y-auto w-full px-4 sm:px-8 pb-10">
           
-          {/* 🌟 HERO SPOTLIGHT (Sleek, elevated vertical alignment for 24x10 LED) */}
-          <div className={`w-full flex flex-col items-center justify-start shrink-0 overflow-hidden ${
-            rosterShown
-              ? (ceremonySettled ? 'pt-1 pb-3' : 'pt-2 sm:pt-4 pb-6')
-              : 'min-h-full pt-2 sm:pt-4 pb-6'
-          }`}>
+          {!rosterShown && (
+          <div className="w-full flex flex-col items-center justify-start shrink-0 overflow-hidden min-h-full pt-2 sm:pt-4 pb-6">
             {/* Header */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -1322,10 +1312,11 @@ export function LeaderboardPage() {
                 decryptingRank={decryptingRank}
                 revealingTeamName={revealingTeamName}
                 nameSpinMs={nameSpinMs}
-                settled={ceremonySettled && !isFinale}
+                settled={false}
               />
             </div>
           </div>
+          )}
 
           {/* ══════════════════════════════════════════════════════════════════ */}
           {/* BOTTOM VIEW: Top 20 Table (for Round 2) OR 3D Podium (for Round 3) */}
@@ -1518,7 +1509,7 @@ export function LeaderboardPage() {
           )}
           {!isFinale && rosterShown && (
             /* ROUND 2: TOP 20 QUALIFIERS TABLE — hidden until #1 has been held 15s */
-            <div ref={rosterRef} className={`w-full max-w-6xl mx-auto rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] mb-10 shrink-0 ${ceremonySettled ? 'mt-4' : 'mt-8'}`}>
+            <div ref={rosterRef} className="w-full max-w-6xl mx-auto rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] mb-16 pb-4 shrink-0 mt-4">
               {/* Header with Title & Status Counter */}
               <div className="flex items-center justify-between px-6 py-4 bg-[#F4ECE1] border-b border-black/10">
                 <div className="flex items-center gap-3">
