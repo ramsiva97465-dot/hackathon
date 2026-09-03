@@ -31,23 +31,29 @@ function sizeFor(longest: number): Size {
   return 'sm'
 }
 
+/**
+ * Brand themes from the SnapServe + vobiz lockup. Both variants run ink drums behind
+ * glass; the finale locks to an orange plate, Round 2 locks to the cream plate.
+ */
 function themeFor(dark: boolean) {
   return dark
     ? {
-        frame: 'border-amber-400/35 bg-gradient-to-b from-[#2a1a06] via-[#0d0803] to-[#2a1a06] shadow-[inset_0_1px_0_rgba(255,255,255,0.12),inset_0_-8px_18px_rgba(0,0,0,0.75)]',
-        glyph: 'text-amber-100/75',
+        frame:
+          'border-[#FF7A1A]/30 bg-gradient-to-b from-[#2E1205] via-[#0F0D0B] to-[#2E1205] shadow-[inset_0_1px_0_rgba(255,255,255,0.12),inset_0_-8px_18px_rgba(0,0,0,0.75)]',
+        glyph: 'text-[#F4ECE1]/60',
         locked:
-          'border-amber-300/90 bg-gradient-to-b from-amber-300/30 via-amber-500/10 to-amber-300/25 text-amber-50 shadow-[0_0_26px_rgba(251,191,36,0.45),inset_0_1px_0_rgba(255,255,255,0.35)]',
-        rail: 'from-transparent via-amber-400/60 to-transparent',
-        kicker: 'text-amber-300/70',
+          'border-[#FF7A1A] bg-gradient-to-b from-[#FF7A1A] via-[#E83C00] to-[#B24A12] text-[#FFF6EE] shadow-[0_0_28px_rgba(232,60,0,0.55),inset_0_1px_0_rgba(255,255,255,0.35)]',
+        rail: 'from-transparent via-[#FF7A1A]/70 to-transparent',
+        kicker: 'text-[#F4ECE1]/55',
       }
     : {
-        frame: 'border-emerald-950/70 bg-gradient-to-b from-[#0f2a22] via-[#061410] to-[#0f2a22] shadow-[inset_0_1px_0_rgba(255,255,255,0.1),inset_0_-8px_18px_rgba(0,0,0,0.6)]',
-        glyph: 'text-emerald-200/70',
+        frame:
+          'border-[#1A1A1A]/80 bg-gradient-to-b from-[#2A2724] via-[#0F0D0B] to-[#2A2724] shadow-[inset_0_1px_0_rgba(255,255,255,0.10),inset_0_-8px_18px_rgba(0,0,0,0.6)]',
+        glyph: 'text-[#F4ECE1]/55',
         locked:
-          'border-emerald-600 bg-gradient-to-b from-white via-emerald-50 to-emerald-100 text-emerald-900 shadow-[0_0_24px_rgba(16,185,129,0.4),inset_0_1px_0_rgba(255,255,255,0.9)]',
-        rail: 'from-transparent via-emerald-500/60 to-transparent',
-        kicker: 'text-emerald-700/70',
+          'border-[#E83C00] bg-gradient-to-b from-white via-[#FBF6EE] to-[#F4ECE1] text-[#1A1A1A] shadow-[0_0_26px_rgba(232,60,0,0.32),inset_0_1px_0_rgba(255,255,255,0.9)]',
+        rail: 'from-transparent via-[#E83C00]/70 to-transparent',
+        kicker: 'text-[#8E8B86]',
       }
 }
 
@@ -98,7 +104,7 @@ function SpinReel({
         initial={{ scale: 1 }}
         animate={{ scale: [1, 1.14, 1] }}
         transition={{ duration: 0.34, ease: 'easeOut' }}
-        className={`relative ${s.cell} rounded-xl border-2 flex items-center justify-center font-mono font-black ${s.text} ${theme.locked}`}
+        className={`relative ${s.cell} rounded-xl border-2 flex items-center justify-center font-display font-black tracking-[-0.03em] ${s.text} ${theme.locked}`}
       >
         {target}
       </motion.div>
@@ -124,7 +130,7 @@ function SpinReel({
         {strip.map((glyph, i) => (
           <span
             key={i}
-            className={`${s.cell} flex items-center justify-center font-mono font-black ${s.text} ${theme.glyph}`}
+            className={`${s.cell} flex items-center justify-center font-display font-black tracking-[-0.03em] ${s.text} ${theme.glyph}`}
           >
             {glyph}
           </span>
@@ -152,7 +158,7 @@ function IntroReel({
       initial={{ opacity: 0, y: 14, rotateX: -60 }}
       animate={{ opacity: 1, y: 0, rotateX: 0 }}
       transition={{ delay: index * 0.045, duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
-      className={`relative ${s.cell} rounded-xl border-2 flex items-center justify-center font-mono font-black ${s.text} ${theme.locked}`}
+      className={`relative ${s.cell} rounded-xl border-2 flex items-center justify-center font-display font-black tracking-[-0.03em] ${s.text} ${theme.locked}`}
     >
       {glyph}
     </motion.div>
@@ -198,7 +204,7 @@ export function WinnerLetterReels({
 
   if (letterCount === 0) {
     return (
-      <p className={`font-mono font-black tracking-[0.3em] text-sm sm:text-base ${theme.kicker}`}>
+      <p className={`font-display font-black tracking-[0.3em] text-sm sm:text-base ${theme.kicker}`}>
         IDENTIFYING WINNER...
       </p>
     )
@@ -268,7 +274,7 @@ export function WinnerLetterReels({
         key={stage}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className={`font-mono text-[10px] sm:text-xs font-bold uppercase tracking-[0.35em] ${theme.kicker}`}
+        className={`font-display text-[10px] sm:text-xs font-bold uppercase tracking-[0.35em] ${theme.kicker}`}
       >
         {stage === 'intro' ? 'Voiceathon 2026' : 'Locking In The Winner'}
       </motion.p>

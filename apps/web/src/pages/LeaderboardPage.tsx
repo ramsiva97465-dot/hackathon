@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { SnapServeMark, VobizLockup } from '@/components/brand/BrandLogos'
-import { WinnerLetterReels } from '@/components/reveal/WinnerLetterReels'
+import { BRAND, RevealSpotlightCard } from '@/components/reveal/RevealSpotlightCard'
 import { Avatar } from '@/components/ui/Avatar'
 import { getTrackConfig } from '@/lib/utils'
 import { useWebSocket } from '@/hooks/useWebSocket'
@@ -1012,28 +1012,47 @@ export function LeaderboardPage() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className={`p-8 sm:p-10 rounded-[2.5rem] shadow-2xl text-center relative overflow-hidden border-2 ${
-                    isFinale
-                      ? 'bg-gradient-to-b from-[#1c140e] to-[#0c0906] border-amber-500/40 text-white shadow-orange-950/40'
-                      : 'bg-[#F4ECE1] border-black/10 text-[#1A1A1A] shadow-black/10'
-                  }`}
+                  className="p-8 sm:p-10 rounded-[2.5rem] text-center relative overflow-hidden border-2"
+                  style={{
+                    background: isFinale
+                      ? `linear-gradient(180deg, #1C1917 0%, ${BRAND.inkDeep} 100%)`
+                      : `linear-gradient(180deg, ${BRAND.creamLit} 0%, ${BRAND.cream} 55%, ${BRAND.creamDeep} 100%)`,
+                    borderColor: isFinale ? 'rgba(255,122,26,0.35)' : 'rgba(26,26,26,0.10)',
+                    boxShadow: '0 28px 70px -32px rgba(0,0,0,0.45)',
+                  }}
                 >
-                  <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-sm relative ${
-                    isFinale ? 'bg-amber-500/10 border border-amber-500/30 text-amber-400' : 'bg-[#E83C00]/10 border border-[#E83C00]/20 text-[#E83C00]'
-                  }`}>
+                  <div
+                    className="pointer-events-none absolute inset-x-0 top-0 h-1"
+                    style={{ background: `linear-gradient(90deg, transparent, ${BRAND.orangeLit}, ${BRAND.orange}, transparent)` }}
+                    aria-hidden
+                  />
+                  <div
+                    className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-4 relative border"
+                    style={{
+                      backgroundColor: 'rgba(232,60,0,0.10)',
+                      borderColor: 'rgba(232,60,0,0.25)',
+                      color: BRAND.orange,
+                    }}
+                  >
                     {isFinale ? (
                       <>
-                        <Crown size={40} className="text-amber-400 animate-bounce" />
-                        <div className="absolute inset-0 rounded-3xl border border-amber-400/40 animate-ping opacity-30" />
+                        <Crown size={40} className="animate-bounce" style={{ color: BRAND.orangeLit }} />
+                        <div className="absolute inset-0 rounded-3xl border animate-ping opacity-30" style={{ borderColor: BRAND.orangeLit }} />
                       </>
                     ) : (
                       <Trophy size={38} />
                     )}
                   </div>
-                  <h3 className={`text-2xl sm:text-3xl font-black mb-2 ${isFinale ? 'text-white' : 'text-[#1A1A1A]'}`}>
-                    {isFinale ? '👑 Grand Finale Verdict Sealed!' : 'Round 1 Graded & Verified!'}
+                  <h3
+                    className="font-display text-2xl sm:text-3xl font-black tracking-[-0.03em] mb-2"
+                    style={{ color: isFinale ? '#FFFFFF' : BRAND.ink }}
+                  >
+                    {isFinale ? 'Grand Finale Verdict Sealed' : 'Round 1 Graded & Verified'}
                   </h3>
-                  <p className={`max-w-lg mx-auto text-sm sm:text-base font-medium ${isFinale ? 'text-slate-300' : 'text-slate-500'}`}>
+                  <p
+                    className="max-w-lg mx-auto text-sm sm:text-base font-medium"
+                    style={{ color: isFinale ? 'rgba(244,236,225,0.62)' : '#7A756E' }}
+                  >
                     {isFinale
                       ? 'Waiting for the admin to unseal 5th Place. Each place opens only when its controller button is pressed.'
                       : 'Waiting for the admin to start the Top 20 announcement from the rounds console.'}
@@ -1041,143 +1060,17 @@ export function LeaderboardPage() {
                 </motion.div>
               ) : currentSpotlightTeam ? (
 
-                <motion.div
+                <RevealSpotlightCard
                   key={`spotlight-${currentSpotlightRank}-${currentSpotlightTeam.teamId}`}
-                  initial={{ opacity: 0, scale: 0.85, y: 30 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 1.05, y: -20 }}
-                  transition={{ type: 'spring', bounce: 0.35, duration: 0.65 }}
-                  className={`relative p-7 sm:p-10 rounded-[2.5rem] overflow-hidden shadow-2xl text-center border-2 ${
-                    isFinale && currentSpotlightRank === 1
-                      ? 'bg-gradient-to-b from-[#2e1205] via-[#1a0a02] to-[#0d0501] border-[#E83C00] text-white ring-4 ring-amber-400/80 shadow-[0_0_80px_rgba(232,60,0,0.5)]'
-                      : isFinale && currentSpotlightRank === 2
-                      ? 'bg-gradient-to-b from-[#1e293b] to-[#0f172a] border-slate-400 text-white shadow-slate-900/40'
-                      : isFinale && currentSpotlightRank === 3
-                      ? 'bg-gradient-to-b from-[#2b170c] to-[#120904] border-amber-700 text-white shadow-amber-950/40'
-                      : 'bg-[#F4ECE1] text-[#1A1A1A] border-black/10 shadow-black/10'
-                  }`}
-                  style={{
-                    borderColor: !isFinale
-                      ? (currentSpotlightRank === 1 ? '#E83C00' : currentSpotlightRank === 2 ? '#475569' : currentSpotlightRank === 3 ? '#B45309' : '#059669')
-                      : undefined
-                  }}
-                >
-                  {/* Announcement Tag */}
-                  <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-4 shadow-sm"
-                    style={{
-                      backgroundColor: currentSpotlightRank === 1 ? '#E83C00' : currentSpotlightRank === 2 ? '#475569' : currentSpotlightRank === 3 ? '#B45309' : '#059669',
-                      color: '#FFFFFF'
-                    }}>
-                    {currentSpotlightRank === 1 ? (
-                      <>
-                        <Crown size={14} className="text-amber-300 fill-amber-300/30 stroke-[2.5]" />
-                        <span>{isFinale ? '👑 Grand Champion · 1st Place' : '1st Place Finalist'}</span>
-                      </>
-                    ) : currentSpotlightRank === 2 ? (
-                      <>
-                        <Medal size={14} className="text-slate-200 stroke-[2.5]" />
-                        <span>{isFinale ? '🥈 1st Runner Up · 2nd Place' : '2nd Place Finalist'}</span>
-                      </>
-                    ) : currentSpotlightRank === 3 ? (
-                      <>
-                        <Award size={14} className="text-amber-200 stroke-[2.5]" />
-                        <span>{isFinale ? '🥉 2nd Runner Up · 3rd Place' : '3rd Place Finalist'}</span>
-                      </>
-                    ) : currentSpotlightRank === 4 && isFinale ? (
-                      <>
-                        <Medal size={14} className="text-slate-200 stroke-[2.5]" />
-                        <span>4th Place</span>
-                      </>
-                    ) : currentSpotlightRank === 5 && isFinale ? (
-                      <>
-                        <Medal size={14} className="text-stone-200 stroke-[2.5]" />
-                        <span>5th Place</span>
-                      </>
-                    ) : (
-                      <>
-                        <ShieldCheck size={14} className="text-emerald-200 stroke-[2.5]" />
-                        <span>Qualified For Round 2</span>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Giant Rank */}
-                  <div className="text-6xl sm:text-7xl font-black mb-3 tracking-tighter"
-                    style={{
-                      color: isFinale && currentSpotlightRank === 1
-                        ? '#FBBF24'
-                        : isFinale && currentSpotlightRank === 2
-                        ? '#CBD5E1'
-                        : isFinale && currentSpotlightRank === 3
-                        ? '#F59E0B'
-                        : (currentSpotlightRank === 1 ? '#E83C00' : currentSpotlightRank === 2 ? '#334155' : currentSpotlightRank === 3 ? '#B45309' : '#047857')
-                    }}>
-                    {isFinale && currentSpotlightRank === 1 ? '👑 GRAND CHAMPION' : `#${currentSpotlightRank}`}
-                  </div>
-
-                  {/* Team name: wordmark reels spin down to the winner, then the real name */}
-                  {isDecrypting ? (
-                    <div className="mb-5 px-2 min-h-[7.5rem] sm:min-h-[9rem] flex items-center justify-center">
-                      <WinnerLetterReels
-                        name={revealingTeamName || currentSpotlightTeam.teamName}
-                        spinning
-                        spinMs={nameSpinMs}
-                        dark={isFinale}
-                      />
-                    </div>
-                  ) : (
-                    <h2 className={`text-3xl sm:text-5xl font-black tracking-tight mb-2 truncate px-4 ${
-                      isFinale ? 'text-white' : 'text-[#1A1A1A]'
-                    }`}>
-                      {currentSpotlightTeam.teamName}
-                    </h2>
-                  )}
-
-                  {/* College & Track */}
-                  <div className={`flex items-center justify-center gap-2.5 flex-wrap text-sm sm:text-base font-medium mb-6 ${
-                    isFinale ? 'text-slate-300' : 'text-slate-600'
-                  }`}>
-                    <span>{currentSpotlightTeam.college || 'Tamil Nadu'}</span>
-                    <span className="opacity-40">•</span>
-                    <span className="px-3 py-1 rounded-lg bg-white text-slate-800 text-xs font-bold border border-black/10 shadow-sm">
-                      {getTrackConfig(currentSpotlightTeam.track).label}
-                    </span>
-                  </div>
-
-                  {/* Score Card */}
-                  <div className="inline-flex items-center gap-3 px-7 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 shadow-sm">
-                    <span className={`text-xs font-bold uppercase tracking-widest ${isFinale ? 'text-amber-200' : 'text-slate-500'}`}>
-                      {isFinale ? 'Final Score' : 'Round 1 Score'}
-                    </span>
-                    <span className={`text-3xl sm:text-4xl font-black font-mono ${isFinale ? 'text-amber-300' : 'text-[#1A1A1A]'}`}>
-                      {Number(currentSpotlightTeam.totalScore || 0).toFixed(1)}
-                    </span>
-                  </div>
-
-                  {/* Progress Indicator */}
-                  <div className="mt-7 pt-4 border-t border-black/10 flex items-center justify-between text-xs text-slate-500 font-semibold px-2">
-                    <span className={`font-mono ${isFinale ? 'text-slate-400' : 'text-slate-500'}`}>
-                      Progress: {revealedStep} of {maxSteps} revealed
-                    </span>
-                    {revealedStep === maxSteps ? (
-                      <span className={isFinale ? 'text-amber-300 font-bold' : 'text-slate-700 font-bold'}>
-                        {isFinale ? 'Ceremony complete' : 'Announcement complete'}
-                      </span>
-                    ) : (
-                      <span className={isFinale ? 'text-amber-300 font-bold' : 'text-slate-700 font-bold'}>
-                        Next: {isFinale
-                          ? (currentSpotlightRank <= 1 ? 'Ceremony complete'
-                            : currentSpotlightRank === 2 ? 'Grand Champion (#1 👑)'
-                            : currentSpotlightRank === 3 ? '1st Runner Up (#2 🥈)'
-                            : currentSpotlightRank === 4 ? '2nd Runner Up (#3 🥉)'
-                            : currentSpotlightRank === 5 ? '4th Place'
-                            : currentSpotlightRank === 6 ? '5th Place'
-                            : `#${currentSpotlightRank - 1}`)
-                          : `#${currentSpotlightRank - 1}`}
-                      </span>
-                    )}
-                  </div>
-                </motion.div>
+                  team={currentSpotlightTeam}
+                  rank={currentSpotlightRank}
+                  isFinale={isFinale}
+                  isDecrypting={isDecrypting}
+                  revealingTeamName={revealingTeamName}
+                  nameSpinMs={nameSpinMs}
+                  revealedStep={revealedStep}
+                  maxSteps={maxSteps}
+                />
               ) : null}
             </AnimatePresence>
           </div>
