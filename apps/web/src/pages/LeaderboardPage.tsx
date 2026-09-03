@@ -1003,8 +1003,8 @@ export function LeaderboardPage() {
             </h1>
           </motion.div>
 
-          {/* 🌟 HERO SPOTLIGHT ANNOUNCEMENT CARD — full width for 24x10 LED */}
-          <div className="w-full mb-6">
+          {/* 🌟 HERO SPOTLIGHT ANNOUNCEMENT CARD — 75% width for 24x10 LED */}
+          <div className="w-3/4 mx-auto mb-6">
             <PremiumRevealCard
               isFinale={isFinale}
               currentSpotlightRank={currentSpotlightRank}
