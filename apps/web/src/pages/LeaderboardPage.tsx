@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { SnapServeMark, VobizLockup } from '@/components/brand/BrandLogos'
@@ -914,24 +914,35 @@ export function LeaderboardPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [isDecrypting])
 
-  // ONLY AFTER all 20 reveals are fully completed (or all 5 for Finale), wait 20 seconds, then smoothly scroll down to show the full Top 20 table
+  // ONLY AFTER all 20 reveals are fully completed (or all 5 for Finale), hold the #1 card
+  // for 7 seconds, then smoothly scroll down to show the full Top 20 table
   useEffect(() => {
     if (!isRevealing) return
 
-    const maxSteps = isFinale ? FINALE_CUTOFF : 20
     if (isDecrypting || revealedStep < maxSteps) return
 
     const timer = setTimeout(() => {
-      if (rosterRef.current && scrollContainerRef.current) {
-        const topOffset = Math.max(0, rosterRef.current.offsetTop - 20)
-        scrollContainerRef.current.scrollTo({ top: topOffset, behavior: 'smooth' })
-      } else if (rosterRef.current) {
-        rosterRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      const roster = rosterRef.current
+      const container = scrollContainerRef.current
+      if (!roster) return
+      if (!container) {
+        roster.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        return
       }
-    }, 20000) // 20 seconds gap after reveal completion
+
+      // offsetTop resolves against the page root (the nearest positioned ancestor),
+      // not this scroll container, so measure the gap between the two directly.
+      const gap = roster.getBoundingClientRect().top - container.getBoundingClientRect().top
+      const rosterHeight = roster.getBoundingClientRect().height
+      const viewport = container.clientHeight
+      // Centre the table when all 20 rows fit, otherwise pin its header to the top.
+      const inset = rosterHeight <= viewport ? (viewport - rosterHeight) / 2 : 16
+
+      container.scrollTo({ top: Math.max(0, container.scrollTop + gap - inset), behavior: 'smooth' })
+    }, 7000) // hold on the #1 winner before revealing the full table
 
     return () => clearTimeout(timer)
-  }, [isRevealing, revealedStep, isFinale, isDecrypting])
+  }, [isRevealing, revealedStep, maxSteps, isDecrypting])
 
   // Round 2 is one-click-per-team from the admin table — never auto-play 20→1.
 
@@ -947,6 +958,107 @@ export function LeaderboardPage() {
       ? (finaleRoster[FINALE_CUTOFF - revealedStep] || finaleRoster[finaleRoster.length - 1] || null)
       : (advancing[20 - revealedStep] || advancing[advancing.length - 1] || null))
     : null
+
+  const qualifierCount = Math.min(20, advancing.length || advancingRef.current.length || 20)
+
+  // Compact enough that all 20 fit on a 24x10 LED when split across two columns.
+  const QUALIFIER_GRID = 'grid grid-cols-[46px_1fr_116px_74px_86px] px-4 py-2 items-center'
+
+  const renderQualifierRow = (rankNum: number) => {
+    if (rankNum > qualifierCount) return null
+
+    const team = advancing[rankNum - 1] || advancingRef.current[rankNum - 1]
+    const isRevealed = unlockedRanks.includes(rankNum) || revealedStep >= (21 - rankNum)
+    const isSpotlight = rankNum === currentSpotlightRank && revealedStep > 0
+
+    if (!isRevealed || !team) {
+      return (
+        <motion.div
+          key={`slot-locked-${rankNum}`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className={`${QUALIFIER_GRID} border-b border-black/[0.04] bg-[#EBE3D5]/40 text-slate-400 opacity-60`}
+        >
+          <div className="flex items-center justify-center">
+            <span className="w-7 h-7 rounded-lg bg-black/5 flex items-center justify-center font-black text-[11px] text-slate-400">
+              {rankNum}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 min-w-0">
+            <Lock size={12} className="animate-pulse text-slate-400 shrink-0" />
+            <span className="text-[11px] font-semibold tracking-wide truncate">Locked & Pending...</span>
+          </div>
+          <div><div className="w-16 h-4 rounded bg-black/5 animate-pulse" /></div>
+          <div className="text-center"><span className="text-[11px] font-mono text-slate-300">--</span></div>
+          <div className="text-right"><span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Pending</span></div>
+        </motion.div>
+      )
+    }
+
+    const track = getTrackConfig(team.track)
+
+    return (
+      <motion.div
+        key={`slot-revealed-${rankNum}-${team.teamId}`}
+        id={`r2-row-${rankNum}`}
+        ref={(el) => { rowRefs.current[rankNum] = el }}
+        layout
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        className={`${QUALIFIER_GRID} border-b transition-colors ${
+          isSpotlight
+            ? 'bg-[#E83C00]/15 border-[#E83C00]/40 ring-1 ring-[#E83C00]/30'
+            : rankNum === 1
+            ? 'bg-orange-500/5 border-black/5'
+            : 'bg-[#F4ECE1] border-black/5'
+        }`}
+      >
+        <div className="flex items-center justify-center">
+          {rankNum === 1 ? (
+            <span className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-[11px] bg-[#E83C00] text-white ring-2 ring-[#E83C00]/30">
+              <Crown size={11} className="text-amber-200 fill-amber-200/20 stroke-[2.5]" />
+            </span>
+          ) : rankNum === 2 ? (
+            <span className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-[11px] bg-slate-300 text-slate-900 ring-1 ring-slate-400/40">2</span>
+          ) : rankNum === 3 ? (
+            <span className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-[11px] bg-amber-200 text-amber-900 ring-1 ring-amber-400/40">3</span>
+          ) : (
+            <span className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-[11px] bg-emerald-100 text-emerald-800 border border-emerald-300">
+              {rankNum}
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 min-w-0">
+          <Avatar name={team.teamName} size="xs" className="shrink-0 ring-1 ring-white shadow-xs" />
+          <div className="min-w-0 leading-tight">
+            <div className="font-bold truncate text-slate-900 text-[13px]">{team.teamName}</div>
+            <div className="text-[10px] text-slate-400 truncate">{team.college}</div>
+          </div>
+        </div>
+
+        <div className="min-w-0">
+          <span
+            className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-bold border bg-white truncate max-w-full"
+            style={{ color: track.color, borderColor: `${track.color}30` }}
+          >
+            {track.label}
+          </span>
+        </div>
+
+        <div className="text-center font-mono font-black text-[13px] text-[#1A1A1A]">
+          {team.totalScore.toFixed(1)}
+        </div>
+
+        <div className="text-right">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 uppercase tracking-wide">
+            <CheckCircle2 size={10} className="text-emerald-600 stroke-[2.5]" />
+            Qualified
+          </span>
+        </div>
+      </motion.div>
+    )
+  }
 
 
   return (
@@ -1243,164 +1355,37 @@ export function LeaderboardPage() {
             ) : null
           ) : (
             /* ROUND 2: TOP 20 QUALIFIERS TABLE */
-            <div ref={rosterRef} className="w-full max-w-5xl rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] mt-8 mb-24">
+            <div ref={rosterRef} className="w-full max-w-[1700px] rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] mt-8 mb-24">
               {/* Header with Title & Status Counter */}
-              <div className="flex items-center justify-between px-6 py-4 bg-[#F4ECE1] border-b border-black/10">
+              <div className="flex items-center justify-between px-6 py-3 bg-[#F4ECE1] border-b border-black/10">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600">
                     <Trophy size={16} />
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg font-black text-[#1A1A1A]">Round 2 · Top 20 Qualifiers</h3>
-                    <p className="text-xs text-slate-500 font-medium">Announced teams appear here after each card</p>
+                    <h3 className="text-base sm:text-lg font-black text-[#1A1A1A] leading-tight">Round 2 · Top 20 Qualifiers</h3>
+                    <p className="text-[11px] text-slate-500 font-medium">Announced teams appear here after each card</p>
                   </div>
                 </div>
                 <span className="text-xs font-black text-emerald-800 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-300 shadow-sm font-mono">
-                  {unlockedRanks.length} / {Math.min(20, advancing.length || advancingRef.current.length || 20)} Unlocked
+                  {unlockedRanks.length} / {qualifierCount} Unlocked
                 </span>
               </div>
 
-              {/* Table Column Headers */}
-              <div className="grid grid-cols-[64px_1fr_170px_110px_120px] px-6 py-3.5 bg-[#1A1A1A] text-[10px] font-bold text-white/70 uppercase tracking-widest">
-                <div className="text-center">Rank</div>
-                <div>Team & College</div>
-                <div>Track</div>
-                <div className="text-center">Score</div>
-                <div className="text-right">Status</div>
-              </div>
-
-              {/* Rows (1 to 20, neat single column row-by-row like Round 1) */}
-              <div className="flex flex-col">
-                {Array.from({ length: Math.min(20, advancing.length || advancingRef.current.length || 20) }).map((_, idx) => {
-                  const rankNum = idx + 1 // 1 to 20
-                  const team = advancing[idx] || advancingRef.current[idx]
-                  const isRevealed = unlockedRanks.includes(rankNum) || revealedStep >= (21 - rankNum)
-                  const isSpotlight = rankNum === currentSpotlightRank && revealedStep > 0
-                  const track = team ? getTrackConfig(team.track) : null
-
-                  if (!isRevealed || !team) {
-                    return (
-                      <motion.div
-                        key={`slot-locked-${rankNum}`}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="grid grid-cols-[64px_1fr_170px_110px_120px] px-6 py-3.5 items-center border-b border-black/[0.04] bg-[#EBE3D5]/40 text-slate-400 opacity-60"
-                      >
-                        <div className="flex items-center justify-center">
-                          <span className="w-8 h-8 rounded-xl bg-black/5 flex items-center justify-center font-black text-xs text-slate-400">
-                            #{rankNum}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-slate-400">
-                          <Lock size={13} className="animate-pulse text-slate-400" />
-                          <span className="text-xs font-semibold tracking-wide">Locked & Pending Announcement...</span>
-                        </div>
-                        <div>
-                          <div className="w-20 h-5 rounded-lg bg-black/5 animate-pulse" />
-                        </div>
-                        <div className="text-center">
-                          <span className="text-xs font-mono text-slate-300">--</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pending</span>
-                        </div>
-                      </motion.div>
-                    )
-                  }
-
-                    return (
-                      <motion.div
-                        key={`slot-revealed-${rankNum}-${team.teamId}`}
-                        id={`r2-row-${rankNum}`}
-                        ref={(el) => { rowRefs.current[rankNum] = el }}
-                        layout
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className={`grid grid-cols-[64px_1fr_170px_110px_120px] px-6 py-3.5 items-center border-b transition-colors ${
-                          isSpotlight
-                            ? 'bg-[#E83C00]/15 border-[#E83C00]/40 shadow-md ring-1 ring-[#E83C00]/30'
-                          : rankNum === 1
-                          ? 'bg-orange-500/5 hover:bg-orange-500/10 border-black/5'
-                          : 'bg-[#F4ECE1] hover:bg-white/60 border-black/5'
-                      }`}
-                    >
-                      {/* Rank Badge */}
-                      <div className="flex items-center justify-center">
-                        {rankNum === 1 ? (
-                          <span className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shadow-sm bg-[#E83C00] text-white ring-2 ring-[#E83C00]/30 gap-0.5">
-                            <Crown size={11} className="text-amber-200 fill-amber-200/20 stroke-[2.5]" />
-                            1
-                          </span>
-                        ) : rankNum === 2 ? (
-                          <span className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shadow-sm bg-slate-300 text-slate-900 ring-1 ring-slate-400/40 gap-0.5">
-                            <Medal size={11} className="text-slate-700 stroke-[2.5]" />
-                            2
-                          </span>
-                        ) : rankNum === 3 ? (
-                          <span className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shadow-sm bg-amber-200 text-amber-900 ring-1 ring-amber-400/40 gap-0.5">
-                            <Award size={11} className="text-amber-800 stroke-[2.5]" />
-                            3
-                          </span>
-                        ) : (
-                          <span className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs">
-                            #{rankNum}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Team & College */}
-                      <div className="flex items-center gap-3 min-w-0">
-                        <Avatar name={team.teamName} size="sm" className="shrink-0 ring-2 ring-white shadow-sm" />
-                        <div className="min-w-0">
-                          <div className="font-bold truncate text-slate-900 text-sm flex items-center gap-2">
-                            <span>{team.teamName}</span>
-                            {rankNum === 1 && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-orange-100 text-[#E83C00] border border-orange-300 tracking-wider uppercase shadow-xs">
-                                <Crown size={9} className="text-[#E83C00]" /> Leader
-                              </span>
-                            )}
-                            {rankNum === 2 && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-slate-200 text-slate-700 border border-slate-300 tracking-wider uppercase shadow-xs">
-                                <Medal size={9} className="text-slate-600" /> 2nd
-                              </span>
-                            )}
-                            {rankNum === 3 && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-100 text-amber-800 border border-amber-300 tracking-wider uppercase shadow-xs">
-                                <Award size={9} className="text-amber-700" /> 3rd
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-xs text-slate-400 truncate">{team.college}</div>
-                        </div>
-                      </div>
-
-                      {/* Track */}
-                      <div>
-                        {track && (
-                          <span
-                            className="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold border bg-white shadow-sm"
-                            style={{ color: track.color, borderColor: `${track.color}30` }}
-                          >
-                            {track.label}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Score */}
-                      <div className="text-center font-mono font-black text-sm text-[#1A1A1A]">
-                        {team.totalScore.toFixed(1)}
-                      </div>
-
-                      {/* Qualified Status */}
-                      <div className="text-right">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm uppercase tracking-wide">
-                          <CheckCircle2 size={11} className="text-emerald-600 stroke-[2.5]" />
-                          Qualified
-                        </span>
-                      </div>
-                    </motion.div>
-                  )
-                })}
+              {/* Ranks 1-10 and 11-20 side by side so all 20 fit the 24x10 display at once */}
+              <div className="grid grid-cols-2 divide-x divide-black/10">
+                {[0, 1].map((column) => (
+                  <div key={column} className="flex flex-col min-w-0">
+                    <div className={`${QUALIFIER_GRID} bg-[#1A1A1A] text-[10px] font-bold text-white/70 uppercase tracking-widest`}>
+                      <div className="text-center">Rank</div>
+                      <div>Team &amp; College</div>
+                      <div>Track</div>
+                      <div className="text-center">Score</div>
+                      <div className="text-right">Status</div>
+                    </div>
+                    {Array.from({ length: 10 }).map((_, i) => renderQualifierRow(column * 10 + i + 1))}
+                  </div>
+                ))}
               </div>
             </div>
           )}
