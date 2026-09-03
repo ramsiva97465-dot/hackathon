@@ -303,6 +303,10 @@ export function PremiumRevealCard({
       const initialWord = 'VOICEATHON'
       const target = (targetName || 'QUALIFIER').toUpperCase()
       const maxLen = Math.max(initialWord.length, target.length)
+      // Keep one non-space character encrypted until the shared decrypt timer
+      // ends. Otherwise the full name can become readable around 85% while
+      // the score continues calculating until 100%.
+      const finalRevealIndex = Math.max(0, target.trimEnd().length - 1)
       const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
       let chars = ''
@@ -328,7 +332,9 @@ export function PremiumRevealCard({
         const charStart = 0.05 + (i / maxLen) * 0.52
         const charLock = charStart + 0.25
 
-        if (progress >= charLock || progress >= 0.98) {
+        const canLockCharacter = i !== finalRevealIndex || progress >= 1
+
+        if ((progress >= charLock || progress >= 0.98) && canLockCharacter) {
           // Locked onto target team name character
           if (targetChar) {
             chars += targetChar
@@ -549,10 +555,12 @@ export function PremiumRevealCard({
         <div className={`flex items-center gap-6 w-full ${settled ? 'min-h-[140px]' : 'min-h-[260px]'}`}>
 
           {/* ── LEFT: Badge + Rank ── */}
-          <div className="flex flex-col items-center justify-center gap-2 shrink-0 min-w-[160px] px-2">
+          <div className={`flex flex-col items-center justify-start self-stretch shrink-0 min-w-[160px] px-2 ${
+            settled ? 'gap-2 pt-1' : 'gap-4 pt-3'
+          }`}>
             {/* Badge */}
             <div
-              className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-[0.16em] shadow-xl transition-all ${
+              className={`inline-flex min-h-[26px] items-center gap-2 px-3.5 py-1.5 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-[0.16em] shadow-xl transition-all ${
                 isDecrypting
                   ? 'bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-amber-500/20 backdrop-blur-md border border-amber-400/60 text-amber-200 shadow-[0_0_20px_rgba(245,158,11,0.3)] ring-1 ring-amber-400/30'
                   : rankTheme.badge
@@ -663,8 +671,10 @@ export function PremiumRevealCard({
           <div className="w-px self-stretch bg-white/10 shrink-0" />
 
           {/* ── RIGHT: Score ── */}
-          <div className="flex flex-col items-center justify-center gap-2 shrink-0 w-[20%]">
-            <span className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-amber-300/90">
+          <div className={`flex flex-col items-center justify-start self-stretch shrink-0 w-[20%] ${
+            settled ? 'gap-2 pt-1' : 'gap-4 pt-3'
+          }`}>
+            <span className="inline-flex min-h-[26px] items-center text-[11px] font-extrabold uppercase tracking-[0.16em] text-amber-300/90">
               {isDecrypting ? 'CALCULATING' : isFinale ? 'FINAL SCORE' : 'ROUND 1 SCORE'}
             </span>
             <span
