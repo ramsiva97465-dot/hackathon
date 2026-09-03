@@ -907,18 +907,14 @@ export function LeaderboardPage() {
     }, spinMs)
   }
 
-  // Keep the LCD locked on the countdown card until the name is unsealed
+  // When a new countdown/decrypt starts, immediately scroll the hero card back to top
   useEffect(() => {
     if (!isDecrypting) return
-    window.scrollTo({ top: 0, behavior: 'auto' })
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = previousOverflow
-    }
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [isDecrypting])
 
-  // After each Top 20 card, scroll the table to that team's row. Repeats every reveal.
+  // After each Top 20 card reveals, wait 2.2s then smoothly scroll down to show the team in the table
   useEffect(() => {
     if (!isRevealing) return
 
@@ -926,7 +922,7 @@ export function LeaderboardPage() {
       if (isDecrypting || revealedStep < FINALE_CUTOFF) return
       const timer = setTimeout(() => {
         rosterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }, 7000)
+      }, 2500)
       return () => clearTimeout(timer)
     }
 
@@ -937,10 +933,10 @@ export function LeaderboardPage() {
       const row = rowRefs.current[rank]
       if (row) {
         row.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      } else {
-        rosterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      } else if (rosterRef.current) {
+        rosterRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
-    }, 7000)
+    }, 2200)
 
     return () => clearTimeout(timer)
   }, [isRevealing, revealedStep, isFinale, isDecrypting, unlockedRanks.length])
