@@ -77,28 +77,64 @@ function Wreath({
   locked,
   rotateY = 0,
   x = 0,
+  idle = false,
+  idleDelay = 0,
 }: {
   glyph: string
   className: string
   locked?: boolean
   rotateY?: number
   x?: number
+  idle?: boolean
+  idleDelay?: number
 }) {
   const facing = Math.abs(Math.cos((rotateY * Math.PI) / 180))
   const showGlyph = facing > 0.28
 
   return (
     <div className="relative" style={{ perspective: 1400 }}>
-      <div
-        className={`relative ${className}`}
-        style={{
-          transform: `translateX(${x}px) rotateY(${rotateY}deg)`,
-          transformStyle: 'preserve-3d',
-          filter: `brightness(${0.52 + 0.48 * facing})`,
-          willChange: 'transform',
-        }}
+      {(locked || idle) && (
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute bottom-[16%] left-1/2 h-14 w-32 -translate-x-1/2 rounded-full bg-amber-300/30 blur-2xl"
+          animate={{ opacity: [0.28, 0.55, 0.28], scale: [0.92, 1.08, 0.92] }}
+          transition={{ duration: 4.8, repeat: Infinity, ease: 'easeInOut' }}
+        />
+      )}
+      <motion.div
+        className={`relative overflow-hidden ${className}`}
+        style={
+          idle
+            ? { transformStyle: 'preserve-3d', filter: 'brightness(1)', willChange: 'transform' }
+            : {
+                transform: `translateX(${x}px) rotateY(${rotateY}deg)`,
+                transformStyle: 'preserve-3d',
+                filter: `brightness(${0.52 + 0.48 * facing})`,
+                willChange: 'transform',
+              }
+        }
+        animate={idle ? { rotateY: [0, 10, 0, -10, 0] } : undefined}
+        transition={
+          idle
+            ? { duration: 7.2, delay: idleDelay, repeat: Infinity, ease: 'easeInOut' }
+            : undefined
+        }
       >
         <img src={PODIUM} alt="" className="absolute inset-0 h-full w-full object-contain" />
+        {(locked || idle) && (
+          <motion.div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            initial={{ x: '-85%', opacity: 0 }}
+            animate={{ x: '85%', opacity: [0, 0.85, 0] }}
+            transition={{ duration: 2.1, delay: 0.15 + idleDelay, repeat: Infinity, repeatDelay: 3.4, ease: [0.4, 0, 0.2, 1] }}
+            style={{
+              background:
+                'linear-gradient(108deg, transparent 38%, rgba(255,245,210,0.0) 44%, rgba(255,255,255,0.42) 50%, rgba(255,214,120,0.12) 54%, transparent 62%)',
+              mixBlendMode: 'screen',
+            }}
+          />
+        )}
         <div className="pointer-events-none absolute inset-x-[16%] top-[9%] z-10 flex h-[48%] items-center justify-center">
           <AnimatePresence mode="wait">
             {showGlyph && (
@@ -118,7 +154,7 @@ function Wreath({
             )}
           </AnimatePresence>
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }
@@ -145,12 +181,14 @@ function Marks({ done, active }: { done: number; active: number }) {
 function Stage({ children }: { children: ReactNode }) {
   return (
     <div className="relative flex min-h-[min(70vh,680px)] w-full items-center justify-center overflow-hidden">
-      <div
+      <motion.div
         aria-hidden
         className="pointer-events-none absolute inset-0"
+        animate={{ opacity: [0.72, 1, 0.72] }}
+        transition={{ duration: 8.5, repeat: Infinity, ease: 'easeInOut' }}
         style={{
           background:
-            'radial-gradient(ellipse 42% 48% at 50% 44%, rgba(245,158,11,0.11), transparent 68%)',
+            'radial-gradient(ellipse 42% 48% at 50% 44%, rgba(245,158,11,0.16), transparent 68%)',
         }}
       />
       {children}
@@ -204,6 +242,13 @@ function PlaceReveal({
         >
           {meta.kicker}
         </motion.p>
+        <motion.span
+          aria-hidden
+          className="mt-3 h-px w-9 origin-center bg-amber-200/55"
+          initial={{ scaleX: 0, opacity: 0 }}
+          animate={{ scaleX: 1, opacity: 1 }}
+          transition={{ duration: 0.7, delay: 0.2, ease: EASE }}
+        />
 
         <div
           className={`mt-7 transition-opacity duration-500 ${wreathVisible ? 'opacity-100' : 'opacity-0'}`}
@@ -214,6 +259,7 @@ function PlaceReveal({
             locked={numberOn}
             rotateY={yaw}
             x={slide}
+            idle={revealed}
           />
         </div>
 
@@ -344,7 +390,7 @@ function FinalTwo() {
             transition={{ duration: 1.55, ease: EASE }}
             style={{ perspective: 1400, transformStyle: 'preserve-3d' }}
           >
-            <Wreath className="h-[188px] w-[206px] sm:h-[220px] sm:w-[240px]" glyph="?" />
+            <Wreath className="h-[188px] w-[206px] sm:h-[220px] sm:w-[240px]" glyph="?" idle idleDelay={1.6} />
           </motion.div>
           <motion.span
             initial={{ scaleY: 0, opacity: 0 }}
@@ -358,7 +404,7 @@ function FinalTwo() {
             transition={{ duration: 1.55, ease: EASE }}
             style={{ perspective: 1400, transformStyle: 'preserve-3d' }}
           >
-            <Wreath className="h-[188px] w-[206px] sm:h-[220px] sm:w-[240px]" glyph="?" />
+            <Wreath className="h-[188px] w-[206px] sm:h-[220px] sm:w-[240px]" glyph="?" idle idleDelay={1.75} />
           </motion.div>
         </div>
       </div>
@@ -451,7 +497,7 @@ function Champion({
               className="mt-6"
               style={{ perspective: 1400, transformStyle: 'preserve-3d' }}
             >
-              <Wreath className="h-[230px] w-[252px] sm:h-[268px] sm:w-[294px]" glyph="1" locked />
+              <Wreath className="h-[230px] w-[252px] sm:h-[268px] sm:w-[294px]" glyph="1" locked idle idleDelay={1.2} />
             </motion.div>
             <motion.h2
               initial={{ opacity: 0, y: 16, filter: 'blur(8px)' }}
