@@ -145,29 +145,9 @@ export class LeaderboardService {
       .sort((a, b) => b.totalScore - a.totalScore)
       .map((entry, i) => ({ ...entry, rank: i + 1 }))
 
-    // Persist only the team's current-round standing so historical R1 scores are not overwritten by R2 zeros
-    await Promise.all(
-      sorted
-        .filter((e) => (e.round || 1) === targetRound)
-        .map((e) =>
-          this.prisma.leaderboard.upsert({
-            where: { hackathonId_teamId: { hackathonId: hackathon.id, teamId: e.teamId } },
-            create: {
-              hackathonId: hackathon.id,
-              teamId: e.teamId,
-              rank: e.rank,
-              overallScore: e.totalScore,
-              judgeCount: e.judgeCount,
-            },
-            update: {
-              rank: e.rank,
-              overallScore: e.totalScore,
-              judgeCount: e.judgeCount,
-            },
-          })
-        )
-    )
-
+    // This method backs a frequently-polled GET endpoint. Keep it read-only:
+    // persisting every computed rank here previously launched hundreds of
+    // concurrent upserts per request and exhausted the production DB pool.
     return sorted
   }
 
