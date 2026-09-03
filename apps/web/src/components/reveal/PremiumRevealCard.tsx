@@ -259,47 +259,72 @@ export function PremiumRevealCard({
   // ─── READY STATE ────────────────────────────────────────────────────────────
   if (revealedStep === 0 && !isDecrypting) {
     return (
-      <motion.div
-        key="ready-state"
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.96 }}
-        className={`relative py-8 px-10 sm:py-10 sm:px-12 rounded-[2.5rem] shadow-2xl text-center overflow-hidden border-2 transition-all ${
-          isFinale
-            ? 'bg-gradient-to-b from-[#1F140A] via-[#120B05] to-[#080503] border-amber-500/60 shadow-[0_30px_80px_rgba(0,0,0,0.9),0_0_80px_rgba(245,158,11,0.25)]'
-            : 'bg-gradient-to-b from-[#1C1A17] via-[#11100E] to-[#0A0908] border-amber-500/50 shadow-[0_30px_80px_rgba(0,0,0,0.9),0_0_60px_rgba(232,60,0,0.25)]'
-        }`}
-      >
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.12)_0%,transparent_65%)] pointer-events-none" />
+      <div className="relative w-full">
+        {/* Ambient Backlight Glow */}
+        <div className="absolute -inset-2 rounded-[2.5rem] blur-3xl pointer-events-none transition-opacity duration-700 opacity-60 bg-gradient-to-r from-amber-600/20 via-orange-500/15 to-amber-600/20" />
 
-        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner relative bg-amber-500/10 border border-amber-500/30 text-amber-400">
-          {isFinale ? (
-            <>
-              <Crown size={38} className="text-amber-400 animate-bounce" />
-              <div className="absolute inset-0 rounded-2xl border border-amber-400/50 animate-ping opacity-30" />
-            </>
-          ) : (
-            <>
-              <Trophy size={36} className="text-amber-400" />
-              <div className="absolute inset-0 rounded-2xl border border-amber-400/40 animate-ping opacity-25" />
-            </>
-          )}
-        </div>
+        <motion.div
+          key="ready-state"
+          initial={{ opacity: 0, scale: 0.96, y: 16 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.96 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+          className={`relative px-10 pt-14 pb-8 sm:pt-16 sm:pb-10 xl:pt-20 xl:pb-12 rounded-[2.5rem] overflow-hidden border-2 transition-all shadow-[0_30px_80px_rgba(0,0,0,0.9)] ${
+            isFinale
+              ? 'bg-gradient-to-b from-[#1F140A] via-[#120B05] to-[#080503] border-amber-500/60 shadow-[0_30px_80px_rgba(0,0,0,0.9),0_0_80px_rgba(245,158,11,0.25)]'
+              : 'bg-gradient-to-b from-[#1A1510] via-[#100D09] to-[#080604] border-amber-600/40 shadow-[0_30px_80px_rgba(0,0,0,0.9)]'
+          }`}
+        >
+          {/* Dot-grid texture */}
+          <div
+            className="absolute inset-0 pointer-events-none opacity-[0.03]"
+            style={{
+              backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)',
+              backgroundSize: '30px 30px',
+            }}
+          />
 
-        <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-3 bg-amber-500/15 border border-amber-500/30 text-amber-300">
-          <Sparkles size={13} className="text-amber-400 animate-spin" />
-          <span>Stage Ready · Awaiting Announcement</span>
-        </div>
+          {/* ─── EXACT SAME HEIGHT & WIDTH INNER CONTAINER ─── */}
+          <div className="flex flex-col items-center justify-center text-center w-full min-h-[260px] my-auto">
+            {/* Trophy icon */}
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner relative bg-amber-500/10 border border-amber-500/30 text-amber-400">
+              {isFinale ? (
+                <>
+                  <Crown size={36} className="text-amber-400 animate-bounce" />
+                  <div className="absolute inset-0 rounded-2xl border border-amber-400/50 animate-ping opacity-30" />
+                </>
+              ) : (
+                <>
+                  <Trophy size={36} className="text-amber-400" />
+                  <div className="absolute inset-0 rounded-2xl border border-amber-400/40 animate-ping opacity-25" />
+                </>
+              )}
+            </div>
 
-        <h3 className="text-3xl sm:text-4xl font-black mb-2 text-white tracking-tight">
-          {isFinale ? '👑 Grand Finale Verdict Sealed' : 'Round 1 Graded & Verified'}
-        </h3>
-        <p className="max-w-xl mx-auto text-sm sm:text-base font-medium text-slate-300">
-          {isFinale
-            ? 'Waiting for admin to unseal 5th Place. Each place opens only when triggered.'
-            : 'Waiting for admin to initiate the Top 20 announcement (#20 ➔ #1).'}
-        </p>
-      </motion.div>
+            {/* Stage Ready Badge */}
+            <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-3 bg-amber-500/15 border border-amber-500/30 text-amber-300">
+              <Sparkles size={13} className="text-amber-400 animate-spin" />
+              <span>Stage Ready · Awaiting Announcement</span>
+            </div>
+
+            {/* Heading */}
+            <h3 className="text-3xl sm:text-4xl font-black mb-1.5 text-white tracking-tight">
+              {isFinale ? '👑 Grand Finale Verdict Sealed' : 'Round 1 Graded & Verified'}
+            </h3>
+            <p className="max-w-xl mx-auto text-xs sm:text-sm font-medium text-slate-300">
+              {isFinale
+                ? 'Waiting for admin to unseal 5th Place. Each place opens only when triggered.'
+                : 'Waiting for admin to initiate the Top 20 announcement (#20 ➔ #1).'}
+            </p>
+          </div>
+
+          {/* Footnote divider */}
+          <div className="w-full pt-7 mt-7 border-t border-white/10 flex items-center justify-between text-xs font-mono text-slate-400 tracking-wider">
+            <span>Status: Ready</span>
+            <span>Next: {isFinale ? '5th Place' : '#20'}</span>
+          </div>
+        </motion.div>
+      </div>
     )
   }
 
