@@ -10,6 +10,72 @@ function randomChar() {
   return CIPHER_GLYPHS[Math.floor(Math.random() * CIPHER_GLYPHS.length)]
 }
 
+const FINALIST_NODE_POSITIONS = [
+  'left-1/2 top-0 -translate-x-1/2',
+  'right-0 top-[31%]',
+  'right-[13%] bottom-[5%]',
+  'left-[13%] bottom-[5%]',
+  'left-0 top-[31%]',
+]
+
+function FinalFiveVaultSeal() {
+  return (
+    <div
+      className="relative h-28 w-28 sm:h-32 sm:w-32"
+      role="img"
+      aria-label="Five finalists secured for the winner reveal"
+    >
+      <div className="absolute inset-3 rounded-full bg-amber-400/20 blur-2xl" />
+      <motion.div
+        className="absolute inset-0 rounded-full border border-dashed border-amber-300/35"
+        animate={{ rotate: 360 }}
+        transition={{ duration: 24, repeat: Infinity, ease: 'linear' }}
+      />
+      <motion.div
+        className="absolute inset-2 rounded-full border border-amber-500/35"
+        animate={{ rotate: -360 }}
+        transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
+      >
+        <span className="absolute left-1/2 top-0 h-1 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-transparent via-amber-200 to-transparent shadow-[0_0_12px_rgba(253,230,138,0.8)]" />
+      </motion.div>
+
+      {FINALIST_NODE_POSITIONS.map((position, index) => (
+        <motion.span
+          key={position}
+          className={`absolute z-20 flex h-3 w-3 items-center justify-center rounded-full border border-amber-200/70 bg-[#211205] shadow-[0_0_12px_rgba(251,191,36,0.7)] ${position}`}
+          animate={{ scale: [0.85, 1.2, 0.85], opacity: [0.55, 1, 0.55] }}
+          transition={{ duration: 2.4, repeat: Infinity, delay: index * 0.28, ease: 'easeInOut' }}
+        >
+          <span className="h-1 w-1 rounded-full bg-amber-200" />
+        </motion.span>
+      ))}
+
+      <div className="absolute inset-[18px] flex items-center justify-center rounded-full border border-amber-300/45 bg-gradient-to-br from-amber-700/35 via-[#1A0D04] to-black shadow-[inset_0_1px_0_rgba(255,255,255,0.15),0_0_30px_rgba(245,158,11,0.2)]">
+        <svg viewBox="0 0 100 100" className="h-16 w-16 drop-shadow-[0_0_12px_rgba(251,191,36,0.35)]" aria-hidden="true">
+          <path
+            d="M50 12 78 24v25c0 19-10.8 32.5-28 40-17.2-7.5-28-21-28-40V24L50 12Z"
+            fill="rgba(245,158,11,0.08)"
+            stroke="rgba(252,211,77,0.85)"
+            strokeWidth="2"
+          />
+          <path
+            d="m34 36 16 30 16-30"
+            fill="none"
+            stroke="#FCD34D"
+            strokeWidth="6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <circle cx="50" cy="53" r="4.5" fill="#FFF1B8" />
+        </svg>
+      </div>
+      <div className="absolute inset-x-0 -bottom-1 text-center font-mono text-[8px] font-black tracking-[0.32em] text-amber-300/75">
+        FINAL FIVE
+      </div>
+    </div>
+  )
+}
+
 export function triggerQualifierConfetti(rank: number) {
   try {
     if (rank === 1) {
@@ -228,6 +294,7 @@ export function PremiumRevealCard({
   const [scrambleDisplay, setScrambleDisplay] = useState('VOICEATHON')
   const [rollingScore, setRollingScore] = useState('00.0')
   const [justLocked, setJustLocked] = useState(false)
+  const [revealProgress, setRevealProgress] = useState(0)
   const nameBoxRef = useRef<HTMLDivElement>(null)
   const nameRef = useRef<HTMLHeadingElement>(null)
   const [nameScale, setNameScale] = useState(1)
@@ -266,6 +333,7 @@ export function PremiumRevealCard({
     if (!isDecrypting) {
       if (prevDecrypting.current) {
         // Just finished — dramatic lock-in
+        setRevealProgress(1)
         setJustLocked(true)
         playRevealImpact()
         if (isFinale) {
@@ -279,6 +347,7 @@ export function PremiumRevealCard({
     }
 
     prevDecrypting.current = true
+    setRevealProgress(0)
     isDecryptingRef.current = true
     const startTime = Date.now()
     const initialWord = 'VOICEATHON'
@@ -292,6 +361,7 @@ export function PremiumRevealCard({
 
       const elapsed = Date.now() - startTime
       const progress = Math.min(1, elapsed / nameSpinMs)
+      setRevealProgress(progress)
 
       // ── Dramatic Suspense Curve: Fast rolling -> Edge-of-seat crawl on final letters ──
       // Accelerates suspense: speedFactor climbs with power curve (progress^0.65)
@@ -312,25 +382,29 @@ export function PremiumRevealCard({
       let chars = ''
       let newLockedCount = 0
 
-      // Length transition: stays 10 while scrolling through initial characters, then smoothly matches target length
-      const lengthProgress = Math.min(1, Math.max(0, (progress - 0.40) / 0.45))
+      // Finale identities remain unreadable for most of the countdown, then
+      // lock rapidly near the impact. Top 20 keeps its familiar cascade.
+      const lengthStart = isFinale ? 0.58 : 0.40
+      const lengthDuration = isFinale ? 0.24 : 0.45
+      const lengthProgress = Math.min(1, Math.max(0, (progress - lengthStart) / lengthDuration))
       const currentDisplayLen = Math.round(initialWord.length + (target.length - initialWord.length) * lengthProgress)
 
       for (let i = 0; i < currentDisplayLen; i++) {
         const startChar = i < initialWord.length ? initialWord[i] : (target[i] || 'A')
         const targetChar = i < target.length ? target[i] : ''
 
-        if (targetChar === ' ' && progress >= (0.05 + (i / maxLen) * 0.50)) {
+        const finaleCharStart = 0.68 + (i / maxLen) * 0.20
+        const standardCharStart = 0.05 + (i / maxLen) * 0.52
+        const charStart = isFinale ? finaleCharStart : standardCharStart
+        const charLock = charStart + (isFinale ? 0.10 : 0.25)
+
+        if (targetChar === ' ' && progress >= charStart) {
           chars += ' '
           continue
         }
 
         const startIdx = ALPHABET.indexOf(startChar) >= 0 ? ALPHABET.indexOf(startChar) : 0
         const targetIdx = targetChar && ALPHABET.indexOf(targetChar) >= 0 ? ALPHABET.indexOf(targetChar) : 0
-
-        // Sequential timing: each letter i starts and finishes in a staggered wave from left to right
-        const charStart = 0.05 + (i / maxLen) * 0.52
-        const charLock = charStart + 0.25
 
         const canLockCharacter = i !== finalRevealIndex || progress >= 1
 
@@ -341,11 +415,14 @@ export function PremiumRevealCard({
             newLockedCount++
           }
         } else if (progress < charStart) {
-          // Untouched original letter from VOICEATHON waiting for its turn
-          chars += startChar
+          // Finale uses a constantly changing cipher so no letter can reveal
+          // the team's identity before the final lock sequence.
+          chars += isFinale
+            ? CIPHER_GLYPHS[(frameCountRef.current + i * 7) % CIPHER_GLYPHS.length]
+            : startChar
         } else {
           // Actively scrolling through A-Z starting from startChar towards targetChar
-          const spinProgress = (progress - charStart) / 0.25
+          const spinProgress = (progress - charStart) / (isFinale ? 0.10 : 0.25)
           const totalFlips = 26 + ((targetIdx - startIdx + 26) % 26)
           const currentStep = Math.floor(spinProgress * totalFlips)
           const currentLetter = ALPHABET[(startIdx + currentStep + (frameCountRef.current % 3)) % 26]
@@ -380,7 +457,16 @@ export function PremiumRevealCard({
 
     timeoutId = setTimeout(tick, 16)    // start immediately
     return () => clearTimeout(timeoutId)
-  }, [isDecrypting, targetName, nameSpinMs, activeRank])
+  }, [isDecrypting, targetName, nameSpinMs, activeRank, isFinale])
+
+  const finaleSecondsRemaining = Math.max(1, Math.ceil(((1 - revealProgress) * nameSpinMs) / 1000))
+  const finaleSuspenseLabel = revealProgress < 0.34
+    ? 'FINALIST IDENTITY SECURED'
+    : revealProgress < 0.68
+    ? 'THE VAULT IS OPENING'
+    : revealProgress < 0.9
+    ? 'BREAKING THE FINAL SEAL'
+    : 'PREPARE FOR THE REVEAL'
 
   // ─── READY STATE ────────────────────────────────────────────────────────────
   if (revealedStep === 0 && !isDecrypting) {
@@ -412,24 +498,21 @@ export function PremiumRevealCard({
 
           {/* ─── EXACT SAME HEIGHT & WIDTH INNER CONTAINER ─── */}
           <div className="flex flex-col items-center justify-center text-center w-full min-h-[260px] my-auto pt-1 pb-2">
-            {/* Premium ceremonial emblem */}
-            <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center mx-auto mb-6">
-              <div className="absolute inset-1 rounded-full bg-amber-400/20 blur-xl" />
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-300/25 via-amber-950/60 to-orange-950/80 border border-amber-400/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_0_35px_rgba(245,158,11,0.22)]" />
-              <div className="absolute inset-2 rounded-full border border-amber-200/15" />
-              {isFinale ? (
-                <>
-                  <Crown size={42} strokeWidth={1.7} className="relative z-10 text-amber-300 fill-amber-400/15 drop-shadow-[0_0_12px_rgba(251,191,36,0.55)]" />
-                  <Sparkles size={14} className="absolute right-0 top-1 text-amber-200 animate-pulse" />
-                  <Sparkles size={10} className="absolute left-1 bottom-2 text-orange-300 animate-pulse" />
-                </>
-              ) : (
+            {isFinale ? (
+              <div className="mb-7">
+                <FinalFiveVaultSeal />
+              </div>
+            ) : (
+              <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center mx-auto mb-6">
+                <div className="absolute inset-1 rounded-full bg-amber-400/20 blur-xl" />
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-300/25 via-amber-950/60 to-orange-950/80 border border-amber-400/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_0_35px_rgba(245,158,11,0.22)]" />
+                <div className="absolute inset-2 rounded-full border border-amber-200/15" />
                 <>
                   <Trophy size={40} strokeWidth={1.7} className="relative z-10 text-amber-300 fill-amber-400/10 drop-shadow-[0_0_12px_rgba(251,191,36,0.45)]" />
                   <Sparkles size={12} className="absolute right-1 top-1 text-amber-200 animate-pulse" />
                 </>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Handcrafted Luxury Stage Ready Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-[0.18em] mb-4 bg-gradient-to-r from-amber-950/90 via-[#1A0E05] to-amber-950/90 border border-amber-500/40 text-amber-300 shadow-md shadow-amber-900/30 ring-1 ring-amber-500/20">
@@ -449,12 +532,20 @@ export function PremiumRevealCard({
                 ? '5 Winners. One Unforgettable Reveal !!'
                 : 'Waiting for admin to initiate the Top 20 announcement (#20 ➔ #1).'}
             </p>
+            {isFinale && (
+              <div className="mt-5 inline-flex items-center gap-3 rounded-full border border-amber-400/20 bg-black/30 px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/80 shadow-inner">
+                <Lock size={11} className="text-amber-400" />
+                <span>Reveal sequence armed</span>
+                <span className="text-amber-500/50">|</span>
+                <span className="text-amber-300">05 → 04 → 03 → 02 → 01</span>
+              </div>
+            )}
           </div>
 
           {/* Footnote divider */}
           <div className="w-full pt-7 mt-7 border-t border-white/10 flex items-center justify-between text-xs font-mono text-slate-400 tracking-wider">
-            <span>Status: Ready</span>
-            <span>Next: {isFinale ? '5th Place' : '#20'}</span>
+            <span>{isFinale ? 'Status: Vault Sealed' : 'Status: Ready'}</span>
+            <span>Next: {isFinale ? 'Unseal 5th Place' : '#20'}</span>
           </div>
         </motion.div>
       </div>
@@ -522,19 +613,82 @@ export function PremiumRevealCard({
         }`}
       />
 
+      {isFinale && isDecrypting && (
+        <>
+          <motion.div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-1/2 h-[120%] aspect-square -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-400/15"
+            animate={{ scale: [0.82, 1.08], opacity: [0.55, 0] }}
+            transition={{ duration: 2.2, repeat: Infinity, ease: 'easeOut' }}
+          />
+          <motion.div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-1/2 h-[145%] aspect-square -translate-x-1/2 -translate-y-1/2 rounded-full border border-orange-400/10"
+            animate={{ scale: [0.74, 1.04], opacity: [0.4, 0] }}
+            transition={{ duration: 2.2, repeat: Infinity, delay: 0.7, ease: 'easeOut' }}
+          />
+        </>
+      )}
+
       <motion.div
         key={`spotlight-card-${activeRank}`}
         initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
+        animate={justLocked && isFinale
+          ? { opacity: 1, scale: [0.985, 1.025, 1] }
+          : { opacity: 1, scale: 1 }}
+        transition={justLocked && isFinale
+          ? { duration: 0.65, times: [0, 0.35, 1], ease: 'easeOut' }
+          : { duration: 0.4, ease: 'easeOut' }}
         className={`relative rounded-[2.5rem] overflow-hidden border-2 transition-all ${
           settled
             ? 'px-8 pt-6 pb-4 sm:pt-7 sm:pb-5'
             : 'px-10 py-8 sm:py-10 xl:py-12'
         } ${rankTheme.cardBg} ${
-          isDecrypting ? 'border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.9)]' : `${rankTheme.cardBorder} ${rankTheme.cardShadow}`
+          isDecrypting
+            ? isFinale
+              ? 'border-amber-400/45 shadow-[0_30px_90px_rgba(0,0,0,0.95),0_0_70px_rgba(245,158,11,0.22)]'
+              : 'border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.9)]'
+            : `${rankTheme.cardBorder} ${rankTheme.cardShadow}`
         }`}
       >
+        {isFinale && isDecrypting && (
+          <>
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(245,158,11,0.14),transparent_52%)]" />
+            <motion.div
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 top-0 h-[2px] origin-left bg-gradient-to-r from-orange-500 via-amber-200 to-orange-500 shadow-[0_0_18px_rgba(251,191,36,0.9)]"
+              style={{ scaleX: revealProgress }}
+            />
+            <div className="pointer-events-none absolute inset-x-0 top-4 z-10 flex items-center justify-center">
+              <div className="inline-flex items-center gap-3 rounded-full border border-amber-300/25 bg-black/45 px-4 py-1.5 font-mono text-[10px] font-black uppercase tracking-[0.2em] text-amber-200 backdrop-blur-md">
+                <Lock size={11} className="text-amber-400" />
+                <span>{finaleSuspenseLabel}</span>
+                <span className="h-3 w-px bg-amber-400/25" />
+                <span className="tabular-nums text-white">T−{String(finaleSecondsRemaining).padStart(2, '0')}</span>
+              </div>
+            </div>
+          </>
+        )}
+
+        {justLocked && isFinale && (
+          <>
+            <motion.div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 z-20 bg-amber-100"
+              initial={{ opacity: 0.8 }}
+              animate={{ opacity: 0 }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
+            />
+            <motion.div
+              aria-hidden
+              className="pointer-events-none absolute inset-3 z-20 rounded-[2rem] border-2 border-amber-200"
+              initial={{ opacity: 1, scale: 0.96 }}
+              animate={{ opacity: 0, scale: 1.04 }}
+              transition={{ duration: 1, ease: 'easeOut' }}
+            />
+          </>
+        )}
+
         {/* Dot-grid texture */}
         <div
           className="absolute inset-0 pointer-events-none opacity-[0.03]"
@@ -641,7 +795,7 @@ export function PremiumRevealCard({
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-80"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-gradient-to-r from-amber-300 to-orange-400 shadow-[0_0_8px_rgba(251,191,36,0.9)]"></span>
                   </span>
-                  <span>VERIFYING OFFICIAL EVALUATION MARKS</span>
+                  <span>{isFinale ? finaleSuspenseLabel : 'VERIFYING OFFICIAL EVALUATION MARKS'}</span>
                 </div>
               ) : (
                 <motion.div
