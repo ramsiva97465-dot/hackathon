@@ -1418,8 +1418,8 @@ export function LeaderboardPage() {
         <div className="relative z-10 flex-1 min-h-0 flex flex-col items-center w-full overflow-hidden">
 
           {/* 📌 FIXED HEADER SECTION (Title + Subtitle + Fixed Table Column Headers) */}
-          <div className="shrink-0 z-20 w-full backdrop-blur-md bg-[#EBE3D5] pt-5 pb-0 border-b border-black/5">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="shrink-0 z-20 w-full backdrop-blur-md bg-[#EBE3D5] pt-5 pb-0 border-b border-black/5 flex flex-col items-center">
+            <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 flex flex-col items-center">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeRound}
@@ -1517,9 +1517,9 @@ export function LeaderboardPage() {
             </div>
           </div>
 
-          {/* 📜 SCROLLABLE CONTENT AREA (Rows start immediately below the header and vanish underneath it cleanly) */}
-          <div ref={scrollContainerRef} className="flex-1 min-h-0 w-full overflow-y-auto flex flex-col items-center pb-24 px-4 sm:px-6 scrollbar-thin">
-            <div className="w-full max-w-6xl flex flex-col items-center">
+          {/* 📜 SCROLLABLE CONTENT AREA (Rows start immediately below the header and match exact width) */}
+          <div ref={scrollContainerRef} className="flex-1 min-h-0 w-full overflow-y-auto flex flex-col items-center pb-24 [scrollbar-gutter:stable]">
+            <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 flex flex-col items-center">
 
             {/* ROUND 1 VIEW — Scrollable Rows */}
             {activeRound === 1 && (
@@ -1536,7 +1536,7 @@ export function LeaderboardPage() {
 
             {/* ROUND 2 VIEW — Scrollable Rows */}
             {activeRound === 2 && (
-              <div className="w-full max-w-5xl rounded-b-[2rem] bg-[#F4ECE1] shadow-2xl shadow-black/10 border border-t-0 border-black/5 overflow-hidden">
+              <div className="w-full max-w-5xl mx-auto rounded-b-[2rem] bg-[#F4ECE1] shadow-2xl shadow-black/10 border border-t-0 border-black/5 overflow-hidden">
                 {r3Teams.length > 0 ? (
                   <div className="flex flex-col bg-[#F4ECE1]">
                     <AnimatePresence>
