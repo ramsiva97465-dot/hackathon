@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useLayoutEffect, useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { Crown, Medal, Award, ShieldCheck, Lock, Sparkles, Trophy } from 'lucide-react'
@@ -225,6 +225,9 @@ export function PremiumRevealCard({
   const [scrambleDisplay, setScrambleDisplay] = useState('VOICEATHON')
   const [rollingScore, setRollingScore] = useState('00.0')
   const [justLocked, setJustLocked] = useState(false)
+  const nameBoxRef = useRef<HTMLDivElement>(null)
+  const nameRef = useRef<HTMLHeadingElement>(null)
+  const [nameScale, setNameScale] = useState(1)
   const prevDecrypting = useRef(isDecrypting)
   const isDecryptingRef = useRef(isDecrypting)
   const frameCountRef = useRef(0)
@@ -232,6 +235,29 @@ export function PremiumRevealCard({
 
   // Keep ref in sync so the setTimeout closure always reads the latest value
   useEffect(() => { isDecryptingRef.current = isDecrypting }, [isDecrypting])
+
+  const displayedName = isDecrypting
+    ? (scrambleDisplay || 'VOICEATHON')
+    : (currentSpotlightTeam?.teamName || targetName).toUpperCase()
+
+  // The name is monospace, so its width tracks the character count exactly. Measure the
+  // natural width once per length change and scale the line down so long names never clip.
+  // A transform is used rather than a font-size step so the fit is exact at any length.
+  useLayoutEffect(() => {
+    const fit = () => {
+      const el = nameRef.current
+      const box = nameBoxRef.current
+      if (!el || !box) return
+      const natural = el.scrollWidth
+      const available = box.clientWidth
+      if (!natural || !available) return
+      setNameScale(Math.min(1, available / natural))
+    }
+
+    fit()
+    window.addEventListener('resize', fit)
+    return () => window.removeEventListener('resize', fit)
+  }, [displayedName.length])
 
   useEffect(() => {
     if (!isDecrypting) {
@@ -431,20 +457,20 @@ export function PremiumRevealCard({
         badge: 'bg-gradient-to-r from-orange-600 via-[#E83C00] to-orange-600 text-white border border-orange-400/60 ring-2 ring-orange-500/40 shadow-lg shadow-orange-900/40',
         rankText:
           'text-transparent bg-clip-text bg-gradient-to-r from-white via-orange-100 to-amber-300 drop-shadow-[0_0_50px_rgba(232,60,0,0.8)]',
-        cardBorder: 'border-[#E83C00] ring-4 ring-orange-500/50',
+        cardBorder: 'border-white/10',
         cardBg: 'bg-gradient-to-b from-[#2E1205] via-[#1A0A02] to-[#0D0501]',
-        glow: 'bg-gradient-to-r from-orange-500/40 via-[#E83C00]/50 to-orange-500/40',
+        glow: 'bg-transparent',
         scoreTxt: 'text-orange-200',
         nameColor: 'text-white',
-        cardShadow: 'shadow-[0_0_100px_rgba(232,60,0,0.6)]',
+        cardShadow: 'shadow-[0_30px_80px_rgba(0,0,0,0.9)]',
       }
     : activeRank === 2
     ? {
         badge: 'bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 text-slate-100 border border-slate-400/50 ring-1 ring-slate-400/20 shadow-md',
         rankText: 'text-slate-200 drop-shadow-[0_0_40px_rgba(203,213,225,0.6)]',
-        cardBorder: 'border-slate-500/60',
+        cardBorder: 'border-white/10',
         cardBg: 'bg-gradient-to-b from-[#1C1A18] via-[#111010] to-[#090808]',
-        glow: 'bg-gradient-to-r from-slate-400/25 via-white/20 to-slate-400/25',
+        glow: 'bg-transparent',
         scoreTxt: 'text-slate-200',
         nameColor: 'text-white',
         cardShadow: 'shadow-[0_30px_80px_rgba(0,0,0,0.9)]',
@@ -453,9 +479,9 @@ export function PremiumRevealCard({
     ? {
         badge: 'bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 text-amber-200 border border-amber-600/50 ring-1 ring-amber-500/20 shadow-md',
         rankText: 'text-orange-200 drop-shadow-[0_0_40px_rgba(232,60,0,0.6)]',
-        cardBorder: 'border-amber-700/60',
+        cardBorder: 'border-white/10',
         cardBg: 'bg-gradient-to-b from-[#1F1508] via-[#110D05] to-[#080601]',
-        glow: 'bg-gradient-to-r from-amber-700/30 via-orange-500/25 to-amber-700/30',
+        glow: 'bg-transparent',
         scoreTxt: 'text-orange-200',
         nameColor: 'text-amber-100',
         cardShadow: 'shadow-[0_30px_80px_rgba(0,0,0,0.9)]',
@@ -464,9 +490,9 @@ export function PremiumRevealCard({
         // Ranks 4–20: deep obsidian + warm gold amber — NO green
         badge: 'bg-gradient-to-r from-amber-950/90 via-[#1A0E05] to-amber-950/90 text-amber-200 border border-amber-500/40 ring-1 ring-amber-500/20 shadow-md',
         rankText: 'text-orange-300 drop-shadow-[0_0_30px_rgba(249,115,22,0.5)]',
-        cardBorder: 'border-amber-600/40',
+        cardBorder: 'border-white/10',
         cardBg: 'bg-gradient-to-b from-[#1A1510] via-[#100D09] to-[#080604]',
-        glow: 'bg-gradient-to-r from-amber-600/20 via-orange-500/15 to-amber-600/20',
+        glow: 'bg-transparent',
         scoreTxt: 'text-orange-200',
         nameColor: 'text-white',
         cardShadow: 'shadow-[0_30px_80px_rgba(0,0,0,0.9)]',
@@ -490,7 +516,7 @@ export function PremiumRevealCard({
         transition={{ duration: 0.4, ease: 'easeOut' }}
         className={`relative px-10 pt-14 pb-8 sm:pt-16 sm:pb-10 xl:pt-20 xl:pb-12 rounded-[2.5rem] overflow-hidden border-2 transition-all
           ${rankTheme.cardBg}
-          ${isDecrypting ? 'border-amber-500/80 shadow-[0_0_100px_rgba(245,158,11,0.45)]' : `${rankTheme.cardBorder} ${rankTheme.cardShadow}`}
+          ${isDecrypting ? 'border-white/10 shadow-[0_30px_80px_rgba(0,0,0,0.9)]' : `${rankTheme.cardBorder} ${rankTheme.cardShadow}`}
         `}
       >
         {/* Dot-grid texture */}
@@ -543,12 +569,14 @@ export function PremiumRevealCard({
               <span className="whitespace-nowrap tracking-[0.16em] font-extrabold">
                 {isDecrypting
                   ? `UNSEALING #${activeRank}`
+                  : !isFinale
+                  ? '(Qualified)'
                   : isChampion
-                  ? (isFinale ? '1ST PLACE' : '#1 SEED')
+                  ? '1ST PLACE'
                   : activeRank === 2
-                  ? (isFinale ? '2ND PLACE' : '#2 SEED')
+                  ? '2ND PLACE'
                   : activeRank === 3
-                  ? (isFinale ? '3RD PLACE' : '#3 SEED')
+                  ? '3RD PLACE'
                   : 'QUALIFIED'}
               </span>
             </div>
@@ -571,12 +599,15 @@ export function PremiumRevealCard({
           {/* ── CENTER: Team Name + College/Track ── */}
           <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center overflow-hidden px-6 min-h-[160px]">
             {/* Team Name / Cipher (Persistent single line element, zero layout jump or popping) */}
-            <h2 className="font-mono text-3xl xl:text-5xl font-black tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-white via-orange-100 to-amber-200 drop-shadow-[0_0_30px_rgba(232,60,0,0.6)] select-none whitespace-nowrap overflow-hidden max-w-full leading-tight">
-              {isDecrypting
-                ? (scrambleDisplay || 'VOICEATHON')
-                : (currentSpotlightTeam?.teamName || targetName).toUpperCase()
-              }
-            </h2>
+            <div ref={nameBoxRef} className="w-full flex justify-center overflow-hidden">
+              <h2
+                ref={nameRef}
+                style={{ transform: `scale(${nameScale})`, transformOrigin: 'center' }}
+                className="font-mono text-3xl xl:text-5xl font-black tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-white via-orange-100 to-amber-200 drop-shadow-[0_0_30px_rgba(232,60,0,0.6)] select-none whitespace-nowrap w-max leading-tight"
+              >
+                {displayedName}
+              </h2>
+            </div>
 
             {/* Subtitle Slot (Decrypting badge cross-fades into College & Track smoothly) */}
             <div className="min-h-[36px] flex items-center justify-center">
@@ -641,11 +672,11 @@ export function PremiumRevealCard({
           <span className="font-mono">
             Progress: {revealedStep} of {maxSteps} announced
           </span>
-          <span className={isFinale || isChampion ? 'text-amber-300 font-bold' : 'text-slate-300 font-bold'}>
-            {revealedStep === maxSteps
-              ? '🎉 Ceremony Complete'
-              : `Next: #${activeRank > 1 ? activeRank - 1 : 1}`}
-          </span>
+          {revealedStep !== maxSteps && (
+            <span className={isFinale || isChampion ? 'text-amber-300 font-bold' : 'text-slate-300 font-bold'}>
+              {`Next: #${activeRank > 1 ? activeRank - 1 : 1}`}
+            </span>
+          )}
         </div>
       </motion.div>
     </div>
