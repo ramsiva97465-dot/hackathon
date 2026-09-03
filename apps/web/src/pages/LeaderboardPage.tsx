@@ -420,6 +420,7 @@ export function LeaderboardPage() {
   const [unlockedRanks, setUnlockedRanks] = useState<number[]>([])
   const unlockedRanksRef = useRef<number[]>([])
   const rosterRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const rowRefs = useRef<Record<number, HTMLDivElement | null>>({})
   const activeRoundRef = useRef(activeRound)
   // Reveal progress is also polled every 3s. Refs keep the socket handler and
@@ -660,7 +661,7 @@ export function LeaderboardPage() {
     }
   }, [entries, isRevealing, activeRound])
 
-  // TV Mode Auto-scroll logic
+  // TV Mode Auto-scroll logic (scrolls ONLY the content area, Top bar & Header stay 100% fixed)
   useEffect(() => {
     const waitingForFinale = entries.some((e) => ((e as any).round || 1) === 3)
     if (isRevealing) return
@@ -668,14 +669,15 @@ export function LeaderboardPage() {
     const scrollSpeed = 1
     let scrollingUp = false
     const interval = setInterval(() => {
-      if (scrollingUp) return
+      if (scrollingUp || !scrollContainerRef.current) return
 
-      window.scrollBy({ top: scrollSpeed, left: 0, behavior: 'auto' })
+      const el = scrollContainerRef.current
+      el.scrollTop += scrollSpeed
       
-      if ((window.innerHeight + Math.ceil(window.scrollY)) >= document.body.offsetHeight - 50) {
+      if ((el.clientHeight + Math.ceil(el.scrollTop)) >= el.scrollHeight - 30) {
         scrollingUp = true
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-        setTimeout(() => { scrollingUp = false }, 2000)
+        el.scrollTo({ top: 0, behavior: 'smooth' })
+        setTimeout(() => { scrollingUp = false }, 2500)
       }
     }, 50)
     return () => clearInterval(interval)
@@ -928,7 +930,7 @@ export function LeaderboardPage() {
 
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-x-hidden" style={{
+    <div className="h-screen flex flex-col relative overflow-hidden" style={{
       backgroundColor: '#EBE3D5',
       backgroundImage: 'radial-gradient(#d4caba 1px, transparent 1px)',
       backgroundSize: '32px 32px',
@@ -936,8 +938,8 @@ export function LeaderboardPage() {
       color: '#1A1A1A'
     }}>
 
-      {/* ── Top Bar ── */}
-      <div className="relative z-20 flex items-center justify-between px-6 sm:px-10 py-4 border-b backdrop-blur-md sticky top-0 transition-colors bg-[#EBE3D5]/80 border-black/5 text-[#1A1A1A]">
+      {/* ── Top Bar ── (Permanently FIXED, never scrolls) */}
+      <div className="shrink-0 z-30 flex items-center justify-between px-6 sm:px-10 py-4 border-b backdrop-blur-md bg-[#EBE3D5]/90 border-black/5 text-[#1A1A1A]">
         <div className="flex items-end gap-4 sm:gap-6">
           <div className="flex items-end gap-2">
             <SnapServeMark className="h-[24.32px] w-[24.32px] shrink-0 object-contain translate-y-[5px]" />
@@ -977,7 +979,7 @@ export function LeaderboardPage() {
       {/* 🎭 DRAMATIC GRAND REVEAL CEREMONY (Round 2: 20➔1 | Round 3: 5➔1)      */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {isRevealing ? (
-        <div className="relative z-10 flex-1 flex flex-col items-center px-4 sm:px-8 w-full">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto w-full flex flex-col items-center px-4 sm:px-8">
           
           {/* 🌟 FULL-VIEWPORT HERO SPOTLIGHT (keeps table below the fold) */}
           <div className="min-h-[calc(100vh-70px)] w-full flex flex-col items-center justify-center py-4">
@@ -1381,10 +1383,10 @@ export function LeaderboardPage() {
         /* ════════════════════════════════════════════════════════════════════ */
         /* STANDARD STAGE 1 / 2 / 3 LEADERBOARDS                                */
         /* ════════════════════════════════════════════════════════════════════ */
-        <div className="relative z-10 flex-1 flex flex-col items-center w-full">
+        <div className="relative z-10 flex-1 flex flex-col items-center w-full overflow-hidden">
 
-          {/* 📌 STICKY FIXED HEADER (Permanently pinned while content scrolls below) */}
-          <div className="sticky top-[69px] z-20 w-full backdrop-blur-md bg-[#EBE3D5]/95 border-b border-black/5 shadow-xs pt-6 pb-5">
+          {/* 📌 FIXED HEADER (Permanently pinned, never scrolls) */}
+          <div className="shrink-0 z-20 w-full backdrop-blur-md bg-[#EBE3D5]/95 border-b border-black/5 shadow-xs pt-5 pb-4">
             <div className="max-w-6xl mx-auto px-6">
               <AnimatePresence mode="wait">
                 <motion.div
@@ -1395,7 +1397,7 @@ export function LeaderboardPage() {
                   transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                   className="text-center"
                 >
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/5 text-slate-700 mb-3 shadow-xl shadow-black/5">
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/5 text-slate-700 mb-2 shadow-xl shadow-black/5">
                     <Trophy size={14} className="text-amber-500" />
                     <span className="text-xs font-bold uppercase tracking-widest">
                       {activeRound === 3 ? 'Stage 3: Top 5 Grand Finale Podium' : activeRound === 2 ? 'Stage 2: Top 20 Shortlist' : 'Stage 1: Live Judging'}
@@ -1421,8 +1423,8 @@ export function LeaderboardPage() {
             </div>
           </div>
 
-          {/* Content Area Below Header (Scrolls underneath the pinned header) */}
-          <div className="flex-1 flex flex-col items-center pt-6 pb-24 px-6 max-w-6xl mx-auto w-full">
+          {/* 📜 SCROLLABLE CONTENT AREA (ONLY this area scrolls) */}
+          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto flex flex-col items-center pt-6 pb-24 px-6 max-w-6xl mx-auto w-full scrollbar-thin">
 
             {/* ROUND 1 VIEW — Live Judging Status (Scores Hidden, 0/1 -> 1/1) */}
             {activeRound === 1 && (
