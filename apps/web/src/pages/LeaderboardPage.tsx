@@ -1381,47 +1381,54 @@ export function LeaderboardPage() {
         /* ════════════════════════════════════════════════════════════════════ */
         /* STANDARD STAGE 1 / 2 / 3 LEADERBOARDS                                */
         /* ════════════════════════════════════════════════════════════════════ */
-        <div className="relative z-10 flex-1 flex flex-col items-center pt-8 pb-20 px-6 max-w-6xl mx-auto w-full">
+        <div className="relative z-10 flex-1 flex flex-col items-center w-full">
 
-          {/* Header */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeRound}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              className="text-center mb-8"
-            >
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/5 text-slate-700 mb-4 shadow-xl shadow-black/5">
-                <Trophy size={14} className="text-amber-500" />
-                <span className="text-xs font-bold uppercase tracking-widest">
-                  {activeRound === 3 ? 'Stage 3: Top 5 Grand Finale Podium' : activeRound === 2 ? 'Stage 2: Top 20 Shortlist' : 'Stage 1: Live Judging'}
-                </span>
-              </div>
-              <h2 className="text-[#E83C00] font-bold tracking-[0.2em] uppercase text-sm mb-2">
-                AI குரல் · VOICE FOR TAMIL NADU · 2026
-              </h2>
-              <h1 className="text-5xl sm:text-6xl font-black text-[#1A1A1A] tracking-tighter" style={{ textShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
-                {activeRound === 3 ? 'Top 5 Grand Finale Winners' : activeRound === 2 ? 'Round 2 · Top 20' : 'Live Evaluation Status'}
-              </h1>
-              <p className="text-slate-500 mt-2 text-sm font-medium">
-                {activeRound === 3
-                  ? `${filtered.length} finalists`
-                  : activeRound === 2
-                  ? (r3Teams.length > 0
-                    ? `${advancing.length} shortlisted teams · waiting for admin to reveal the winners`
-                    : `${filtered.length} teams competing · judges scoring live`)
-                  : `${filtered.length} teams · tracking live evaluation completion`}
-              </p>
-            </motion.div>
-          </AnimatePresence>
+          {/* 📌 STICKY FIXED HEADER (Permanently pinned while content scrolls below) */}
+          <div className="sticky top-[69px] z-20 w-full backdrop-blur-md bg-[#EBE3D5]/95 border-b border-black/5 shadow-xs pt-6 pb-5">
+            <div className="max-w-6xl mx-auto px-6">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeRound}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                  className="text-center"
+                >
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/5 text-slate-700 mb-3 shadow-xl shadow-black/5">
+                    <Trophy size={14} className="text-amber-500" />
+                    <span className="text-xs font-bold uppercase tracking-widest">
+                      {activeRound === 3 ? 'Stage 3: Top 5 Grand Finale Podium' : activeRound === 2 ? 'Stage 2: Top 20 Shortlist' : 'Stage 1: Live Judging'}
+                    </span>
+                  </div>
+                  <h2 className="text-[#E83C00] font-bold tracking-[0.2em] uppercase text-xs mb-1">
+                    AI குரல் · VOICE FOR TAMIL NADU · 2026
+                  </h2>
+                  <h1 className="text-4xl sm:text-5xl font-black text-[#1A1A1A] tracking-tighter" style={{ textShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
+                    {activeRound === 3 ? 'Top 5 Grand Finale Winners' : activeRound === 2 ? 'Round 2 · Top 20' : 'Live Evaluation Status'}
+                  </h1>
+                  <p className="text-slate-500 mt-1 text-xs sm:text-sm font-medium">
+                    {activeRound === 3
+                      ? `${filtered.length} finalists`
+                      : activeRound === 2
+                      ? (r3Teams.length > 0
+                        ? `${advancing.length} shortlisted teams · waiting for admin to reveal the winners`
+                        : `${filtered.length} teams competing · judges scoring live`)
+                      : `${filtered.length} teams · tracking live evaluation completion`}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
 
-          {/* ROUND 1 VIEW — Live Judging Status (Scores Hidden, 0/1 -> 1/1) */}
-          {activeRound === 1 && (
-            <div className="w-full rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5">
-              {/* Table header */}
-              <div className="grid grid-cols-[56px_1fr_170px_110px_110px] px-6 py-4 bg-[#1A1A1A] text-[10px] font-bold text-white/60 uppercase tracking-widest">
+          {/* Content Area Below Header (Scrolls underneath the pinned header) */}
+          <div className="flex-1 flex flex-col items-center pt-6 pb-24 px-6 max-w-6xl mx-auto w-full">
+
+            {/* ROUND 1 VIEW — Live Judging Status (Scores Hidden, 0/1 -> 1/1) */}
+            {activeRound === 1 && (
+              <div className="w-full rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5">
+                {/* Table header */}
+                <div className="grid grid-cols-[56px_1fr_170px_110px_110px] px-6 py-4 bg-[#1A1A1A] text-[10px] font-bold text-white/60 uppercase tracking-widest">
                 <div className="text-center">#</div>
                 <div>Team</div>
                 <div>Track</div>
@@ -1564,6 +1571,7 @@ export function LeaderboardPage() {
             </div>
           )}
 
+          </div>
         </div>
       )}
     </div>
