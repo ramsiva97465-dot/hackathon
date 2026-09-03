@@ -107,7 +107,7 @@ function FinaleReadyPodiums() {
             <span className="mb-1 font-mono text-[10px] font-black text-amber-200/90 drop-shadow-[0_0_8px_rgba(251,191,36,0.45)]">{place}</span>
             <div className="relative aspect-[640/583] w-full">
               <motion.img
-                src="/images/finale-podium.webp"
+                src="/images/finale-podium-transparent.png"
                 alt=""
                 className="absolute inset-0 h-full w-full object-contain"
                 animate={{ filter: ['brightness(0.82)', 'brightness(1.12)', 'brightness(0.82)'] }}
