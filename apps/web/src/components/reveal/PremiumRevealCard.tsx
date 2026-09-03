@@ -301,10 +301,13 @@ export function PremiumRevealCard({
               )}
             </div>
 
-            {/* Stage Ready Badge */}
-            <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest mb-4 bg-amber-500/15 border border-amber-500/30 text-amber-300">
-              <Sparkles size={13} className="text-amber-400 animate-spin" />
-              <span>Stage Ready · Awaiting Announcement</span>
+            {/* Handcrafted Luxury Stage Ready Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-[0.18em] mb-4 bg-gradient-to-r from-amber-950/90 via-[#1A0E05] to-amber-950/90 border border-amber-500/40 text-amber-300 shadow-md shadow-amber-900/30 ring-1 ring-amber-500/20">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
+              </span>
+              <span>STAGE READY · TOP 20 CEREMONY</span>
             </div>
 
             {/* Heading */}
@@ -334,7 +337,7 @@ export function PremiumRevealCard({
 
   const rankTheme = isChampion
     ? {
-        badge: 'bg-[#E83C00] text-white ring-4 ring-amber-400/60',
+        badge: 'bg-gradient-to-r from-amber-600 via-[#E83C00] to-amber-600 text-white border border-amber-300/60 ring-2 ring-amber-400/40 shadow-lg shadow-amber-900/40',
         rankText:
           'text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-300 to-orange-400 drop-shadow-[0_0_60px_rgba(251,191,36,0.9)]',
         cardBorder: 'border-[#E83C00] ring-4 ring-amber-400/70',
@@ -346,7 +349,7 @@ export function PremiumRevealCard({
       }
     : activeRank === 2
     ? {
-        badge: 'bg-slate-600 text-white border border-slate-400',
+        badge: 'bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 text-slate-100 border border-slate-400/50 ring-1 ring-slate-400/20 shadow-md',
         rankText: 'text-slate-200 drop-shadow-[0_0_40px_rgba(203,213,225,0.6)]',
         cardBorder: 'border-slate-500/60',
         cardBg: 'bg-gradient-to-b from-[#1C1A18] via-[#111010] to-[#090808]',
@@ -357,7 +360,7 @@ export function PremiumRevealCard({
       }
     : activeRank === 3
     ? {
-        badge: 'bg-amber-800 text-white border border-amber-600',
+        badge: 'bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 text-amber-200 border border-amber-600/50 ring-1 ring-amber-500/20 shadow-md',
         rankText: 'text-amber-300 drop-shadow-[0_0_40px_rgba(245,158,11,0.6)]',
         cardBorder: 'border-amber-700/60',
         cardBg: 'bg-gradient-to-b from-[#1F1508] via-[#110D05] to-[#080601]',
@@ -367,8 +370,8 @@ export function PremiumRevealCard({
         cardShadow: 'shadow-[0_30px_80px_rgba(0,0,0,0.9)]',
       }
     : {
-        // Ranks 4–20: deep obsidian + warm orange — NO green
-        badge: 'bg-orange-900/80 text-orange-200 border border-orange-600/60',
+        // Ranks 4–20: deep obsidian + warm gold amber — NO green
+        badge: 'bg-gradient-to-r from-amber-950/90 via-[#1A0E05] to-amber-950/90 text-amber-200 border border-amber-500/40 ring-1 ring-amber-500/20 shadow-md',
         rankText: 'text-orange-300 drop-shadow-[0_0_30px_rgba(249,115,22,0.5)]',
         cardBorder: 'border-amber-600/40',
         cardBg: 'bg-gradient-to-b from-[#1A1510] via-[#100D09] to-[#080604]',
@@ -426,14 +429,17 @@ export function PremiumRevealCard({
           <div className="flex flex-col items-center justify-center gap-2 shrink-0 w-[20%]">
             {/* Badge */}
             <div
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-widest shadow-lg max-w-full ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-[0.14em] shadow-lg max-w-full ${
                 isDecrypting
-                  ? 'bg-amber-500/20 border border-amber-400 text-amber-300 animate-pulse ring-2 ring-amber-400/30'
+                  ? 'bg-gradient-to-r from-amber-950/90 via-[#1A0E05] to-amber-950/90 border border-amber-500/50 text-amber-300 ring-1 ring-amber-500/30'
                   : rankTheme.badge
               }`}
             >
               {isDecrypting ? (
-                <Sparkles size={12} className="text-amber-300 animate-spin shrink-0" />
+                <span className="relative flex h-2 w-2 mr-0.5 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
+                </span>
               ) : isChampion ? (
                 <Crown size={12} className="text-amber-200 fill-amber-200 animate-bounce shrink-0" />
               ) : activeRank === 2 ? (
@@ -441,18 +447,18 @@ export function PremiumRevealCard({
               ) : activeRank === 3 ? (
                 <Award size={12} className="text-amber-200 shrink-0" />
               ) : (
-                <ShieldCheck size={12} className="text-orange-200 shrink-0" />
+                <ShieldCheck size={12} className="text-amber-400 shrink-0" />
               )}
-              <span className="truncate">
+              <span className="truncate font-mono">
                 {isDecrypting
-                  ? `#${activeRank} DECRYPTING`
+                  ? `UNSEALING #${activeRank}`
                   : isChampion
-                  ? (isFinale ? '👑 1st Place' : '👑 #1 Seed')
+                  ? (isFinale ? '👑 1st Place Champion' : '👑 #1 Qualifier')
                   : activeRank === 2
-                  ? (isFinale ? '🥈 2nd Place' : '#2 Seed')
+                  ? (isFinale ? '🥈 2nd Place Finalist' : '🥈 #2 Qualifier')
                   : activeRank === 3
-                  ? (isFinale ? '🥉 3rd Place' : '#3 Seed')
-                  : 'Qualified'}
+                  ? (isFinale ? '🥉 3rd Place Finalist' : '🥉 #3 Qualifier')
+                  : 'Top 20 Qualifier'}
               </span>
             </div>
 
@@ -484,9 +490,12 @@ export function PremiumRevealCard({
             {/* Subtitle Slot (Decrypting badge cross-fades into College & Track smoothly) */}
             <div className="min-h-[36px] flex items-center justify-center">
               {isDecrypting ? (
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-white/5 border border-white/10 text-amber-300/80 text-xs sm:text-sm font-mono tracking-wider">
-                  <Lock size={12} className="text-amber-400 animate-spin shrink-0" />
-                  <span>⚡ DECRYPTING VERIFIED SUBMISSION MARKS ⚡</span>
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/60 border border-amber-500/30 text-amber-300/90 text-xs font-mono tracking-[0.16em] uppercase shadow-sm">
+                  <span className="relative flex h-2 w-2 shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
+                  </span>
+                  <span>VERIFYING OFFICIAL EVALUATION MARKS</span>
                 </div>
               ) : (
                 <motion.div
