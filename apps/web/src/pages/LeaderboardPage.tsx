@@ -977,15 +977,15 @@ export function LeaderboardPage() {
       {/* 🎭 DRAMATIC GRAND REVEAL CEREMONY (Round 2: 20➔1 | Round 3: 5➔1)      */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {isRevealing ? (
-        <div className="relative z-10 flex-1 flex flex-col items-center pt-8 pb-24 px-4 sm:px-6 max-w-6xl mx-auto w-full">
+        <div className="relative z-10 flex-1 flex flex-col items-center pt-4 pb-10 px-4 sm:px-8 w-full">
           
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-6"
+            className="text-center mb-4"
           >
-            <div className={`inline-flex items-center gap-2 px-5 py-2 rounded-full mb-3 shadow-xl ${
+            <div className={`inline-flex items-center gap-2 px-5 py-2 rounded-full mb-2 shadow-xl ${
               isFinale 
                 ? 'bg-amber-950/80 border border-amber-500/40 text-amber-300 shadow-amber-900/30' 
                 : 'bg-white border border-black/5 text-slate-700 shadow-black/5'
@@ -995,7 +995,7 @@ export function LeaderboardPage() {
                 {isFinale ? '👑 Grand Finale · Champions Coronation' : 'Round 1 Qualifiers - Live Ceremony'}
               </span>
             </div>
-            <h2 className="text-[#E83C00] font-bold tracking-[0.2em] uppercase text-sm mb-2">
+            <h2 className="text-[#E83C00] font-bold tracking-[0.2em] uppercase text-sm mb-1">
               AI குரல் · VOICE FOR TAMIL NADU · 2026
             </h2>
             <h1 className="text-5xl sm:text-6xl font-black text-[#1A1A1A] tracking-tighter" style={{ textShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
@@ -1003,8 +1003,8 @@ export function LeaderboardPage() {
             </h1>
           </motion.div>
 
-          {/* 🌟 HERO SPOTLIGHT ANNOUNCEMENT CARD */}
-          <div className="w-full max-w-3xl mb-10">
+          {/* 🌟 HERO SPOTLIGHT ANNOUNCEMENT CARD — full width for 24x10 LED */}
+          <div className="w-full mb-6">
             <PremiumRevealCard
               isFinale={isFinale}
               currentSpotlightRank={currentSpotlightRank}

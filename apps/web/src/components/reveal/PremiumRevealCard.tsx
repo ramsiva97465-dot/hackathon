@@ -357,7 +357,7 @@ export function PremiumRevealCard({
     <div className="relative w-full">
       {/* Ambient Backlight Glow */}
       <div
-        className={`absolute -inset-2 rounded-[3.2rem] blur-3xl pointer-events-none transition-opacity duration-700 ${
+        className={`absolute -inset-2 rounded-[2.5rem] blur-3xl pointer-events-none transition-opacity duration-700 ${
           isDecrypting
             ? `opacity-90 ${rankTheme.glow} animate-pulse`
             : `opacity-60 ${rankTheme.glow}`
@@ -366,19 +366,19 @@ export function PremiumRevealCard({
 
       <motion.div
         key={`spotlight-card-${activeRank}-${isDecrypting ? 'spinning' : 'locked'}`}
-        initial={{ opacity: 0, scale: 0.93, y: 20 }}
+        initial={{ opacity: 0, scale: 0.96, y: 16 }}
         animate={{
           opacity: 1,
-          scale: justLocked ? [1, 1.04, 1] : 1,
+          scale: justLocked ? [1, 1.03, 1] : 1,
           y: 0,
         }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className={`relative p-12 sm:p-16 xl:p-20 rounded-[2.8rem] overflow-hidden text-center border-2 transition-all
+        className={`relative px-10 py-8 rounded-[2.2rem] overflow-hidden border-2 transition-all
           ${rankTheme.cardBg}
           ${isDecrypting ? 'border-amber-500/80 shadow-[0_0_100px_rgba(245,158,11,0.45)]' : `${rankTheme.cardBorder} ${rankTheme.cardShadow}`}
         `}
       >
-        {/* Subtle dot-grid texture for depth */}
+        {/* Dot-grid texture */}
         <div
           className="absolute inset-0 pointer-events-none opacity-[0.03]"
           style={{
@@ -398,135 +398,132 @@ export function PremiumRevealCard({
           />
         )}
 
-        {/* ── 1. Ceremony Badge ── */}
-        <div className="flex items-center justify-center mb-8">
-          <div
-            className={`inline-flex items-center gap-3 px-8 py-3.5 rounded-full text-base sm:text-lg font-black uppercase tracking-widest shadow-lg ${
-              isDecrypting
-                ? 'bg-amber-500/20 border border-amber-400 text-amber-300 animate-pulse ring-2 ring-amber-400/30'
-                : rankTheme.badge
-            }`}
-          >
+        {/* ─── HORIZONTAL 3-COLUMN LAYOUT for 24:10 wide LED ─────────────────── */}
+        <div className="flex items-center gap-8 w-full">
+
+          {/* ── LEFT: Rank + Badge ── */}
+          <div className="flex flex-col items-center justify-center gap-3 shrink-0 w-[22%]">
+            {/* Badge */}
+            <div
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-black uppercase tracking-widest shadow-lg ${
+                isDecrypting
+                  ? 'bg-amber-500/20 border border-amber-400 text-amber-300 animate-pulse ring-2 ring-amber-400/30'
+                  : rankTheme.badge
+              }`}
+            >
+              {isDecrypting ? (
+                <Sparkles size={16} className="text-amber-300 animate-spin" />
+              ) : isChampion ? (
+                <Crown size={16} className="text-amber-200 fill-amber-200 animate-bounce" />
+              ) : activeRank === 2 ? (
+                <Medal size={16} className="text-slate-200" />
+              ) : activeRank === 3 ? (
+                <Award size={16} className="text-amber-200" />
+              ) : (
+                <ShieldCheck size={16} className="text-orange-200" />
+              )}
+              <span className="truncate">
+                {isDecrypting
+                  ? (isFinale
+                      ? `⚡ ${activeRank === 1 ? 'GRAND CHAMPION' : `PLACE #${activeRank}`} ⚡`
+                      : `⚡ QUALIFIER #${activeRank} ⚡`)
+                  : isChampion
+                  ? (isFinale ? '👑 1st Place' : '👑 #1 Seed')
+                  : activeRank === 2
+                  ? (isFinale ? '🥈 2nd Place' : '#2 Seed')
+                  : activeRank === 3
+                  ? (isFinale ? '🥉 3rd Place' : '#3 Seed')
+                  : 'Qualified'}
+              </span>
+            </div>
+
+            {/* Giant Rank Number */}
+            <div
+              className={`font-black tracking-tighter leading-none ${
+                isDecrypting
+                  ? 'text-amber-400/90 font-mono animate-pulse text-[8rem] xl:text-[11rem]'
+                  : `${rankTheme.rankText} text-[8rem] xl:text-[11rem]`
+              }`}
+            >
+              {isFinale && activeRank === 1 ? '👑' : `#${activeRank}`}
+            </div>
+          </div>
+
+          {/* ── DIVIDER ── */}
+          <div className="w-px self-stretch bg-white/10 shrink-0" />
+
+          {/* ── CENTER: Team Name (dominant) + College/Track ── */}
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center overflow-hidden px-4">
             {isDecrypting ? (
               <>
-                <Sparkles size={20} className="text-amber-300 animate-spin" />
-                <span>
-                  {isFinale
-                    ? `⚡ DECRYPTING ${activeRank === 1 ? 'GRAND CHAMPION' : `PLACE #${activeRank}`} ⚡`
-                    : `⚡ UNSEALING QUALIFIER #${activeRank} ⚡`}
+                <span className="font-mono text-5xl sm:text-7xl xl:text-8xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-400 drop-shadow-[0_0_60px_rgba(245,158,11,1)] select-none break-all leading-tight w-full">
+                  {scrambleDisplay || 'IDENTIFYING...'}
                 </span>
-              </>
-            ) : isChampion ? (
-              <>
-                <Crown size={20} className="text-amber-200 fill-amber-200 animate-bounce" />
-                <span>{isFinale ? '👑 Grand Champion · 1st Place' : '👑 #1 Seed Qualifier'}</span>
-              </>
-            ) : activeRank === 2 ? (
-              <>
-                <Medal size={20} className="text-slate-200" />
-                <span>{isFinale ? '🥈 1st Runner Up · 2nd Place' : '#2 Seed Qualifier'}</span>
-              </>
-            ) : activeRank === 3 ? (
-              <>
-                <Award size={20} className="text-amber-200" />
-                <span>{isFinale ? '🥉 2nd Runner Up · 3rd Place' : '#3 Seed Qualifier'}</span>
+                <div className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-white/5 border border-white/10 text-amber-300/80 text-base font-mono tracking-wider">
+                  <Lock size={14} className="text-amber-400 animate-spin" />
+                  <span>⚡ DECRYPTING VERIFIED SUBMISSION MARKS ⚡</span>
+                </div>
               </>
             ) : (
               <>
-                <ShieldCheck size={20} className="text-orange-200" />
-                <span>Qualified for Round 2</span>
+                <motion.h2
+                  initial={{ scale: 0.82, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', bounce: 0.45, duration: 0.7 }}
+                  className={`text-5xl sm:text-7xl xl:text-8xl font-black tracking-tight drop-shadow-lg leading-tight w-full ${rankTheme.nameColor}`}
+                  style={{ wordBreak: 'break-word' }}
+                >
+                  {currentSpotlightTeam?.teamName || targetName}
+                </motion.h2>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.4 }}
+                  className="flex items-center justify-center gap-4 flex-wrap text-2xl sm:text-3xl font-medium text-slate-300"
+                >
+                  <span className="font-bold text-white/90">
+                    {currentSpotlightTeam?.college || 'Tamil Nadu'}
+                  </span>
+                  {trackConfig && (
+                    <>
+                      <span className="opacity-40 text-3xl">·</span>
+                      <span
+                        className="px-5 py-2 rounded-xl text-base sm:text-lg font-black uppercase tracking-wider border"
+                        style={{
+                          backgroundColor: `${trackConfig.color}20`,
+                          color: trackConfig.color,
+                          borderColor: `${trackConfig.color}50`,
+                        }}
+                      >
+                        {trackConfig.label}
+                      </span>
+                    </>
+                  )}
+                </motion.div>
               </>
             )}
           </div>
-        </div>
 
-        {/* ── 2. GIANT Rank Number ── LED-scale */}
-        <div
-          className={`font-black mb-6 tracking-tighter transition-colors leading-none ${
-            isDecrypting
-              ? 'text-amber-400/90 font-mono animate-pulse text-8xl sm:text-[9rem] xl:text-[11rem]'
-              : `${rankTheme.rankText} text-8xl sm:text-[9rem] xl:text-[11rem]`
-          }`}
-        >
-          {isFinale && activeRank === 1 ? '👑 #1' : `#${activeRank}`}
-        </div>
+          {/* ── DIVIDER ── */}
+          <div className="w-px self-stretch bg-white/10 shrink-0" />
 
-        {/* ── 3. Team Name — Cipher Scramble or Revealed ── */}
-        <div className="min-h-[9rem] sm:min-h-[11rem] xl:min-h-[13rem] flex items-center justify-center mb-8 px-4">
-          {isDecrypting ? (
-            <div className="flex flex-col items-center gap-4 w-full">
-              <span className="font-mono text-5xl sm:text-7xl xl:text-8xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-400 drop-shadow-[0_0_60px_rgba(245,158,11,1)] select-none break-all leading-tight">
-                {scrambleDisplay || 'IDENTIFYING...'}
-              </span>
-              <span className="text-base sm:text-lg font-mono font-bold uppercase tracking-[0.35em] text-amber-300/80 animate-pulse">
-                ⚡ DECRYPTING VERIFIED SUBMISSION MARKS ⚡
-              </span>
-            </div>
-          ) : (
-            <motion.h2
-              initial={{ scale: 0.82, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', bounce: 0.45, duration: 0.7 }}
-              className={`text-5xl sm:text-7xl xl:text-8xl font-black tracking-tight drop-shadow-lg leading-tight ${rankTheme.nameColor}`}
-              style={{ wordBreak: 'break-word' }}
+          {/* ── RIGHT: Score ── */}
+          <div className="flex flex-col items-center justify-center gap-3 shrink-0 w-[22%]">
+            <span className="text-sm font-bold uppercase tracking-widest text-amber-300/90 font-mono">
+              {isDecrypting ? 'CALCULATING' : isFinale ? 'FINAL SCORE' : 'ROUND 1 SCORE'}
+            </span>
+            <span
+              className={`text-[6rem] xl:text-[9rem] font-black font-mono tracking-wider leading-none ${
+                isDecrypting ? 'text-amber-300/80 animate-pulse' : rankTheme.scoreTxt
+              }`}
             >
-              {currentSpotlightTeam?.teamName || targetName}
-            </motion.h2>
-          )}
+              {isDecrypting ? rollingScore : Number(currentSpotlightTeam?.totalScore || 0).toFixed(1)}
+            </span>
+          </div>
         </div>
 
-        {/* ── 4. College & Track ── */}
-        <div className="min-h-[4rem] flex items-center justify-center mb-10">
-          {isDecrypting ? (
-            <div className="inline-flex items-center gap-3 px-7 py-3.5 rounded-xl bg-white/5 border border-white/10 text-amber-300/80 text-lg sm:text-xl font-mono tracking-wider shadow-inner">
-              <Lock size={18} className="text-amber-400 animate-spin" />
-              <span>COLLEGE & TRACK ENCRYPTED</span>
-            </div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.45 }}
-              className="flex items-center justify-center gap-4 flex-wrap text-2xl sm:text-3xl font-medium text-slate-300"
-            >
-              <span className="font-bold text-white/90">
-                {currentSpotlightTeam?.college || 'Tamil Nadu'}
-              </span>
-              {trackConfig && (
-                <>
-                  <span className="opacity-40 text-4xl leading-none">·</span>
-                  <span
-                    className="px-6 py-2.5 rounded-xl text-lg sm:text-xl font-black uppercase tracking-wider border shadow-sm"
-                    style={{
-                      backgroundColor: `${trackConfig.color}20`,
-                      color: trackConfig.color,
-                      borderColor: `${trackConfig.color}50`,
-                    }}
-                  >
-                    {trackConfig.label}
-                  </span>
-                </>
-              )}
-            </motion.div>
-          )}
-        </div>
-
-        {/* ── 5. Score Pill ── LED-scale */}
-        <div className="inline-flex items-center gap-8 px-12 py-6 rounded-2xl bg-white/5 backdrop-blur-md border border-white/15 shadow-inner">
-          <span className="text-base sm:text-lg font-bold uppercase tracking-widest text-amber-300/90 font-mono">
-            {isDecrypting ? 'CALCULATING SCORE' : isFinale ? 'FINAL SCORE' : 'ROUND 1 SCORE'}
-          </span>
-          <span
-            className={`text-6xl sm:text-7xl xl:text-8xl font-black font-mono tracking-wider ${
-              isDecrypting ? 'text-amber-300/80 animate-pulse' : rankTheme.scoreTxt
-            }`}
-          >
-            {isDecrypting ? rollingScore : Number(currentSpotlightTeam?.totalScore || 0).toFixed(1)}
-          </span>
-        </div>
-
-        {/* ── 6. Progress Footnote ── */}
-        <div className="mt-10 pt-6 border-t border-white/10 flex items-center justify-between text-base sm:text-lg font-semibold px-4 text-slate-400">
+        {/* ── Progress Footnote ── */}
+        <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-sm sm:text-base font-semibold px-2 text-slate-400">
           <span className="font-mono">
             Progress: {revealedStep} of {maxSteps} announced
           </span>
