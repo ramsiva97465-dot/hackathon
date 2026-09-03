@@ -7,7 +7,7 @@ import { Avatar } from '@/components/ui/Avatar'
 import { getTrackConfig } from '@/lib/utils'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { 
-  TrendingUp, TrendingDown, Minus, Trophy, ChevronRight, Monitor,
+  TrendingUp, TrendingDown, Minus, Trophy, ChevronRight, ChevronDown, Monitor,
   Sparkles, Star, CheckCircle2, Lock, Flame, Zap, Award, Crown, Medal, Layers, ShieldCheck
 } from 'lucide-react'
 import type { LeaderboardEntry } from '@hackathon/shared'
@@ -958,13 +958,11 @@ export function LeaderboardPage() {
       autoScrollTimerRef.current = null
       const roster = rosterRef.current
       const container = scrollContainerRef.current
-      if (!roster) return
-
-      if (container) {
-        const gap = roster.getBoundingClientRect().top - container.getBoundingClientRect().top
-        container.scrollTo({ top: Math.max(0, container.scrollTop + gap - 16), behavior: 'smooth' })
+      if (roster && container) {
+        container.scrollTo({ top: roster.offsetTop - 16, behavior: 'smooth' })
       }
-      roster.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      roster?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
     }, 20000)
   }, [isRevealing, revealedStep, isFinale, unlockedRanks.length, isDecrypting])
 
@@ -1172,7 +1170,7 @@ export function LeaderboardPage() {
             </motion.div>
 
             {/* 🌟 HERO SPOTLIGHT ANNOUNCEMENT CARD — 75% width for 24x10 LED */}
-            <div className="w-3/4 mx-auto">
+            <div className="w-3/4 mx-auto flex flex-col items-center">
               <PremiumRevealCard
                 isFinale={isFinale}
                 currentSpotlightRank={currentSpotlightRank}
@@ -1184,6 +1182,28 @@ export function LeaderboardPage() {
                 revealingTeamName={revealingTeamName}
                 nameSpinMs={nameSpinMs}
               />
+
+              {/* View Top 20 Table Jump Button */}
+              {!isFinale && (revealedStep >= 20 || unlockedRanks.length >= 20) && !isDecrypting && (
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  onClick={() => {
+                    const roster = rosterRef.current
+                    const container = scrollContainerRef.current
+                    if (roster && container) {
+                      container.scrollTo({ top: roster.offsetTop - 16, behavior: 'smooth' })
+                    }
+                    roster?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+                  }}
+                  className="mt-4 inline-flex items-center gap-2 px-6 py-2 rounded-full bg-[#1A1A1A] text-white border border-amber-500/40 text-xs font-black uppercase tracking-widest shadow-xl hover:bg-black transition-all cursor-pointer ring-1 ring-amber-400/20"
+                >
+                  <Trophy size={13} className="text-amber-400" />
+                  <span>View Top 20 Leaderboard</span>
+                  <ChevronDown size={14} className="text-amber-400 animate-bounce" />
+                </motion.button>
+              )}
             </div>
           </div>
 
