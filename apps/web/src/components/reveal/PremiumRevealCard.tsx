@@ -133,7 +133,30 @@ function playLatchLock() {
 }
 
 /**
- * Dramatic reveal "lock-in" thud when the name is fully decrypted.
+ * Cinematic sub-bass heartbeat / tension riser pulse.
+ */
+function playTensionPulse(progress: number) {
+  const ctx = getAudioCtx()
+  if (!ctx) return
+  const now = ctx.currentTime
+
+  const osc = ctx.createOscillator()
+  const gain = ctx.createGain()
+  osc.type = 'sine'
+  osc.frequency.setValueAtTime(45 + progress * 40, now)
+  osc.frequency.exponentialRampToValueAtTime(30, now + 0.12)
+
+  gain.gain.setValueAtTime(0.25 + progress * 0.25, now)
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14)
+
+  osc.connect(gain)
+  gain.connect(ctx.destination)
+  osc.start(now)
+  osc.stop(now + 0.15)
+}
+
+/**
+ * Dramatic cinematic reveal "lock-in" impact when the full team name is confirmed.
  */
 function playRevealImpact() {
   const ctx = getAudioCtx()
@@ -141,30 +164,30 @@ function playRevealImpact() {
 
   const now = ctx.currentTime
 
-  // Low THUD — sine sweep down
-  const thud = ctx.createOscillator()
-  const thudGain = ctx.createGain()
-  thud.type = 'sine'
-  thud.frequency.setValueAtTime(180, now)
-  thud.frequency.exponentialRampToValueAtTime(55, now + 0.25)
-  thudGain.gain.setValueAtTime(0.7, now)
-  thudGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5)
-  thud.connect(thudGain)
-  thudGain.connect(ctx.destination)
-  thud.start(now)
-  thud.stop(now + 0.55)
+  // 1. Deep cinematic Subwoofer THUD (50Hz - 30Hz boom)
+  const sub = ctx.createOscillator()
+  const subGain = ctx.createGain()
+  sub.type = 'sine'
+  sub.frequency.setValueAtTime(140, now)
+  sub.frequency.exponentialRampToValueAtTime(35, now + 0.4)
+  subGain.gain.setValueAtTime(0.85, now)
+  subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.65)
+  sub.connect(subGain)
+  subGain.connect(ctx.destination)
+  sub.start(now)
+  sub.stop(now + 0.7)
 
-  // High metallic TING — decaying sine at 880 Hz
-  const ting = ctx.createOscillator()
-  const tingGain = ctx.createGain()
-  ting.type = 'sine'
-  ting.frequency.setValueAtTime(880, now)
-  tingGain.gain.setValueAtTime(0.35, now)
-  tingGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8)
-  ting.connect(tingGain)
-  tingGain.connect(ctx.destination)
-  ting.start(now + 0.02)
-  ting.stop(now + 0.85)
+  // 2. High metallic orchestral CHIME
+  const chime = ctx.createOscillator()
+  const chimeGain = ctx.createGain()
+  chime.type = 'sine'
+  chime.frequency.setValueAtTime(960, now)
+  chimeGain.gain.setValueAtTime(0.4, now)
+  chimeGain.gain.exponentialRampToValueAtTime(0.001, now + 0.9)
+  chime.connect(chimeGain)
+  chimeGain.connect(ctx.destination)
+  chime.start(now + 0.02)
+  chime.stop(now + 0.95)
 }
 
 export interface PremiumRevealCardProps {
@@ -239,10 +262,11 @@ export function PremiumRevealCard({
       const elapsed = Date.now() - startTime
       const progress = Math.min(1, elapsed / nameSpinMs)
 
-      // ── Speed curve: fast → slow (Slower, tactile, suspenseful flip pace) ──
-      // interval: 45 ms (crisp visible rolling) → 220 ms (suspenseful slow-motion crawl)
-      const speedFactor = Math.pow(progress, 0.45)
-      const nextMs = Math.round(45 + (220 - 45) * speedFactor)
+      // ── Dramatic Suspense Curve: Fast rolling -> Edge-of-seat crawl on final letters ──
+      // Accelerates suspense: speedFactor climbs with power curve (progress^0.65)
+      // interval: 45 ms (rolling) → 260 ms (heavy, dramatic clicks on the final letters)
+      const speedFactor = Math.pow(progress, 0.65)
+      const nextMs = Math.round(45 + (260 - 45) * speedFactor)
 
       // ── Sequential Cascade Scramble (V scrolls first, then O, then I... in a cascading wave) ────
       const initialWord = 'VOICEATHON'
@@ -293,12 +317,17 @@ export function PremiumRevealCard({
       }
       setScrambleDisplay(chars)
 
-      // Rolling fake score
+      // Rolling fake score (fluctuates during suspense)
       setRollingScore((Math.random() * 80 + 15).toFixed(1))
 
-      // ── Realistic Mechanical Sound Synthesis ──────────────────────────────
+      // ── Realistic Mechanical Sound Synthesis & Suspense Pulses ─────────────
       // Play crisp mechanical flap click on every active step
       playMechanicalFlap(speedFactor)
+
+      // Play suspenseful sub-bass heartbeat every 6 frames
+      if (frameCountRef.current % 6 === 0 && progress > 0.15 && progress < 0.92) {
+        playTensionPulse(progress)
+      }
       frameCountRef.current++
 
       // Play metallic latch lock click whenever a new character locks in
