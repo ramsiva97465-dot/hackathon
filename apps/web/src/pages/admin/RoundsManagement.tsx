@@ -98,7 +98,7 @@ export function RoundsManagement() {
       setRevealRound(round)
       if (round === 2) setRevealedQualifierRanks([])
       toast.success(round === 3
-        ? 'Top 5 Grand Finale Reveal broadcasted to stage screens!'
+        ? 'Top 5 Grand Finale stage is ready. All five identities are locked on every LCD!'
         : 'Top 20 ceremony opened on the LCD. Use Reveal on each team in the Round 2 table (20 → 1).')
     } catch (err) {
       console.error(err)
@@ -106,6 +106,16 @@ export function RoundsManagement() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handlePrepareFinaleStage = async () => {
+    if (
+      revealRound === 3
+      && revealStep > 0
+      && !window.confirm('This will lock all five winner cards again and return every LCD to the Grand Finale ready screen. Continue?')
+    ) return
+
+    await handleStartReveal(3)
   }
 
   const handleTriggerStep = async (step: number) => {
@@ -377,10 +387,19 @@ export function RoundsManagement() {
             )}
             {activeRoundNum === 3 && (
               <>
-                <span className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-black">
-                  <Crown size={14} className="text-amber-400" />
-                  Use Top 5 Controller Below ↓
-                </span>
+                <button
+                  onClick={handlePrepareFinaleStage}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#E83C00] to-amber-500 hover:from-[#ff4b0a] hover:to-amber-400 text-white rounded-xl text-xs font-black transition-all shadow-lg shadow-orange-950/30 ring-1 ring-amber-300/30 disabled:opacity-50 cursor-pointer"
+                  title="Lock all five identities and open the Grand Finale ready screen on every LCD"
+                >
+                  <Crown size={14} className="fill-amber-200/30" />
+                  <span>
+                    {isStageRevealing && revealRound === 3 && revealStep === 0
+                      ? 'Re-send Top 5 Stage Ready'
+                      : 'Set Top 5 Reveal Stage Ready'}
+                  </span>
+                </button>
                 <button
                   onClick={() => handlePromote(2)}
                   disabled={loading}
@@ -419,7 +438,7 @@ export function RoundsManagement() {
                   Top 5 Grand Finale Reveal Controller
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mt-1 font-medium">
-                  Click each button when the stage host speaks. The LCD countdown is <span className="text-amber-300 font-bold">3 for 5th/4th</span>, <span className="text-amber-300 font-bold">5 for 2nd Runner Up</span>, <span className="text-amber-300 font-bold">7 for 1st Runner Up</span>, and <span className="text-amber-300 font-bold">10 for the Grand Champion</span>.
+                  Click each button when the stage host speaks. The LCD suspense sequence is <span className="text-amber-300 font-bold">6 seconds for 5th</span>, <span className="text-amber-300 font-bold">7 for 4th</span>, <span className="text-amber-300 font-bold">8 for 2nd Runner Up</span>, <span className="text-amber-300 font-bold">10 for 1st Runner Up</span>, and <span className="text-amber-300 font-bold">12 for the Grand Champion</span>.
                 </p>
               </div>
 
@@ -428,11 +447,11 @@ export function RoundsManagement() {
             {/* Step Buttons Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               {([
-                { step: 1, label: 'Reveal 5th Place (#5)', done: '5th Unsealed', accent: 'amber', countdown: '3➔1 countdown & unseals this slot' },
-                { step: 2, label: 'Reveal 4th Place (#4)', done: '4th Unsealed', accent: 'slate', countdown: '3➔1 countdown & unseals this slot' },
-                { step: 3, label: 'Reveal 2nd Runner Up (#3)', done: '3rd Unsealed', accent: 'bronze', countdown: '5➔1 countdown & unseals this slot' },
-                { step: 4, label: 'Reveal 1st Runner Up (#2)', done: '2nd Unsealed', accent: 'silver', countdown: '7➔1 countdown & unseals this slot' },
-                { step: 5, label: 'CROWN GRAND CHAMPION (#1)', done: 'Champion Crowned!', accent: 'gold', countdown: '10➔1 countdown + confetti' },
+                { step: 1, label: 'Reveal 5th Place (#5)', done: '5th Unsealed', accent: 'amber', countdown: '6-second cinematic unsealing' },
+                { step: 2, label: 'Reveal 4th Place (#4)', done: '4th Unsealed', accent: 'slate', countdown: '7-second cinematic unsealing' },
+                { step: 3, label: 'Reveal 2nd Runner Up (#3)', done: '3rd Unsealed', accent: 'bronze', countdown: '8-second cinematic unsealing' },
+                { step: 4, label: 'Reveal 1st Runner Up (#2)', done: '2nd Unsealed', accent: 'silver', countdown: '10-second cinematic unsealing' },
+                { step: 5, label: 'CROWN GRAND CHAMPION (#1)', done: 'Champion Crowned!', accent: 'gold', countdown: '12-second coronation + confetti' },
               ] as const).map(({ step, label, done, accent, countdown }) => {
                 const isGold = accent === 'gold'
                 const finaleProgress = revealRound === 3 ? revealStep : 0
