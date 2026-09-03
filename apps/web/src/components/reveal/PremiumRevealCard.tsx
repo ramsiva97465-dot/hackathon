@@ -469,10 +469,10 @@ export function PremiumRevealCard({
                   initial={{ scale: 0.85, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: 'spring', bounce: 0.4, duration: 0.65 }}
-                  className={`text-4xl xl:text-6xl font-black tracking-tight drop-shadow-lg leading-tight w-full ${rankTheme.nameColor}`}
+                  className="font-mono text-4xl xl:text-6xl font-black tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.85)] leading-tight w-full"
                   style={{ wordBreak: 'break-word' }}
                 >
-                  {currentSpotlightTeam?.teamName || targetName}
+                  {(currentSpotlightTeam?.teamName || targetName).toUpperCase()}
                 </motion.h2>
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
