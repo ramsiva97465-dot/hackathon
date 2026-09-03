@@ -532,14 +532,6 @@ export function PremiumRevealCard({
                 ? '5 Winners. One Unforgettable Reveal !!'
                 : 'Waiting for admin to initiate the Top 20 announcement (#20 ➔ #1).'}
             </p>
-            {isFinale && (
-              <div className="mt-5 inline-flex items-center gap-3 rounded-full border border-amber-400/20 bg-black/30 px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/80 shadow-inner">
-                <Lock size={11} className="text-amber-400" />
-                <span>Reveal sequence armed</span>
-                <span className="text-amber-500/50">|</span>
-                <span className="text-amber-300">05 → 04 → 03 → 02 → 01</span>
-              </div>
-            )}
           </div>
 
           {/* Footnote divider */}
