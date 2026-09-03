@@ -1011,10 +1011,10 @@ export function LeaderboardPage() {
                 {isFinale ? (
                   <span className="inline-flex items-center gap-3 flex-wrap justify-center">
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E83C00] via-amber-600 to-[#E83C00] drop-shadow-xs">
-                      Top 5
+                      Grand Finale
                     </span>
                     <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#111111] via-[#2A241E] to-[#0A0A0A]">
-                      Grand Finale Winners
+                      Winners
                     </span>
                   </span>
                 ) : (
