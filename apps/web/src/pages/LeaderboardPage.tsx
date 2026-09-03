@@ -1289,7 +1289,8 @@ export function LeaderboardPage() {
       transition: 'background-color 700ms ease, color 700ms ease',
     }}>
 
-      {/* ── Top Bar ── (Permanently FIXED, never scrolls) */}
+      {/* ── Top Bar ── hidden during Top 5 announcement so the stage is full-bleed */}
+      {!(isFinale && revealedStep > 0) && (
       <div className="shrink-0 z-30 flex items-center justify-between px-6 sm:px-10 py-4 border-b backdrop-blur-md bg-[#EBE3D5]/90 border-black/5 text-[#1A1A1A]">
         <div className="flex items-end gap-4 sm:gap-6">
           <div className="flex items-end gap-2">
@@ -1317,6 +1318,7 @@ export function LeaderboardPage() {
           </span>
         </div>
       </div>
+      )}
 
       {/* ════════════════════════════════════════════════════════════════════ */}
       {/* 🎭 DRAMATIC GRAND REVEAL CEREMONY (Round 2: 20➔1 | Round 3: 5➔1)      */}

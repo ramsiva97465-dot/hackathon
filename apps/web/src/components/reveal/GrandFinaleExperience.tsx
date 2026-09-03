@@ -99,23 +99,25 @@ function Wreath({
         }}
       >
         <img src={PODIUM} alt="" className="absolute inset-0 h-full w-full object-contain" />
-        <AnimatePresence mode="wait">
-          {showGlyph && (
-            <motion.span
-              key={glyph}
-              initial={{ opacity: 0, scale: 0.86 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.28, ease: EASE }}
-              className={`absolute left-1/2 top-[43%] -translate-x-1/2 -translate-y-1/2 font-serif font-black ${
-                locked ? 'text-amber-200' : 'text-amber-200/40'
-              }`}
-              style={{ fontSize: '1.7em' }}
-            >
-              {glyph}
-            </motion.span>
-          )}
-        </AnimatePresence>
+        <div className="pointer-events-none absolute inset-x-[16%] top-[9%] z-10 flex h-[48%] items-center justify-center">
+          <AnimatePresence mode="wait">
+            {showGlyph && (
+              <motion.span
+                key={glyph}
+                initial={{ opacity: 0, scale: 0.86 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.28, ease: EASE }}
+                className={`flex h-[1.05em] w-[1.05em] items-center justify-center font-serif font-black leading-none ${
+                  locked ? 'text-amber-200' : 'text-amber-200/40'
+                }`}
+                style={{ fontSize: '1.7em' }}
+              >
+                {glyph}
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   )
