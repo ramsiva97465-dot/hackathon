@@ -69,7 +69,7 @@ function FinalFiveVaultSeal() {
           <circle cx="50" cy="53" r="4.5" fill="#FFF1B8" />
         </svg>
       </div>
-      <div className="absolute inset-x-0 -bottom-1 text-center font-mono text-[8px] font-black tracking-[0.32em] text-amber-300/75">
+      <div className="absolute inset-x-0 -bottom-3 text-center font-mono text-[8px] font-black tracking-[0.32em] text-amber-300/75">
         FINAL FIVE
       </div>
     </div>
