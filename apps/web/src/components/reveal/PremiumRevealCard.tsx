@@ -373,7 +373,7 @@ export function PremiumRevealCard({
           y: 0,
         }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className={`relative px-10 py-8 rounded-[2.2rem] overflow-hidden border-2 transition-all
+        className={`relative px-10 py-12 rounded-[2.2rem] overflow-hidden border-2 transition-all
           ${rankTheme.cardBg}
           ${isDecrypting ? 'border-amber-500/80 shadow-[0_0_100px_rgba(245,158,11,0.45)]' : `${rankTheme.cardBorder} ${rankTheme.cardShadow}`}
         `}
@@ -399,34 +399,32 @@ export function PremiumRevealCard({
         )}
 
         {/* ─── HORIZONTAL 3-COLUMN LAYOUT for 24:10 wide LED ─────────────────── */}
-        <div className="flex items-center gap-8 w-full">
+        <div className="flex items-center gap-6 w-full min-h-[200px]">
 
-          {/* ── LEFT: Rank + Badge ── */}
-          <div className="flex flex-col items-center justify-center gap-3 shrink-0 w-[22%]">
+          {/* ── LEFT: Badge + Rank ── */}
+          <div className="flex flex-col items-center justify-center gap-2 shrink-0 w-[20%]">
             {/* Badge */}
             <div
-              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-black uppercase tracking-widest shadow-lg ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-widest shadow-lg max-w-full ${
                 isDecrypting
                   ? 'bg-amber-500/20 border border-amber-400 text-amber-300 animate-pulse ring-2 ring-amber-400/30'
                   : rankTheme.badge
               }`}
             >
               {isDecrypting ? (
-                <Sparkles size={16} className="text-amber-300 animate-spin" />
+                <Sparkles size={12} className="text-amber-300 animate-spin shrink-0" />
               ) : isChampion ? (
-                <Crown size={16} className="text-amber-200 fill-amber-200 animate-bounce" />
+                <Crown size={12} className="text-amber-200 fill-amber-200 animate-bounce shrink-0" />
               ) : activeRank === 2 ? (
-                <Medal size={16} className="text-slate-200" />
+                <Medal size={12} className="text-slate-200 shrink-0" />
               ) : activeRank === 3 ? (
-                <Award size={16} className="text-amber-200" />
+                <Award size={12} className="text-amber-200 shrink-0" />
               ) : (
-                <ShieldCheck size={16} className="text-orange-200" />
+                <ShieldCheck size={12} className="text-orange-200 shrink-0" />
               )}
               <span className="truncate">
                 {isDecrypting
-                  ? (isFinale
-                      ? `⚡ ${activeRank === 1 ? 'GRAND CHAMPION' : `PLACE #${activeRank}`} ⚡`
-                      : `⚡ QUALIFIER #${activeRank} ⚡`)
+                  ? `#${activeRank} DECRYPTING`
                   : isChampion
                   ? (isFinale ? '👑 1st Place' : '👑 #1 Seed')
                   : activeRank === 2
@@ -437,12 +435,12 @@ export function PremiumRevealCard({
               </span>
             </div>
 
-            {/* Giant Rank Number */}
+            {/* Rank Number — sized to fit column */}
             <div
-              className={`font-black tracking-tighter leading-none ${
+              className={`font-black tracking-tighter leading-none text-[4rem] xl:text-[5.5rem] ${
                 isDecrypting
-                  ? 'text-amber-400/90 font-mono animate-pulse text-[8rem] xl:text-[11rem]'
-                  : `${rankTheme.rankText} text-[8rem] xl:text-[11rem]`
+                  ? 'text-amber-400/90 font-mono animate-pulse'
+                  : rankTheme.rankText
               }`}
             >
               {isFinale && activeRank === 1 ? '👑' : `#${activeRank}`}
@@ -452,43 +450,44 @@ export function PremiumRevealCard({
           {/* ── DIVIDER ── */}
           <div className="w-px self-stretch bg-white/10 shrink-0" />
 
-          {/* ── CENTER: Team Name (dominant) + College/Track ── */}
-          <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center overflow-hidden px-4">
+          {/* ── CENTER: Team Name + College/Track ── */}
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center overflow-hidden px-6 min-h-[160px]">
             {isDecrypting ? (
               <>
-                <span className="font-mono text-5xl sm:text-7xl xl:text-8xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-400 drop-shadow-[0_0_60px_rgba(245,158,11,1)] select-none break-all leading-tight w-full">
+                {/* Cipher: nowrap keeps it on 1 line, text scales to fit */}
+                <span className="font-mono text-3xl xl:text-5xl font-black tracking-[0.15em] text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.9)] select-none whitespace-nowrap overflow-hidden max-w-full">
                   {scrambleDisplay || 'IDENTIFYING...'}
                 </span>
-                <div className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-white/5 border border-white/10 text-amber-300/80 text-base font-mono tracking-wider">
-                  <Lock size={14} className="text-amber-400 animate-spin" />
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-white/5 border border-white/10 text-amber-300/80 text-xs sm:text-sm font-mono tracking-wider">
+                  <Lock size={12} className="text-amber-400 animate-spin shrink-0" />
                   <span>⚡ DECRYPTING VERIFIED SUBMISSION MARKS ⚡</span>
                 </div>
               </>
             ) : (
               <>
                 <motion.h2
-                  initial={{ scale: 0.82, opacity: 0 }}
+                  initial={{ scale: 0.85, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: 'spring', bounce: 0.45, duration: 0.7 }}
-                  className={`text-5xl sm:text-7xl xl:text-8xl font-black tracking-tight drop-shadow-lg leading-tight w-full ${rankTheme.nameColor}`}
+                  transition={{ type: 'spring', bounce: 0.4, duration: 0.65 }}
+                  className={`text-4xl xl:text-6xl font-black tracking-tight drop-shadow-lg leading-tight w-full ${rankTheme.nameColor}`}
                   style={{ wordBreak: 'break-word' }}
                 >
                   {currentSpotlightTeam?.teamName || targetName}
                 </motion.h2>
                 <motion.div
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2, duration: 0.4 }}
-                  className="flex items-center justify-center gap-4 flex-wrap text-2xl sm:text-3xl font-medium text-slate-300"
+                  transition={{ delay: 0.18, duration: 0.35 }}
+                  className="flex items-center justify-center gap-3 flex-wrap text-lg xl:text-xl font-medium text-slate-300"
                 >
-                  <span className="font-bold text-white/90">
+                  <span className="font-semibold text-white/90">
                     {currentSpotlightTeam?.college || 'Tamil Nadu'}
                   </span>
                   {trackConfig && (
                     <>
-                      <span className="opacity-40 text-3xl">·</span>
+                      <span className="opacity-40 text-xl">·</span>
                       <span
-                        className="px-5 py-2 rounded-xl text-base sm:text-lg font-black uppercase tracking-wider border"
+                        className="px-3 py-1 rounded-lg text-sm font-black uppercase tracking-wider border"
                         style={{
                           backgroundColor: `${trackConfig.color}20`,
                           color: trackConfig.color,
@@ -508,12 +507,12 @@ export function PremiumRevealCard({
           <div className="w-px self-stretch bg-white/10 shrink-0" />
 
           {/* ── RIGHT: Score ── */}
-          <div className="flex flex-col items-center justify-center gap-3 shrink-0 w-[22%]">
-            <span className="text-sm font-bold uppercase tracking-widest text-amber-300/90 font-mono">
+          <div className="flex flex-col items-center justify-center gap-2 shrink-0 w-[20%]">
+            <span className="text-xs font-bold uppercase tracking-widest text-amber-300/80 font-mono">
               {isDecrypting ? 'CALCULATING' : isFinale ? 'FINAL SCORE' : 'ROUND 1 SCORE'}
             </span>
             <span
-              className={`text-[6rem] xl:text-[9rem] font-black font-mono tracking-wider leading-none ${
+              className={`text-[3.5rem] xl:text-[5rem] font-black font-mono tracking-wider leading-none ${
                 isDecrypting ? 'text-amber-300/80 animate-pulse' : rankTheme.scoreTxt
               }`}
             >
@@ -523,7 +522,7 @@ export function PremiumRevealCard({
         </div>
 
         {/* ── Progress Footnote ── */}
-        <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-sm sm:text-base font-semibold px-2 text-slate-400">
+        <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-sm font-semibold px-2 text-slate-400">
           <span className="font-mono">
             Progress: {revealedStep} of {maxSteps} announced
           </span>
