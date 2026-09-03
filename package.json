@@ -11,7 +11,7 @@
     "build": "turbo build",
     "build:web": "turbo build --filter=@hackathon/web",
     "build:api": "turbo build --filter=@hackathon/api",
-    "start": "pnpm --filter @hackathon/api exec prisma generate && pnpm --filter @hackathon/api exec prisma db push && pnpm --filter @hackathon/api build && pnpm --filter @hackathon/api start",
+    "start": "pnpm --filter @hackathon/api start",
     "start:web": "pnpm --filter @hackathon/web start",
     "start:api": "pnpm --filter @hackathon/api start",
     "lint": "turbo lint",
