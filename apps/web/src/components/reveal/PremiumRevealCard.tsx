@@ -58,45 +58,105 @@ function getAudioCtx(): AudioContext | null {
 }
 
 /**
- * Plays a mechanical tick / cipher-click sound.
- * speedFactor: 0 = blazing fast (light tap), 1 = very slow (heavy clunk)
+ * Plays a realistic mechanical split-flap letter-flip sound.
+ * speedFactor: 0 = fast flutter, 1 = heavy tactile click
  */
-function playTick(speedFactor: number) {
+function playMechanicalFlap(speedFactor: number) {
   const ctx = getAudioCtx()
   if (!ctx) return
 
   const now = ctx.currentTime
-  const duration = 0.025 + speedFactor * 0.06  // 25–85 ms click length
+  const duration = 0.022 + speedFactor * 0.04
 
-  // White-noise burst shaped into a sharp percussive tap
+  // 1. Crisp tactile plastic/metal flap strike (bandpass noise burst)
   const bufLen = Math.ceil(ctx.sampleRate * duration)
   const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate)
   const data = buf.getChannelData(0)
   for (let i = 0; i < bufLen; i++) {
-    // Exponential decay envelope on the noise
-    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufLen * 0.18))
+    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufLen * 0.22))
   }
 
-  const src = ctx.createBufferSource()
-  src.buffer = buf
+  const noise = ctx.createBufferSource()
+  noise.buffer = buf
 
-  // Band-pass filter: high-pitched fast clicks, lower "clunk" when slow
-  const bpf = ctx.createBiquadFilter()
-  bpf.type = 'bandpass'
-  bpf.frequency.value = 2200 - speedFactor * 1400   // 2200 Hz → 800 Hz
-  bpf.Q.value = 1.8
+  const filter = ctx.createBiquadFilter()
+  filter.type = 'bandpass'
+  filter.frequency.setValueAtTime(3400 - speedFactor * 1400, now) // Crisp click
+  filter.Q.value = 2.8
 
-  const gain = ctx.createGain()
-  gain.gain.setValueAtTime(0.12 + speedFactor * 0.22, now) // louder when slow
+  const noiseGain = ctx.createGain()
+  noiseGain.gain.setValueAtTime(0.25 + speedFactor * 0.15, now)
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + duration)
 
-  src.connect(bpf)
-  bpf.connect(gain)
-  gain.connect(ctx.destination)
-  src.start(now)
+  noise.connect(filter)
+  filter.connect(noiseGain)
+  noiseGain.connect(ctx.destination)
+  noise.start(now)
+
+  // 2. Mechanical chassis body resonance ("tock")
+  const osc = ctx.createOscillator()
+  const oscGain = ctx.createGain()
+  osc.type = 'triangle'
+  osc.frequency.setValueAtTime(320 - speedFactor * 100, now)
+  osc.frequency.exponentialRampToValueAtTime(80, now + 0.03)
+
+  oscGain.gain.setValueAtTime(0.18 + speedFactor * 0.12, now)
+  oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.035)
+
+  osc.connect(oscGain)
+  oscGain.connect(ctx.destination)
+  osc.start(now)
+  osc.stop(now + 0.04)
 }
 
 /**
- * Dramatic reveal "lock-in" thud when the name is fully decrypted.
+ * Solid metallic latch lock sound when a letter locks into place.
+ */
+function playLatchLock() {
+  const ctx = getAudioCtx()
+  if (!ctx) return
+  const now = ctx.currentTime
+
+  const osc = ctx.createOscillator()
+  const gain = ctx.createGain()
+  osc.type = 'sine'
+  osc.frequency.setValueAtTime(560, now)
+  osc.frequency.exponentialRampToValueAtTime(120, now + 0.07)
+
+  gain.gain.setValueAtTime(0.4, now)
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08)
+
+  osc.connect(gain)
+  gain.connect(ctx.destination)
+  osc.start(now)
+  osc.stop(now + 0.085)
+}
+
+/**
+ * Cinematic sub-bass heartbeat / tension riser pulse.
+ */
+function playTensionPulse(progress: number) {
+  const ctx = getAudioCtx()
+  if (!ctx) return
+  const now = ctx.currentTime
+
+  const osc = ctx.createOscillator()
+  const gain = ctx.createGain()
+  osc.type = 'sine'
+  osc.frequency.setValueAtTime(45 + progress * 40, now)
+  osc.frequency.exponentialRampToValueAtTime(30, now + 0.12)
+
+  gain.gain.setValueAtTime(0.25 + progress * 0.25, now)
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14)
+
+  osc.connect(gain)
+  gain.connect(ctx.destination)
+  osc.start(now)
+  osc.stop(now + 0.15)
+}
+
+/**
+ * Dramatic cinematic reveal "lock-in" impact when the full team name is confirmed.
  */
 function playRevealImpact() {
   const ctx = getAudioCtx()
@@ -104,30 +164,30 @@ function playRevealImpact() {
 
   const now = ctx.currentTime
 
-  // Low THUD — sine sweep down
-  const thud = ctx.createOscillator()
-  const thudGain = ctx.createGain()
-  thud.type = 'sine'
-  thud.frequency.setValueAtTime(180, now)
-  thud.frequency.exponentialRampToValueAtTime(55, now + 0.25)
-  thudGain.gain.setValueAtTime(0.7, now)
-  thudGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5)
-  thud.connect(thudGain)
-  thudGain.connect(ctx.destination)
-  thud.start(now)
-  thud.stop(now + 0.55)
+  // 1. Deep cinematic Subwoofer THUD (50Hz - 30Hz boom)
+  const sub = ctx.createOscillator()
+  const subGain = ctx.createGain()
+  sub.type = 'sine'
+  sub.frequency.setValueAtTime(140, now)
+  sub.frequency.exponentialRampToValueAtTime(35, now + 0.4)
+  subGain.gain.setValueAtTime(0.85, now)
+  subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.65)
+  sub.connect(subGain)
+  subGain.connect(ctx.destination)
+  sub.start(now)
+  sub.stop(now + 0.7)
 
-  // High metallic TING — decaying sine at 880 Hz
-  const ting = ctx.createOscillator()
-  const tingGain = ctx.createGain()
-  ting.type = 'sine'
-  ting.frequency.setValueAtTime(880, now)
-  tingGain.gain.setValueAtTime(0.35, now)
-  tingGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8)
-  ting.connect(tingGain)
-  tingGain.connect(ctx.destination)
-  ting.start(now + 0.02)
-  ting.stop(now + 0.85)
+  // 2. High metallic orchestral CHIME
+  const chime = ctx.createOscillator()
+  const chimeGain = ctx.createGain()
+  chime.type = 'sine'
+  chime.frequency.setValueAtTime(960, now)
+  chimeGain.gain.setValueAtTime(0.4, now)
+  chimeGain.gain.exponentialRampToValueAtTime(0.001, now + 0.9)
+  chime.connect(chimeGain)
+  chimeGain.connect(ctx.destination)
+  chime.start(now + 0.02)
+  chime.stop(now + 0.95)
 }
 
 export interface PremiumRevealCardProps {
@@ -162,7 +222,7 @@ export function PremiumRevealCard({
   const activeRank = isDecrypting && decryptingRank != null ? decryptingRank : currentSpotlightRank
   const targetName = (revealingTeamName || currentSpotlightTeam?.teamName || '').toUpperCase()
 
-  const [scrambleDisplay, setScrambleDisplay] = useState('')
+  const [scrambleDisplay, setScrambleDisplay] = useState('VOICEATHON')
   const [rollingScore, setRollingScore] = useState('00.0')
   const [justLocked, setJustLocked] = useState(false)
   const prevDecrypting = useRef(isDecrypting)
@@ -179,7 +239,9 @@ export function PremiumRevealCard({
         // Just finished — dramatic lock-in
         setJustLocked(true)
         playRevealImpact()
-        triggerQualifierConfetti(activeRank)
+        if (isFinale) {
+          triggerQualifierConfetti(activeRank)
+        }
         const t = setTimeout(() => setJustLocked(false), 1400)
         return () => clearTimeout(t)
       }
@@ -190,7 +252,8 @@ export function PremiumRevealCard({
     prevDecrypting.current = true
     isDecryptingRef.current = true
     const startTime = Date.now()
-    const targetLen = Math.max(8, targetName.length || 10)
+    const initialWord = 'VOICEATHON'
+    const targetLen = Math.max(initialWord.length, targetName.length || initialWord.length)
     frameCountRef.current = 0
     lockedCharsRef.current = 0
     let timeoutId: ReturnType<typeof setTimeout>
@@ -201,49 +264,77 @@ export function PremiumRevealCard({
       const elapsed = Date.now() - startTime
       const progress = Math.min(1, elapsed / nameSpinMs)
 
-      // ── Speed curve: fast → slow ─────────────────────────────────────────
-      // progress^0.45 gives strong deceleration (slot-machine feel)
-      // interval: 16 ms (60 fps blaze) → 170 ms (suspenseful crawl)
-      const speedFactor = Math.pow(progress, 0.45)
-      const nextMs = Math.round(16 + (170 - 16) * speedFactor)
+      // ── Dramatic Suspense Curve: Fast rolling -> Edge-of-seat crawl on final letters ──
+      // Accelerates suspense: speedFactor climbs with power curve (progress^0.65)
+      // interval: 45 ms (rolling) → 260 ms (heavy, dramatic clicks on the final letters)
+      const speedFactor = Math.pow(progress, 0.65)
+      const nextMs = Math.round(45 + (260 - 45) * speedFactor)
 
-      // ── Character scramble ───────────────────────────────────────────────
-      const lockThreshold = 0.62
+      // ── Sequential Cascade Scramble (V scrolls first, then O, then I... in a cascading wave) ────
+      const initialWord = 'VOICEATHON'
+      const target = (targetName || 'QUALIFIER').toUpperCase()
+      const maxLen = Math.max(initialWord.length, target.length)
+      const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
       let chars = ''
       let newLockedCount = 0
-      for (let i = 0; i < targetLen; i++) {
-        const charProgress = (progress - lockThreshold) / (1 - lockThreshold)
-        const charLockIdx = Math.floor(charProgress * targetLen)
-        if (progress >= lockThreshold && i <= charLockIdx && targetName[i]) {
-          chars += targetName[i]
-          newLockedCount++
-        } else if (targetName[i] === ' ') {
+
+      // Length transition: stays 10 while scrolling through initial characters, then smoothly matches target length
+      const lengthProgress = Math.min(1, Math.max(0, (progress - 0.40) / 0.45))
+      const currentDisplayLen = Math.round(initialWord.length + (target.length - initialWord.length) * lengthProgress)
+
+      for (let i = 0; i < currentDisplayLen; i++) {
+        const startChar = i < initialWord.length ? initialWord[i] : (target[i] || 'A')
+        const targetChar = i < target.length ? target[i] : ''
+
+        if (targetChar === ' ' && progress >= (0.05 + (i / maxLen) * 0.50)) {
           chars += ' '
+          continue
+        }
+
+        const startIdx = ALPHABET.indexOf(startChar) >= 0 ? ALPHABET.indexOf(startChar) : 0
+        const targetIdx = targetChar && ALPHABET.indexOf(targetChar) >= 0 ? ALPHABET.indexOf(targetChar) : 0
+
+        // Sequential timing: each letter i starts and finishes in a staggered wave from left to right
+        const charStart = 0.05 + (i / maxLen) * 0.52
+        const charLock = charStart + 0.25
+
+        if (progress >= charLock || progress >= 0.98) {
+          // Locked onto target team name character
+          if (targetChar) {
+            chars += targetChar
+            newLockedCount++
+          }
+        } else if (progress < charStart) {
+          // Untouched original letter from VOICEATHON waiting for its turn
+          chars += startChar
         } else {
-          chars += randomChar()
+          // Actively scrolling through A-Z starting from startChar towards targetChar
+          const spinProgress = (progress - charStart) / 0.25
+          const totalFlips = 26 + ((targetIdx - startIdx + 26) % 26)
+          const currentStep = Math.floor(spinProgress * totalFlips)
+          const currentLetter = ALPHABET[(startIdx + currentStep + (frameCountRef.current % 3)) % 26]
+          chars += currentLetter
         }
       }
       setScrambleDisplay(chars)
 
-      // Rolling fake score
+      // Rolling fake score (fluctuates during suspense)
       setRollingScore((Math.random() * 80 + 15).toFixed(1))
 
-      // ── Sound ─────────────────────────────────────────────────────────────
-      // Fast phase: play every 4th frame to avoid audio overload
-      // Slow phase: play every frame for maximum suspense
-      const fc = frameCountRef.current
-      const playEveryN = progress < 0.3 ? 4 : progress < 0.6 ? 2 : 1
-      if (fc % playEveryN === 0) {
-        playTick(speedFactor)
+      // ── Realistic Mechanical Sound Synthesis & Suspense Pulses ─────────────
+      // Play crisp mechanical flap click on every active step
+      playMechanicalFlap(speedFactor)
+
+      // Play suspenseful sub-bass heartbeat every 6 frames
+      if (frameCountRef.current % 6 === 0 && progress > 0.15 && progress < 0.92) {
+        playTensionPulse(progress)
       }
       frameCountRef.current++
 
-      // Per-character lock-in click (heavier clunk each time a new letter resolves)
+      // Play metallic latch lock click whenever a new character locks in
       if (newLockedCount > lockedCharsRef.current) {
-        const extra = Math.min(newLockedCount - lockedCharsRef.current, 3)
-        for (let k = 0; k < extra; k++) {
-          setTimeout(() => playTick(0.95), k * 60)
-        }
+        playLatchLock()
         lockedCharsRef.current = newLockedCount
       }
 
@@ -259,47 +350,75 @@ export function PremiumRevealCard({
   // ─── READY STATE ────────────────────────────────────────────────────────────
   if (revealedStep === 0 && !isDecrypting) {
     return (
-      <motion.div
-        key="ready-state"
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.96 }}
-        className={`relative p-14 sm:p-20 rounded-[3rem] shadow-2xl text-center overflow-hidden border-2 transition-all ${
-          isFinale
-            ? 'bg-gradient-to-b from-[#1F140A] via-[#120B05] to-[#080503] border-amber-500/60 shadow-[0_30px_80px_rgba(0,0,0,0.9),0_0_80px_rgba(245,158,11,0.25)]'
-            : 'bg-gradient-to-b from-[#1C1A17] via-[#11100E] to-[#0A0908] border-amber-500/50 shadow-[0_30px_80px_rgba(0,0,0,0.9),0_0_60px_rgba(232,60,0,0.25)]'
-        }`}
-      >
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(245,158,11,0.12)_0%,transparent_65%)] pointer-events-none" />
+      <div className="relative w-full">
+        {/* Ambient Backlight Glow */}
+        <div className="absolute -inset-2 rounded-[2.5rem] blur-3xl pointer-events-none transition-opacity duration-700 opacity-60 bg-gradient-to-r from-amber-600/20 via-orange-500/15 to-amber-600/20" />
 
-        <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-inner relative bg-amber-500/10 border border-amber-500/30 text-amber-400">
-          {isFinale ? (
-            <>
-              <Crown size={80} className="text-amber-400 animate-bounce" />
-              <div className="absolute inset-0 rounded-[2rem] border border-amber-400/50 animate-ping opacity-30" />
-            </>
-          ) : (
-            <>
-              <Trophy size={76} className="text-amber-400" />
-              <div className="absolute inset-0 rounded-[2rem] border border-amber-400/40 animate-ping opacity-25" />
-            </>
-          )}
-        </div>
+        <motion.div
+          key="ready-state"
+          initial={{ opacity: 0, scale: 0.96, y: 16 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.96 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+          className={`relative px-10 pt-14 pb-8 sm:pt-16 sm:pb-10 xl:pt-20 xl:pb-12 rounded-[2.5rem] overflow-hidden border-2 transition-all shadow-[0_30px_80px_rgba(0,0,0,0.9)] ${
+            isFinale
+              ? 'bg-gradient-to-b from-[#1F140A] via-[#120B05] to-[#080503] border-amber-500/60 shadow-[0_30px_80px_rgba(0,0,0,0.9),0_0_80px_rgba(245,158,11,0.25)]'
+              : 'bg-gradient-to-b from-[#1A1510] via-[#100D09] to-[#080604] border-amber-600/40 shadow-[0_30px_80px_rgba(0,0,0,0.9)]'
+          }`}
+        >
+          {/* Dot-grid texture */}
+          <div
+            className="absolute inset-0 pointer-events-none opacity-[0.03]"
+            style={{
+              backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)',
+              backgroundSize: '30px 30px',
+            }}
+          />
 
-        <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-base font-black uppercase tracking-widest mb-6 bg-amber-500/15 border border-amber-500/30 text-amber-300">
-          <Sparkles size={18} className="text-amber-400 animate-spin" />
-          <span>Stage Ready · Awaiting Announcement</span>
-        </div>
+          {/* ─── EXACT SAME HEIGHT & WIDTH INNER CONTAINER ─── */}
+          <div className="flex flex-col items-center justify-center text-center w-full min-h-[260px] my-auto pt-1 pb-2">
+            {/* Trophy icon — elevated with clean breathing room */}
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-inner relative bg-amber-500/10 border border-amber-500/30 text-amber-400">
+              {isFinale ? (
+                <>
+                  <Crown size={36} className="text-amber-400 animate-bounce" />
+                  <div className="absolute inset-0 rounded-2xl border border-amber-400/50 animate-ping opacity-30" />
+                </>
+              ) : (
+                <>
+                  <Trophy size={36} className="text-amber-400" />
+                  <div className="absolute inset-0 rounded-2xl border border-amber-400/40 animate-ping opacity-25" />
+                </>
+              )}
+            </div>
 
-        <h3 className="text-6xl sm:text-8xl font-black mb-6 text-white tracking-tight">
-          {isFinale ? '👑 Grand Finale Verdict Sealed' : 'Round 1 Graded & Verified'}
-        </h3>
-        <p className="max-w-3xl mx-auto text-2xl sm:text-3xl font-medium text-slate-300">
-          {isFinale
-            ? 'Waiting for admin to unseal 5th Place. Each place opens only when triggered.'
-            : 'Waiting for admin to initiate the Top 20 announcement (#20 ➔ #1).'}
-        </p>
-      </motion.div>
+            {/* Handcrafted Luxury Stage Ready Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-[0.18em] mb-4 bg-gradient-to-r from-amber-950/90 via-[#1A0E05] to-amber-950/90 border border-amber-500/40 text-amber-300 shadow-md shadow-amber-900/30 ring-1 ring-amber-500/20">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
+              </span>
+              <span>STAGE READY · TOP 20 CEREMONY</span>
+            </div>
+
+            {/* Heading */}
+            <h3 className="text-3xl sm:text-4xl font-black mb-2.5 text-white tracking-tight">
+              {isFinale ? '👑 Grand Finale Verdict Sealed' : 'Round 1 Graded & Verified'}
+            </h3>
+            <p className="max-w-xl mx-auto text-xs sm:text-sm font-medium text-slate-300 leading-relaxed">
+              {isFinale
+                ? 'Waiting for admin to unseal 5th Place. Each place opens only when triggered.'
+                : 'Waiting for admin to initiate the Top 20 announcement (#20 ➔ #1).'}
+            </p>
+          </div>
+
+          {/* Footnote divider */}
+          <div className="w-full pt-7 mt-7 border-t border-white/10 flex items-center justify-between text-xs font-mono text-slate-400 tracking-wider">
+            <span>Status: Ready</span>
+            <span>Next: {isFinale ? '5th Place' : '#20'}</span>
+          </div>
+        </motion.div>
+      </div>
     )
   }
 
@@ -309,19 +428,19 @@ export function PremiumRevealCard({
 
   const rankTheme = isChampion
     ? {
-        badge: 'bg-[#E83C00] text-white ring-4 ring-amber-400/60',
+        badge: 'bg-gradient-to-r from-orange-600 via-[#E83C00] to-orange-600 text-white border border-orange-400/60 ring-2 ring-orange-500/40 shadow-lg shadow-orange-900/40',
         rankText:
-          'text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-300 to-orange-400 drop-shadow-[0_0_60px_rgba(251,191,36,0.9)]',
-        cardBorder: 'border-[#E83C00] ring-4 ring-amber-400/70',
+          'text-transparent bg-clip-text bg-gradient-to-r from-white via-orange-100 to-amber-300 drop-shadow-[0_0_50px_rgba(232,60,0,0.8)]',
+        cardBorder: 'border-[#E83C00] ring-4 ring-orange-500/50',
         cardBg: 'bg-gradient-to-b from-[#2E1205] via-[#1A0A02] to-[#0D0501]',
-        glow: 'bg-gradient-to-r from-amber-500/50 via-[#E83C00]/60 to-amber-500/50',
-        scoreTxt: 'text-amber-300',
-        nameColor: 'text-amber-100',
+        glow: 'bg-gradient-to-r from-orange-500/40 via-[#E83C00]/50 to-orange-500/40',
+        scoreTxt: 'text-orange-200',
+        nameColor: 'text-white',
         cardShadow: 'shadow-[0_0_100px_rgba(232,60,0,0.6)]',
       }
     : activeRank === 2
     ? {
-        badge: 'bg-slate-600 text-white border border-slate-400',
+        badge: 'bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 text-slate-100 border border-slate-400/50 ring-1 ring-slate-400/20 shadow-md',
         rankText: 'text-slate-200 drop-shadow-[0_0_40px_rgba(203,213,225,0.6)]',
         cardBorder: 'border-slate-500/60',
         cardBg: 'bg-gradient-to-b from-[#1C1A18] via-[#111010] to-[#090808]',
@@ -332,18 +451,18 @@ export function PremiumRevealCard({
       }
     : activeRank === 3
     ? {
-        badge: 'bg-amber-800 text-white border border-amber-600',
-        rankText: 'text-amber-300 drop-shadow-[0_0_40px_rgba(245,158,11,0.6)]',
+        badge: 'bg-gradient-to-r from-amber-950 via-amber-900 to-amber-950 text-amber-200 border border-amber-600/50 ring-1 ring-amber-500/20 shadow-md',
+        rankText: 'text-orange-200 drop-shadow-[0_0_40px_rgba(232,60,0,0.6)]',
         cardBorder: 'border-amber-700/60',
         cardBg: 'bg-gradient-to-b from-[#1F1508] via-[#110D05] to-[#080601]',
-        glow: 'bg-gradient-to-r from-amber-700/30 via-amber-400/25 to-amber-700/30',
-        scoreTxt: 'text-amber-300',
+        glow: 'bg-gradient-to-r from-amber-700/30 via-orange-500/25 to-amber-700/30',
+        scoreTxt: 'text-orange-200',
         nameColor: 'text-amber-100',
         cardShadow: 'shadow-[0_30px_80px_rgba(0,0,0,0.9)]',
       }
     : {
-        // Ranks 4–20: deep obsidian + warm orange — NO green
-        badge: 'bg-orange-900/80 text-orange-200 border border-orange-600/60',
+        // Ranks 4–20: deep obsidian + warm gold amber — NO green
+        badge: 'bg-gradient-to-r from-amber-950/90 via-[#1A0E05] to-amber-950/90 text-amber-200 border border-amber-500/40 ring-1 ring-amber-500/20 shadow-md',
         rankText: 'text-orange-300 drop-shadow-[0_0_30px_rgba(249,115,22,0.5)]',
         cardBorder: 'border-amber-600/40',
         cardBg: 'bg-gradient-to-b from-[#1A1510] via-[#100D09] to-[#080604]',
@@ -365,14 +484,10 @@ export function PremiumRevealCard({
       />
 
       <motion.div
-        key={`spotlight-card-${activeRank}-${isDecrypting ? 'spinning' : 'locked'}`}
-        initial={{ opacity: 0, scale: 0.96, y: 16 }}
-        animate={{
-          opacity: 1,
-          scale: justLocked ? [1, 1.03, 1] : 1,
-          y: 0,
-        }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
+        key={`spotlight-card-${activeRank}`}
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
         className={`relative px-10 pt-14 pb-8 sm:pt-16 sm:pb-10 xl:pt-20 xl:pb-12 rounded-[2.5rem] overflow-hidden border-2 transition-all
           ${rankTheme.cardBg}
           ${isDecrypting ? 'border-amber-500/80 shadow-[0_0_100px_rgba(245,158,11,0.45)]' : `${rankTheme.cardBorder} ${rankTheme.cardShadow}`}
@@ -402,48 +517,51 @@ export function PremiumRevealCard({
         <div className="flex items-center gap-6 w-full min-h-[260px]">
 
           {/* ── LEFT: Badge + Rank ── */}
-          <div className="flex flex-col items-center justify-center gap-2 shrink-0 w-[20%]">
+          <div className="flex flex-col items-center justify-center gap-2 shrink-0 min-w-[160px] px-2">
             {/* Badge */}
             <div
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-widest shadow-lg max-w-full ${
+              className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-[0.16em] shadow-xl transition-all ${
                 isDecrypting
-                  ? 'bg-amber-500/20 border border-amber-400 text-amber-300 animate-pulse ring-2 ring-amber-400/30'
+                  ? 'bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-amber-500/20 backdrop-blur-md border border-amber-400/60 text-amber-200 shadow-[0_0_20px_rgba(245,158,11,0.3)] ring-1 ring-amber-400/30'
                   : rankTheme.badge
               }`}
             >
               {isDecrypting ? (
-                <Sparkles size={12} className="text-amber-300 animate-spin shrink-0" />
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-80"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-gradient-to-r from-amber-300 to-orange-400 shadow-[0_0_8px_rgba(251,191,36,0.8)]"></span>
+                </span>
               ) : isChampion ? (
-                <Crown size={12} className="text-amber-200 fill-amber-200 animate-bounce shrink-0" />
+                <Crown size={13} className="text-amber-200 fill-amber-200 shrink-0" />
               ) : activeRank === 2 ? (
-                <Medal size={12} className="text-slate-200 shrink-0" />
+                <Medal size={13} className="text-slate-200 shrink-0" />
               ) : activeRank === 3 ? (
-                <Award size={12} className="text-amber-200 shrink-0" />
+                <Award size={13} className="text-amber-200 shrink-0" />
               ) : (
-                <ShieldCheck size={12} className="text-orange-200 shrink-0" />
+                <ShieldCheck size={13} className="text-amber-400 shrink-0" />
               )}
-              <span className="truncate">
+              <span className="whitespace-nowrap tracking-[0.16em] font-extrabold">
                 {isDecrypting
-                  ? `#${activeRank} DECRYPTING`
+                  ? `UNSEALING #${activeRank}`
                   : isChampion
-                  ? (isFinale ? '👑 1st Place' : '👑 #1 Seed')
+                  ? (isFinale ? '1ST PLACE' : '#1 SEED')
                   : activeRank === 2
-                  ? (isFinale ? '🥈 2nd Place' : '#2 Seed')
+                  ? (isFinale ? '2ND PLACE' : '#2 SEED')
                   : activeRank === 3
-                  ? (isFinale ? '🥉 3rd Place' : '#3 Seed')
-                  : 'Qualified'}
+                  ? (isFinale ? '3RD PLACE' : '#3 SEED')
+                  : 'QUALIFIED'}
               </span>
             </div>
 
-            {/* Rank Number — sized to fit column */}
+            {/* Rank Number — Crisp metallic gold typography */}
             <div
-              className={`font-black tracking-tighter leading-none text-[4rem] xl:text-[5.5rem] ${
+              className={`font-black tracking-tighter leading-none text-[4.5rem] xl:text-[6rem] transition-colors duration-300 ${
                 isDecrypting
                   ? 'text-amber-400/90 font-mono animate-pulse'
                   : rankTheme.rankText
               }`}
             >
-              {isFinale && activeRank === 1 ? '👑' : `#${activeRank}`}
+              #{activeRank}
             </div>
           </div>
 
@@ -452,32 +570,29 @@ export function PremiumRevealCard({
 
           {/* ── CENTER: Team Name + College/Track ── */}
           <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center overflow-hidden px-6 min-h-[160px]">
-            {isDecrypting ? (
-              <>
-                {/* Cipher: nowrap keeps it on 1 line, text scales to fit */}
-                <span className="font-mono text-3xl xl:text-5xl font-black tracking-[0.15em] text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.9)] select-none whitespace-nowrap overflow-hidden max-w-full">
-                  {scrambleDisplay || 'IDENTIFYING...'}
-                </span>
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg bg-white/5 border border-white/10 text-amber-300/80 text-xs sm:text-sm font-mono tracking-wider">
-                  <Lock size={12} className="text-amber-400 animate-spin shrink-0" />
-                  <span>⚡ DECRYPTING VERIFIED SUBMISSION MARKS ⚡</span>
+            {/* Team Name / Cipher (Persistent single line element, zero layout jump or popping) */}
+            <h2 className="font-mono text-3xl xl:text-5xl font-black tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-white via-orange-100 to-amber-200 drop-shadow-[0_0_30px_rgba(232,60,0,0.6)] select-none whitespace-nowrap overflow-hidden max-w-full leading-tight">
+              {isDecrypting
+                ? (scrambleDisplay || 'VOICEATHON')
+                : (currentSpotlightTeam?.teamName || targetName).toUpperCase()
+              }
+            </h2>
+
+            {/* Subtitle Slot (Decrypting badge cross-fades into College & Track smoothly) */}
+            <div className="min-h-[36px] flex items-center justify-center">
+              {isDecrypting ? (
+                <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 via-[#1A1208]/90 to-orange-500/15 backdrop-blur-md border border-amber-400/40 text-amber-200/95 text-[11px] sm:text-xs font-bold tracking-[0.18em] uppercase shadow-[0_0_20px_rgba(245,158,11,0.2)] ring-1 ring-amber-400/20">
+                  <span className="relative flex h-2 w-2 shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-80"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-gradient-to-r from-amber-300 to-orange-400 shadow-[0_0_8px_rgba(251,191,36,0.9)]"></span>
+                  </span>
+                  <span>VERIFYING OFFICIAL EVALUATION MARKS</span>
                 </div>
-              </>
-            ) : (
-              <>
-                <motion.h2
-                  initial={{ scale: 0.85, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: 'spring', bounce: 0.4, duration: 0.65 }}
-                  className="font-mono text-4xl xl:text-6xl font-black tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.85)] leading-tight w-full"
-                  style={{ wordBreak: 'break-word' }}
-                >
-                  {(currentSpotlightTeam?.teamName || targetName).toUpperCase()}
-                </motion.h2>
+              ) : (
                 <motion.div
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.18, duration: 0.35 }}
+                  transition={{ duration: 0.4, ease: 'easeOut' }}
                   className="flex items-center justify-center gap-3 flex-wrap text-lg xl:text-xl font-medium text-slate-300"
                 >
                   <span className="font-semibold text-white/90">
@@ -499,8 +614,8 @@ export function PremiumRevealCard({
                     </>
                   )}
                 </motion.div>
-              </>
-            )}
+              )}
+            </div>
           </div>
 
           {/* ── DIVIDER ── */}
@@ -508,7 +623,7 @@ export function PremiumRevealCard({
 
           {/* ── RIGHT: Score ── */}
           <div className="flex flex-col items-center justify-center gap-2 shrink-0 w-[20%]">
-            <span className="text-xs font-bold uppercase tracking-widest text-amber-300/80 font-mono">
+            <span className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-amber-300/90">
               {isDecrypting ? 'CALCULATING' : isFinale ? 'FINAL SCORE' : 'ROUND 1 SCORE'}
             </span>
             <span

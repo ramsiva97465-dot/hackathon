@@ -420,6 +420,7 @@ export function LeaderboardPage() {
   const [unlockedRanks, setUnlockedRanks] = useState<number[]>([])
   const unlockedRanksRef = useRef<number[]>([])
   const rosterRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const rowRefs = useRef<Record<number, HTMLDivElement | null>>({})
   const activeRoundRef = useRef(activeRound)
   // Reveal progress is also polled every 3s. Refs keep the socket handler and
@@ -660,26 +661,59 @@ export function LeaderboardPage() {
     }
   }, [entries, isRevealing, activeRound])
 
-  // TV Mode Auto-scroll logic
+  useEffect(() => {
+    const handleStorage = () => {
+      const val = localStorage.getItem('snapserve_tv_mode') === 'true'
+      setTvMode(val)
+    }
+    window.addEventListener('storage', handleStorage)
+    window.addEventListener('tv_mode_toggled', handleStorage)
+    return () => {
+      window.removeEventListener('storage', handleStorage)
+      window.removeEventListener('tv_mode_toggled', handleStorage)
+    }
+  }, [])
+
+  // TV Mode Auto-scroll logic (buttery smooth 60fps requestAnimationFrame with sub-pixel float accumulator)
   useEffect(() => {
     const waitingForFinale = entries.some((e) => ((e as any).round || 1) === 3)
     if (isRevealing) return
     if (!tvMode && !waitingForFinale) return
-    const scrollSpeed = 1
-    let scrollingUp = false
-    const interval = setInterval(() => {
-      if (scrollingUp) return
 
-      window.scrollBy({ top: scrollSpeed, left: 0, behavior: 'auto' })
-      
-      if ((window.innerHeight + Math.ceil(window.scrollY)) >= document.body.offsetHeight - 50) {
-        scrollingUp = true
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-        setTimeout(() => { scrollingUp = false }, 2000)
+    let animId: number
+    let scrollingUp = false
+    let currentScroll = scrollContainerRef.current?.scrollTop || 0
+    let lastTime = performance.now()
+
+    const step = (now: number) => {
+      const dt = Math.min((now - lastTime) / 1000, 0.1)
+      lastTime = now
+
+      const el = scrollContainerRef.current
+      if (el && !scrollingUp) {
+        // Comfortable, readable speed: 24 pixels per second
+        currentScroll += 24 * dt
+        el.scrollTop = Math.floor(currentScroll)
+
+        // Check if reached the bottom
+        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 15) {
+          scrollingUp = true
+          el.scrollTo({ top: 0, behavior: 'smooth' })
+          currentScroll = 0
+          setTimeout(() => {
+            scrollingUp = false
+            currentScroll = 0
+            lastTime = performance.now()
+          }, 3500)
+        }
       }
-    }, 50)
-    return () => clearInterval(interval)
-  }, [tvMode, isRevealing, entries])
+
+      animId = requestAnimationFrame(step)
+    }
+
+    animId = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(animId)
+  }, [tvMode, isRevealing, entries.length, activeRound])
 
   const rawDisplay = entries
 
@@ -873,43 +907,31 @@ export function LeaderboardPage() {
     }, spinMs)
   }
 
-  // Keep the LCD locked on the countdown card until the name is unsealed
+  // When a new countdown/decrypt starts, immediately scroll the hero card back to top
   useEffect(() => {
     if (!isDecrypting) return
-    window.scrollTo({ top: 0, behavior: 'auto' })
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = previousOverflow
-    }
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [isDecrypting])
 
-  // After each Top 20 card, scroll the table to that team's row. Repeats every reveal.
+  // ONLY AFTER all 20 reveals are fully completed (or all 5 for Finale), wait 20 seconds, then smoothly scroll down to show the full Top 20 table
   useEffect(() => {
     if (!isRevealing) return
 
-    if (isFinale) {
-      if (isDecrypting || revealedStep < FINALE_CUTOFF) return
-      const timer = setTimeout(() => {
-        rosterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }, 7000)
-      return () => clearTimeout(timer)
-    }
+    const maxSteps = isFinale ? FINALE_CUTOFF : 20
+    if (isDecrypting || revealedStep < maxSteps) return
 
-    if (isDecrypting || unlockedRanks.length === 0) return
-
-    const rank = 21 - revealedStep
     const timer = setTimeout(() => {
-      const row = rowRefs.current[rank]
-      if (row) {
-        row.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      } else {
-        rosterRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      if (rosterRef.current && scrollContainerRef.current) {
+        const topOffset = Math.max(0, rosterRef.current.offsetTop - 20)
+        scrollContainerRef.current.scrollTo({ top: topOffset, behavior: 'smooth' })
+      } else if (rosterRef.current) {
+        rosterRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
-    }, 7000)
+    }, 20000) // 20 seconds gap after reveal completion
 
     return () => clearTimeout(timer)
-  }, [isRevealing, revealedStep, isFinale, isDecrypting, unlockedRanks.length])
+  }, [isRevealing, revealedStep, isFinale, isDecrypting])
 
   // Round 2 is one-click-per-team from the admin table — never auto-play 20→1.
 
@@ -928,16 +950,14 @@ export function LeaderboardPage() {
 
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-x-hidden" style={{
+    <div className="h-screen flex flex-col relative overflow-hidden" style={{
       backgroundColor: '#EBE3D5',
-      backgroundImage: 'radial-gradient(#d4caba 1px, transparent 1px)',
-      backgroundSize: '32px 32px',
       fontFamily: "'Space Grotesk', 'Inter', system-ui, sans-serif",
       color: '#1A1A1A'
     }}>
 
-      {/* ── Top Bar ── */}
-      <div className="relative z-20 flex items-center justify-between px-6 sm:px-10 py-4 border-b backdrop-blur-md sticky top-0 transition-colors bg-[#EBE3D5]/80 border-black/5 text-[#1A1A1A]">
+      {/* ── Top Bar ── (Permanently FIXED, never scrolls) */}
+      <div className="shrink-0 z-30 flex items-center justify-between px-6 sm:px-10 py-4 border-b backdrop-blur-md bg-[#EBE3D5]/90 border-black/5 text-[#1A1A1A]">
         <div className="flex items-end gap-4 sm:gap-6">
           <div className="flex items-end gap-2">
             <SnapServeMark className="h-[24.32px] w-[24.32px] shrink-0 object-contain translate-y-[5px]" />
@@ -954,14 +974,6 @@ export function LeaderboardPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Active TV Mode Indicator (Controlled by Admin Panel) */}
-          {!isRevealing && tvMode && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 shadow-xs animate-pulse">
-              <Monitor size={13} className="text-emerald-600 stroke-[2.2]" />
-              <span className="text-[10px] font-black uppercase tracking-wider hidden sm:inline">TV Auto-Scroll</span>
-            </div>
-          )}
-
           <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 shadow-xs">
             <Flame size={13} className="text-orange-500 fill-orange-500/20" />
             <span className="text-[11px] font-black text-[#E83C00] tracking-widest uppercase">Live</span>
@@ -977,31 +989,49 @@ export function LeaderboardPage() {
       {/* 🎭 DRAMATIC GRAND REVEAL CEREMONY (Round 2: 20➔1 | Round 3: 5➔1)      */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {isRevealing ? (
-        <div className="relative z-10 flex-1 flex flex-col items-center px-4 sm:px-8 w-full">
+        <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-y-auto w-full flex flex-col items-center px-4 sm:px-8 pb-32 scroll-smooth">
           
-          {/* 🌟 FULL-VIEWPORT HERO SPOTLIGHT (keeps table below the fold) */}
-          <div className="min-h-[calc(100vh-70px)] w-full flex flex-col items-center justify-center py-4">
+          {/* 🌟 HERO SPOTLIGHT (Sleek, elevated vertical alignment for 24x10 LED) */}
+          <div className="w-full flex flex-col items-center justify-start pt-2 sm:pt-4 pb-6">
             {/* Header */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-center mb-6"
+              className="text-center mb-3 sm:mb-4"
             >
-              <div className={`inline-flex items-center gap-2 px-5 py-2 rounded-full mb-2 shadow-xl ${
-                isFinale 
-                  ? 'bg-amber-950/80 border border-amber-500/40 text-amber-300 shadow-amber-900/30' 
-                  : 'bg-white border border-black/5 text-slate-700 shadow-black/5'
-              }`}>
-                {isFinale ? <Crown size={15} className="text-amber-400 fill-amber-400/40" /> : <Trophy size={14} className="text-amber-500" />}
-                <span className="text-xs font-black uppercase tracking-widest">
-                  {isFinale ? '👑 Grand Finale · Champions Coronation' : 'Round 1 Qualifiers - Live Ceremony'}
+              <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full mb-1.5 shadow-xl bg-white/90 border border-amber-500/30 text-amber-950 shadow-amber-900/5 ring-1 ring-amber-500/10 backdrop-blur-md">
+                {isFinale ? <Crown size={13} className="text-amber-500 fill-amber-500/40" /> : <Trophy size={13} className="text-amber-500" />}
+                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.16em]">
+                  {isFinale ? '👑 Grand Finale · Champions Coronation' : '⚡ Stage 1 Qualifiers · Live Ceremony'}
                 </span>
               </div>
-              <h2 className="text-[#E83C00] font-bold tracking-[0.2em] uppercase text-sm mb-1">
-                AI குரல் · VOICE FOR TAMIL NADU · 2026
-              </h2>
-              <h1 className="text-5xl sm:text-6xl font-black text-[#1A1A1A] tracking-tighter" style={{ textShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
-                {isFinale ? 'Top 5 Grand Finale Winners' : 'Top 20 Grand Reveal'}
+              <div className="flex items-center justify-center gap-3 mb-1">
+                <span className="h-px w-8 bg-gradient-to-r from-transparent to-[#E83C00]/40" />
+                <h2 className="text-[#E83C00] font-black tracking-[0.28em] uppercase text-xs">
+                  AI குரல் · VOICE FOR TAMIL NADU · 2026
+                </h2>
+                <span className="h-px w-8 bg-gradient-to-l from-transparent to-[#E83C00]/40" />
+              </div>
+              <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight">
+                {isFinale ? (
+                  <span className="inline-flex items-center gap-3 flex-wrap justify-center">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E83C00] via-amber-600 to-[#E83C00] drop-shadow-xs">
+                      Grand Finale
+                    </span>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#111111] via-[#2A241E] to-[#0A0A0A]">
+                      Winners
+                    </span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-3 flex-wrap justify-center">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#111111] via-[#2A241E] to-[#0A0A0A]">
+                      Meet The
+                    </span>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E83C00] via-amber-600 to-[#E83C00] drop-shadow-xs">
+                      Top 20
+                    </span>
+                  </span>
+                )}
               </h1>
             </motion.div>
 
@@ -1211,9 +1241,9 @@ export function LeaderboardPage() {
               </div>
             </div>
             ) : null
-          ) : !isDecrypting && unlockedRanks.length > 0 ? (
-            /* ROUND 2: TOP 20 QUALIFIERS TABLE — hidden before any team is announced */
-            <div ref={rosterRef} className="w-full max-w-5xl rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] mt-32 pb-32">
+          ) : (
+            /* ROUND 2: TOP 20 QUALIFIERS TABLE */
+            <div ref={rosterRef} className="w-full max-w-5xl rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] mt-8 mb-24">
               {/* Header with Title & Status Counter */}
               <div className="flex items-center justify-between px-6 py-4 bg-[#F4ECE1] border-b border-black/10">
                 <div className="flex items-center gap-3">
@@ -1226,7 +1256,7 @@ export function LeaderboardPage() {
                   </div>
                 </div>
                 <span className="text-xs font-black text-emerald-800 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-300 shadow-sm font-mono">
-                  {unlockedRanks.length} / {Math.min(20, advancing.length)} Unlocked
+                  {unlockedRanks.length} / {Math.min(20, advancing.length || advancingRef.current.length || 20)} Unlocked
                 </span>
               </div>
 
@@ -1241,10 +1271,10 @@ export function LeaderboardPage() {
 
               {/* Rows (1 to 20, neat single column row-by-row like Round 1) */}
               <div className="flex flex-col">
-                {Array.from({ length: Math.min(20, advancing.length || 20) }).map((_, idx) => {
+                {Array.from({ length: Math.min(20, advancing.length || advancingRef.current.length || 20) }).map((_, idx) => {
                   const rankNum = idx + 1 // 1 to 20
-                  const team = advancing[idx]
-                  const isRevealed = unlockedRanks.includes(rankNum)
+                  const team = advancing[idx] || advancingRef.current[idx]
+                  const isRevealed = unlockedRanks.includes(rankNum) || revealedStep >= (21 - rankNum)
                   const isSpotlight = rankNum === currentSpotlightRank && revealedStep > 0
                   const track = team ? getTrackConfig(team.track) : null
 
@@ -1373,7 +1403,7 @@ export function LeaderboardPage() {
                 })}
               </div>
             </div>
-          ) : null}
+          )}
         </div>
 
 
@@ -1381,11 +1411,11 @@ export function LeaderboardPage() {
         /* ════════════════════════════════════════════════════════════════════ */
         /* STANDARD STAGE 1 / 2 / 3 LEADERBOARDS                                */
         /* ════════════════════════════════════════════════════════════════════ */
-        <div className="relative z-10 flex-1 flex flex-col items-center w-full">
+        <div className="relative z-10 flex-1 min-h-0 flex flex-col items-center w-full overflow-hidden">
 
-          {/* 📌 STICKY FIXED HEADER (Permanently pinned while content scrolls below) */}
-          <div className="sticky top-[69px] z-20 w-full backdrop-blur-md bg-[#EBE3D5]/95 border-b border-black/5 shadow-xs pt-6 pb-5">
-            <div className="max-w-6xl mx-auto px-6">
+          {/* 📌 FIXED HEADER SECTION (Title + Subtitle + Fixed Table Column Headers) */}
+          <div className="shrink-0 z-20 w-full backdrop-blur-md bg-[#EBE3D5] pt-5 pb-0 flex flex-col items-center">
+            <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 flex flex-col items-center">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeRound}
@@ -1395,68 +1425,115 @@ export function LeaderboardPage() {
                   transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                   className="text-center"
                 >
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-black/5 text-slate-700 mb-3 shadow-xl shadow-black/5">
-                    <Trophy size={14} className="text-amber-500" />
-                    <span className="text-xs font-bold uppercase tracking-widest">
-                      {activeRound === 3 ? 'Stage 3: Top 5 Grand Finale Podium' : activeRound === 2 ? 'Stage 2: Top 20 Shortlist' : 'Stage 1: Live Judging'}
+                  {/* Luxury Pill Badge */}
+                  <div className="inline-flex items-center gap-2 px-5 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-amber-500/30 text-amber-900 mb-2 shadow-lg shadow-amber-900/5 ring-1 ring-amber-500/10">
+                    <Trophy size={13} className="text-amber-500" />
+                    <span className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-800">
+                      {activeRound === 3 ? '👑 Grand Finale · Champions Podium' : activeRound === 2 ? '⚡ Stage 2 · Top 20 Shortlist' : '🎯 Stage 1 - Live Judging'}
                     </span>
                   </div>
-                  <h2 className="text-[#E83C00] font-bold tracking-[0.2em] uppercase text-xs mb-1">
-                    AI குரல் · VOICE FOR TAMIL NADU · 2026
-                  </h2>
-                  <h1 className="text-4xl sm:text-5xl font-black text-[#1A1A1A] tracking-tighter" style={{ textShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
-                    {activeRound === 3 ? 'Top 5 Grand Finale Winners' : activeRound === 2 ? 'Round 2 · Top 20' : 'Live Evaluation Status'}
+
+                  {/* Tamil Brand Tag with Decorative Hairline Accents */}
+                  <div className="flex items-center justify-center gap-3 mb-1">
+                    <span className="h-px w-8 bg-gradient-to-r from-transparent to-[#E83C00]/40" />
+                    <h2 className="text-[#E83C00] font-black tracking-[0.28em] uppercase text-xs">
+                      AI குரல் · VOICE FOR TAMIL NADU · 2026
+                    </h2>
+                    <span className="h-px w-8 bg-gradient-to-l from-transparent to-[#E83C00]/40" />
+                  </div>
+
+                  {/* Ultra-Premium Dual-Tone Typography Title */}
+                  <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-none mb-2">
+                    {activeRound === 3 ? (
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1A0A02] via-[#E83C00] to-[#B45309] drop-shadow-sm">
+                        Top 5 Grand Finale Winners
+                      </span>
+                    ) : activeRound === 2 ? (
+                      <span className="inline-flex items-center gap-3 flex-wrap justify-center">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#111111] via-[#2A241E] to-[#0A0A0A]">
+                          Round 2
+                        </span>
+                        <span className="text-amber-500 font-light opacity-50 text-2xl sm:text-4xl">·</span>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E83C00] via-amber-600 to-[#E83C00] drop-shadow-xs font-black">
+                          Top 20
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#111111] via-[#2A241E] to-[#0A0A0A]">
+                        Live Evaluation Status
+                      </span>
+                    )}
                   </h1>
-                  <p className="text-slate-500 mt-1 text-xs sm:text-sm font-medium">
-                    {activeRound === 3
-                      ? `${filtered.length} finalists`
-                      : activeRound === 2
-                      ? (r3Teams.length > 0
-                        ? `${advancing.length} shortlisted teams · waiting for admin to reveal the winners`
-                        : `${filtered.length} teams competing · judges scoring live`)
-                      : `${filtered.length} teams · tracking live evaluation completion`}
-                  </p>
+
+                  {/* Refined Subtitle Pill */}
+                  <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-black/[0.03] border border-black/5 text-xs text-slate-600 font-semibold tracking-wide mb-3">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    <span>
+                      {activeRound === 3
+                        ? `${filtered.length} finalists competing for the crown`
+                        : activeRound === 2
+                        ? (r3Teams.length > 0
+                          ? `${advancing.length} shortlisted teams · official selection`
+                          : `${filtered.length} teams competing · judges scoring live`)
+                        : `${filtered.length} teams · live evaluation in progress`}
+                    </span>
+                  </div>
                 </motion.div>
               </AnimatePresence>
-            </div>
-          </div>
 
-          {/* Content Area Below Header (Scrolls underneath the pinned header) */}
-          <div className="flex-1 flex flex-col items-center pt-6 pb-24 px-6 max-w-6xl mx-auto w-full">
+              {/* 🖤 PERMANENTLY FIXED TABLE COLUMN HEADER (ROUND 1) */}
+              {activeRound === 1 && (
+                <div className="w-full grid grid-cols-[56px_1fr_170px_110px_110px] px-6 py-3.5 bg-[#1A1A1A] text-[10px] font-bold text-white/75 uppercase tracking-widest border-b border-white/10 shadow-lg rounded-t-[2rem]">
+                  <div className="text-center">#</div>
+                  <div>Team</div>
+                  <div>Track</div>
+                  <div className="text-center">Evaluation</div>
+                  <div className="text-right">Status</div>
+                </div>
+              )}
 
-            {/* ROUND 1 VIEW — Live Judging Status (Scores Hidden, 0/1 -> 1/1) */}
-            {activeRound === 1 && (
-              <div className="w-full rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5">
-                {/* Table header */}
-                <div className="grid grid-cols-[56px_1fr_170px_110px_110px] px-6 py-4 bg-[#1A1A1A] text-[10px] font-bold text-white/60 uppercase tracking-widest">
-                <div className="text-center">#</div>
-                <div>Team</div>
-                <div>Track</div>
-                <div className="text-center">Evaluation</div>
-                <div className="text-right">Status</div>
-              </div>
-
-              {/* All teams listed with live 0/1 -> 1/1 evaluation status */}
-              <div className="flex flex-col">
-                <AnimatePresence>
-                  {filtered.map((entry, idx) => (
-                    <Round1Row key={entry.teamId} entry={entry} index={idx} />
-                  ))}
-                </AnimatePresence>
-              </div>
-            </div>
-          )}
-
-          {/* ROUND 2 VIEW — full Top 20 list. No podium; winners stay sealed
-              until the admin clicks Reveal 5th / 4th / runner-up / champion. */}
-          {activeRound === 2 && (
-            <div className="w-full max-w-5xl rounded-[2rem] bg-[#F4ECE1] shadow-2xl shadow-black/10 overflow-hidden border border-black/5">
-              {r3Teams.length > 0 ? (
-                <>
-                  <div className="grid grid-cols-[1fr_200px] px-8 py-5 bg-[#EBE2D5] border-b border-black/5 text-xs font-bold text-slate-600 uppercase tracking-widest">
+              {/* 🖤 PERMANENTLY FIXED TABLE COLUMN HEADER (ROUND 2) */}
+              {activeRound === 2 && (
+                r3Teams.length > 0 ? (
+                  <div className="w-full max-w-5xl mx-auto grid grid-cols-[1fr_200px] px-8 py-3.5 bg-[#1A1A1A] text-white/75 border-b border-white/10 text-xs font-bold uppercase tracking-widest shadow-lg rounded-t-[2rem]">
                     <div>Team</div>
                     <div>Track</div>
                   </div>
+                ) : (
+                  <div className="w-full max-w-5xl mx-auto grid grid-cols-[80px_1fr_200px_120px_120px_80px] px-8 py-3.5 bg-[#1A1A1A] text-white/75 border-b border-white/10 text-xs font-bold uppercase tracking-widest shadow-lg rounded-t-[2rem]">
+                    <div className="text-center">Rank</div>
+                    <div>Team Details</div>
+                    <div>Track</div>
+                    <div className="text-center">Judges</div>
+                    <div className="text-right">Score</div>
+                    <div className="text-right">Change</div>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+
+          {/* 📜 SCROLLABLE CONTENT AREA (Rows start immediately below the header and match exact width) */}
+          <div ref={scrollContainerRef} className="flex-1 min-h-0 w-full overflow-y-auto flex flex-col items-center pb-24 [scrollbar-gutter:stable]">
+            <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 flex flex-col items-center">
+
+            {/* ROUND 1 VIEW — Scrollable Rows */}
+            {activeRound === 1 && (
+              <div className="w-full shadow-2xl shadow-black/10 border border-t-0 border-black/5 bg-[#F4ECE1] rounded-b-[2rem] overflow-hidden">
+                <div className="flex flex-col">
+                  <AnimatePresence>
+                    {filtered.map((entry, idx) => (
+                      <Round1Row key={entry.teamId} entry={entry} index={idx} />
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </div>
+            )}
+
+            {/* ROUND 2 VIEW — Scrollable Rows */}
+            {activeRound === 2 && (
+              <div className="w-full max-w-5xl mx-auto rounded-b-[2rem] bg-[#F4ECE1] shadow-2xl shadow-black/10 border border-t-0 border-black/5 overflow-hidden">
+                {r3Teams.length > 0 ? (
                   <div className="flex flex-col bg-[#F4ECE1]">
                     <AnimatePresence>
                       {[...advancing]
@@ -1466,17 +1543,7 @@ export function LeaderboardPage() {
                         ))}
                     </AnimatePresence>
                   </div>
-                </>
-              ) : (
-                <>
-                  <div className="grid grid-cols-[80px_1fr_200px_120px_120px_80px] px-8 py-5 bg-[#EBE2D5] border-b border-black/5 text-xs font-bold text-slate-600 uppercase tracking-widest">
-                    <div className="text-center">Rank</div>
-                    <div>Team Details</div>
-                    <div>Track</div>
-                    <div className="text-center">Judges</div>
-                    <div className="text-right">Score</div>
-                    <div className="text-right">Change</div>
-                  </div>
+                ) : (
                   <div className="flex flex-col bg-[#F4ECE1]">
                     <AnimatePresence>
                       {advancing.map((entry) => (
@@ -1484,10 +1551,9 @@ export function LeaderboardPage() {
                       ))}
                     </AnimatePresence>
                   </div>
-                </>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
 
           {/* ROUND 3 — Winners podium only (locked until admin reveal step) */}
           {activeRound === 3 && (
@@ -1571,6 +1637,7 @@ export function LeaderboardPage() {
             </div>
           )}
 
+            </div>
           </div>
         </div>
       )}
