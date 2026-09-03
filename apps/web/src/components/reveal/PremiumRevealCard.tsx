@@ -68,6 +68,13 @@ function FinalFiveVaultSeal() {
         </svg>
         <Crown size={34} strokeWidth={1.8} className="relative z-10 text-amber-200 fill-amber-400/25 drop-shadow-[0_0_12px_rgba(251,191,36,0.65)]" />
       </div>
+      <div className="absolute left-1/2 -bottom-7 flex w-36 -translate-x-1/2 flex-col items-center gap-1.5">
+        <span className="h-px w-full bg-gradient-to-r from-transparent via-amber-400/55 to-transparent" />
+        <span className="font-mono text-[8px] font-black tracking-[0.32em] text-amber-300/80">
+          FINAL FIVE
+        </span>
+        <span className="h-px w-full bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
+      </div>
     </div>
   )
 }
@@ -552,7 +559,7 @@ export function PremiumRevealCard({
             isFinale ? 'min-h-[390px]' : 'min-h-[260px]'
           }`}>
             {isFinale ? (
-              <div className="mb-5">
+              <div className="mb-10">
                 <FinalFiveVaultSeal />
               </div>
             ) : (
