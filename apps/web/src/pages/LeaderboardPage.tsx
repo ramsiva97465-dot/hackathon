@@ -1241,8 +1241,8 @@ export function LeaderboardPage() {
               </div>
             </div>
             ) : null
-          ) : (revealedStep >= 20 || unlockedRanks.length >= 20) ? (
-            /* ROUND 2: TOP 20 QUALIFIERS TABLE — mounts ONLY after all 20 teams are announced */
+          ) : (
+            /* ROUND 2: TOP 20 QUALIFIERS TABLE */
             <div ref={rosterRef} className="w-full max-w-5xl rounded-[2rem] overflow-hidden shadow-2xl shadow-black/10 border border-black/5 bg-[#F4ECE1] mt-8 mb-24">
               {/* Header with Title & Status Counter */}
               <div className="flex items-center justify-between px-6 py-4 bg-[#F4ECE1] border-b border-black/10">
@@ -1256,7 +1256,7 @@ export function LeaderboardPage() {
                   </div>
                 </div>
                 <span className="text-xs font-black text-emerald-800 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-300 shadow-sm font-mono">
-                  {unlockedRanks.length} / {Math.min(20, advancing.length)} Unlocked
+                  {unlockedRanks.length} / {Math.min(20, advancing.length || advancingRef.current.length || 20)} Unlocked
                 </span>
               </div>
 
@@ -1271,10 +1271,10 @@ export function LeaderboardPage() {
 
               {/* Rows (1 to 20, neat single column row-by-row like Round 1) */}
               <div className="flex flex-col">
-                {Array.from({ length: Math.min(20, advancing.length || 20) }).map((_, idx) => {
+                {Array.from({ length: Math.min(20, advancing.length || advancingRef.current.length || 20) }).map((_, idx) => {
                   const rankNum = idx + 1 // 1 to 20
-                  const team = advancing[idx]
-                  const isRevealed = unlockedRanks.includes(rankNum)
+                  const team = advancing[idx] || advancingRef.current[idx]
+                  const isRevealed = unlockedRanks.includes(rankNum) || revealedStep >= (21 - rankNum)
                   const isSpotlight = rankNum === currentSpotlightRank && revealedStep > 0
                   const track = team ? getTrackConfig(team.track) : null
 
@@ -1403,7 +1403,7 @@ export function LeaderboardPage() {
                 })}
               </div>
             </div>
-          ) : null}
+          )}
         </div>
 
 
