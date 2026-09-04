@@ -36,14 +36,29 @@ function finaleCountdownStart(step: number) {
 // ── Cinematic Confetti FX for Grand Finale ────────────────────────────────────
 function triggerFinaleConfetti(rank: number, durationMs?: number) {
   try {
-    if (rank === 3) {
-      // Bronze confetti burst from right
-      confetti({
-        particleCount: 75,
-        spread: 70,
-        origin: { x: 0.8, y: 0.6 },
-        colors: ['#b45309', '#d97706', '#f59e0b', '#fbbf24', '#ffffff']
-      })
+    if (rank === 3 || rank === 4 || rank === 5) {
+      // Place reveals (5th / 4th / 2nd Runner Up): small top rain at name lock — not side poppers.
+      const duration = Math.max(1_400, durationMs ?? 2_400)
+      const end = Date.now() + duration
+      const colors =
+        rank === 3
+          ? ['#b45309', '#d97706', '#f59e0b', '#fbbf24', '#ffffff']
+          : ['#78716c', '#a8a29e', '#e7e5e4', '#ffffff', '#fbbf24']
+
+      ;(function frame() {
+        confetti({
+          particleCount: 3,
+          startVelocity: 10,
+          spread: 360,
+          ticks: 240,
+          gravity: 0.88,
+          scalar: 0.95,
+          drift: (Math.random() - 0.5) * 0.5,
+          origin: { x: Math.random(), y: -0.04 },
+          colors,
+        })
+        if (Date.now() < end) requestAnimationFrame(frame)
+      })()
     } else if (rank === 2) {
       // 1st Runner Up — full-screen rain from the top (not side poppers; Champion keeps cannons).
       const duration = Math.max(2_200, durationMs ?? 3_600)
@@ -77,13 +92,6 @@ function triggerFinaleConfetti(rank: number, durationMs?: number) {
           requestAnimationFrame(frame)
         }
       })()
-    } else if (rank === 4 || rank === 5) {
-      confetti({
-        particleCount: 55,
-        spread: 65,
-        origin: { y: 0.65 },
-        colors: ['#78716c', '#a8a29e', '#e7e5e4', '#ffffff']
-      })
     } else if (rank === 1) {
       // 👑 GRAND CHAMPION — blast only during the winner-hold window (ends with the 22s beat)
       const duration = Math.max(1_000, durationMs ?? (CHAMPION_TOTAL_MS - CHAMPION_WIN_AT_MS))

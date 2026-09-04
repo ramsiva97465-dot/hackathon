@@ -242,6 +242,7 @@ function flapGlyph(elapsed: number, index: number, rollT: number) {
 }
 
 function placeCountdownDigit(p: number) {
+  // Same boundaries as finaleRevealAudio place-bed count beeps (0 / 0.2 / 0.4 / 0.6 / 0.8).
   const t = clamp((p - PLACE_CROWN_END) / (PLACE_COUNT_END - PLACE_CROWN_END))
   if (t < 0.2) return 5
   if (t < 0.4) return 4
@@ -554,8 +555,9 @@ function PlaceReveal({
       : progress
   const revealLive = !isAnimating || !isFifth || !inPreface
   const tease = rank === 4
-  // Sequence: crown fast→slow rise → countdown → roll → score → team name.
-  const numberOn = revealLive && (!isAnimating || p >= PLACE_CROWN_END - 0.02)
+  // Sequence: crown rise → crown stable → countdown → roll → score → team name.
+  // Glyph + count start together the instant the wreath finishes settling.
+  const numberOn = revealLive && (!isAnimating || p >= PLACE_CROWN_END)
   const inCount = revealLive && isAnimating && p >= PLACE_CROWN_END && p < PLACE_COUNT_END
   const inRoll = revealLive && isAnimating && p >= PLACE_COUNT_END && p < PLACE_ROLL_END
   const scoreOn = revealLive && (!isAnimating || p >= PLACE_ROLL_END)

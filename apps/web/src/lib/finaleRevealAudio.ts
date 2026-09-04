@@ -1,7 +1,7 @@
 /** Ceremony bed + one-shot FX for Top 5 LCD reveals.
- * Place (5/4/3): crown 0→0.36 · count 0.36→0.52 · roll 0.52→0.70 · score 0.70→0.82 · name 0.82→1
+ * Place (5/4/3): crown 0→0.36 (stable) · count 0.36→0.52 · roll 0.52→0.70 · score 0.70→0.82 · name 0.82→1
  * Final Two (2): dedicated shuffle/pick/score/name bed
- * Champion (1): 6s countdown · 6s roll · winner lock at 12s (22s total)
+ * Champion (1): 6s countdown · 6s roll · winner lock at 12s (22s total) — unchanged path
  */
 
 let ctx: AudioContext | null = null
@@ -112,39 +112,34 @@ export function playFinaleRevealBed(
     return
   }
 
-  // ── Crown fast→slow rise (0 → CROWN_END) ─────────────────────────────────
-  // Opening whoosh + dense ticks (fast spin), then spaced ticks (slow settle).
-  noiseBurst(audio, t0, Math.min(1.6, d * CROWN_END * 0.35), 0.18)
-  tone(audio, 'sine', 56, t0, d * CROWN_END * 0.9, 0.2)
-  tone(audio, 'triangle', 112, t0 + 0.1, d * CROWN_END * 0.75, 0.1)
-
-  const fastSpan = d * CROWN_END * 0.45
-  const slowSpan = d * CROWN_END * 0.5
-  const fastTicks = Math.max(12, Math.round(fastSpan / 0.22))
-  for (let i = 0; i < fastTicks; i++) {
-    const at = t0 + (i / fastTicks) * fastSpan * 0.98
-    tone(audio, 'square', 170 + i * 22, at, 0.06, 0.028 + i * 0.0018)
-    tone(audio, 'sine', 340 + i * 14, at + 0.01, 0.08, 0.032)
+  // ── Crown rise only (0 → CROWN_END) — no count beeps until the wreath locks ─
+  // Soft whoosh + low rumble while spinning; one clear thud when stable.
+  noiseBurst(audio, t0, Math.min(1.4, d * CROWN_END * 0.32), 0.14)
+  tone(audio, 'sine', 52, t0, d * CROWN_END * 0.95, 0.16)
+  tone(audio, 'triangle', 96, t0 + 0.12, d * CROWN_END * 0.7, 0.07)
+  // Sparse mechanical ticks (spin texture only — not countdown pitches)
+  const spinTicks = Math.max(8, Math.round((d * CROWN_END) / 0.55))
+  for (let i = 0; i < spinTicks; i++) {
+    const u = i / spinTicks
+    const at = t0 + u * d * CROWN_END * 0.92
+    const dens = u < 0.45 ? 0.022 : 0.034
+    tone(audio, 'square', 150 + u * 40, at, 0.05, dens)
   }
-  const slowTicks = Math.max(6, Math.round(slowSpan / 0.55))
-  for (let i = 0; i < slowTicks; i++) {
-    const at = t0 + fastSpan + (i / slowTicks) * slowSpan * 0.95
-    tone(audio, 'square', 200 + i * 10, at, 0.09, 0.04)
-    tone(audio, 'sine', 400 + i * 8, at + 0.015, 0.12, 0.045)
-  }
-  // Crown lock thud
-  noiseBurst(audio, t0 + d * CROWN_END, 0.3, 0.2)
-  tone(audio, 'sine', 72, t0 + d * CROWN_END, 0.75, 0.24)
+  // Crown stable lock — counting starts on the next beat
+  const crownLock = t0 + d * CROWN_END
+  noiseBurst(audio, crownLock, 0.35, 0.24)
+  tone(audio, 'sine', 68, crownLock, 0.85, 0.28)
+  tone(audio, 'triangle', 136, crownLock + 0.03, 0.55, 0.1)
 
-  // Soft pulse under countdown + roll
-  for (let i = 0; i < Math.floor(d * 0.4); i++) {
-    const at = t0 + d * CROWN_END + 0.4 + i * 1.05
+  // Soft bed under count + roll (no pitch steps)
+  for (let i = 0; i < Math.floor(d * 0.35); i++) {
+    const at = crownLock + 0.55 + i * 1.15
     if (at >= t0 + d * ROLL_END) break
-    tone(audio, 'sine', 52, at, 0.5, 0.065)
+    tone(audio, 'sine', 48, at, 0.55, 0.05)
   }
 
-  // ── Countdown 5 · 4 · 3 · 2 · 1 (CROWN_END → COUNT_END) ───────────────────
-  // Fire exactly when the on-screen digit switches (0 / 0.2 / 0.4 / 0.6 / 0.8 of the count window).
+  // ── Countdown 5·4·3·2·1 — exact visual digit boundaries after crown lock ──
+  // Visual: placeCountdownDigit uses t = 0,0.2,0.4,0.6,0.8 of (COUNT_END - CROWN_END).
   const countSpan = COUNT_END - CROWN_END
   ;[
     { step: 0, freq: 311 },
@@ -153,46 +148,51 @@ export function playFinaleRevealBed(
     { step: 3, freq: 466 },
     { step: 4, freq: 523 },
   ].forEach(({ step, freq }, i) => {
-    const at = t0 + d * (CROWN_END + (step / 5) * countSpan) + 0.03
-    const peak = 0.24 + i * 0.025
-    noiseBurst(audio, at, 0.12, 0.09)
-    tone(audio, 'triangle', freq, at, 0.55, peak)
-    tone(audio, 'sine', freq * 2, at + 0.02, 0.4, peak * 0.42)
+    const at = t0 + d * (CROWN_END + (step / 5) * countSpan)
+    const peak = 0.26 + i * 0.03
+    noiseBurst(audio, at, 0.1, 0.08)
+    tone(audio, 'triangle', freq, at, 0.5, peak)
+    tone(audio, 'sine', freq * 2, at + 0.015, 0.38, peak * 0.4)
   })
 
-  // ── Letter-roll ticks (COUNT_END → ROLL_END) ──────────────────────────────
-  // Match flapGlyph: start lively (~110ms), slow toward lock (~330ms).
+  // ── Split-flap scroll (COUNT_END → ROLL_END) — same interval curve as flapGlyph
   const rollStart = d * COUNT_END
   const rollEnd = d * ROLL_END
-  const rollSpan = Math.max(0.4, rollEnd - rollStart)
+  const rollSpan = Math.max(0.5, rollEnd - rollStart)
+  // Accent when ROLLING tiles appear
+  noiseBurst(audio, t0 + rollStart, 0.18, 0.12)
+  tone(audio, 'square', 240, t0 + rollStart, 0.12, 0.06)
   let rollAt = 0
   let tick = 0
-  while (rollAt < rollSpan - 0.04) {
+  while (rollAt < rollSpan - 0.05) {
     const rollT = rollAt / rollSpan
     const interval = (110 + rollT * 220) / 1000
     const at = t0 + rollStart + rollAt
-    tone(audio, 'square', 210 + tick * 12, at, 0.07, 0.034 + tick * 0.0012)
-    tone(audio, 'sine', 420 + tick * 8, at + 0.01, 0.11, 0.04)
+    const peak = 0.028 + rollT * 0.02
+    tone(audio, 'square', 200 + tick * 10, at, 0.055, peak)
+    tone(audio, 'sine', 400 + tick * 7, at + 0.008, 0.09, peak * 1.15)
     rollAt += interval
     tick += 1
-    if (tick > 40) break
+    if (tick > 48) break
   }
 
-  // ── Score flourish (ROLL_END) — hits when score pops on screen ────────────
+  // ── Score reveal (ROLL_END) ───────────────────────────────────────────────
   const scoreAt = t0 + d * ROLL_END
-  noiseBurst(audio, scoreAt, 0.35, 0.22)
-  tone(audio, 'sine', 76, scoreAt, 1.2, 0.3)
+  noiseBurst(audio, scoreAt, 0.4, 0.24)
+  tone(audio, 'sine', 72, scoreAt, 1.3, 0.32)
   ;[440, 554.37, 659.25].forEach((freq, i) => {
-    tone(audio, 'triangle', freq, scoreAt + 0.06 + i * 0.1, 0.85, 0.14)
+    tone(audio, 'triangle', freq, scoreAt + 0.05 + i * 0.09, 0.9, 0.15)
   })
 
-  // ── Name lock / popup (SCORE_END) — hits when team name appears ───────────
+  // ── Team name + little popup hit (SCORE_END) ───────────────────────────────
   const lock = t0 + d * SCORE_END
-  noiseBurst(audio, lock, 0.5, 0.32)
-  tone(audio, 'sine', 76, lock, 1.9, 0.36)
-  tone(audio, 'triangle', 392, lock + 0.04, 1.5, 0.26)
-  tone(audio, 'sine', 523, lock + 0.08, 1.2, 0.18)
-  tone(audio, 'triangle', 659, lock + 0.14, 0.9, 0.12)
+  noiseBurst(audio, lock, 0.55, 0.34)
+  tone(audio, 'sine', 70, lock, 2.0, 0.38)
+  tone(audio, 'triangle', 392, lock + 0.04, 1.55, 0.28)
+  tone(audio, 'sine', 523, lock + 0.08, 1.25, 0.2)
+  tone(audio, 'triangle', 659, lock + 0.14, 0.95, 0.14)
+  // Soft afterglow under name hold
+  tone(audio, 'sine', 52, lock + 0.6, Math.max(0.8, d * (1 - SCORE_END) - 0.6), 0.07)
 
   stopTimer = window.setTimeout(() => clearBed(), durationMs + 600)
 }
