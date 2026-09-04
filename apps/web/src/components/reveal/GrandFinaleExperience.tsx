@@ -194,10 +194,11 @@ function Wreath({
           className="pointer-events-none absolute z-10 flex items-center justify-center"
           style={{
             left: '50%',
-            top: '42%',
-            width: '54%',
-            height: '38%',
+            top: '43%',
+            width: '58%',
+            height: '46%',
             transform: 'translate(-50%, -50%)',
+            containerType: 'size',
           }}
         >
           <AnimatePresence mode="wait">
@@ -208,10 +209,15 @@ function Wreath({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.28, ease: EASE }}
-                className={`flex h-[1em] w-[1em] items-center justify-center text-center font-serif font-black leading-none ${
+                className={`flex items-center justify-center text-center font-serif font-black leading-none ${
                   locked ? 'text-amber-200' : 'text-amber-200/40'
                 }`}
-                style={{ fontSize: '2.15em' }}
+                style={{
+                  fontSize: 'clamp(2.75rem, 82cqh, 9rem)',
+                  textShadow: locked
+                    ? '0 0 28px rgba(251, 191, 36, 0.45), 0 2px 0 rgba(0,0,0,0.35)'
+                    : undefined,
+                }}
               >
                 {glyph}
               </motion.span>
