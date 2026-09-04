@@ -132,14 +132,6 @@ export function playFinaleRevealBed(rank: number, durationMs = 20_000) {
   tone(audio, 'triangle', isChamp ? 523 : isSecond ? 440 : 392, lock + 0.04, 1.4, 0.24)
   tone(audio, 'sine', isChamp ? 784 : isSecond ? 659 : 523, lock + 0.08, 1.1, 0.16)
 
-  // Official seal stamp — just after name lock (~0.94 + settle)
-  const sealAt = t0 + d * 0.945
-  noiseBurst(audio, sealAt, 0.22, 0.2)
-  tone(audio, 'sine', 90, sealAt, 0.55, 0.22)
-  tone(audio, 'triangle', 660, sealAt + 0.03, 0.7, 0.16)
-  tone(audio, 'sine', 990, sealAt + 0.05, 0.45, 0.1)
-  tone(audio, 'sine', 1320, sealAt + 0.08, 0.35, 0.06)
-
   // Score flourish
   const endFreqs = isChamp
     ? [523.25, 659.25, 783.99, 1046.5, 1318.5]
@@ -147,23 +139,10 @@ export function playFinaleRevealBed(rank: number, durationMs = 20_000) {
     ? [587.33, 739.99, 880, 1174.66]
     : [440, 554.37, 659.25, 880]
   endFreqs.forEach((freq, i) => {
-    tone(audio, 'triangle', freq, t0 + d * 0.96 + i * 0.11, 0.95, 0.14)
+    tone(audio, 'triangle', freq, t0 + d * 0.94 + i * 0.11, 0.95, 0.14)
   })
 
   stopTimer = window.setTimeout(() => clearBed(), durationMs + 600)
-}
-
-/** One-shot wax-stamp hit when the SnapServe seal lands (extra layer on top of bed). */
-export function playSealStamp(intensity: 'md' | 'lg' = 'md') {
-  const audio = getCtx()
-  if (!audio) return
-  const t0 = audio.currentTime + 0.01
-  const peak = intensity === 'lg' ? 0.28 : 0.2
-  noiseBurst(audio, t0, 0.28, peak, false)
-  tone(audio, 'sine', intensity === 'lg' ? 72 : 88, t0, 0.7, peak, false)
-  tone(audio, 'triangle', 620, t0 + 0.02, 0.55, peak * 0.7, false)
-  tone(audio, 'sine', 930, t0 + 0.04, 0.4, peak * 0.4, false)
-  tone(audio, 'sine', 1240, t0 + 0.06, 0.3, peak * 0.22, false)
 }
 
 export function stopFinaleRevealBed() {

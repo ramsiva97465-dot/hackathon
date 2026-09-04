@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { getTrackConfig } from '@/lib/utils'
-import { playFinaleRevealBed, playSealStamp, stopFinaleRevealBed } from '@/lib/finaleRevealAudio'
+import { playFinaleRevealBed, stopFinaleRevealBed } from '@/lib/finaleRevealAudio'
 
 export type GrandFinaleEntry = {
   teamId: string
@@ -30,64 +30,7 @@ const PLACE: Record<number, { kicker: string }> = {
 
 const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
 const PODIUM = '/images/finale-podium-transparent.png'
-const SEAL = '/images/snapserve-seal.png'
 const EASE = [0.22, 1, 0.36, 1] as const
-
-/** Official seal — larger gold stamp under the locked name. One hit, no pulse spam. */
-function SealMark({
-  show,
-  size = 'md',
-  delay = 0.15,
-}: {
-  show: boolean
-  size?: 'md' | 'lg'
-  delay?: number
-}) {
-  const dim =
-    size === 'lg'
-      ? 'h-36 w-36 sm:h-44 sm:w-44 lg:h-48 lg:w-48'
-      : 'h-28 w-28 sm:h-32 sm:w-32 lg:h-36 lg:w-36'
-
-  useEffect(() => {
-    if (!show) return
-    const t = window.setTimeout(() => playSealStamp(size), Math.max(0, delay * 1000))
-    return () => window.clearTimeout(t)
-  }, [show, size, delay])
-
-  return (
-    <AnimatePresence>
-      {show && (
-        <motion.div
-          key="seal"
-          initial={{ opacity: 0, scale: 1.45, y: -28, rotate: -8 }}
-          animate={{ opacity: 1, scale: [1.45, 0.94, 1], y: 0, rotate: 0 }}
-          exit={{ opacity: 0, scale: 0.92 }}
-          transition={{ duration: 0.7, delay, ease: EASE, times: [0, 0.72, 1] }}
-          className={`relative mx-auto ${dim}`}
-          aria-hidden
-        >
-          <div
-            className="pointer-events-none absolute inset-[-18%] rounded-full"
-            style={{
-              background:
-                'radial-gradient(circle, rgba(245,214,140,0.35) 0%, rgba(232,197,71,0.12) 42%, transparent 70%)',
-              filter: 'blur(6px)',
-            }}
-          />
-          <img
-            src={SEAL}
-            alt=""
-            className="relative h-full w-full object-contain"
-            style={{
-              filter:
-                'brightness(0) invert(84%) sepia(32%) saturate(720%) hue-rotate(2deg) drop-shadow(0 10px 28px rgba(0,0,0,0.55)) drop-shadow(0 0 18px rgba(245,214,140,0.35))',
-            }}
-          />
-        </motion.div>
-      )}
-    </AnimatePresence>
-  )
-}
 
 function clamp(n: number) {
   return Math.min(1, Math.max(0, n))
@@ -629,7 +572,7 @@ function PlaceReveal({
       )}
       <motion.div
         key={`place-${rank}`}
-        className="relative z-10 flex h-full w-full max-w-6xl flex-col items-center justify-start px-6 pt-[8vh] text-center sm:pt-[10vh]"
+        className="relative z-10 flex h-full w-full max-w-6xl flex-col items-center justify-start px-6 pt-[3.5vh] text-center sm:pt-[4.5vh]"
         style={{
           opacity: inRain ? 0 : inHold ? 0.45 + holdT * 0.55 : 1,
         }}
@@ -662,7 +605,7 @@ function PlaceReveal({
           />
         </div>
 
-        <div className="mt-4 flex min-h-[17rem] w-full flex-col items-center justify-start sm:min-h-[19rem]">
+        <div className="mt-4 flex min-h-[12rem] w-full flex-col items-center justify-start sm:min-h-[13.5rem]">
           <AnimatePresence mode="wait">
             {nameLive ? (
               <motion.h2
@@ -688,11 +631,7 @@ function PlaceReveal({
             ) : null}
           </AnimatePresence>
 
-          <div className="mt-5 flex h-36 w-full items-center justify-center sm:h-40 lg:h-44">
-            <SealMark show={Boolean(nameLocked && nameLive)} delay={0.22} />
-          </div>
-
-          <div className="mt-1 h-6">
+          <div className="mt-3 h-6">
             {metaOn && (
               <motion.p
                 initial={{ opacity: 0, y: 8 }}
@@ -795,7 +734,7 @@ function FinalTwoReveal({
 
   return (
     <Stage cinematic progress={p}>
-      <div className="relative z-10 flex h-full w-full max-w-6xl flex-col items-center justify-start overflow-visible px-6 pt-[8vh] text-center sm:pt-[10vh]">
+      <div className="relative z-10 flex h-full w-full max-w-6xl flex-col items-center justify-start overflow-visible px-6 pt-[3.5vh] text-center sm:pt-[4.5vh]">
         <AnimatePresence mode="wait">
           <motion.p
             key={titleSecond ? 'second' : 'final-two'}
@@ -875,10 +814,7 @@ function FinalTwoReveal({
               {secondEntry?.teamName || 'Unavailable'}
             </motion.h2>
           )}
-          <div className="mt-5 flex h-36 w-full items-center justify-center sm:h-40 lg:h-44">
-            <SealMark show={Boolean(bigNameOn && metaOn)} delay={0.22} />
-          </div>
-          <div className="mt-1 h-6">
+          <div className="mt-3 h-6">
             {metaOn && (
               <motion.p
                 initial={{ opacity: 0, y: 8 }}
@@ -1019,14 +955,11 @@ function Champion({
             >
               {entry?.teamName || 'Unavailable'}
             </motion.h2>
-            <div className="mt-6 flex h-44 w-full items-center justify-center sm:h-52 lg:h-56">
-              <SealMark show size="lg" delay={0.95} />
-            </div>
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 1.25, duration: 0.5 }}
-              className="mt-1 text-sm text-white/40 sm:text-base"
+              transition={{ delay: 0.95, duration: 0.5 }}
+              className="mt-3 text-sm text-white/40 sm:text-base"
             >
               {entry?.college || 'Tamil Nadu'}
               {track ? ` · ${track.label}` : ''}
@@ -1034,7 +967,7 @@ function Champion({
             <motion.p
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.4, duration: 0.5, ease: EASE }}
+              transition={{ delay: 1.1, duration: 0.5, ease: EASE }}
               className="mt-5 font-black tabular-nums leading-none text-amber-200 text-[2.8rem] sm:text-5xl"
             >
               {score.toFixed(1)}
