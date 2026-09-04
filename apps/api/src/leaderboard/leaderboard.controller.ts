@@ -67,6 +67,18 @@ export class LeaderboardController {
     return { success: true, tvMode: isEnabled }
   }
 
+  @Get('certificates-released')
+  getCertificatesReleased() {
+    return { released: this.gateway.getCertificatesReleased() }
+  }
+
+  @Post('certificates-released')
+  async setCertificatesReleased(@Body() dto: TvModeDto) {
+    const released = Boolean(dto.enabled)
+    await this.gateway.broadcastCertificatesReleased(released)
+    return { success: true, released }
+  }
+
   @Get('reveal-state')
   getRevealState() {
     return this.gateway.getRevealState()

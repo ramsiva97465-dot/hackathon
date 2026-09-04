@@ -21,6 +21,7 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
   server: Server
 
   private isTvMode = false
+  private certificatesReleased = false
   private isRevealing = false
   private revealRound = 2
   private revealStep = 0
@@ -59,6 +60,7 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
       const leaderboard = await this.leaderboardService.getLeaderboard()
       client.emit('leaderboard:update', leaderboard)
       client.emit('leaderboard:tv_mode', { tvMode: this.isTvMode })
+      client.emit('leaderboard:certificates_released', { released: this.certificatesReleased })
       client.emit('leaderboard:reveal_state', this.getRevealStatePayload())
       client.emit('leaderboard:special_reveal_state', this.getSpecialRevealStatePayload())
     } catch (err) {
@@ -75,12 +77,17 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
     const leaderboard = await this.leaderboardService.getLeaderboard()
     client.emit('leaderboard:update', leaderboard)
     client.emit('leaderboard:tv_mode', { tvMode: this.isTvMode })
+    client.emit('leaderboard:certificates_released', { released: this.certificatesReleased })
     client.emit('leaderboard:reveal_state', this.getRevealStatePayload())
     client.emit('leaderboard:special_reveal_state', this.getSpecialRevealStatePayload())
   }
 
   getTvMode(): boolean {
     return this.isTvMode
+  }
+
+  getCertificatesReleased(): boolean {
+    return this.certificatesReleased
   }
 
   getRevealState() {
@@ -108,6 +115,18 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
       console.log('[WS] TV Mode broadcast sent:', enabled)
     } catch (err) {
       console.error('[WS] TV Mode broadcast failed:', err)
+    }
+  }
+
+  // Called when Admin releases / locks participation certificates
+  async broadcastCertificatesReleased(released: boolean) {
+    this.certificatesReleased = released
+    try {
+      if (!this.server) return
+      this.server.to('leaderboard').emit('leaderboard:certificates_released', { released })
+      console.log('[WS] Certificates released broadcast sent:', released)
+    } catch (err) {
+      console.error('[WS] Certificates released broadcast failed:', err)
     }
   }
 
