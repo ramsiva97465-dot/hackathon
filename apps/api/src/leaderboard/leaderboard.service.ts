@@ -202,7 +202,6 @@ export class LeaderboardService {
         (team as any).bonusVerifiedAt || (team as any).bonusVerifiedBy
           ? team.bonusPoints || 0
           : 0
-      const teamRound = team.round || 1
       const hasAdminOverride = team.adminScore !== null && team.adminScore !== undefined
 
       let totalScore = 0
