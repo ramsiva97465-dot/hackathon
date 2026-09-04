@@ -16,6 +16,7 @@ type TeamOverview = {
   overallScore?: number
   judgeCount: number
   round: number
+  adminOverride?: boolean
 }
 
 export function RoundsManagement() {
@@ -500,6 +501,38 @@ export function RoundsManagement() {
     }
   }
 
+  const handleOverrideScore = async (teamId: string, currentScore: number) => {
+    const input = window.prompt(
+      `Override score for this team (current: ${currentScore}).\nLeave blank to cancel.\nType clear to remove the override.`,
+    )
+    if (input === null) return
+    const trimmed = input.trim()
+    if (trimmed === '') return
+
+    let score: number | null = null
+    if (trimmed.toLowerCase() === 'clear') {
+      score = null
+    } else {
+      const parsed = Number(trimmed)
+      if (Number.isNaN(parsed)) {
+        toast.error('Invalid score')
+        return
+      }
+      score = parsed
+    }
+
+    try {
+      setLoading(true)
+      await api.leaderboard.adminScore(teamId, score)
+      toast.success(score === null ? 'Admin override cleared.' : `Score overridden to ${score}.`)
+      await fetchLeaderboard(true)
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to override score')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const activeRoundNum = winnersCount > 0 ? 3 : round2Count > 0 ? 2 : 1
   const displayTeams = isSpecialBoard
     ? teams
@@ -945,6 +978,7 @@ export function RoundsManagement() {
                     <th className="px-6 py-3">Track</th>
                     <th className="px-6 py-3 text-center">Judges Graded</th>
                     <th className="px-6 py-3 text-right">Avg Score</th>
+                    <th className="px-6 py-3 text-right">Override</th>
                     {showRound2Reveals && (
                       <th className="px-6 py-3 text-right">Reveal</th>
                     )}
@@ -955,6 +989,7 @@ export function RoundsManagement() {
                     const rank = t.standing
                     const alreadyRevealed = revealedQualifierRanks.includes(rank)
                     const isNext = rank === nextQualifierRank
+                    const score = Number(t.totalScore ?? t.overallScore ?? 0)
                     return (
                     <tr key={t.teamId} className="hover:bg-white/5 transition-colors">
                       <td className="px-6 py-4 font-bold text-slate-500">
@@ -962,6 +997,9 @@ export function RoundsManagement() {
                       </td>
                       <td className="px-6 py-4 font-bold text-white">
                         {t.teamName}
+                        {t.adminOverride && (
+                          <span className="ml-2 text-[9px] font-black uppercase tracking-wider text-amber-400">Override</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-slate-400 font-medium">
                         {t.track}
@@ -971,6 +1009,17 @@ export function RoundsManagement() {
                       </td>
                       <td className="px-6 py-4 text-right font-black text-white">
                         {t.totalScore ?? t.overallScore}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          type="button"
+                          disabled={loading}
+                          onClick={() => handleOverrideScore(t.teamId, score)}
+                          className="inline-flex items-center px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/15 text-slate-300 hover:text-amber-300 border border-white/10 hover:border-amber-500/30 text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
+                          title="Admin score override"
+                        >
+                          Edit
+                        </button>
                       </td>
                       {showRound2Reveals && (
                         <td className="px-6 py-4 text-right">

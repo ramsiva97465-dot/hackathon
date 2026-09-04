@@ -259,6 +259,9 @@ export class LeaderboardService {
         previousRank: (team as any).leaderboard?.rank ?? undefined,
         round: team.round,
         isSpecialCategory: true,
+        adminOverride:
+          hasAdminOverride &&
+          ((targetRound === 1 && teamRound === 1) || (targetRound === 2 && teamRound >= 2)),
         scores: [],
         _qualifierScore: qualifierScore,
       }

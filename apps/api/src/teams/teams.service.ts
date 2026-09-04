@@ -1039,18 +1039,19 @@ export class TeamsService {
       const submittedSheets = t.scoreSheets.filter((s) => s.isSubmitted && (s.round || 1) === 1)
       let overallScore = 0
       let judgeCount = submittedSheets.length
-      // Prefer live R1 sheets, then frozen round1Score (works even if team.round is already 2).
-      if (submittedSheets.length > 0) {
+      // Same priority as main promote: admin override wins, then frozen R1, then live sheets.
+      if (t.adminScore !== null && t.adminScore !== undefined && (t.round || 1) === 1) {
+        overallScore = t.adminScore
+        judgeCount = t.round1JudgeCount ?? submittedSheets.length
+      } else if (t.round1Score !== null && t.round1Score !== undefined) {
+        overallScore = t.round1Score
+        judgeCount = t.round1JudgeCount ?? 0
+      } else if (submittedSheets.length > 0) {
         const total = submittedSheets.reduce((sum, sheet) => {
           return sum + sheet.scores.reduce((sSum, sc) => sSum + sc.score, 0)
         }, 0)
         overallScore = total / submittedSheets.length
         judgeCount = submittedSheets.length
-      } else if (t.round1Score !== null && t.round1Score !== undefined) {
-        overallScore = t.round1Score
-        judgeCount = t.round1JudgeCount ?? 0
-      } else if (t.adminScore !== null && t.adminScore !== undefined && (t.round || 1) === 1) {
-        overallScore = t.adminScore
       }
       if (t.bonusVerifiedAt || t.bonusVerifiedBy) {
         overallScore += t.bonusPoints || 0
