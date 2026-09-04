@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { LeaderboardService } from '../leaderboard/leaderboard.service'
 
@@ -9,78 +9,144 @@ export class AttendanceService {
     private leaderboardService: LeaderboardService
   ) {}
 
-  async lookup(query: string) {
-    let teamId = query
+  private parseQrQuery(query: string): { teamId: string | null; memberId: string | null; raw: string } {
+    const raw = (query || '').trim()
+    let teamId: string | null = null
     let memberId: string | null = null
 
-    // Parse JSON or SNAPSERVE prefix if passed from QR code scanner
     try {
-      if (query.startsWith('{')) {
-        const parsed = JSON.parse(query)
-        teamId = parsed.teamId || query
-        memberId = parsed.memberId || null
-      } else if (query.startsWith('SNAPSERVE:')) {
-        const parts = query.split(':')
-        teamId = parts[1] || query
-        memberId = parts[2] || null
+      if (raw.startsWith('{')) {
+        const parsed = JSON.parse(raw)
+        teamId = parsed.teamId || parsed.teamID || null
+        memberId = parsed.memberId || parsed.memberID || null
+      } else if (raw.toUpperCase().startsWith('SNAPSERVE:')) {
+        const parts = raw.split(':')
+        teamId = parts[1]?.trim() || null
+        memberId = parts[2]?.trim() || null
       }
-    } catch (e) {
+    } catch {
       // Fallback to literal query string
     }
 
-    // Try finding team by ID, table number, or team name
-    const team = await this.prisma.team.findFirst({
-      where: {
-        OR: [
-          { id: teamId },
-          { tableNumber: { equals: query, mode: 'insensitive' } },
-          { name: { equals: query, mode: 'insensitive' } },
-          { members: { some: { id: query } } },
-          { members: { some: { email: { equals: query, mode: 'insensitive' } } } }
-        ]
-      },
-      include: {
-        track: true,
-        members: true
-      }
-    })
+    return { teamId, memberId, raw }
+  }
 
-    if (!team) {
-      throw new NotFoundException(`Team or Member not found for query: "${query}"`)
+  private teamInclude() {
+    return {
+      track: true,
+      members: {
+        orderBy: { createdAt: 'asc' as const },
+      },
+    }
+  }
+
+  async lookup(query: string) {
+    const { teamId, memberId, raw } = this.parseQrQuery(query)
+    if (!raw) {
+      throw new BadRequestException('Lookup query is required')
     }
 
+    const include = this.teamInclude()
+    let team =
+      (teamId
+        ? await this.prisma.team.findUnique({ where: { id: teamId }, include })
+        : null)
+      || await this.prisma.team.findUnique({ where: { id: raw }, include }).catch(() => null)
+      || await this.prisma.team.findFirst({
+          where: { tableNumber: { equals: raw, mode: 'insensitive' } },
+          include,
+        })
+      || await this.prisma.team.findFirst({
+          where: { name: { equals: raw, mode: 'insensitive' } },
+          include,
+        })
+      || await this.prisma.team.findFirst({
+          where: { members: { some: { id: memberId || raw } } },
+          include,
+        })
+      || await this.prisma.team.findFirst({
+          where: { members: { some: { email: { equals: raw, mode: 'insensitive' } } } },
+          include,
+        })
+      || await this.prisma.team.findFirst({
+          where: { members: { some: { name: { equals: raw, mode: 'insensitive' } } } },
+          include,
+        })
+
+    // Fuzzy desk fallbacks
+    if (!team) {
+      const tableHint = raw.replace(/^table\s*/i, '').trim()
+      team =
+        await this.prisma.team.findFirst({
+          where: { tableNumber: { contains: tableHint, mode: 'insensitive' } },
+          include,
+        })
+        || await this.prisma.team.findFirst({
+          where: { name: { contains: raw, mode: 'insensitive' } },
+          include,
+        })
+        || await this.prisma.team.findFirst({
+          where: { members: { some: { name: { contains: raw, mode: 'insensitive' } } } },
+          include,
+        })
+    }
+
+    if (!team) {
+      throw new NotFoundException(`Team or Member not found for query: "${raw}"`)
+    }
+
+    const matchedMember =
+      (memberId && team.members.find((m) => m.id === memberId))
+      || team.members.find((m) => m.id === raw)
+      || team.members.find((m) => m.email?.toLowerCase() === raw.toLowerCase())
+      || team.members.find((m) => m.name?.toLowerCase() === raw.toLowerCase())
+      || team.members[0]
+      || null
+
     return {
+      success: true,
       team,
-      scannedMemberId: memberId || team.members[0]?.id || null
+      scannedMemberId: matchedMember?.id || null,
     }
   }
 
   async markMemberAttendance(memberId: string, isPresent: boolean, adminUserId?: string) {
+    if (!memberId?.trim()) {
+      throw new BadRequestException('memberId is required')
+    }
+
+    const existing = await this.prisma.teamMember.findUnique({ where: { id: memberId } })
+    if (!existing) {
+      throw new NotFoundException('Team member not found')
+    }
+
     const member = await this.prisma.teamMember.update({
       where: { id: memberId },
       data: {
-        isPresent,
+        isPresent: Boolean(isPresent),
         checkedInAt: isPresent ? new Date() : null,
-        checkedInBy: adminUserId || 'ADMIN'
+        checkedInBy: isPresent ? (adminUserId || 'ADMIN') : null,
       },
-      include: { team: true }
+      include: { team: true },
     })
 
-    // If member belongs to a team, update team attendance status
+    let attendanceStatus: string | null = null
     if (member.teamId) {
-      const anyPresent = await this.prisma.teamMember.findFirst({
-        where: { teamId: member.teamId, isPresent: true }
+      const presentCount = await this.prisma.teamMember.count({
+        where: { teamId: member.teamId, isPresent: true },
       })
-
+      attendanceStatus = presentCount > 0 ? 'CHECKED_IN' : 'PENDING'
       await this.prisma.team.update({
         where: { id: member.teamId },
-        data: {
-          attendanceStatus: anyPresent ? 'CHECKED_IN' : 'PENDING'
-        }
+        data: { attendanceStatus },
       })
     }
 
-    return member
+    return {
+      success: true,
+      data: member,
+      attendanceStatus,
+    }
   }
 
   async verifyTeamBonus(
@@ -93,12 +159,11 @@ export class AttendanceService {
       data: {
         bonusPoints,
         bonusVerifiedBy: adminUserId || 'ADMIN',
-        bonusVerifiedAt: new Date()
+        bonusVerifiedAt: new Date(),
       },
-      include: { track: true, members: true }
+      include: { track: true, members: true },
     })
 
-    // Recalculate leaderboard scores across all rounds
     try {
       await this.leaderboardService.getLeaderboard({ round: 1 })
       await this.leaderboardService.getLeaderboard({ round: 2 })
@@ -107,6 +172,6 @@ export class AttendanceService {
       console.error('Error recalculating leaderboard score on bonus update:', err)
     }
 
-    return team
+    return { success: true, data: team }
   }
 }

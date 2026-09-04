@@ -1109,6 +1109,8 @@ export function ParticipantDashboard() {
                               participantName={activeMember.name}
                               memberRole={activeRole}
                               teamName={data.name}
+                              teamId={data.id}
+                              memberId={activeMember.id || null}
                               trackName={data.track.name}
                               tableNumber={data.tableNumber}
                               agentName={data.agentName}

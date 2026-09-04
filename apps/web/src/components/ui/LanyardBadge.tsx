@@ -8,6 +8,8 @@ interface LanyardBadgeProps {
   participantName?: string
   memberRole?: string
   teamName?: string
+  teamId?: string | null
+  memberId?: string | null
   trackName?: string
   tableNumber?: string | null
   agentName?: string | null
@@ -23,6 +25,8 @@ export function LanyardBadge({
   participantName = 'Participant',
   memberRole = 'Team Member',
   teamName = 'Team Alpha',
+  teamId = null,
+  memberId = null,
   trackName = 'Voice AI Agent',
   tableNumber = 'T-01',
   agentName = 'VoxAgent Pro',
@@ -34,6 +38,15 @@ export function LanyardBadge({
   members = []
 }: LanyardBadgeProps) {
   const [isFlipped, setIsFlipped] = useState(false)
+
+  // Desk scanner expects SNAPSERVE:teamId:memberId (falls back to team name for older passes)
+  const qrPayload =
+    teamId && memberId
+      ? `SNAPSERVE:${teamId}:${memberId}`
+      : teamId
+        ? `SNAPSERVE:${teamId}`
+        : (teamName || participantName || 'SnapServe AI')
+
 
   // Motion physics for interactive elastic rubber drag & pendulum swing
   const dragX = useMotionValue(0)
@@ -239,7 +252,7 @@ export function LanyardBadge({
     // Draw Real Scannable QR Code Box on HD Canvas
     const qrImg = new Image()
     qrImg.crossOrigin = 'anonymous'
-    const qrDataStr = encodeURIComponent(teamName || pName || 'SnapServe AI')
+    const qrDataStr = encodeURIComponent(qrPayload)
     qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${qrDataStr}&color=000000&bgcolor=ffffff`
     
     await new Promise((resolve) => {
@@ -580,7 +593,7 @@ export function LanyardBadge({
                   </div>
                   <div className="p-1.5 bg-white rounded-xl shrink-0 border border-slate-300 shadow-2xs">
                     <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(teamName || participantName || 'SnapServe AI')}&color=000000&bgcolor=ffffff`}
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrPayload)}&color=000000&bgcolor=ffffff`}
                       alt="Pass QR Code"
                       className="w-10 h-10 object-contain rounded-md"
                       crossOrigin="anonymous"

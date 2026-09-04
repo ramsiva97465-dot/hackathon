@@ -139,18 +139,26 @@ export function AdminScannerPage() {
     try {
       setCheckingInId(memberId)
       const newStatus = !currentStatus
-      await api.attendance.checkIn(memberId, newStatus)
-      
-      // Update local state
+      const res = await api.attendance.checkIn(memberId, newStatus)
+      const nextTeamStatus =
+        res.data?.attendanceStatus
+        || (newStatus
+          ? 'CHECKED_IN'
+          : (teamData?.members.some(m => m.id !== memberId && m.isPresent) ? 'CHECKED_IN' : 'PENDING'))
+
       if (teamData) {
         setTeamData({
           ...teamData,
-          attendanceStatus: 'CHECKED_IN',
+          attendanceStatus: nextTeamStatus,
           members: teamData.members.map(m =>
             m.id === memberId
-              ? { ...m, isPresent: newStatus, checkedInAt: newStatus ? new Date().toISOString() : undefined }
+              ? {
+                  ...m,
+                  isPresent: newStatus,
+                  checkedInAt: newStatus ? new Date().toISOString() : undefined,
+                }
               : m
-          )
+          ),
         })
       }
       toast.success(newStatus ? 'Marked Present & Checked-In! ✅' : 'Attendance Status Reset')
