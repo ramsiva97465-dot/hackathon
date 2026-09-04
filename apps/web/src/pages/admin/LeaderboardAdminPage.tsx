@@ -261,7 +261,12 @@ export function LeaderboardAdminPage() {
                       </span>
                     </td>
                     <td className="px-5 py-4 text-slate-400 font-medium text-xs hidden lg:table-cell">{entry.judgeCount > 0 ? '1 / 1' : '0 / 1'}</td>
-                    <td className="px-5 py-4 text-right font-display font-bold text-xl text-white">{entry.totalScore.toFixed(1)}</td>
+                    <td className="px-5 py-4 text-right">
+                      <div className="font-display font-bold text-xl text-white">{entry.totalScore.toFixed(1)}</div>
+                      {(entry as { adminOverride?: boolean }).adminOverride && (
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-amber-400/90 mt-0.5">Admin override</div>
+                      )}
+                    </td>
                     <td className="px-5 py-4 text-center">
                       <DeltaIcon curr={entry.rank} prev={entry.previousRank || entry.rank} />
                     </td>

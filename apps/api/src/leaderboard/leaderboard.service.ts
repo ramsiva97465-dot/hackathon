@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 
 type ScoreSheetWithScores = {
@@ -69,38 +69,41 @@ export class LeaderboardService {
         (team as any).bonusVerifiedAt || (team as any).bonusVerifiedBy
           ? team.bonusPoints || 0
           : 0
+      const teamRound = team.round || 1
+      const hasAdminOverride = team.adminScore !== null && team.adminScore !== undefined
 
       let totalScore = 0
       let judgeCount = 0
 
       if (targetRound === 1) {
-        if (team.round1Score !== null && team.round1Score !== undefined) {
+        const r1Sheets = sheetsForRound(team.scoreSheets, 1)
+        judgeCount = team.round1JudgeCount ?? r1Sheets.length
+        // Admin override always wins for teams still in Round 1 scoring.
+        if (hasAdminOverride && teamRound === 1) {
+          totalScore = team.adminScore!
+        } else if (team.round1Score !== null && team.round1Score !== undefined) {
           totalScore = team.round1Score
           judgeCount = team.round1JudgeCount ?? 0
         } else {
-          const r1Sheets = sheetsForRound(team.scoreSheets, 1)
-          judgeCount = r1Sheets.length
-          if (team.adminScore !== null && team.adminScore !== undefined && (team.round || 1) === 1) {
-            totalScore = team.adminScore
-          } else {
-            totalScore = averageFromSheets(r1Sheets)
-          }
-          totalScore += bonus
+          totalScore = averageFromSheets(r1Sheets) + bonus
         }
       } else if (targetRound === 2) {
         if (useLiveRound2Scores) {
-          if ((team.round || 1) >= 3 && team.round2Score !== null && team.round2Score !== undefined) {
+          const r2Sheets = sheetsForRound(team.scoreSheets, 2)
+          // Admin / ops live R2 board: override beats frozen R2 and sheets.
+          if (hasAdminOverride && teamRound >= 2) {
+            totalScore = team.adminScore!
+            judgeCount = team.round2JudgeCount ?? r2Sheets.length
+          } else if (teamRound >= 3 && team.round2Score !== null && team.round2Score !== undefined) {
             totalScore = team.round2Score
             judgeCount = team.round2JudgeCount ?? 0
+          } else if (team.round2Score !== null && team.round2Score !== undefined) {
+            totalScore = team.round2Score
+            judgeCount = team.round2JudgeCount ?? r2Sheets.length
           } else {
-            const r2Sheets = sheetsForRound(team.scoreSheets, 2)
             judgeCount = r2Sheets.length
-            if (team.adminScore !== null && team.adminScore !== undefined && (team.round || 1) === 2) {
-              totalScore = team.adminScore
-            } else {
-              // Round 2: sum every judge's sheet. 5 judges → /50, 4 → /40, 3 → /30.
-              totalScore = sumFromSheets(r2Sheets)
-            }
+            // Round 2: sum every judge's sheet. 5 judges → /50, 4 → /40, 3 → /30.
+            totalScore = sumFromSheets(r2Sheets)
           }
         } else if (team.round1Score !== null && team.round1Score !== undefined) {
           // Qualifier announcement board: always Round 1, even after R2 judging.
@@ -112,13 +115,15 @@ export class LeaderboardService {
           totalScore = averageFromSheets(r1Sheets) + bonus
         }
       } else {
-        // Round 3 is reveal-only. Final ranking is always the Round 2 score
-        // frozen at promotion. There is no third judging round.
-        if (team.round2Score !== null && team.round2Score !== undefined) {
+        // Round 3 is reveal-only. Prefer admin override, else frozen Round 2 score.
+        const r2Sheets = sheetsForRound(team.scoreSheets, 2)
+        if (hasAdminOverride) {
+          totalScore = team.adminScore!
+          judgeCount = team.round2JudgeCount ?? r2Sheets.length
+        } else if (team.round2Score !== null && team.round2Score !== undefined) {
           totalScore = team.round2Score
           judgeCount = team.round2JudgeCount ?? 0
         } else {
-          const r2Sheets = sheetsForRound(team.scoreSheets, 2)
           judgeCount = r2Sheets.length
           totalScore = sumFromSheets(r2Sheets)
         }
@@ -133,6 +138,11 @@ export class LeaderboardService {
         judgeCount,
         previousRank: (team as any).leaderboard?.rank ?? undefined,
         round: team.round,
+        adminOverride: hasAdminOverride && (
+          (targetRound === 1 && teamRound === 1)
+          || (targetRound === 2 && useLiveRound2Scores && teamRound >= 2)
+          || targetRound === 3
+        ),
         scores: [],
       }
     })
@@ -188,26 +198,29 @@ export class LeaderboardService {
         (team as any).bonusVerifiedAt || (team as any).bonusVerifiedBy
           ? team.bonusPoints || 0
           : 0
+      const teamRound = team.round || 1
+      const hasAdminOverride = team.adminScore !== null && team.adminScore !== undefined
 
       let totalScore = 0
       let judgeCount = 0
 
       if (targetRound === 1) {
-        if (team.round1Score !== null && team.round1Score !== undefined) {
+        const r1Sheets = sheetsForRound(team.scoreSheets, 1)
+        judgeCount = team.round1JudgeCount ?? r1Sheets.length
+        if (hasAdminOverride && teamRound === 1) {
+          totalScore = team.adminScore!
+        } else if (team.round1Score !== null && team.round1Score !== undefined) {
           totalScore = team.round1Score
           judgeCount = team.round1JudgeCount ?? 0
         } else {
-          const r1Sheets = sheetsForRound(team.scoreSheets, 1)
-          judgeCount = r1Sheets.length
-          if (team.adminScore !== null && team.adminScore !== undefined && (team.round || 1) === 1) {
-            totalScore = team.adminScore
-          } else {
-            totalScore = averageFromSheets(r1Sheets)
-          }
-          totalScore += bonus
+          totalScore = averageFromSheets(r1Sheets) + bonus
         }
       } else {
-        if (team.round2Score !== null && team.round2Score !== undefined) {
+        const r2Sheets = sheetsForRound(team.scoreSheets, 2)
+        if (hasAdminOverride && teamRound >= 2) {
+          totalScore = team.adminScore!
+          judgeCount = team.round2JudgeCount ?? r2Sheets.length
+        } else if (team.round2Score !== null && team.round2Score !== undefined) {
           totalScore = team.round2Score
           judgeCount = team.round2JudgeCount ?? 0
         } else if (!round2JudgingStarted) {
@@ -220,13 +233,8 @@ export class LeaderboardService {
             totalScore = averageFromSheets(r1Sheets) + bonus
           }
         } else {
-          const r2Sheets = sheetsForRound(team.scoreSheets, 2)
           judgeCount = r2Sheets.length
-          if (team.adminScore !== null && team.adminScore !== undefined && (team.round || 1) === 2) {
-            totalScore = team.adminScore
-          } else {
-            totalScore = sumFromSheets(r2Sheets)
-          }
+          totalScore = sumFromSheets(r2Sheets)
         }
       }
 
@@ -258,29 +266,36 @@ export class LeaderboardService {
   }
 
   async updateAdminScore(teamId: string, score: number | null) {
-    if (score === 0) {
-      const team = await this.prisma.team.findUnique({ where: { id: teamId } })
-      const currentRound = team?.round || 1
-      const scoreSheets = await this.prisma.scoreSheet.findMany({
-        where: { teamId, round: currentRound },
-      })
-      const sheetIds = scoreSheets.map(s => s.id)
-      
-      if (sheetIds.length > 0) {
-        await this.prisma.score.deleteMany({ where: { scoreSheetId: { in: sheetIds } } })
-        await this.prisma.scoreSheet.deleteMany({ where: { id: { in: sheetIds } } })
-      }
-      
+    const team = await this.prisma.team.findUnique({ where: { id: teamId } })
+    if (!team) throw new NotFoundException('Team not found')
+
+    const teamRound = team.round || 1
+
+    if (score === null) {
+      // Clear override only — keep frozen round scores / judge sheets intact.
       await this.prisma.team.update({
         where: { id: teamId },
         data: { adminScore: null },
       })
-    } else {
-      await this.prisma.team.update({
-        where: { id: teamId },
-        data: { adminScore: score },
-      })
+      return
     }
-    await this.getLeaderboard({ round: 1 })
+
+    // Persist override AND sync the frozen score field so LCD / promote / boards match.
+    const data: {
+      adminScore: number
+      round1Score?: number
+      round2Score?: number
+    } = { adminScore: score }
+
+    if (teamRound <= 1) {
+      data.round1Score = score
+    } else {
+      data.round2Score = score
+    }
+
+    await this.prisma.team.update({
+      where: { id: teamId },
+      data,
+    })
   }
 }
