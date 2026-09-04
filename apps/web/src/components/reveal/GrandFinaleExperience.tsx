@@ -37,7 +37,8 @@ const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
 const PODIUM = '/images/finale-podium-transparent.png'
 const EASE = [0.22, 1, 0.36, 1] as const
 /** Fixed subtitle under the revealed team name on LCD. */
-const REVEAL_META = 'AI குரல் · VOICE FOR TAMIL NADU · 2026'
+const REVEAL_META = 'VOICEATHON 2026'
+const RANK_GLYPH_FONT = '"Libre Baskerville", "Times New Roman", Georgia, serif'
 
 function clamp(n: number) {
   return Math.min(1, Math.max(0, n))
@@ -209,13 +210,15 @@ function Wreath({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.28, ease: EASE }}
-                className={`flex items-center justify-center text-center font-serif font-black leading-none ${
+                className={`flex items-center justify-center text-center font-black leading-none ${
                   locked ? 'text-amber-200' : 'text-amber-200/40'
                 }`}
                 style={{
-                  fontSize: 'clamp(2.75rem, 82cqh, 9rem)',
+                  fontFamily: RANK_GLYPH_FONT,
+                  fontSize: 'clamp(2.15rem, 68cqh, 7rem)',
+                  letterSpacing: '-0.02em',
                   textShadow: locked
-                    ? '0 0 28px rgba(251, 191, 36, 0.45), 0 2px 0 rgba(0,0,0,0.35)'
+                    ? '0 0 24px rgba(251, 191, 36, 0.4), 0 2px 0 rgba(0,0,0,0.35)'
                     : undefined,
                 }}
               >
@@ -1099,7 +1102,7 @@ export function TopFiveLineup({ finalists }: { finalists: GrandFinaleEntry[] }) 
                   >
                     {entry.teamName || '—'}
                   </h3>
-                  <p className="mt-1 max-w-[14ch] truncate text-[10px] text-white/35 sm:text-xs">
+                  <p className="mt-1 max-w-[16ch] truncate text-[10px] text-white/35 sm:text-xs tracking-[0.12em]">
                     {REVEAL_META}
                   </p>
                   <p

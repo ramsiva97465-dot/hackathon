@@ -121,7 +121,7 @@ export function ParticipantCertificate({
   }
 
   const handleShareLinkedIn = () => {
-    const text = `Honored to receive my Official Certificate of Participation for Voice-A-Thon 2026 — India's Biggest Voice-a-thon (Tamil Nadu Edition).\n\nBuilding Voice AI with SnapServe AI & Vobiz. Team "${teamName}" • Track "${trackName}".\n\n#SnapServe #VoiceAI #VoiceAThon2026`
+    const text = `Honored to receive my Official Certificate of Participation for Voice-A-Thon 2026 — India's Biggest Voice-a-thon (Tamil Nadu Edition).\n\nBuilding Voice AI with SnapServe AI. Team "${teamName}" • Track "${trackName}".\n\n#SnapServe #VoiceAI #VoiceAThon2026`
     navigator.clipboard.writeText(text)
     toast.success('LinkedIn post text copied!')
     window.open('https://www.linkedin.com/feed/', '_blank')

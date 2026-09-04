@@ -143,7 +143,8 @@ function FinaleReadyPodiums() {
                 transition={{ duration: 3, repeat: Infinity, delay: index * 0.22, ease: 'easeInOut' }}
               />
               <motion.span
-                className="absolute left-1/2 top-[43%] z-10 -translate-x-1/2 -translate-y-1/2 font-serif text-2xl font-black text-amber-200 drop-shadow-[0_0_12px_rgba(251,191,36,0.8)] sm:text-4xl"
+                className="absolute left-1/2 top-[43%] z-10 -translate-x-1/2 -translate-y-1/2 text-xl font-black text-amber-200 drop-shadow-[0_0_12px_rgba(251,191,36,0.8)] sm:text-3xl"
+                style={{ fontFamily: '"Libre Baskerville", "Times New Roman", Georgia, serif' }}
                 animate={place <= 2 ? { opacity: [0.55, 1, 0.55] } : undefined}
                 transition={place <= 2 ? { duration: 2.2, repeat: Infinity, delay: index * 0.25 } : undefined}
               >
@@ -890,7 +891,7 @@ export function PremiumRevealCard({
                   className="flex items-center justify-center gap-3 flex-wrap text-lg xl:text-xl font-medium text-slate-300"
                 >
                   <span className="font-semibold text-white/90 text-center text-base xl:text-lg tracking-wide">
-                    AI குரல் · VOICE FOR TAMIL NADU · 2026
+                    VOICEATHON 2026
                   </span>
                 </motion.div>
               )}
