@@ -1621,7 +1621,7 @@ export function LeaderboardPage() {
                 <div className="flex items-center justify-center gap-3">
                   <span className="h-px w-10 sm:w-12 bg-gradient-to-r from-transparent to-[#E83C00]/40" />
                   <h2 className="text-[#E83C00] font-black tracking-[0.28em] uppercase text-xs">
-                    AI குரல் · VOICE FOR TAMIL NADU · 2026
+                    VOICEATHON 2026
                   </h2>
                   <span className="h-px w-10 sm:w-12 bg-gradient-to-l from-transparent to-[#E83C00]/40" />
                 </div>
@@ -1761,7 +1761,7 @@ export function LeaderboardPage() {
                   <div className="flex items-center justify-center gap-3">
                     <span className="h-px w-10 sm:w-12 bg-gradient-to-r from-transparent to-[#E83C00]/40" />
                     <h2 className="text-[#E83C00] font-black tracking-[0.28em] uppercase text-xs">
-                      AI குரல் · VOICE FOR TAMIL NADU · 2026
+                      VOICEATHON 2026
                     </h2>
                     <span className="h-px w-10 sm:w-12 bg-gradient-to-l from-transparent to-[#E83C00]/40" />
                   </div>
@@ -2087,7 +2087,7 @@ export function LeaderboardPage() {
                   <div className="flex items-center justify-center gap-3 mb-1">
                     <span className="h-px w-8 bg-gradient-to-r from-transparent to-[#E83C00]/40" />
                     <h2 className="text-[#E83C00] font-black tracking-[0.28em] uppercase text-xs">
-                      AI குரல் · VOICE FOR TAMIL NADU · 2026
+                      VOICEATHON 2026
                     </h2>
                     <span className="h-px w-8 bg-gradient-to-l from-transparent to-[#E83C00]/40" />
                   </div>
