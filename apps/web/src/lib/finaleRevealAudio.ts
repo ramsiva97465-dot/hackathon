@@ -89,23 +89,26 @@ function noiseBurst(audio: AudioContext, start: number, dur: number, peak: numbe
 /**
  * Starts a reveal score sized to `durationMs`.
  * Hits sync with crown rise → 5/4/3/2/1 → letter roll → score → name lock.
- * Rank 2 uses Final Two face-off timing; rank 1 uses Champion countdown/roll/win.
+ * Rank 1 → Champion bed. Rank 2 + finalTwo (default) → Final Two bed.
+ * Rank 2 with finalTwo:false → place bed (Special Category Runner).
  */
-export function playFinaleRevealBed(rank: number, durationMs = 28_000) {
+export function playFinaleRevealBed(
+  rank: number,
+  durationMs = 28_000,
+  options?: { finalTwo?: boolean },
+) {
   clearBed()
   const audio = getCtx()
   if (!audio) return
   const t0 = audio.currentTime + 0.02
   const d = Math.max(8, durationMs / 1000)
-  const isChamp = rank === 1
-  const isSecond = rank === 2
 
-  if (isSecond) {
-    playFinalTwoBed(audio, t0, d, durationMs)
+  if (rank === 1) {
+    playChampionBed(audio, t0, d, durationMs)
     return
   }
-  if (isChamp) {
-    playChampionBed(audio, t0, d, durationMs)
+  if (rank === 2 && options?.finalTwo !== false) {
+    playFinalTwoBed(audio, t0, d, durationMs)
     return
   }
 
