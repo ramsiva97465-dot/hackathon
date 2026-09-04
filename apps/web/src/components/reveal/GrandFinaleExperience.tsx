@@ -421,7 +421,7 @@ function Stage({
 const FALL_WORDS = [
   { text: 'SNAPSERVE', x: 8, size: '1.1rem', weight: 700, gold: true },
   { text: 'VOBIZ', x: 38, size: '1.05rem', weight: 700, gold: true },
-  { text: 'GENXAI', x: 68, size: '1rem', weight: 650, gold: true },
+  { text: 'zenXai', x: 68, size: '1rem', weight: 650, gold: true },
   { text: 'TELE CMI', x: 18, size: '0.95rem', weight: 600, gold: true },
   { text: 'RENDINGTON', x: 52, size: '0.95rem', weight: 600, gold: true },
   { text: 'VOICEATHON', x: 78, size: '0.9rem', weight: 500, gold: false },
