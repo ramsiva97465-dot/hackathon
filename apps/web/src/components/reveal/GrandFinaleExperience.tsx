@@ -336,6 +336,9 @@ export const FIFTH_HOLD_MS = 5_000
 export const FIFTH_PREFACE_MS = FIFTH_RAIN_MS + FIFTH_HOLD_MS
 export const FIFTH_TOTAL_MS = FIFTH_PREFACE_MS + FINALE_BEAT_MS
 /** Grand Champion popup: countdown → rolling → winner hold. */
+export const CHAMPION_COUNT_MS = 6_000
+export const CHAMPION_ROLL_MS = 6_000
+export const CHAMPION_WIN_AT_MS = CHAMPION_COUNT_MS + CHAMPION_ROLL_MS
 export const CHAMPION_TOTAL_MS = 22_000
 
 function StageMedia({
@@ -898,10 +901,10 @@ function Champion({
   finished: boolean
   placeKickers?: Partial<Record<number, string>>
 }) {
-  // 22s: countdown → rolling tiles → winner hold.
-  const COUNT_MS = 6_000
-  const ROLL_MS = 6_000
-  const WIN_AT = COUNT_MS + ROLL_MS
+  // One 22s beat: countdown → rolling tiles → winner hold (until stepDuration ends).
+  const COUNT_MS = CHAMPION_COUNT_MS
+  const ROLL_MS = CHAMPION_ROLL_MS
+  const WIN_AT = CHAMPION_WIN_AT_MS
   const stage = finished || elapsed >= WIN_AT
     ? 'winner'
     : elapsed < COUNT_MS

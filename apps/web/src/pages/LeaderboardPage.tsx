@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { SnapServeMark, VobizLockup } from '@/components/brand/BrandLogos'
 import { PremiumRevealCard } from '@/components/reveal/PremiumRevealCard'
-import { GrandFinaleExperience, TopFiveLineup } from '@/components/reveal/GrandFinaleExperience'
+import { GrandFinaleExperience, TopFiveLineup, CHAMPION_TOTAL_MS, CHAMPION_WIN_AT_MS } from '@/components/reveal/GrandFinaleExperience'
 import { Avatar } from '@/components/ui/Avatar'
 import { getTrackConfig } from '@/lib/utils'
 import { unlockFinaleAudio } from '@/lib/finaleRevealAudio'
@@ -29,12 +29,12 @@ function finalePlace(rank: number) {
 /** Step 1=5th … 5=champion — countdown → rolling → name (slow) */
 function finaleCountdownStart(step: number) {
   if (step === 1) return 41 // 8s rain + 5s hold + 28s reveal
-  if (step === 5) return 22 // countdown → rolling → champion hold → lineup
+  if (step === 5) return CHAMPION_TOTAL_MS / 1000 // countdown → rolling → name → lineup
   return 28
 }
 
 // ── Cinematic Confetti FX for Grand Finale ────────────────────────────────────
-function triggerFinaleConfetti(rank: number) {
+function triggerFinaleConfetti(rank: number, durationMs?: number) {
   try {
     if (rank === 3) {
       // Bronze confetti burst from right
@@ -60,8 +60,8 @@ function triggerFinaleConfetti(rank: number) {
         colors: ['#78716c', '#a8a29e', '#e7e5e4', '#ffffff']
       })
     } else if (rank === 1) {
-      // 👑 GRAND CHAMPION — full-screen blast for the full champion solo hold
-      const duration = 22 * 1000
+      // 👑 GRAND CHAMPION — blast only during the winner-hold window (ends with the 22s beat)
+      const duration = Math.max(1_000, durationMs ?? (CHAMPION_TOTAL_MS - CHAMPION_WIN_AT_MS))
       const end = Date.now() + duration
       const colors = ['#E83C00', '#F59E0B', '#FFD700', '#FBBF24', '#FFFFFF', '#10B981']
 
@@ -1150,6 +1150,16 @@ export function LeaderboardPage() {
     setNameSpinMs(spinMs)
     setRevealedStep(targetStep)
 
+    // Champion confetti starts when the name popup opens — ends with the same 22s beat.
+    if (isFinaleStep && currentRank === 1) {
+      const winDelay = Math.max(0, CHAMPION_WIN_AT_MS - elapsed)
+      const confettiMs = Math.max(1_000, remainingMs - winDelay)
+      window.setTimeout(() => {
+        if (!isRevealingRef.current || animatingStepRef.current !== targetStep) return
+        triggerFinaleConfetti(1, confettiMs)
+      }, winDelay)
+    }
+
     if (revealCompletionTimerRef.current) {
       clearTimeout(revealCompletionTimerRef.current)
     }
@@ -1169,7 +1179,8 @@ export function LeaderboardPage() {
         playRevealChime(currentRank)
       }
       if (isFinaleStep) {
-        triggerFinaleConfetti(currentRank)
+        // Champion confetti already ran during the winner hold; others burst on lock.
+        if (currentRank !== 1) triggerFinaleConfetti(currentRank)
         const place = finalePlace(currentRank)
         speakCountdown((currentRank === 1 ? 'Grand Champion, ' : place.speak) + winnerName)
       } else {
@@ -1241,11 +1252,18 @@ export function LeaderboardPage() {
     if (hasAutoScrolledRef.current || holdStartedRef.current || autoScrollTimerRef.current) return
 
     holdStartedRef.current = true
+
+    // Champion popup already ran the full 22s beat. Switch to Top 5 lineup
+    // immediately when decrypt ends — do not wait another 22s.
+    if (isFinale) {
+      hasAutoScrolledRef.current = true
+      triggerFinaleLineupConfetti()
+      setRosterShown(true)
+      return
+    }
+
     autoScrollTimerRef.current = setTimeout(() => {
       autoScrollTimerRef.current = null
-      if (revealRoundRef.current === 3) {
-        triggerFinaleLineupConfetti()
-      }
       jumpToTop20Table()
     }, 22000)
   }, [isRevealing, revealedStep, isFinale, unlockedRanks.length, isDecrypting])
