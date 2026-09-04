@@ -41,6 +41,17 @@ export class LeaderboardController {
     })
   }
 
+  @Get('special')
+  getSpecialLeaderboard(
+    @Query('hackathonId') hackathonId?: string,
+    @Query('round') round?: string
+  ) {
+    return this.service.getSpecialLeaderboard({
+      hackathonId,
+      round: round ? Number(round) : undefined
+    })
+  }
+
   @Get('tv-mode')
   getTvMode() {
     return { tvMode: this.gateway.getTvMode() }
@@ -80,6 +91,31 @@ export class LeaderboardController {
   async stopReveal() {
     await this.gateway.broadcastStopReveal()
     return { success: true, isRevealing: false }
+  }
+
+  @Get('special/reveal-state')
+  getSpecialRevealState() {
+    return this.gateway.getSpecialRevealState()
+  }
+
+  @Post('special/reveal-start')
+  async startSpecialReveal(@Body() dto: { phase?: 'TOP5' | 'FINALE' }) {
+    const phase = dto.phase === 'FINALE' ? 'FINALE' : 'TOP5'
+    await this.gateway.broadcastSpecialRevealStart(phase)
+    return { success: true, ...this.gateway.getSpecialRevealState() }
+  }
+
+  @Post('special/reveal-step')
+  async setSpecialRevealStep(@Body() dto: { step: number; phase?: 'TOP5' | 'FINALE' }) {
+    const step = Number(dto.step ?? 0)
+    await this.gateway.broadcastSpecialRevealStep(step, dto.phase)
+    return { success: true, ...this.gateway.getSpecialRevealState() }
+  }
+
+  @Post('special/reveal-stop')
+  async stopSpecialReveal() {
+    await this.gateway.broadcastSpecialRevealStop()
+    return { success: true, ...this.gateway.getSpecialRevealState() }
   }
 
   @Post('admin-score')

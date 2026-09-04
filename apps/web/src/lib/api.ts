@@ -77,6 +77,10 @@ export const api = {
       apiClient.post('/teams/submit-project', data),
     promote: (currentRound: number) =>
       apiClient.post('/teams/promote', { currentRound }),
+    promoteSpecial: () =>
+      apiClient.post('/teams/special/promote'),
+    autoDistributeSpecialJudges: (round?: number) =>
+      apiClient.post('/teams/special/auto-distribute-judges', { round }),
     undoFinalists: () =>
       apiClient.post('/teams/undo-finalists'),
     resetRounds: () =>
@@ -114,6 +118,8 @@ export const api = {
   leaderboard: {
     get: (params?: { round?: number; hackathonId?: string }) =>
       apiClient.get('/leaderboard', { params }),
+    getSpecial: (params?: { round?: number; hackathonId?: string }) =>
+      apiClient.get('/leaderboard/special', { params }),
     adminScore: (teamId: string, score: number | null) =>
       apiClient.post('/leaderboard/admin-score', { teamId, score }),
     getTvMode: () => apiClient.get('/leaderboard/tv-mode'),
@@ -127,6 +133,12 @@ export const api = {
     setRevealStep: (step: number, round: number) =>
       apiClient.post('/leaderboard/reveal-step', { step, round }),
     stopReveal: () => apiClient.post('/leaderboard/reveal-stop'),
+    getSpecialRevealState: () => apiClient.get('/leaderboard/special/reveal-state'),
+    startSpecialReveal: (phase: 'TOP5' | 'FINALE') =>
+      apiClient.post('/leaderboard/special/reveal-start', { phase }),
+    setSpecialRevealStep: (step: number, phase?: 'TOP5' | 'FINALE') =>
+      apiClient.post('/leaderboard/special/reveal-step', { step, phase }),
+    stopSpecialReveal: () => apiClient.post('/leaderboard/special/reveal-stop'),
   },
 
   // Emails

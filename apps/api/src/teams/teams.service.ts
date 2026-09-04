@@ -121,6 +121,7 @@ export class TeamsService {
       bonusPoints: t.bonusPoints,
       followedInstagram: t.followedInstagram,
       followedLinkedin: t.followedLinkedin,
+      isSpecialCategory: Boolean(t.isSpecialCategory),
     }))
 
     return { success: true, data: mapped }
@@ -205,7 +206,7 @@ export class TeamsService {
       }
     }
 
-    const whereClause: any = { status: 'COMPETING' }
+    const whereClause: any = { status: 'COMPETING', isSpecialCategory: false }
     if (round !== undefined && round !== null) {
       whereClause.round = Number(round)
     } else {
@@ -412,6 +413,7 @@ export class TeamsService {
               trackId,
               tableNumber: teamInput.tableNumber || null,
               status: 'COMPETING',
+              isSpecialCategory: Boolean(teamInput.isSpecialCategory),
             }
           })
           createdTeams++
@@ -421,6 +423,9 @@ export class TeamsService {
             data: {
               tableNumber: teamInput.tableNumber || team.tableNumber,
               trackId,
+              ...(teamInput.isSpecialCategory !== undefined
+                ? { isSpecialCategory: Boolean(teamInput.isSpecialCategory) }
+                : {}),
             }
           })
         }
@@ -724,7 +729,7 @@ export class TeamsService {
 
     if (currentRound === 1) {
       const teams = await this.prisma.team.findMany({
-        where: { hackathonId: hackathon.id, status: 'COMPETING' },
+        where: { hackathonId: hackathon.id, status: 'COMPETING', isSpecialCategory: false },
         include: {
           scoreSheets: {
             where: { isSubmitted: true },
@@ -770,7 +775,9 @@ export class TeamsService {
         data: { round: 2, adminScore: null }
       })
 
-      await this.prisma.judgeAssignment.deleteMany({})
+      await this.prisma.judgeAssignment.deleteMany({
+        where: { team: { isSpecialCategory: false } },
+      })
 
       this.leaderboardGateway.broadcastLeaderboardUpdate().catch(err =>
         console.error('[WS] Promote R1→R2 broadcast failed:', err)
@@ -782,7 +789,7 @@ export class TeamsService {
       return { success: true, promotedCount: top20Ids.length }
     } else if (currentRound === 2) {
       const teams = await this.prisma.team.findMany({
-        where: { hackathonId: hackathon.id, status: 'COMPETING', round: { in: [2, 3] } },
+        where: { hackathonId: hackathon.id, status: 'COMPETING', isSpecialCategory: false, round: { in: [2, 3] } },
         include: {
           scoreSheets: {
             where: { isSubmitted: true },
@@ -821,13 +828,16 @@ export class TeamsService {
         where: {
           hackathonId: hackathon.id,
           status: 'COMPETING',
+          isSpecialCategory: false,
           round: { in: [2, 3] },
           id: { notIn: top5Ids },
         },
         data: { round: 2 },
       })
 
-      await this.prisma.judgeAssignment.deleteMany({})
+      await this.prisma.judgeAssignment.deleteMany({
+        where: { team: { isSpecialCategory: false } },
+      })
 
       this.leaderboardGateway.broadcastLeaderboardUpdate().catch(err =>
         console.error('[WS] Promote R2→R3 broadcast failed:', err)
@@ -854,7 +864,7 @@ export class TeamsService {
     if (!hackathon) throw new Error('No hackathon found')
 
     const finalists = await this.prisma.team.findMany({
-      where: { hackathonId: hackathon.id, status: 'COMPETING', round: 3 },
+      where: { hackathonId: hackathon.id, status: 'COMPETING', round: 3, isSpecialCategory: false },
       select: { id: true, name: true },
     })
 
@@ -876,6 +886,148 @@ export class TeamsService {
       movedBack: finalists.length,
       teams: finalists.map(t => t.name),
       message: `Moved ${finalists.length} finalists back to Round 2. Assign judges and finish Round 2 scoring, then promote the Top 5 again.`,
+    }
+  }
+
+  /** Promote Special Category Round 1 → Top 5 in Round 2. Never touches main teams. */
+  async promoteSpecialCategory() {
+    const hackathon = await this.prisma.hackathon.findFirst()
+    if (!hackathon) throw new Error('No hackathon found')
+
+    const teams = await this.prisma.team.findMany({
+      where: {
+        hackathonId: hackathon.id,
+        status: 'COMPETING',
+        isSpecialCategory: true,
+        round: 1,
+      },
+      include: {
+        scoreSheets: {
+          where: { isSubmitted: true },
+          include: { scores: true },
+        },
+      },
+    })
+
+    if (teams.length === 0) {
+      throw new Error('No Special Category Round 1 teams found to promote.')
+    }
+
+    const scored = teams.map((t) => {
+      const submittedSheets = t.scoreSheets.filter((s) => s.isSubmitted && (s.round || 1) === 1)
+      let overallScore = 0
+      if (t.adminScore !== null && t.adminScore !== undefined) {
+        overallScore = t.adminScore
+      } else if (submittedSheets.length > 0) {
+        const total = submittedSheets.reduce((sum, sheet) => {
+          return sum + sheet.scores.reduce((sSum, sc) => sSum + sc.score, 0)
+        }, 0)
+        overallScore = total / submittedSheets.length
+      }
+      if (t.bonusVerifiedAt || t.bonusVerifiedBy) {
+        overallScore += t.bonusPoints || 0
+      }
+      return { id: t.id, overallScore, judgeCount: submittedSheets.length }
+    })
+
+    const sorted = [...scored].sort((a, b) => b.overallScore - a.overallScore)
+    const top5 = sorted.slice(0, 5)
+    const top5Ids = top5.map((t) => t.id)
+    const restIds = sorted.slice(5).map((t) => t.id)
+
+    await Promise.all(
+      top5.map((t) =>
+        this.prisma.team.update({
+          where: { id: t.id },
+          data: { round1Score: t.overallScore, round1JudgeCount: t.judgeCount },
+        }),
+      ),
+    )
+
+    if (restIds.length > 0) {
+      await this.prisma.team.updateMany({
+        where: { id: { in: restIds } },
+        data: { round: 1 },
+      })
+    }
+
+    await this.prisma.team.updateMany({
+      where: { id: { in: top5Ids } },
+      data: { round: 2, adminScore: null },
+    })
+
+    await this.prisma.judgeAssignment.deleteMany({
+      where: { teamId: { in: top5Ids } },
+    })
+
+    this.leaderboardGateway.broadcastSpecialLeaderboardUpdate().catch((err) =>
+      console.error('[WS] Special promote broadcast failed:', err),
+    )
+
+    return { success: true, promotedCount: top5Ids.length }
+  }
+
+  /** Assign every judge to every Special Category team in the given round. */
+  async autoDistributeSpecialJudges(round: number = 1) {
+    const targetRound = Number(round) || 1
+    if (targetRound !== 1 && targetRound !== 2) {
+      return { success: false, message: 'Special Category only uses Round 1 and Round 2.' }
+    }
+
+    const teams = await this.prisma.team.findMany({
+      where: {
+        status: 'COMPETING',
+        isSpecialCategory: true,
+        round: targetRound,
+      },
+    })
+    const judges = await this.prisma.judge.findMany()
+
+    if (teams.length === 0) {
+      return { success: false, message: `No Special Category teams found in Round ${targetRound}.` }
+    }
+    if (judges.length === 0) {
+      return { success: false, message: 'No judges available.' }
+    }
+
+    let created = 0
+    for (const team of teams) {
+      for (const judge of judges) {
+        const existing = await this.prisma.judgeAssignment.findUnique({
+          where: { judgeId_teamId: { judgeId: judge.id, teamId: team.id } },
+        })
+        if (!existing) {
+          await this.prisma.judgeAssignment.create({
+            data: {
+              hackathonId: team.hackathonId,
+              judgeId: judge.id,
+              teamId: team.id,
+            },
+          })
+          created++
+        }
+        const existingSheet = await this.prisma.scoreSheet.findUnique({
+          where: {
+            judgeId_teamId_round: { judgeId: judge.id, teamId: team.id, round: targetRound },
+          },
+        })
+        if (!existingSheet) {
+          await this.prisma.scoreSheet.create({
+            data: {
+              hackathonId: team.hackathonId,
+              judgeId: judge.id,
+              teamId: team.id,
+              round: targetRound,
+            },
+          })
+        }
+      }
+    }
+
+    return {
+      success: true,
+      message: `Assigned all ${judges.length} judges to all ${teams.length} Special Category Round ${targetRound} teams. Team totals are out of ${judges.length * 10}.`,
+      created,
     }
   }
 

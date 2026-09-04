@@ -28,6 +28,14 @@ export function RoundsManagement() {
   const [revealNextAllowedAt, setRevealNextAllowedAt] = useState(0)
   const [stageClock, setStageClock] = useState(() => Date.now())
   const [revealedQualifierRanks, setRevealedQualifierRanks] = useState<number[]>([])
+
+  // Special Category ceremony (isolated from main Top 20 / Top 5)
+  const [specialIsRevealing, setSpecialIsRevealing] = useState(false)
+  const [specialPhase, setSpecialPhase] = useState<'TOP5' | 'FINALE'>('TOP5')
+  const [specialStep, setSpecialStep] = useState(0)
+  const [specialR1Count, setSpecialR1Count] = useState(0)
+  const [specialR2Count, setSpecialR2Count] = useState(0)
+  const [distributingSpecial, setDistributingSpecial] = useState(false)
   
   // Stats
   const [round1Count, setRound1Count] = useState(0)
@@ -37,9 +45,13 @@ export function RoundsManagement() {
   useEffect(() => {
     fetchLeaderboard()
     fetchRevealState()
+    fetchSpecialRevealState()
+    fetchSpecialCounts()
     const interval = setInterval(() => {
       fetchLeaderboard(true)
       fetchRevealState()
+      fetchSpecialRevealState()
+      fetchSpecialCounts(true)
     }, 4000)
     return () => clearInterval(interval)
   }, [activeTab])
@@ -70,6 +82,139 @@ export function RoundsManagement() {
       }
     } catch (err) {
       // Ignore
+    }
+  }
+
+  const fetchSpecialRevealState = async () => {
+    try {
+      const res = await api.leaderboard.getSpecialRevealState()
+      if (typeof res.data?.isRevealing === 'boolean') {
+        setSpecialIsRevealing(res.data.isRevealing)
+      }
+      if (res.data?.phase === 'TOP5' || res.data?.phase === 'FINALE') {
+        setSpecialPhase(res.data.phase)
+      }
+      if (typeof res.data?.step === 'number') {
+        setSpecialStep(res.data.step)
+      }
+    } catch {
+      // Ignore
+    }
+  }
+
+  const fetchSpecialCounts = async (silent = false) => {
+    try {
+      const [r1, r2] = await Promise.all([
+        api.leaderboard.getSpecial({ round: 1 }),
+        api.leaderboard.getSpecial({ round: 2 }),
+      ])
+      if (Array.isArray(r1.data)) setSpecialR1Count(r1.data.length)
+      if (Array.isArray(r2.data)) setSpecialR2Count(r2.data.length)
+    } catch {
+      if (!silent) {
+        // counts are optional
+      }
+    }
+  }
+
+  const handlePromoteSpecial = async () => {
+    if (!window.confirm('Promote the Top 5 Special Category teams from Round 1 to Round 2?')) return
+    try {
+      setLoading(true)
+      const res = await api.teams.promoteSpecial()
+      if (res.data?.success) {
+        toast.success(res.data.message || `Promoted ${res.data.promotedCount ?? 5} Special Category teams to Round 2.`)
+        await fetchSpecialCounts()
+        await fetchLeaderboard(true)
+      } else {
+        toast.error(res.data?.message || 'Special Category promote failed.')
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to promote Special Category teams.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSpecialAutoDistribute = async (round: 1 | 2) => {
+    try {
+      setDistributingSpecial(true)
+      const res = await api.teams.autoDistributeSpecialJudges(round)
+      if (res.data?.success) {
+        toast.success(res.data.message || `Assigned all judges to Special Category Round ${round}.`)
+      } else {
+        toast.error(res.data?.message || 'Special Category auto-assign failed.')
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to assign Special Category judges.')
+    } finally {
+      setDistributingSpecial(false)
+    }
+  }
+
+  const handleStartSpecialReveal = async (phase: 'TOP5' | 'FINALE') => {
+    try {
+      setLoading(true)
+      await api.leaderboard.startSpecialReveal(phase)
+      setSpecialIsRevealing(true)
+      setSpecialPhase(phase)
+      setSpecialStep(0)
+      toast.success(
+        phase === 'TOP5'
+          ? 'Special Category Top 5 ceremony opened on the LCD.'
+          : 'Special Category Finale opened — reveal Runner, then Winner.'
+      )
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to start Special Category reveal.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSpecialRevealStep = async (step: number, phase: 'TOP5' | 'FINALE') => {
+    const expected = specialIsRevealing && specialPhase === phase ? specialStep + 1 : 1
+    if (step !== expected) {
+      toast.error(
+        phase === 'TOP5'
+          ? `Reveal #${6 - expected} first (step ${expected}).`
+          : expected === 1
+            ? 'Reveal Runner first, then Winner.'
+            : 'Reveal Winner next.'
+      )
+      return
+    }
+    try {
+      setLoading(true)
+      if (!specialIsRevealing || specialPhase !== phase) {
+        await api.leaderboard.startSpecialReveal(phase)
+      }
+      await api.leaderboard.setSpecialRevealStep(step, phase)
+      setSpecialIsRevealing(true)
+      setSpecialPhase(phase)
+      setSpecialStep(step)
+      if (phase === 'TOP5') {
+        toast.success(`Special Category #${6 - step} reveal triggered.`)
+      } else {
+        toast.success(step === 1 ? 'Special Category Runner reveal triggered.' : 'Special Category Winner reveal triggered.')
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to step Special Category reveal.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleStopSpecialReveal = async () => {
+    try {
+      setLoading(true)
+      await api.leaderboard.stopSpecialReveal()
+      setSpecialIsRevealing(false)
+      setSpecialStep(0)
+      toast.success('Special Category stage reveal ended.')
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to stop Special Category reveal.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -712,6 +857,152 @@ export function RoundsManagement() {
               </table>
             </div>
           )}
+        </div>
+
+        {/* Special Category — isolated from main Top 20 / Top 5 controls */}
+        <div className="bg-[#0A0A0A] border border-sky-500/30 rounded-2xl p-5 sm:p-6 space-y-5 shadow-2xl relative overflow-hidden">
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-300 text-[11px] font-black uppercase tracking-widest mb-2">
+                <Medal size={13} />
+                Special Category Track
+              </div>
+              <h2 className="text-lg font-black text-white">School Special Category</h2>
+              <p className="text-sm text-slate-400 mt-1 max-w-2xl">
+                Promote Top 5 from Round 1, assign all judges, then reveal on the same /leaderboard LCD — never mixed with main Top 20 / Top 5.
+              </p>
+              <p className="text-xs text-sky-300/80 mt-2 font-semibold">
+                R1 pool: {specialR1Count} · R2 finalists: {specialR2Count}
+                {specialIsRevealing ? ` · Live: ${specialPhase} step ${specialStep}` : ''}
+              </p>
+            </div>
+            {specialIsRevealing && (
+              <button
+                type="button"
+                onClick={handleStopSpecialReveal}
+                disabled={loading}
+                className="flex items-center gap-1.5 px-4 py-2 border border-rose-500/40 bg-rose-500/20 hover:bg-rose-500/30 rounded-xl text-xs font-bold text-rose-300 transition-all cursor-pointer shrink-0"
+              >
+                Exit Special Reveal
+              </button>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handlePromoteSpecial}
+              disabled={loading || specialR1Count === 0}
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-sky-500 hover:bg-sky-400 text-black rounded-xl text-xs font-black transition-all disabled:opacity-50 cursor-pointer"
+            >
+              <Play size={13} />
+              Promote Special Category to Round 2
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSpecialAutoDistribute(1)}
+              disabled={distributingSpecial || specialR1Count === 0}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded-xl text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
+            >
+              <Users size={13} />
+              Assign All Judges · Special R1
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSpecialAutoDistribute(2)}
+              disabled={distributingSpecial || specialR2Count === 0}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded-xl text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
+            >
+              <Users size={13} />
+              Assign All Judges · Special R2
+            </button>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-4 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-black text-sky-200">Reveal Special Category Top 5</h3>
+                <button
+                  type="button"
+                  onClick={() => handleStartSpecialReveal('TOP5')}
+                  disabled={loading || specialR2Count === 0}
+                  className="px-3 py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-200 border border-sky-400/40 text-[10px] font-black uppercase tracking-wider disabled:opacity-50 cursor-pointer"
+                >
+                  Open Ceremony
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-400">Announce #5 → #1 after promote. Sequential lock.</p>
+              <div className="flex flex-wrap gap-2">
+                {[1, 2, 3, 4, 5].map((step) => {
+                  const rank = 6 - step
+                  const done = specialIsRevealing && specialPhase === 'TOP5' && specialStep >= step
+                  const isNext = (!specialIsRevealing || specialPhase !== 'TOP5')
+                    ? step === 1
+                    : specialStep + 1 === step
+                  return (
+                    <button
+                      key={step}
+                      type="button"
+                      onClick={() => handleSpecialRevealStep(step, 'TOP5')}
+                      disabled={loading || !isNext || specialR2Count === 0}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                        done
+                          ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                          : isNext
+                            ? 'bg-sky-500 text-black border border-sky-400 cursor-pointer'
+                            : 'bg-white/5 text-slate-500 border border-white/10 opacity-50 cursor-not-allowed'
+                      }`}
+                    >
+                      {done ? `#${rank} Done` : `Reveal #${rank}`}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-4 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-black text-sky-200">Reveal Winner / Runner</h3>
+                <button
+                  type="button"
+                  onClick={() => handleStartSpecialReveal('FINALE')}
+                  disabled={loading || specialR2Count === 0}
+                  className="px-3 py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-200 border border-sky-400/40 text-[10px] font-black uppercase tracking-wider disabled:opacity-50 cursor-pointer"
+                >
+                  Open Finale
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-400">After Round 2 judging: Runner first, then Winner.</p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { step: 1, label: 'Reveal Runner', doneLabel: 'Runner Done' },
+                  { step: 2, label: 'Reveal Winner', doneLabel: 'Winner Done' },
+                ].map(({ step, label, doneLabel }) => {
+                  const done = specialIsRevealing && specialPhase === 'FINALE' && specialStep >= step
+                  const isNext = (!specialIsRevealing || specialPhase !== 'FINALE')
+                    ? step === 1
+                    : specialStep + 1 === step
+                  return (
+                    <button
+                      key={step}
+                      type="button"
+                      onClick={() => handleSpecialRevealStep(step, 'FINALE')}
+                      disabled={loading || !isNext || specialR2Count === 0}
+                      className={`px-3.5 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                        done
+                          ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                          : isNext
+                            ? 'bg-sky-500 text-black border border-sky-400 cursor-pointer'
+                            : 'bg-white/5 text-slate-500 border border-white/10 opacity-50 cursor-not-allowed'
+                      }`}
+                    >
+                      {done ? doneLabel : label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>

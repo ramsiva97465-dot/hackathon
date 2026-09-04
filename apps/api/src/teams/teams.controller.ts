@@ -120,6 +120,16 @@ export class TeamsController {
     return this.service.promoteTeams(Number(dto.currentRound))
   }
 
+  @Post('special/promote')
+  promoteSpecialCategory() {
+    return this.service.promoteSpecialCategory()
+  }
+
+  @Post('special/auto-distribute-judges')
+  autoDistributeSpecialJudges(@Body() dto: AutoDistributeJudgesDto) {
+    return this.service.autoDistributeSpecialJudges(dto?.round ? Number(dto.round) : 1)
+  }
+
   @Post('undo-finalists')
   undoFinalists() {
     return this.service.undoFinalistPromotion()

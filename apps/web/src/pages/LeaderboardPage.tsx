@@ -441,6 +441,31 @@ export function LeaderboardPage() {
   const holdStartedRef = useRef(false)
   const [rosterShown, setRosterShown] = useState(false)
 
+  // Special Category ceremony (mutual exclusion with main reveal)
+  const [specialIsRevealing, setSpecialIsRevealing] = useState(false)
+  const [specialPhase, setSpecialPhase] = useState<'TOP5' | 'FINALE'>('TOP5')
+  const [specialStep, setSpecialStep] = useState(0)
+  const [specialEntries, setSpecialEntries] = useState<LeaderboardEntry[]>([])
+  const [specialDecrypting, setSpecialDecrypting] = useState(false)
+  const specialIsRevealingRef = useRef(false)
+  const specialStepRef = useRef(0)
+  const specialPhaseRef = useRef<'TOP5' | 'FINALE'>('TOP5')
+  const specialDecryptingRef = useRef(false)
+  const specialDecryptTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    specialIsRevealingRef.current = specialIsRevealing
+  }, [specialIsRevealing])
+  useEffect(() => {
+    specialStepRef.current = specialStep
+  }, [specialStep])
+  useEffect(() => {
+    specialPhaseRef.current = specialPhase
+  }, [specialPhase])
+  useEffect(() => {
+    specialDecryptingRef.current = specialDecrypting
+  }, [specialDecrypting])
+
   useEffect(() => {
     activeRoundRef.current = activeRound
   }, [activeRound])
@@ -515,6 +540,35 @@ export function LeaderboardPage() {
 
   useWebSocket<{ isRevealing: boolean; round?: number; step?: number; startedAt?: number }>('leaderboard:reveal_state', (data) => {
     applyServerRevealState(data, 'poll')
+  })
+
+  useWebSocket<{ isRevealing?: boolean; phase?: 'TOP5' | 'FINALE'; step?: number }>('leaderboard:special_reveal_start', (data) => {
+    applySpecialRevealState({
+      isRevealing: true,
+      phase: data?.phase || 'TOP5',
+      step: 0,
+    })
+  })
+
+  useWebSocket<{ step?: number; phase?: 'TOP5' | 'FINALE' }>('leaderboard:special_reveal_step', (data) => {
+    if (typeof data?.step !== 'number') return
+    applySpecialRevealState({
+      isRevealing: true,
+      phase: data.phase || specialPhaseRef.current,
+      step: data.step,
+    })
+  })
+
+  useWebSocket('leaderboard:special_reveal_stop', () => {
+    stopSpecialReveal()
+  })
+
+  useWebSocket<{ isRevealing?: boolean; phase?: 'TOP5' | 'FINALE'; step?: number }>('leaderboard:special_reveal_state', (data) => {
+    applySpecialRevealState(data)
+  })
+
+  useWebSocket<LeaderboardEntry[]>('leaderboard:special_update', (rows) => {
+    if (Array.isArray(rows)) setSpecialEntries(rows)
   })
 
   // Listen for broadcasted TV Mode toggles from admin panel
@@ -626,6 +680,88 @@ export function LeaderboardPage() {
     }
   }
 
+  const fetchSpecialBoard = async (phase?: 'TOP5' | 'FINALE') => {
+    try {
+      const p = phase || specialPhaseRef.current
+      // TOP5 shortlist uses R2 roster ranked by frozen R1 until R2 judging; FINALE uses R2 sums.
+      const res = await api.leaderboard.getSpecial({ round: 2 })
+      if (Array.isArray(res.data)) setSpecialEntries(res.data)
+      else if (p === 'TOP5') {
+        const r1 = await api.leaderboard.getSpecial({ round: 1 })
+        if (Array.isArray(r1.data)) setSpecialEntries(r1.data)
+      }
+    } catch {
+      // Ignore
+    }
+  }
+
+  const stopSpecialReveal = () => {
+    if (specialDecryptTimerRef.current) {
+      clearTimeout(specialDecryptTimerRef.current)
+      specialDecryptTimerRef.current = null
+    }
+    specialIsRevealingRef.current = false
+    setSpecialIsRevealing(false)
+    setSpecialStep(0)
+    setSpecialDecrypting(false)
+  }
+
+  const applySpecialRevealState = (data: { isRevealing?: boolean; phase?: 'TOP5' | 'FINALE'; step?: number } | undefined) => {
+    if (!data) return
+    if (!data.isRevealing) {
+      if (specialIsRevealingRef.current) stopSpecialReveal()
+      return
+    }
+
+    // Main and special never share the LCD.
+    if (isRevealingRef.current) stopGrandReveal(true)
+
+    const phase = data.phase === 'FINALE' ? 'FINALE' : 'TOP5'
+    const step = typeof data.step === 'number' ? data.step : 0
+
+    specialIsRevealingRef.current = true
+    specialPhaseRef.current = phase
+    setSpecialIsRevealing(true)
+    setSpecialPhase(phase)
+    void fetchSpecialBoard(phase)
+
+    if (step > specialStepRef.current) {
+      runSpecialRevealStep(step, phase)
+    } else if (step === 0 && specialStepRef.current === 0) {
+      setSpecialStep(0)
+    } else if (step !== specialStepRef.current && !specialDecryptingRef.current) {
+      // Catch-up / reconnect: jump to server step without replaying animation mid-flight
+      specialStepRef.current = step
+      setSpecialStep(step)
+    }
+  }
+
+  const runSpecialRevealStep = (step: number, phase: 'TOP5' | 'FINALE') => {
+    if (specialDecryptTimerRef.current) {
+      clearTimeout(specialDecryptTimerRef.current)
+      specialDecryptTimerRef.current = null
+    }
+    specialPhaseRef.current = phase
+    setSpecialPhase(phase)
+    setSpecialDecrypting(true)
+    specialStepRef.current = step
+    setSpecialStep(step)
+    specialDecryptTimerRef.current = window.setTimeout(() => {
+      specialDecryptTimerRef.current = null
+      setSpecialDecrypting(false)
+      try {
+        confetti({
+          particleCount: phase === 'FINALE' && step === 2 ? 120 : 60,
+          spread: 70,
+          origin: { y: 0.65 },
+          colors: ['#0EA5E9', '#38BDF8', '#E83C00', '#F59E0B', '#FFFFFF'],
+        })
+      } catch {
+        // ignore
+      }
+    }, 4500)
+  }
+
   useEffect(() => { emit('leaderboard:subscribe') }, [emit])
 
   // One-time user interaction listener to wake up browser audio context
@@ -655,10 +791,13 @@ export function LeaderboardPage() {
     fetchLiveLeaderboard()
     fetchTvModeState()
     fetchRevealState()
+    void api.leaderboard.getSpecialRevealState().then((res) => applySpecialRevealState(res.data)).catch(() => {})
     const pollTimer = setInterval(() => {
       fetchLiveLeaderboard()
       fetchTvModeState()
       fetchRevealState()
+      void api.leaderboard.getSpecialRevealState().then((res) => applySpecialRevealState(res.data)).catch(() => {})
+      if (specialIsRevealingRef.current) void fetchSpecialBoard()
     }, 3000)
 
     const handleUpdateEvent = () => {
@@ -804,6 +943,7 @@ export function LeaderboardPage() {
       setIsRevealing(true)
       return
     }
+    if (specialIsRevealingRef.current) stopSpecialReveal()
     revealRoundRef.current = round
     isRevealingRef.current = true
     setRevealRound(round)
@@ -1186,6 +1326,26 @@ export function LeaderboardPage() {
   // Keep the #1 card full-size for the 15s hold; compact only after we scroll to the table.
   const ceremonySettled = allPlacesAnnounced && rosterShown
 
+  // Special Category spotlight (TOP5: step 1=#5 … 5=#1 | FINALE: step 1=Runner #2, step 2=Winner #1)
+  const specialRoster = [...specialEntries]
+    .sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0))
+    .slice(0, 5)
+    .map((e, idx) => ({ ...e, rank: idx + 1 }))
+  const specialSpotlightRank =
+    specialPhase === 'FINALE'
+      ? (specialStep === 1 ? 2 : specialStep === 2 ? 1 : 0)
+      : (specialStep > 0 ? 6 - specialStep : 0)
+  const specialSpotlightTeam =
+    specialSpotlightRank > 0
+      ? (specialRoster.find((t) => t.rank === specialSpotlightRank) || null)
+      : null
+  const specialPlaceLabel =
+    specialPhase === 'FINALE'
+      ? (specialStep === 1 ? 'Runner Up' : specialStep === 2 ? 'Winner' : 'Special Category Finale')
+      : specialSpotlightRank
+        ? `Special Shortlist · #${specialSpotlightRank}`
+        : 'Special Category · Top 5'
+
   // Single-column luxury row grid matching Stage 1 Leaderboard
   const QUALIFIER_GRID = 'grid grid-cols-[64px_minmax(0,1fr)_170px_110px_120px] px-6 py-3.5 items-center min-h-[56px]'
 
@@ -1292,12 +1452,122 @@ export function LeaderboardPage() {
 
   return (
     <div className="h-screen flex flex-col relative overflow-hidden" style={{
-      backgroundColor: isFinale && revealedStep > 0 ? '#070605' : '#EBE3D5',
+      backgroundColor: specialIsRevealing
+        ? '#071018'
+        : isFinale && revealedStep > 0
+          ? '#070605'
+          : '#EBE3D5',
       fontFamily: "'Space Grotesk', 'Inter', system-ui, sans-serif",
-      color: isFinale && revealedStep > 0 ? '#F5F5F5' : '#1A1A1A',
+      color: specialIsRevealing || (isFinale && revealedStep > 0) ? '#F5F5F5' : '#1A1A1A',
       transition: 'background-color 700ms ease, color 700ms ease',
     }}>
 
+      {specialIsRevealing ? (
+        <>
+          <div className="shrink-0 z-30 flex items-center justify-between px-6 sm:px-10 py-4 border-b border-sky-500/20 bg-[#071018]/95 backdrop-blur-md">
+            <div className="flex items-end gap-4 sm:gap-6">
+              <div className="flex items-end gap-2">
+                <SnapServeMark className="h-[24.32px] w-[24.32px] shrink-0 object-contain translate-y-[5px]" />
+                <span
+                  className="text-[19.456px] leading-none tracking-tight"
+                  style={{ fontFamily: "'Plus Jakarta Sans', 'Montserrat', system-ui, sans-serif" }}
+                >
+                  <span style={{ fontWeight: 800, color: '#F8FAFC' }}>Snap</span>
+                  <span style={{ fontWeight: 800, color: '#94A3B8' }}>Serve</span>
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-sky-400/40 bg-sky-500/15">
+                <Medal size={13} className="text-sky-300" />
+                <span className="text-[11px] font-black text-sky-200 tracking-widest uppercase">Special Category</span>
+              </div>
+              <span className="font-mono text-base sm:text-lg font-bold tracking-wider text-slate-400">
+                {clock.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              </span>
+            </div>
+          </div>
+
+          <div className="relative flex-1 min-h-0 w-full overflow-y-auto px-4 sm:px-8 pb-10">
+            <div className="w-full min-h-full flex flex-col items-center justify-start pt-6 sm:pt-10 pb-8 gap-8">
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center flex flex-col items-center gap-3"
+              >
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-500/15 border border-sky-400/35 text-sky-100">
+                  <Trophy size={13} className="text-sky-300" />
+                  <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.16em]">
+                    {specialPhase === 'FINALE' ? 'Special Category · Winner & Runner' : 'Special Category · Top 5 Shortlist'}
+                  </span>
+                </div>
+                <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white">
+                  {specialPlaceLabel}
+                </h1>
+              </motion.div>
+
+              <div className="w-full max-w-5xl">
+                {specialStep === 0 ? (
+                  <div className="rounded-3xl border border-sky-400/25 bg-sky-950/40 px-8 py-16 text-center">
+                    <Lock size={36} className="mx-auto text-sky-300/80 mb-4" />
+                    <p className="text-lg font-black text-sky-100 uppercase tracking-widest">
+                      {specialPhase === 'FINALE' ? 'Awaiting Runner reveal' : 'Awaiting #5 reveal'}
+                    </p>
+                    <p className="text-sm text-slate-400 mt-2">Admin triggers each place from Rounds Management.</p>
+                  </div>
+                ) : (
+                  <PremiumRevealCard
+                    isFinale={specialPhase === 'FINALE'}
+                    currentSpotlightRank={specialSpotlightRank || 1}
+                    currentSpotlightTeam={specialSpotlightTeam}
+                    revealedStep={specialStep}
+                    maxSteps={specialPhase === 'FINALE' ? 2 : 5}
+                    isDecrypting={specialDecrypting}
+                    decryptingRank={specialDecrypting ? specialSpotlightRank : null}
+                    revealingTeamName={specialSpotlightTeam?.teamName || ''}
+                    nameSpinMs={4500}
+                    settled={false}
+                  />
+                )}
+              </div>
+
+              {specialRoster.length > 0 && (
+                <div className="w-full max-w-3xl space-y-2">
+                  {specialRoster.map((team) => {
+                    const showName = specialPhase === 'FINALE'
+                      ? (team.rank === 2 && specialStep >= 1 && !(specialDecrypting && specialStep === 1))
+                        || (team.rank === 1 && specialStep >= 2 && !(specialDecrypting && specialStep === 2))
+                        || (team.rank > 2)
+                      : specialStep >= (6 - team.rank) && !(specialDecrypting && specialSpotlightRank === team.rank)
+                    const isSpotlight = team.rank === specialSpotlightRank && specialStep > 0
+                    return (
+                      <div
+                        key={team.teamId}
+                        className={`flex items-center justify-between gap-3 rounded-xl px-4 py-3 border ${
+                          isSpotlight
+                            ? 'border-sky-400/50 bg-sky-500/15'
+                            : 'border-white/10 bg-white/5'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="font-mono text-sm font-black text-sky-300 w-8">#{team.rank}</span>
+                          <span className="text-sm font-bold text-white truncate">
+                            {showName ? team.teamName : '••••••••'}
+                          </span>
+                        </div>
+                        <span className="font-mono text-sm font-black text-slate-300">
+                          {showName ? Number(team.totalScore || 0).toFixed(1) : '—'}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      ) : (
+      <>
       {/* ── Top Bar ── hidden during Top 5 announcement so the stage is full-bleed */}
       {!(isFinale && revealedStep > 0) && (
       <div className="shrink-0 z-30 flex items-center justify-between px-6 sm:px-10 py-4 border-b backdrop-blur-md bg-[#EBE3D5]/90 border-black/5 text-[#1A1A1A]">
@@ -1888,6 +2158,8 @@ export function LeaderboardPage() {
             </div>
           </div>
         </div>
+      )}
+      </>
       )}
     </div>
   )

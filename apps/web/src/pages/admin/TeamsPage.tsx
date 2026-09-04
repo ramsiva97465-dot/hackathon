@@ -182,6 +182,7 @@ type Team = {
   demoUrl?: string | null
   techStack?: string[]
   bonusPoints: number; followedInstagram: boolean; followedLinkedin: boolean
+  isSpecialCategory?: boolean
 }
 
 const TEAM_COLUMNS = [
@@ -220,6 +221,7 @@ export function TeamsPage() {
   const roundParam = searchParams.get('round')
   const initialRound = roundParam === '2' ? 2 : roundParam === '3' ? 3 : roundParam === '1' ? 1 : 'all'
   const [selectedRound, setSelectedRound] = useState<'all' | 1 | 2 | 3>(initialRound)
+  const [specialOnly, setSpecialOnly] = useState(searchParams.get('special') === '1')
 
   useEffect(() => {
     const f = searchParams.get('filter')
@@ -234,6 +236,7 @@ export function TeamsPage() {
     else if (r === '3') setSelectedRound(3)
     else if (r === '1') setSelectedRound(1)
     else if (r === 'all' || !r) setSelectedRound('all')
+    setSpecialOnly(searchParams.get('special') === '1')
   }, [searchParams])
 
   const handleSetFilterType = (type: 'all' | 'submitted' | 'not_submitted') => {
@@ -249,11 +252,26 @@ export function TeamsPage() {
 
   const handleSetSelectedRound = (round: 'all' | 1 | 2 | 3) => {
     setSelectedRound(round)
+    setSpecialOnly(false)
     const newParams = new URLSearchParams(searchParams)
     if (round === 'all') {
       newParams.delete('round')
     } else {
       newParams.set('round', String(round))
+    }
+    newParams.delete('special')
+    setSearchParams(newParams, { replace: true })
+  }
+
+  const handleSetSpecialOnly = (on: boolean) => {
+    setSpecialOnly(on)
+    const newParams = new URLSearchParams(searchParams)
+    if (on) {
+      newParams.set('special', '1')
+      newParams.delete('round')
+      setSelectedRound('all')
+    } else {
+      newParams.delete('special')
     }
     setSearchParams(newParams, { replace: true })
   }
@@ -276,6 +294,7 @@ export function TeamsPage() {
   const [csvImportOpen, setCsvImportOpen] = useState(false)
   const [importingCsv, setImportingCsv] = useState(false)
   const [parsedTeams, setParsedTeams] = useState<any[]>([])
+  const [importAsSpecialCategory, setImportAsSpecialCategory] = useState(false)
   const [parseErrors, setParseErrors] = useState<string[]>([])
   const [dragActive, setDragActive] = useState(false)
 
@@ -284,6 +303,7 @@ export function TeamsPage() {
   const [manualTeamName, setManualTeamName] = useState('')
   const [manualTrack, setManualTrack] = useState('Voice AI')
   const [manualTableNumber, setManualTableNumber] = useState('')
+  const [manualSpecialCategory, setManualSpecialCategory] = useState(false)
   const [manualMembers, setManualMembers] = useState<{ name: string; email: string; phone: string; role: string }[]>([
     { name: '', email: '', phone: '', role: 'Team Lead' }
   ])
@@ -293,6 +313,7 @@ export function TeamsPage() {
     setManualTeamName('')
     setManualTrack('Voice AI')
     setManualTableNumber('')
+    setManualSpecialCategory(false)
     setManualMembers([{ name: '', email: '', phone: '', role: 'Team Lead' }])
   }
 
@@ -313,6 +334,7 @@ export function TeamsPage() {
         name: finalTeamName,
         track: manualTrack,
         tableNumber: manualTableNumber.trim() || undefined,
+        isSpecialCategory: manualSpecialCategory,
         members: validMembers.map((m, idx) => ({
           name: m.name.trim(),
           email: m.email.trim().toLowerCase(),
@@ -419,7 +441,10 @@ export function TeamsPage() {
       const toastId = toast.loading(`Importing ${parsedTeams.length} teams...`)
 
       for (let i = 0; i < parsedTeams.length; i += CHUNK_SIZE) {
-        const chunk = parsedTeams.slice(i, i + CHUNK_SIZE)
+        const chunk = parsedTeams.slice(i, i + CHUNK_SIZE).map((t) => ({
+          ...t,
+          isSpecialCategory: importAsSpecialCategory,
+        }))
         const currentBatch = Math.floor(i / CHUNK_SIZE) + 1
         const processedCount = Math.min(i + CHUNK_SIZE, parsedTeams.length)
 
@@ -440,6 +465,7 @@ export function TeamsPage() {
       setCsvImportOpen(false)
       setParsedTeams([])
       setParseErrors([])
+      setImportAsSpecialCategory(false)
     } catch (err: any) {
       console.error(err)
       toast.error(err.response?.data?.message || 'Failed to import teams.')
@@ -656,6 +682,16 @@ export function TeamsPage() {
     try {
       setDistributing(true)
       const targetRound = overrideRound ?? (selectedRound !== 'all' ? selectedRound : undefined)
+      if (specialOnly) {
+        const res = await api.teams.autoDistributeSpecialJudges(targetRound === 2 ? 2 : 1)
+        if (res.data?.success) {
+          toast.success(res.data.message || 'Assigned all judges to Special Category teams!')
+          fetchTeams()
+        } else {
+          toast.error(res.data?.message || 'Special Category auto-assignment failed.')
+        }
+        return
+      }
       const res = await api.teams.autoDistributeJudges(1, targetRound)
       if (res.data?.success) {
         toast.success(res.data.message || `Auto-assigned 1 judge per team${targetRound ? ` in Round ${targetRound}` : ''}!`)
@@ -681,11 +717,21 @@ export function TeamsPage() {
 
   const submittedCount = teams.filter(isTeamSubmitted).length
   const notSubmittedCount = teams.length - submittedCount
-  const round1Count = teams.filter(t => (t.round || 1) === 1).length
-  const round2Count = teams.filter(t => (t.round || 1) === 2).length
-  const round3Count = teams.filter(t => (t.round || 1) === 3).length
+  const round1Count = teams.filter(t => (t.round || 1) === 1 && !t.isSpecialCategory).length
+  const round2Count = teams.filter(t => (t.round || 1) === 2 && !t.isSpecialCategory).length
+  const round3Count = teams.filter(t => (t.round || 1) === 3 && !t.isSpecialCategory).length
+  const specialCount = teams.filter(t => t.isSpecialCategory).length
+  const specialR1Count = teams.filter(t => t.isSpecialCategory && (t.round || 1) === 1).length
+  const specialR2Count = teams.filter(t => t.isSpecialCategory && (t.round || 1) === 2).length
 
   const filtered = teams.filter(t => {
+    if (specialOnly) {
+      if (!t.isSpecialCategory) return false
+    } else if (t.isSpecialCategory) {
+      // Main stage filters never mix Special Category teams into Top 20 / Top 5 views.
+      return false
+    }
+
     // Stage / Round filter check
     if (selectedRound !== 'all') {
       const teamRound = t.round || 1
@@ -837,14 +883,14 @@ export function TeamsPage() {
                 type="button"
                 onClick={() => handleSetSelectedRound('all')}
                 className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                  selectedRound === 'all'
+                  selectedRound === 'all' && !specialOnly
                     ? 'bg-white text-black shadow-sm'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                 }`}
               >
                 <span>All Stages</span>
                 <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-300">
-                  {teams.length}
+                  {teams.length - specialCount}
                 </span>
               </button>
 
@@ -852,7 +898,7 @@ export function TeamsPage() {
                 type="button"
                 onClick={() => handleSetSelectedRound(1)}
                 className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                  selectedRound === 1
+                  selectedRound === 1 && !specialOnly
                     ? 'bg-white text-black shadow-sm'
                     : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
                 }`}
@@ -867,15 +913,15 @@ export function TeamsPage() {
                 type="button"
                 onClick={() => handleSetSelectedRound(2)}
                 className={`px-3.5 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                  selectedRound === 2
+                  selectedRound === 2 && !specialOnly
                     ? 'bg-gradient-to-r from-[#E83C00] to-amber-500 text-white shadow-lg'
                     : 'bg-amber-500/10 text-amber-300 border border-amber-500/20 hover:bg-amber-500/20'
                 }`}
               >
-                <Zap size={12} className={selectedRound === 2 ? 'text-white' : 'text-amber-400'} />
+                <Zap size={12} className={selectedRound === 2 && !specialOnly ? 'text-white' : 'text-amber-400'} />
                 <span>Round 2 (Top 20)</span>
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-                  selectedRound === 2 ? 'bg-black/30 text-amber-200' : 'bg-amber-500/20 text-amber-300'
+                  selectedRound === 2 && !specialOnly ? 'bg-black/30 text-amber-200' : 'bg-amber-500/20 text-amber-300'
                 }`}>
                   {round2Count}
                 </span>
@@ -885,17 +931,34 @@ export function TeamsPage() {
                 type="button"
                 onClick={() => handleSetSelectedRound(3)}
                 className={`px-3.5 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-                  selectedRound === 3
+                  selectedRound === 3 && !specialOnly
                     ? 'bg-amber-400 text-black shadow-lg'
                     : 'bg-amber-400/10 text-amber-400 border border-amber-400/20 hover:bg-amber-400/20'
                 }`}
               >
-                <Crown size={12} className={selectedRound === 3 ? 'text-black' : 'text-amber-400'} />
+                <Crown size={12} className={selectedRound === 3 && !specialOnly ? 'text-black' : 'text-amber-400'} />
                 <span>Round 3 (Finalists)</span>
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-                  selectedRound === 3 ? 'bg-black/30 text-black' : 'bg-amber-400/20 text-amber-400'
+                  selectedRound === 3 && !specialOnly ? 'bg-black/30 text-black' : 'bg-amber-400/20 text-amber-400'
                 }`}>
                   {round3Count}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSetSpecialOnly(true)}
+                className={`px-3.5 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  specialOnly
+                    ? 'bg-sky-400 text-black shadow-lg'
+                    : 'bg-sky-400/10 text-sky-300 border border-sky-400/20 hover:bg-sky-400/20'
+                }`}
+              >
+                <span>Special Category</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
+                  specialOnly ? 'bg-black/30 text-black' : 'bg-sky-400/20 text-sky-300'
+                }`}>
+                  {specialCount}
                 </span>
               </button>
             </div>
@@ -903,8 +966,42 @@ export function TeamsPage() {
             <span className="text-xs font-semibold text-slate-400 shrink-0">{filtered.length} teams in view</span>
           </div>
 
+          {/* Special Category banner */}
+          {specialOnly && (
+            <div className="mx-5 mt-4 p-3.5 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-2.5">
+                <div>
+                  <p className="text-xs font-black text-sky-200">
+                    Special Category ({specialCount} teams · R1 {specialR1Count} · R2 Top 5 {specialR2Count})
+                  </p>
+                  <p className="text-[11px] text-sky-300/70">
+                    All judges score every Special Category team. Promote Top 5 from Rounds Management after Round 1.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  disabled={distributing || specialR1Count === 0}
+                  onClick={() => handleAutoDistribute(1)}
+                  className="px-3.5 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-black text-xs font-black transition-all flex items-center gap-1.5 shadow-md disabled:opacity-50 cursor-pointer"
+                >
+                  <UserPlus size={13} />
+                  {distributing ? 'Assigning…' : 'Assign All Judges (Special · Round 1)'}
+                </button>
+                <button
+                  disabled={distributing || specialR2Count === 0}
+                  onClick={() => handleAutoDistribute(2)}
+                  className="px-3.5 py-1.5 rounded-lg bg-sky-400/20 hover:bg-sky-400/30 text-sky-200 border border-sky-400/40 text-xs font-black transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                >
+                  <UserPlus size={13} />
+                  {distributing ? 'Assigning…' : 'Assign All Judges (Special · Round 2)'}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Special Context Banner for Round 2 */}
-          {selectedRound === 2 && (
+          {selectedRound === 2 && !specialOnly && (
             <div className="mx-5 mt-4 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between flex-wrap gap-3">
               <div className="flex items-center gap-2.5">
                 <Zap size={16} className="text-amber-400 shrink-0" />
@@ -1072,13 +1169,31 @@ export function TeamsPage() {
               </button>
 
               <button
-                disabled={distributing || filtered.length === 0 || selectedRound === 3}
-                onClick={() => handleAutoDistribute(selectedRound !== 'all' && selectedRound !== 3 ? selectedRound : undefined)}
+                disabled={distributing || filtered.length === 0 || (!specialOnly && selectedRound === 3)}
+                onClick={() => handleAutoDistribute(
+                  specialOnly
+                    ? (selectedRound === 2 ? 2 : 1)
+                    : (selectedRound !== 'all' && selectedRound !== 3 ? selectedRound : undefined)
+                )}
                 className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-xl text-amber-300 transition-all bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 disabled:opacity-50 cursor-pointer"
-                title={selectedRound === 3 ? 'Round 3 is reveal-only. Rankings use Round 2 scores.' : 'Auto-distribute teams evenly across all confirmed judges'}
+                title={
+                  specialOnly
+                    ? 'Assign every judge to every Special Category team in this round'
+                    : selectedRound === 3
+                      ? 'Round 3 is reveal-only. Rankings use Round 2 scores.'
+                      : 'Auto-distribute teams evenly across all confirmed judges'
+                }
               >
                 <UserPlus size={14} className="text-amber-400" />
-                {distributing ? 'Assigning…' : selectedRound === 2 ? `⚡ Auto-Assign Round 2 (${round2Count})` : selectedRound === 3 ? 'Reveal only — no Round 3 judging' : '⚡ Auto-Assign to Judges'}
+                {distributing
+                  ? 'Assigning…'
+                  : specialOnly
+                    ? `Assign All Judges (Special · Round ${selectedRound === 2 ? 2 : 1})`
+                    : selectedRound === 2
+                      ? `⚡ Auto-Assign Round 2 (${round2Count})`
+                      : selectedRound === 3
+                        ? 'Reveal only — no Round 3 judging'
+                        : '⚡ Auto-Assign to Judges'}
               </button>
             </div>
             <span className="text-xs font-semibold text-slate-400">{filtered.length} teams shown</span>
@@ -1151,6 +1266,11 @@ export function TeamsPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-bold text-white truncate">{team.name}</p>
+                          {team.isSpecialCategory && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-sky-500/20 text-sky-300 border border-sky-500/40 shrink-0">
+                              Special
+                            </span>
+                          )}
                           {team.round === 2 && (
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
                               ⚡ Round 2
@@ -1782,7 +1902,7 @@ export function TeamsPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => { setCsvImportOpen(false); setParsedTeams([]); setParseErrors([]) }}
+                  onClick={() => { setCsvImportOpen(false); setParsedTeams([]); setParseErrors([]); setImportAsSpecialCategory(false) }}
                   className="p-2 rounded-xl transition-colors text-slate-400 hover:bg-slate-50 hover:text-slate-600 border border-transparent hover:border-slate-200"
                 >
                   <X size={15} />
@@ -1836,6 +1956,17 @@ export function TeamsPage() {
                     </div>
                   </div>
                 </div>
+
+                <label className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-sky-200 bg-sky-50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={importAsSpecialCategory}
+                    onChange={(e) => setImportAsSpecialCategory(e.target.checked)}
+                    className="rounded border-sky-300 text-sky-600 focus:ring-sky-500"
+                  />
+                  <span className="text-xs font-bold text-sky-800">Import as Special Category</span>
+                  <span className="text-[10px] text-sky-600">All teams in this file join the school track</span>
+                </label>
 
                 {/* Errors list if any */}
                 {parseErrors.length > 0 && (
@@ -1988,6 +2119,17 @@ export function TeamsPage() {
                       className="w-full px-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none text-slate-900 bg-slate-50/50"
                     />
                   </div>
+
+                  <label className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-sky-200 bg-sky-50 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={manualSpecialCategory}
+                      onChange={(e) => setManualSpecialCategory(e.target.checked)}
+                      className="rounded border-sky-300 text-sky-600 focus:ring-sky-500"
+                    />
+                    <span className="text-xs font-bold text-sky-800">Special Category team</span>
+                    <span className="text-[10px] text-sky-600">Isolated school track (Top 5 → Winner)</span>
+                  </label>
 
                   {/* Members Section */}
                   <div className="pt-3 border-t border-slate-100 space-y-3">

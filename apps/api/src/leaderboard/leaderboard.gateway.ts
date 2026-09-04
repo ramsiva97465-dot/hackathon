@@ -27,6 +27,11 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
   private revealStepStartedAt = 0
   private revealNextAllowedAt = 0
 
+  // Special Category ceremony — completely separate from main Top 20 / Top 5.
+  private specialIsRevealing = false
+  private specialPhase: 'TOP5' | 'FINALE' = 'TOP5'
+  private specialStep = 0
+
   private getRevealStatePayload() {
     return {
       isRevealing: this.isRevealing,
@@ -34,6 +39,14 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
       step: this.revealStep,
       startedAt: this.revealStepStartedAt,
       nextAllowedAt: this.revealNextAllowedAt,
+    }
+  }
+
+  private getSpecialRevealStatePayload() {
+    return {
+      isRevealing: this.specialIsRevealing,
+      phase: this.specialPhase,
+      step: this.specialStep,
     }
   }
 
@@ -47,6 +60,7 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
       client.emit('leaderboard:update', leaderboard)
       client.emit('leaderboard:tv_mode', { tvMode: this.isTvMode })
       client.emit('leaderboard:reveal_state', this.getRevealStatePayload())
+      client.emit('leaderboard:special_reveal_state', this.getSpecialRevealStatePayload())
     } catch (err) {
       console.error('[WS] Error sending initial state on connection:', err)
     }
@@ -62,6 +76,7 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
     client.emit('leaderboard:update', leaderboard)
     client.emit('leaderboard:tv_mode', { tvMode: this.isTvMode })
     client.emit('leaderboard:reveal_state', this.getRevealStatePayload())
+    client.emit('leaderboard:special_reveal_state', this.getSpecialRevealStatePayload())
   }
 
   getTvMode(): boolean {
@@ -98,6 +113,9 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
 
   // Called when Admin triggers Stage Grand Reveal
   async broadcastRevealEvent(payload: { round: number; type: string; timestamp: number }) {
+    if (this.specialIsRevealing) {
+      throw new BadRequestException('Special Category reveal is already running. Stop it before starting the main ceremony.')
+    }
     this.isRevealing = true
     this.revealRound = payload.round || 2
     this.revealStep = 0
@@ -197,6 +215,9 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
   // After Top 5 promotion, move every public display to the sealed Grand
   // Finale ready screen. Step 0 keeps all finalist names and scores hidden.
   async showFinaleReady() {
+    if (this.specialIsRevealing) {
+      await this.broadcastSpecialRevealStop()
+    }
     this.isRevealing = true
     this.revealStep = 0
     this.revealRound = 3
@@ -213,6 +234,77 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
       this.server.to('leaderboard').emit('leaderboard:reveal_state', this.getRevealStatePayload())
     } catch (err) {
       console.error('[WS] Show Grand Finale ready screen failed:', err)
+    }
+  }
+
+  getSpecialRevealState() {
+    return this.getSpecialRevealStatePayload()
+  }
+
+  async broadcastSpecialLeaderboardUpdate() {
+    try {
+      if (!this.server) return
+      const board = await this.leaderboardService.getSpecialLeaderboard({ round: 2 })
+      this.server.to('leaderboard').emit('leaderboard:special_update', board)
+    } catch (err) {
+      console.error('[WS] Special leaderboard broadcast failed:', err)
+    }
+  }
+
+  async broadcastSpecialRevealStart(phase: 'TOP5' | 'FINALE') {
+    if (this.isRevealing) {
+      throw new BadRequestException('Main ceremony is already running. Stop it before starting Special Category reveal.')
+    }
+    this.specialIsRevealing = true
+    this.specialPhase = phase
+    this.specialStep = 0
+    const payload = this.getSpecialRevealStatePayload()
+    try {
+      if (!this.server) return
+      this.server.to('leaderboard').emit('leaderboard:special_reveal_start', payload)
+      this.server.to('leaderboard').emit('leaderboard:special_reveal_state', payload)
+      console.log('[WS] Special reveal start:', payload)
+    } catch (err) {
+      console.error('[WS] Special reveal start failed:', err)
+    }
+  }
+
+  async broadcastSpecialRevealStep(step: number, phase?: 'TOP5' | 'FINALE') {
+    if (this.isRevealing) {
+      throw new BadRequestException('Main ceremony is running. Stop it before advancing Special Category reveal.')
+    }
+    const nextPhase = phase || this.specialPhase
+    const maxStep = nextPhase === 'TOP5' ? 5 : 2
+    if (step < 0 || step > maxStep) {
+      throw new BadRequestException(`Special reveal step must be between 0 and ${maxStep}.`)
+    }
+    if (this.specialIsRevealing && nextPhase === this.specialPhase && step !== 0 && step !== this.specialStep + 1) {
+      throw new BadRequestException(`Special reveal step ${this.specialStep + 1} must run next.`)
+    }
+
+    this.specialIsRevealing = true
+    this.specialPhase = nextPhase
+    this.specialStep = step
+    const payload = this.getSpecialRevealStatePayload()
+    try {
+      if (!this.server) return
+      this.server.to('leaderboard').emit('leaderboard:special_reveal_step', payload)
+      this.server.to('leaderboard').emit('leaderboard:special_reveal_state', payload)
+      console.log('[WS] Special reveal step:', payload)
+    } catch (err) {
+      console.error('[WS] Special reveal step failed:', err)
+    }
+  }
+
+  async broadcastSpecialRevealStop() {
+    this.specialIsRevealing = false
+    const payload = this.getSpecialRevealStatePayload()
+    try {
+      if (!this.server) return
+      this.server.to('leaderboard').emit('leaderboard:special_reveal_stop', payload)
+      this.server.to('leaderboard').emit('leaderboard:special_reveal_state', payload)
+    } catch (err) {
+      console.error('[WS] Special reveal stop failed:', err)
     }
   }
 }

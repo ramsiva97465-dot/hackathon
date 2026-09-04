@@ -241,6 +241,7 @@ model Team {
   attendanceStatus   String     @default("PENDING")
   bonusVerifiedBy    String?
   bonusVerifiedAt    DateTime?
+  isSpecialCategory  Boolean    @default(false)
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
@@ -255,6 +256,7 @@ model Team {
 
   @@index([hackathonId])
   @@index([trackId])
+  @@index([isSpecialCategory])
   @@map("teams")
 }
 

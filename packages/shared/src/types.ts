@@ -60,6 +60,7 @@ export interface Team {
   scores: Score[];
   totalScore?: number;
   rank?: number;
+  isSpecialCategory?: boolean;
   createdAt: string;
 }
 
@@ -135,6 +136,7 @@ export interface LeaderboardEntry {
   totalScore: number;
   judgeCount: number;
   previousRank?: number;
+  isSpecialCategory?: boolean;
   scores: {
     roundId: string;
     roundName: string;

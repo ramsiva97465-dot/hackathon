@@ -39,6 +39,7 @@ export class LeaderboardService {
     const whereCondition: any = {
       hackathonId: hackathon.id,
       status: 'COMPETING',
+      isSpecialCategory: false,
     }
 
     if (targetRound === 3) {
@@ -149,6 +150,107 @@ export class LeaderboardService {
     // persisting every computed rank here previously launched hundreds of
     // concurrent upserts per request and exhausted the production DB pool.
     return sorted
+  }
+
+  /** Special Category board only — never mixed into the main Top 20 / Top 5 ranks. */
+  async getSpecialLeaderboard(params?: { hackathonId?: string; round?: number }) {
+    const hackathon = params?.hackathonId
+      ? { id: params.hackathonId }
+      : await this.prisma.hackathon.findFirst()
+
+    if (!hackathon) return []
+
+    const targetRound = params?.round ? Number(params.round) : 1
+    const whereCondition: any = {
+      hackathonId: hackathon.id,
+      status: 'COMPETING',
+      isSpecialCategory: true,
+      round: targetRound === 2 ? 2 : 1,
+    }
+
+    const teams = await this.prisma.team.findMany({
+      where: whereCondition,
+      include: {
+        track: true,
+        application: { select: { college: true } },
+        scoreSheets: {
+          where: { isSubmitted: true },
+          include: { scores: true },
+        },
+        leaderboard: { select: { rank: true } },
+      },
+    })
+
+    const round2JudgingStarted = targetRound === 2 && teams.some((team) => {
+      if (team.round2Score !== null && team.round2Score !== undefined) return true
+      if (team.adminScore !== null && team.adminScore !== undefined && (team.round || 1) === 2) return true
+      return sheetsForRound(team.scoreSheets, 2).length > 0
+    })
+
+    const entries = teams.map((team) => {
+      const bonus =
+        (team as any).bonusVerifiedAt || (team as any).bonusVerifiedBy
+          ? team.bonusPoints || 0
+          : 0
+
+      let totalScore = 0
+      let judgeCount = 0
+
+      if (targetRound === 1) {
+        if (team.round1Score !== null && team.round1Score !== undefined) {
+          totalScore = team.round1Score
+          judgeCount = team.round1JudgeCount ?? 0
+        } else {
+          const r1Sheets = sheetsForRound(team.scoreSheets, 1)
+          judgeCount = r1Sheets.length
+          if (team.adminScore !== null && team.adminScore !== undefined && (team.round || 1) === 1) {
+            totalScore = team.adminScore
+          } else {
+            totalScore = averageFromSheets(r1Sheets)
+          }
+          totalScore += bonus
+        }
+      } else {
+        if (team.round2Score !== null && team.round2Score !== undefined) {
+          totalScore = team.round2Score
+          judgeCount = team.round2JudgeCount ?? 0
+        } else if (!round2JudgingStarted) {
+          if (team.round1Score !== null && team.round1Score !== undefined) {
+            totalScore = team.round1Score
+            judgeCount = team.round1JudgeCount ?? 0
+          } else {
+            const r1Sheets = sheetsForRound(team.scoreSheets, 1)
+            judgeCount = r1Sheets.length
+            totalScore = averageFromSheets(r1Sheets) + bonus
+          }
+        } else {
+          const r2Sheets = sheetsForRound(team.scoreSheets, 2)
+          judgeCount = r2Sheets.length
+          if (team.adminScore !== null && team.adminScore !== undefined && (team.round || 1) === 2) {
+            totalScore = team.adminScore
+          } else {
+            totalScore = sumFromSheets(r2Sheets)
+          }
+        }
+      }
+
+      return {
+        teamId: team.id,
+        teamName: team.name,
+        college: (team as any).application?.college || 'Unknown',
+        track: team.track.name,
+        totalScore: Math.round(totalScore * 10) / 10,
+        judgeCount,
+        previousRank: (team as any).leaderboard?.rank ?? undefined,
+        round: team.round,
+        isSpecialCategory: true,
+        scores: [],
+      }
+    })
+
+    return entries
+      .sort((a, b) => b.totalScore - a.totalScore)
+      .map((entry, i) => ({ ...entry, rank: i + 1 }))
   }
 
   async getEntry(teamId: string) {
