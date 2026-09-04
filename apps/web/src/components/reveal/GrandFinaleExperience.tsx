@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { getTrackConfig } from '@/lib/utils'
-import { playFinaleRevealBed, stopFinaleRevealBed } from '@/lib/finaleRevealAudio'
+import { playFinaleRevealBed, playSealStamp, stopFinaleRevealBed } from '@/lib/finaleRevealAudio'
 
 export type GrandFinaleEntry = {
   teamId: string
@@ -33,7 +33,7 @@ const PODIUM = '/images/finale-podium-transparent.png'
 const SEAL = '/images/snapserve-seal.png'
 const EASE = [0.22, 1, 0.36, 1] as const
 
-/** Official seal — stamps once when a place locks. Gold on black; no pulse, no corner spam. */
+/** Official seal — larger gold stamp under the locked name. One hit, no pulse spam. */
 function SealMark({
   show,
   size = 'md',
@@ -43,27 +43,44 @@ function SealMark({
   size?: 'md' | 'lg'
   delay?: number
 }) {
-  const dim = size === 'lg' ? 'h-[5.5rem] w-[5.5rem] sm:h-28 sm:w-28' : 'h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem]'
+  const dim =
+    size === 'lg'
+      ? 'h-36 w-36 sm:h-44 sm:w-44 lg:h-48 lg:w-48'
+      : 'h-28 w-28 sm:h-32 sm:w-32 lg:h-36 lg:w-36'
+
+  useEffect(() => {
+    if (!show) return
+    const t = window.setTimeout(() => playSealStamp(size), Math.max(0, delay * 1000))
+    return () => window.clearTimeout(t)
+  }, [show, size, delay])
+
   return (
     <AnimatePresence>
       {show && (
         <motion.div
           key="seal"
-          initial={{ opacity: 0, scale: 1.22, y: -14 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.94 }}
-          transition={{ duration: 0.55, delay, ease: EASE }}
+          initial={{ opacity: 0, scale: 1.45, y: -28, rotate: -8 }}
+          animate={{ opacity: 1, scale: [1.45, 0.94, 1], y: 0, rotate: 0 }}
+          exit={{ opacity: 0, scale: 0.92 }}
+          transition={{ duration: 0.7, delay, ease: EASE, times: [0, 0.72, 1] }}
           className={`relative mx-auto ${dim}`}
           aria-hidden
         >
+          <div
+            className="pointer-events-none absolute inset-[-18%] rounded-full"
+            style={{
+              background:
+                'radial-gradient(circle, rgba(245,214,140,0.35) 0%, rgba(232,197,71,0.12) 42%, transparent 70%)',
+              filter: 'blur(6px)',
+            }}
+          />
           <img
             src={SEAL}
             alt=""
-            className="h-full w-full object-contain"
+            className="relative h-full w-full object-contain"
             style={{
-              // Black seal → warm gold for the dark LCD stage
               filter:
-                'brightness(0) invert(82%) sepia(28%) saturate(650%) hue-rotate(2deg) drop-shadow(0 6px 18px rgba(0,0,0,0.45))',
+                'brightness(0) invert(84%) sepia(32%) saturate(720%) hue-rotate(2deg) drop-shadow(0 10px 28px rgba(0,0,0,0.55)) drop-shadow(0 0 18px rgba(245,214,140,0.35))',
             }}
           />
         </motion.div>
@@ -645,7 +662,7 @@ function PlaceReveal({
           />
         </div>
 
-        <div className="mt-4 flex min-h-[15rem] w-full flex-col items-center justify-start sm:min-h-[17rem]">
+        <div className="mt-4 flex min-h-[17rem] w-full flex-col items-center justify-start sm:min-h-[19rem]">
           <AnimatePresence mode="wait">
             {nameLive ? (
               <motion.h2
@@ -671,8 +688,8 @@ function PlaceReveal({
             ) : null}
           </AnimatePresence>
 
-          <div className="mt-4 flex h-[4.75rem] w-full items-center justify-center sm:h-[5.25rem]">
-            <SealMark show={Boolean(nameLocked && nameLive)} delay={0.28} />
+          <div className="mt-5 flex h-36 w-full items-center justify-center sm:h-40 lg:h-44">
+            <SealMark show={Boolean(nameLocked && nameLive)} delay={0.22} />
           </div>
 
           <div className="mt-1 h-6">
@@ -858,8 +875,8 @@ function FinalTwoReveal({
               {secondEntry?.teamName || 'Unavailable'}
             </motion.h2>
           )}
-          <div className="mt-4 flex h-[4.75rem] w-full items-center justify-center sm:h-[5.25rem]">
-            <SealMark show={Boolean(bigNameOn && metaOn)} delay={0.28} />
+          <div className="mt-5 flex h-36 w-full items-center justify-center sm:h-40 lg:h-44">
+            <SealMark show={Boolean(bigNameOn && metaOn)} delay={0.22} />
           </div>
           <div className="mt-1 h-6">
             {metaOn && (
@@ -1002,8 +1019,8 @@ function Champion({
             >
               {entry?.teamName || 'Unavailable'}
             </motion.h2>
-            <div className="mt-5 flex h-28 w-full items-center justify-center sm:h-32">
-              <SealMark show size="lg" delay={1.05} />
+            <div className="mt-6 flex h-44 w-full items-center justify-center sm:h-52 lg:h-56">
+              <SealMark show size="lg" delay={0.95} />
             </div>
             <motion.p
               initial={{ opacity: 0 }}
