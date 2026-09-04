@@ -35,6 +35,7 @@ export function RoundsManagement() {
   const [specialStep, setSpecialStep] = useState(0)
   const [specialR1Count, setSpecialR1Count] = useState(0)
   const [specialR2Count, setSpecialR2Count] = useState(0)
+  const [specialNextAllowedAt, setSpecialNextAllowedAt] = useState(0)
   const [showSpecialTrackPanel, setShowSpecialTrackPanel] = useState(false)
   const specialTrackPanelRef = useRef<HTMLDivElement>(null)
   
@@ -184,6 +185,11 @@ export function RoundsManagement() {
       )
       return
     }
+    if (specialIsRevealing && specialPhase === phase && Date.now() < specialNextAllowedAt) {
+      const wait = Math.ceil((specialNextAllowedAt - Date.now()) / 1000)
+      toast.error(`Current Special Category animation is still running. Wait ${wait}s.`)
+      return
+    }
     try {
       setLoading(true)
       if (!specialIsRevealing || specialPhase !== phase) {
@@ -193,6 +199,10 @@ export function RoundsManagement() {
       setSpecialIsRevealing(true)
       setSpecialPhase(phase)
       setSpecialStep(step)
+      // Match LCD: TOP5 = 5s card; Runner = 28s place beat; Winner = 22s champion beat.
+      const lockMs =
+        phase === 'TOP5' ? 5000 : step === 1 ? 28000 : 22000
+      setSpecialNextAllowedAt(Date.now() + lockMs)
       if (phase === 'TOP5') {
         toast.success(`Special Category #${6 - step} reveal triggered.`)
       } else {
@@ -211,6 +221,7 @@ export function RoundsManagement() {
       await api.leaderboard.stopSpecialReveal()
       setSpecialIsRevealing(false)
       setSpecialStep(0)
+      setSpecialNextAllowedAt(0)
       toast.success('Special Category stage reveal ended.')
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to stop Special Category reveal.')
@@ -999,21 +1010,30 @@ export function RoundsManagement() {
                   const isNext = (!specialIsRevealing || specialPhase !== 'FINALE')
                     ? step === 1
                     : specialStep + 1 === step
+                  const locked =
+                    isNext
+                    && specialIsRevealing
+                    && specialPhase === 'FINALE'
+                    && specialStep > 0
+                    && stageClock < specialNextAllowedAt
+                  const waitSeconds = locked
+                    ? Math.max(0, Math.ceil((specialNextAllowedAt - stageClock) / 1000))
+                    : 0
                   return (
                     <button
                       key={step}
                       type="button"
                       onClick={() => handleSpecialRevealStep(step, 'FINALE')}
-                      disabled={loading || !isNext || specialR2Count === 0}
+                      disabled={loading || !isNext || specialR2Count === 0 || locked}
                       className={`px-3.5 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
                         done
                           ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
-                          : isNext
+                          : isNext && !locked
                             ? 'bg-sky-500 text-black border border-sky-400 cursor-pointer'
                             : 'bg-white/5 text-slate-500 border border-white/10 opacity-50 cursor-not-allowed'
                       }`}
                     >
-                      {done ? doneLabel : label}
+                      {done ? doneLabel : locked ? `Wait ${waitSeconds}s` : label}
                     </button>
                   )
                 })}

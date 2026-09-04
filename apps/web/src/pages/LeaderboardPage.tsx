@@ -785,7 +785,7 @@ export function LeaderboardPage() {
     setSpecialStep(step)
 
     // TOP5 shortlist → same Top 20 PremiumRevealCard timing.
-    // FINALE Runner/Winner → same Grand Finale beats (mapped to steps 4 then 5).
+    // FINALE: Runner = place beat (28s), Winner = champion beat (22s).
     const gfeStep = phase === 'FINALE' ? (step === 1 ? 4 : 5) : 0
     const durationMs = phase === 'FINALE'
       ? finaleCountdownStart(gfeStep) * 1000
@@ -794,13 +794,35 @@ export function LeaderboardPage() {
     setSpecialNameSpinMs(durationMs)
     setSpecialFinaleStepStartedAt(startedAt)
     setSpecialDecrypting(true)
+    unlockFinaleAudio()
+
+    const roster = [...specialEntries]
+      .sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0))
+      .slice(0, 5)
+    const winnerName =
+      phase === 'FINALE'
+        ? (roster[(step === 1 ? 2 : 1) - 1]?.teamName || '')
+        : ''
+
+    // Winner confetti opens with the name popup (same as main champion), not at beat end.
+    if (phase === 'FINALE' && step === 2) {
+      window.setTimeout(() => {
+        if (!specialIsRevealingRef.current || specialStepRef.current !== step) return
+        triggerFinaleConfetti(1, Math.max(1_000, durationMs - CHAMPION_WIN_AT_MS))
+      }, CHAMPION_WIN_AT_MS)
+    }
 
     specialDecryptTimerRef.current = window.setTimeout(() => {
       specialDecryptTimerRef.current = null
       setSpecialDecrypting(false)
       try {
         if (phase === 'FINALE') {
-          triggerFinaleConfetti(step === 2 ? 1 : 2)
+          if (step === 1) {
+            triggerFinaleConfetti(2)
+            speakCountdown('Special Team Runner, ' + winnerName)
+          } else {
+            speakCountdown('Special Team Winner, ' + winnerName)
+          }
         } else {
           confetti({
             particleCount: 55,

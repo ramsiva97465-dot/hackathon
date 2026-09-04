@@ -1145,6 +1145,9 @@ export function GrandFinaleExperience({
 
   // Restart muted stage video + Web Audio bed together for every Top 5 beat.
   // 5th place waits through rain + hold before the reveal score starts.
+  // Special Category Runner reuses step 4 timing but a single place reveal (not Final Two).
+  const specialRunner = Boolean(placeKickers?.[2]) && revealStep === 4
+
   useEffect(() => {
     if (!isAnimating || revealStep < 1) {
       stopFinaleRevealBed()
@@ -1153,17 +1156,18 @@ export function GrandFinaleExperience({
     const rank = Math.max(1, 6 - revealStep)
     const preface = rank === 5 ? FIFTH_PREFACE_MS : 0
     const bedMs = Math.max(1, stepDurationMs - preface)
+    const finalTwo = revealStep === 4 && !specialRunner
     let timer: number | null = null
     if (preface > 0) {
-      timer = window.setTimeout(() => playFinaleRevealBed(rank, bedMs), preface)
+      timer = window.setTimeout(() => playFinaleRevealBed(rank, bedMs, { finalTwo }), preface)
     } else {
-      playFinaleRevealBed(rank, bedMs)
+      playFinaleRevealBed(rank, bedMs, { finalTwo })
     }
     return () => {
       if (timer != null) window.clearTimeout(timer)
       stopFinaleRevealBed()
     }
-  }, [isAnimating, revealStep, stepStartedAt, stepDurationMs])
+  }, [isAnimating, revealStep, stepStartedAt, stepDurationMs, specialRunner])
 
   const elapsed = Math.max(0, now - (stepStartedAt || now))
   const duration = Math.max(1, stepDurationMs)
@@ -1178,6 +1182,19 @@ export function GrandFinaleExperience({
   if (revealStep === 5) {
     scene = <Champion entry={entry} elapsed={elapsed} finished={!isAnimating} placeKickers={placeKickers} />
     sceneKey = 'champion'
+  } else if (revealStep === 4 && specialRunner) {
+    scene = (
+      <PlaceReveal
+        entry={entry}
+        rank={2}
+        progress={progress}
+        isAnimating={isAnimating}
+        elapsed={elapsed}
+        durationMs={duration}
+        placeKickers={placeKickers}
+      />
+    )
+    sceneKey = 'special-runner'
   } else if (revealStep === 4) {
     scene = (
       <FinalTwoReveal
