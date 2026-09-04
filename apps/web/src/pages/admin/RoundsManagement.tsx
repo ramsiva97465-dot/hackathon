@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { motion } from 'framer-motion'
 import { api } from '@/lib/api'
@@ -36,6 +36,8 @@ export function RoundsManagement() {
   const [specialR1Count, setSpecialR1Count] = useState(0)
   const [specialR2Count, setSpecialR2Count] = useState(0)
   const [distributingSpecial, setDistributingSpecial] = useState(false)
+  const [showSpecialTrackPanel, setShowSpecialTrackPanel] = useState(false)
+  const specialTrackPanelRef = useRef<HTMLDivElement>(null)
   
   // Stats
   const [round1Count, setRound1Count] = useState(0)
@@ -60,6 +62,13 @@ export function RoundsManagement() {
     const timer = setInterval(() => setStageClock(Date.now()), 500)
     return () => clearInterval(timer)
   }, [])
+
+  // Keep Special Category controls visible during an active special ceremony.
+  useEffect(() => {
+    if (specialIsRevealing || specialR2Count > 0) {
+      setShowSpecialTrackPanel(true)
+    }
+  }, [specialIsRevealing, specialR2Count])
 
   const fetchRevealState = async () => {
     try {
@@ -117,6 +126,13 @@ export function RoundsManagement() {
     }
   }
 
+  const openSpecialTrackPanel = () => {
+    setShowSpecialTrackPanel(true)
+    window.setTimeout(() => {
+      specialTrackPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 50)
+  }
+
   const handlePromoteSpecial = async () => {
     if (!window.confirm('Promote the Top 5 Special Category teams from Round 1 to Round 2?')) return
     try {
@@ -126,6 +142,7 @@ export function RoundsManagement() {
         toast.success(res.data.message || `Promoted ${res.data.promotedCount ?? 5} Special Category teams to Round 2.`)
         await fetchSpecialCounts()
         await fetchLeaderboard(true)
+        openSpecialTrackPanel()
       } else {
         toast.error(res.data?.message || 'Special Category promote failed.')
       }
@@ -515,6 +532,15 @@ export function RoundsManagement() {
                   <span>⚡ Promote Top 20 to Round 2</span>
                 </button>
                 <button
+                  onClick={handlePromoteSpecial}
+                  disabled={loading || specialR1Count === 0}
+                  className="flex items-center gap-1.5 px-4 py-2.5 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-[#E83C00]/15 disabled:opacity-50 cursor-pointer"
+                  title="Promote the Top 5 Special Category teams from Round 1 to Round 2"
+                >
+                  <Play size={13} fill="white" />
+                  <span>⚡ Promote special category to round 2</span>
+                </button>
+                <button
                   onClick={() => handleStartReveal(2)}
                   disabled={loading}
                   className="flex items-center gap-1.5 px-3.5 py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
@@ -541,6 +567,18 @@ export function RoundsManagement() {
                 >
                   <Crown size={14} />
                   <span>👑 Promote Top 5</span>
+                </button>
+                <button
+                  onClick={() => {
+                    openSpecialTrackPanel()
+                    toast.success('Special Category track controls are open below.')
+                  }}
+                  disabled={loading}
+                  className="flex items-center gap-1.5 px-4 py-2.5 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-[#E83C00]/15 cursor-pointer"
+                  title="Open the Special Category track card for assign judges and Winner / Runner reveal"
+                >
+                  <Crown size={14} />
+                  <span>👑 Promote Top 5 Special category to round 2</span>
                 </button>
               </>
             )}
@@ -859,8 +897,12 @@ export function RoundsManagement() {
           )}
         </div>
 
-        {/* Special Category — isolated from main Top 20 / Top 5 controls */}
-        <div className="bg-[#0A0A0A] border border-sky-500/30 rounded-2xl p-5 sm:p-6 space-y-5 shadow-2xl relative overflow-hidden">
+        {/* Special Category — shown after R1 promote or Round 2 "Special category" button */}
+        {showSpecialTrackPanel && (
+        <div
+          ref={specialTrackPanelRef}
+          className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-5 sm:p-6 space-y-5 shadow-2xl relative overflow-hidden"
+        >
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-300 text-[11px] font-black uppercase tracking-widest mb-2">
@@ -1004,6 +1046,7 @@ export function RoundsManagement() {
             </div>
           </div>
         </div>
+        )}
 
       </div>
     </DashboardLayout>
