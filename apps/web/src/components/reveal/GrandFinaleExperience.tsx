@@ -237,10 +237,11 @@ function Marks({ done, active }: { done: number; active: number }) {
   )
 }
 
-const SEAL_DOTS = Array.from({ length: 16 }, (_, i) => {
-  const a = (i / 16) * Math.PI * 2 - Math.PI / 2
-  return { cx: 50 + Math.cos(a) * 38, cy: 50 + Math.sin(a) * 38 }
-})
+const SEAL_BARS = [
+  { x: 2, y: 2, fill: '#F4F4F4' },
+  { x: 11, y: 14, fill: '#A3A3A3' },
+  { x: 20, y: 26, fill: '#5C5C5C' },
+] as const
 
 function flapGlyph(elapsed: number, index: number, progress: number) {
   const interval = 48 + clamp(progress / 0.44) * 130
@@ -263,57 +264,101 @@ function nameCountdown(progress: number) {
   return 1
 }
 
-function WaxStamp({ slamming, progress }: { slamming?: boolean; progress: number }) {
-  const t = clamp((progress - 0.10) / 0.12)
-  const falling = progress < 0.10
-  const justHit = progress >= 0.22 && progress < 0.30
-  const landed = progress >= 0.22 || slamming
-  const drop = falling ? -108 : landed ? 0 : -108 * (1 - t * t * t)
-  const tilt = falling ? -16 : landed ? 0 : -16 * (1 - t)
-  const squash = !landed && t > 0.82 ? 0.9 + (1 - t) * 0.4 : 1
+/** SnapServe mark seal — bars build one by one, then a rising heartbeat. */
+function SnapSeal({
+  slamming,
+  progress,
+  elapsed,
+}: {
+  slamming?: boolean
+  progress: number
+  elapsed: number
+}) {
+  const barOn = (i: number) => progress >= 0.12 + i * 0.055 || progress >= 1
+  const dotOn = (i: number) => progress >= 0.30 + i * 0.028 || progress >= 1
+  const wordOn = progress >= 0.46 || progress >= 1
+  const built = progress >= 0.48 || progress >= 1
+  const tension = built ? clamp((progress - 0.48) / 0.34) : 0
+  const tSec = elapsed / 1000
+  const hz = 0.8 + tension * 2.8
+  const phase = tSec * hz * Math.PI * 2
+  const beat =
+    Math.pow(Math.max(0, Math.sin(phase)), 10) +
+    0.5 * Math.pow(Math.max(0, Math.sin(phase - 0.4)), 14)
+  const scale = slamming ? 1 : 1 + beat * (0.04 + tension * 0.1)
+  const shake = !slamming && tension > 0.42
+    ? Math.sin(tSec * 42) * (tension - 0.42) * 4.2
+    : 0
+  const glow = 0.08 + beat * (0.22 + tension * 0.5)
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={slamming ? { opacity: 1, scale: [1.16, 0.94, 1] } : { opacity: 1 }}
-      exit={{ opacity: 0, y: -32, rotate: -10, filter: 'blur(8px)' }}
-      transition={{ duration: slamming ? 0.4 : 0.3, ease: EASE }}
+      initial={{ opacity: 0, y: 14 }}
+      animate={
+        slamming
+          ? { opacity: 1, y: 0, scale: [1.2, 0.94, 1] }
+          : { opacity: 1, y: 0 }
+      }
+      exit={{ opacity: 0, scale: 1.22, y: -14, filter: 'blur(10px)' }}
+      transition={{ duration: slamming ? 0.42 : 0.55, ease: EASE }}
       className="relative flex flex-col items-center"
-      style={{
-        transform: `translateY(${drop}px) rotate(${tilt}deg) scaleY(${squash})`,
-        transformOrigin: 'center bottom',
-      }}
     >
-      {justHit && (
-        <motion.span
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-5 h-[4.5rem] w-[4.5rem] -translate-x-1/2 rounded-full bg-amber-300 blur-2xl"
+        style={{ opacity: glow }}
+      />
+      <div
+        style={{
+          transform: `translateX(${shake}px) scale(${scale})`,
+          transformOrigin: 'center center',
+        }}
+      >
+        <svg
+          viewBox="0 0 48 36"
+          className="relative h-12 w-16 sm:h-16 sm:w-[5.25rem]"
           aria-hidden
-          className="pointer-events-none absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-200/70"
-          initial={{ scale: 0.55, opacity: 0.8 }}
-          animate={{ scale: 1.85, opacity: 0 }}
-          transition={{ duration: 0.55, ease: EASE }}
-        />
-      )}
-      <svg viewBox="0 0 100 100" className="relative h-[5.5rem] w-[5.5rem] sm:h-[6.75rem] sm:w-[6.75rem]" aria-hidden>
-        <circle cx="50" cy="50" r="46" fill="#7A5410" />
-        <circle cx="50" cy="50" r="46" fill="none" stroke="#E8C547" strokeWidth="3.2" />
-        <circle cx="50" cy="50" r="41" fill="none" stroke="#C9A227" strokeWidth="1.4" />
-        <circle cx="50" cy="50" r="33" fill="#140E06" />
-        <circle cx="50" cy="50" r="33" fill="none" stroke="#D4AF37" strokeWidth="1.1" />
-        {SEAL_DOTS.map((dot) => (
-          <circle key={`${dot.cx}-${dot.cy}`} cx={dot.cx} cy={dot.cy} r="1.7" fill="#F5E6A8" />
-        ))}
-        <text
-          x="50"
-          y="58"
-          textAnchor="middle"
-          fill="#F5E6A8"
-          fontSize="28"
-          fontFamily="Georgia, serif"
-          fontWeight="700"
         >
-          ?
-        </text>
-      </svg>
+          {SEAL_BARS.map((bar, i) => (
+            <motion.rect
+              key={bar.fill}
+              x={bar.x}
+              y={bar.y}
+              height="8"
+              rx="4"
+              fill={bar.fill}
+              initial={{ width: 0, opacity: 0 }}
+              animate={barOn(i) ? { width: 26, opacity: 1 } : { width: 0, opacity: 0 }}
+              transition={{ duration: 0.34, ease: EASE }}
+            />
+          ))}
+        </svg>
+
+        <div className="mt-3 flex items-center justify-center gap-1.5">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <motion.span
+              key={i}
+              className="h-[5px] w-[5px] rounded-full bg-amber-200"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={dotOn(i) ? { scale: 1, opacity: 0.85 } : { scale: 0, opacity: 0 }}
+              transition={{ duration: 0.22, ease: EASE }}
+            />
+          ))}
+        </div>
+
+        <motion.span
+          className="mt-2.5 text-[10px] font-semibold uppercase tracking-[0.38em] text-white/50 sm:text-[11px]"
+          initial={{ opacity: 0, y: 6, letterSpacing: '0.55em' }}
+          animate={
+            wordOn
+              ? { opacity: 0.34 + beat * 0.42, y: 0, letterSpacing: `${0.34 + beat * 0.08}em` }
+              : { opacity: 0, y: 6 }
+          }
+          transition={{ duration: 0.4, ease: EASE }}
+        >
+          Sealed
+        </motion.span>
+      </div>
     </motion.div>
   )
 }
@@ -331,7 +376,7 @@ function NameWait({
   const n = nameCountdown(progress)
 
   if (isStamping(progress) || slamming) {
-    return <WaxStamp slamming={slamming} progress={slamming ? 1 : progress} />
+    return <SnapSeal slamming={slamming} progress={slamming ? 1 : progress} elapsed={elapsed} />
   }
 
   if (counting) {
@@ -760,12 +805,14 @@ function FinalTwoReveal({
             <div style={{ transform: `scale(${champScale})` }}>
               <Wreath className={laurelCls} glyph="?" />
             </div>
-            <motion.p
-              className="mt-2 max-w-[14ch] truncate text-lg font-bold tracking-tight text-white/70 sm:text-2xl"
-              style={{ opacity: (p < 0.64 ? 1 : 1 - pick) }}
+            {/* Names stay hidden during the face-off — suspense until 2nd locks. */}
+            <p
+              aria-hidden
+              className="mt-3 font-mono text-2xl font-bold tracking-[0.35em] text-white/25 sm:text-3xl"
+              style={{ opacity: p < 0.74 ? 0.7 : 1 - pick }}
             >
-              {championEntry?.teamName || 'Finalist'}
-            </motion.p>
+              ???
+            </p>
           </div>
 
           {/* Runner-up laurel — locks with "2" */}
@@ -789,10 +836,11 @@ function FinalTwoReveal({
               />
             </div>
             <p
-              className="mt-2 max-w-[14ch] truncate text-lg font-bold tracking-tight text-white/70 sm:text-2xl"
+              aria-hidden
+              className="mt-3 font-mono text-2xl font-bold tracking-[0.35em] text-white/25 sm:text-3xl"
               style={{ opacity: smallLabels }}
             >
-              {secondEntry?.teamName || 'Finalist'}
+              ???
             </p>
           </div>
         </div>
