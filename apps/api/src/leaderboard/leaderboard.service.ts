@@ -167,11 +167,15 @@ export class LeaderboardService {
     if (!hackathon) return []
 
     const targetRound = params?.round ? Number(params.round) : 1
+    // Special R1 = ALL special teams ranked by Round 1 scores (even after promote).
+    // Special R2 = shortlisted Top 5 only (team.round >= 2), live Round 2 marks.
     const whereCondition: any = {
       hackathonId: hackathon.id,
       status: 'COMPETING',
       isSpecialCategory: true,
-      round: targetRound === 2 ? 2 : 1,
+    }
+    if (targetRound === 2) {
+      whereCondition.round = { in: [2, 3] }
     }
 
     const teams = await this.prisma.team.findMany({
@@ -189,7 +193,7 @@ export class LeaderboardService {
 
     const round2JudgingStarted = targetRound === 2 && teams.some((team) => {
       if (team.round2Score !== null && team.round2Score !== undefined) return true
-      if (team.adminScore !== null && team.adminScore !== undefined && (team.round || 1) === 2) return true
+      if (team.adminScore !== null && team.adminScore !== undefined && (team.round || 1) >= 2) return true
       return sheetsForRound(team.scoreSheets, 2).length > 0
     })
 
@@ -206,24 +210,34 @@ export class LeaderboardService {
 
       if (targetRound === 1) {
         const r1Sheets = sheetsForRound(team.scoreSheets, 1)
-        judgeCount = team.round1JudgeCount ?? r1Sheets.length
+        // Prefer submitted R1 sheets so a leftover round1Score of 0 cannot hide real marks.
         if (hasAdminOverride && teamRound === 1) {
           totalScore = team.adminScore!
+          judgeCount = team.round1JudgeCount ?? r1Sheets.length
+        } else if (r1Sheets.length > 0) {
+          judgeCount = r1Sheets.length
+          totalScore = averageFromSheets(r1Sheets) + bonus
         } else if (team.round1Score !== null && team.round1Score !== undefined) {
           totalScore = team.round1Score
           judgeCount = team.round1JudgeCount ?? 0
         } else {
-          totalScore = averageFromSheets(r1Sheets) + bonus
+          totalScore = bonus
+          judgeCount = 0
         }
       } else {
+        // Live Round 2 board for the special Top 5 shortlist.
         const r2Sheets = sheetsForRound(team.scoreSheets, 2)
         if (hasAdminOverride && teamRound >= 2) {
           totalScore = team.adminScore!
           judgeCount = team.round2JudgeCount ?? r2Sheets.length
+        } else if (r2Sheets.length > 0) {
+          judgeCount = r2Sheets.length
+          totalScore = sumFromSheets(r2Sheets)
         } else if (team.round2Score !== null && team.round2Score !== undefined) {
           totalScore = team.round2Score
           judgeCount = team.round2JudgeCount ?? 0
         } else if (!round2JudgingStarted) {
+          // Before any R2 marks: show frozen/qualifier R1 so the shortlist is readable.
           if (team.round1Score !== null && team.round1Score !== undefined) {
             totalScore = team.round1Score
             judgeCount = team.round1JudgeCount ?? 0
@@ -233,8 +247,8 @@ export class LeaderboardService {
             totalScore = averageFromSheets(r1Sheets) + bonus
           }
         } else {
-          judgeCount = r2Sheets.length
-          totalScore = sumFromSheets(r2Sheets)
+          judgeCount = 0
+          totalScore = 0
         }
       }
 

@@ -1039,8 +1039,10 @@ export class TeamsService {
     const top5Ids = top5.map((t) => t.id)
     const restIds = sorted.slice(5).map((t) => t.id)
 
+    // Freeze Round 1 scores for every special team so Special R1 stays complete
+    // after the Top 5 move to round 2.
     await Promise.all(
-      top5.map((t) =>
+      scored.map((t) =>
         this.prisma.team.update({
           where: { id: t.id },
           data: { round1Score: t.overallScore, round1JudgeCount: t.judgeCount },

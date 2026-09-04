@@ -614,7 +614,7 @@ export function PremiumRevealCard({
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
               </span>
-              <span>{isFinale ? 'GRAND FINALE • WINNER REVEAL' : 'STAGE READY · TOP 20 CEREMONY'}</span>
+              <span>{isFinale ? 'GRAND FINALE • WINNER REVEAL' : `STAGE READY · TOP ${maxSteps} CEREMONY`}</span>
             </div>
 
             {/* Heading */}
@@ -624,7 +624,7 @@ export function PremiumRevealCard({
             <p className="max-w-xl mx-auto text-xs sm:text-sm font-medium text-slate-300 leading-relaxed">
               {isFinale
                 ? '5 Winners. One Unforgettable Reveal !!'
-                : 'Waiting for admin to initiate the Top 20 announcement (#20 ➔ #1).'}
+                : `Waiting for admin to initiate the Top ${maxSteps} announcement (#${maxSteps} ➔ #1).`}
             </p>
             {isFinale && <FinaleReadyPodiums />}
           </div>
@@ -632,7 +632,7 @@ export function PremiumRevealCard({
           {/* Footnote divider */}
           <div className="w-full pt-7 mt-7 border-t border-white/10 flex items-center justify-between text-xs font-mono text-slate-400 tracking-wider">
             <span>{isFinale ? 'Status: Vault Sealed' : 'Status: Ready'}</span>
-            <span>Next: {isFinale ? 'Unseal 5th Place' : '#20'}</span>
+            <span>Next: {isFinale ? 'Unseal 5th Place' : `#${maxSteps}`}</span>
           </div>
         </motion.div>
       </div>
