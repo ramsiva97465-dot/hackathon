@@ -60,8 +60,8 @@ function triggerFinaleConfetti(rank: number) {
         colors: ['#78716c', '#a8a29e', '#e7e5e4', '#ffffff']
       })
     } else if (rank === 1) {
-      // 👑 GRAND CHAMPION DUAL CANNON & FIREWORKS SHOWER (3.5s celebration)
-      const duration = 3.5 * 1000
+      // 👑 GRAND CHAMPION — full-screen blast for the full 15s champion solo hold
+      const duration = 15 * 1000
       const end = Date.now() + duration
       const colors = ['#E83C00', '#F59E0B', '#FFD700', '#FBBF24', '#FFFFFF', '#10B981']
 
@@ -93,6 +93,35 @@ function triggerFinaleConfetti(rank: number) {
         }
       })()
     }
+  } catch (e) {
+    // Non-blocking fallback
+  }
+}
+
+/** Soft burst when the full Top 5 lineup appears after the champion solo. */
+function triggerFinaleLineupConfetti() {
+  try {
+    const colors = ['#E83C00', '#F59E0B', '#FFD700', '#FFFFFF', '#10B981']
+    confetti({
+      particleCount: 45,
+      spread: 60,
+      origin: { y: 0.65 },
+      colors,
+    })
+    confetti({
+      particleCount: 22,
+      angle: 60,
+      spread: 45,
+      origin: { x: 0.12, y: 0.75 },
+      colors,
+    })
+    confetti({
+      particleCount: 22,
+      angle: 120,
+      spread: 45,
+      origin: { x: 0.88, y: 0.75 },
+      colors,
+    })
   } catch (e) {
     // Non-blocking fallback
   }
@@ -1181,7 +1210,8 @@ export function LeaderboardPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [isDecrypting])
 
-  // After #1 is announced, hold that card for 15 seconds, then jump to the Top 20 table.
+  // After #1 is announced: hold the champion solo for 15s (with full-screen
+  // confetti), then show the Top 5 lineup forever (finale) or the Top 20 table.
   // Once the hold starts, polls / clock ticks must never cancel it.
   useEffect(() => {
     if (!isRevealing) {
@@ -1213,6 +1243,9 @@ export function LeaderboardPage() {
     holdStartedRef.current = true
     autoScrollTimerRef.current = setTimeout(() => {
       autoScrollTimerRef.current = null
+      if (revealRoundRef.current === 3) {
+        triggerFinaleLineupConfetti()
+      }
       jumpToTop20Table()
     }, 15000)
   }, [isRevealing, revealedStep, isFinale, unlockedRanks.length, isDecrypting])
@@ -1663,7 +1696,8 @@ export function LeaderboardPage() {
             : 'overflow-y-auto px-4 sm:px-8 pb-10'
         }`}>
           
-          {!rosterShown && (
+          {/* Finale stays mounted after the champion hold so the Top 5 lineup never unmounts. */}
+          {((isFinale && revealedStep > 0) || !rosterShown) && (
           <div className={`w-full flex flex-col items-stretch shrink-0 ${
             isFinale && revealedStep > 0
               ? 'h-full min-h-0 py-0'
@@ -1727,7 +1761,7 @@ export function LeaderboardPage() {
             }`}>
               {isFinale && revealedStep > 0 ? (
                 <div className="h-full w-full min-h-0">
-                  {allPlacesAnnounced ? (
+                  {allPlacesAnnounced && rosterShown ? (
                     <TopFiveLineup finalists={finaleRoster} />
                   ) : (
                     <GrandFinaleExperience
