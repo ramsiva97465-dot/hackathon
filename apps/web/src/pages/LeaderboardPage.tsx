@@ -36,14 +36,45 @@ function finaleCountdownStart(step: number) {
 // ── Cinematic Confetti FX for Grand Finale ────────────────────────────────────
 function triggerFinaleConfetti(rank: number, durationMs?: number) {
   try {
-    if (rank === 3 || rank === 4 || rank === 5) {
-      // Place reveals (5th / 4th / 2nd Runner Up): small top rain at name lock — not side poppers.
+    if (rank === 3) {
+      // 2nd Runner Up — full-screen top rain (not side poppers).
+      // Bronze/copper palette — not the silver/ice of 1st Runner Up, not Champion gold cannons.
+      const duration = Math.max(2_200, durationMs ?? 3_600)
+      const end = Date.now() + duration
+      const colors = ['#92400e', '#b45309', '#c2410c', '#ea580c', '#fdba74', '#fff7ed']
+
+      ;(function frame() {
+        confetti({
+          particleCount: 4,
+          startVelocity: 12,
+          spread: 360,
+          ticks: 280,
+          gravity: 0.85,
+          scalar: 1.05,
+          drift: (Math.random() - 0.5) * 0.6,
+          origin: { x: Math.random(), y: -0.05 },
+          colors,
+        })
+        confetti({
+          particleCount: 3,
+          startVelocity: 8,
+          spread: 180,
+          ticks: 260,
+          gravity: 0.9,
+          scalar: 0.9,
+          origin: { x: Math.random() * 0.9 + 0.05, y: -0.02 },
+          colors,
+        })
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame)
+        }
+      })()
+    } else if (rank === 4 || rank === 5) {
+      // 5th / 4th — light top rain (stone/amber)
       const duration = Math.max(1_400, durationMs ?? 2_400)
       const end = Date.now() + duration
-      const colors =
-        rank === 3
-          ? ['#b45309', '#d97706', '#f59e0b', '#fbbf24', '#ffffff']
-          : ['#78716c', '#a8a29e', '#e7e5e4', '#ffffff', '#fbbf24']
+      const colors = ['#78716c', '#a8a29e', '#e7e5e4', '#ffffff', '#fbbf24']
 
       ;(function frame() {
         confetti({
