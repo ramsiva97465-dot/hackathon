@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Query } from '@nestjs/common'
-import { IsString, IsNumber, IsOptional, IsBoolean } from 'class-validator'
+import { IsString, IsNumber, IsOptional, IsBoolean, ValidateIf } from 'class-validator'
 import { LeaderboardService } from './leaderboard.service'
 import { LeaderboardGateway } from './leaderboard.gateway'
 
@@ -7,6 +7,7 @@ class AdminScoreDto {
   @IsString()
   teamId: string
 
+  @ValidateIf((_, value) => value !== null && value !== undefined)
   @IsNumber()
   @IsOptional()
   score: number | null
