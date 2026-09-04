@@ -172,6 +172,13 @@ export function RoundsManagement() {
   const handleStartSpecialReveal = async (phase: 'TOP5' | 'FINALE') => {
     try {
       setLoading(true)
+      try {
+        await api.leaderboard.stopReveal()
+        setIsStageRevealing(false)
+        setRevealStep(0)
+      } catch {
+        // ignore — main ceremony may already be idle
+      }
       await api.leaderboard.startSpecialReveal(phase)
       setSpecialIsRevealing(true)
       setSpecialPhase(phase)
@@ -286,6 +293,14 @@ export function RoundsManagement() {
   const handleStartReveal = async (round: number = 2) => {
     try {
       setLoading(true)
+      // If Special Category ceremony is live/stuck, stop it first so Top 20 can open.
+      try {
+        await api.leaderboard.stopSpecialReveal()
+        setSpecialIsRevealing(false)
+        setSpecialStep(0)
+      } catch {
+        // ignore — Special may already be idle
+      }
       await api.leaderboard.startReveal(round)
       setIsStageRevealing(true)
       setRevealStep(0)
@@ -295,9 +310,9 @@ export function RoundsManagement() {
       toast.success(round === 3
         ? 'Top 5 Grand Finale stage is ready. All five identities are locked on every LCD!'
         : 'Top 20 ceremony opened on the LCD. Use Reveal on each team in the Round 2 table (20 → 1).')
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
-      toast.error('Failed to start reveal.')
+      toast.error(err?.response?.data?.message || 'Failed to start reveal.')
     } finally {
       setLoading(false)
     }

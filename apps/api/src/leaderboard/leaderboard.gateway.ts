@@ -146,8 +146,10 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
 
   // Called when Admin triggers Stage Grand Reveal
   async broadcastRevealEvent(payload: { round: number; type: string; timestamp: number }) {
+    // Main + Special are mutually exclusive. If Special is stuck/open, clear it
+    // so desk admins can open Top 20 / Grand Finale without a manual stop first.
     if (this.specialIsRevealing) {
-      throw new BadRequestException('Special Category reveal is already running. Stop it before starting the main ceremony.')
+      await this.broadcastSpecialRevealStop()
     }
     this.isRevealing = true
     this.revealRound = payload.round || 2
@@ -285,8 +287,9 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
   }
 
   async broadcastSpecialRevealStart(phase: 'TOP5' | 'FINALE') {
+    // Clear a stuck/open main ceremony so Special can start from the desk.
     if (this.isRevealing) {
-      throw new BadRequestException('Main ceremony is already running. Stop it before starting Special Category reveal.')
+      await this.broadcastStopReveal()
     }
     this.specialIsRevealing = true
     this.specialPhase = phase
@@ -304,7 +307,7 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
 
   async broadcastSpecialRevealStep(step: number, phase?: 'TOP5' | 'FINALE') {
     if (this.isRevealing) {
-      throw new BadRequestException('Main ceremony is running. Stop it before advancing Special Category reveal.')
+      await this.broadcastStopReveal()
     }
     const nextPhase = phase || this.specialPhase
     const maxStep = nextPhase === 'TOP5' ? 5 : 2
