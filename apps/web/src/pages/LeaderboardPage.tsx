@@ -605,7 +605,13 @@ export function LeaderboardPage() {
     applySpecialRevealState(data)
   })
 
-  useWebSocket<LeaderboardEntry[]>('leaderboard:special_update', (rows) => {
+  useWebSocket<LeaderboardEntry[] | { round1?: LeaderboardEntry[]; round2?: LeaderboardEntry[]; entries?: LeaderboardEntry[] }>('leaderboard:special_update', (payload) => {
+    // During Top 5 shortlist ceremony, never apply raw R2 zeros — refetch with R1 merge.
+    if (specialIsRevealingRef.current && specialPhaseRef.current === 'TOP5') {
+      void fetchSpecialBoard('TOP5')
+      return
+    }
+    const rows = Array.isArray(payload) ? payload : (payload?.round2 || payload?.entries)
     if (Array.isArray(rows)) setSpecialEntries(rows)
   })
 
@@ -723,13 +729,36 @@ export function LeaderboardPage() {
   const fetchSpecialBoard = async (phase?: 'TOP5' | 'FINALE') => {
     try {
       const p = phase || specialPhaseRef.current
-      // TOP5 shortlist uses R2 roster ranked by frozen R1 until R2 judging; FINALE uses R2 sums.
+      // TOP5 ceremony must show Round 1 qualifier scores for the shortlist.
+      // Special R2 API returns 0 until R2 judging starts (correct for the live R2 board),
+      // so merge R1 totals onto the R2 roster for the LCD announcement only.
+      if (p === 'TOP5') {
+        const [r2Res, r1Res] = await Promise.all([
+          api.leaderboard.getSpecial({ round: 2 }),
+          api.leaderboard.getSpecial({ round: 1 }),
+        ])
+        const r2 = Array.isArray(r2Res.data) ? r2Res.data : []
+        const r1 = Array.isArray(r1Res.data) ? r1Res.data : []
+        if (r2.length === 0 && r1.length > 0) {
+          setSpecialEntries(r1.slice(0, 5))
+          return
+        }
+        const r1ById = new Map(r1.map((e) => [e.teamId, e]))
+        const merged = r2
+          .map((e) => {
+            const q = r1ById.get(e.teamId)
+            return q
+              ? { ...e, totalScore: q.totalScore, judgeCount: q.judgeCount }
+              : e
+          })
+          .sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0))
+        setSpecialEntries(merged)
+        return
+      }
+
+      // FINALE uses live Round 2 sums.
       const res = await api.leaderboard.getSpecial({ round: 2 })
       if (Array.isArray(res.data)) setSpecialEntries(res.data)
-      else if (p === 'TOP5') {
-        const r1 = await api.leaderboard.getSpecial({ round: 1 })
-        if (Array.isArray(r1.data)) setSpecialEntries(r1.data)
-      }
     } catch {
       // Ignore
     }
