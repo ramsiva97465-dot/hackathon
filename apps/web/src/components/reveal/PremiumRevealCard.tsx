@@ -857,8 +857,8 @@ export function PremiumRevealCard({
           <div className="w-px self-stretch bg-white/10 shrink-0" />
 
           {/* ── CENTER: Team Name + College/Track ── */}
-          <div className={`flex-1 flex flex-col items-center justify-center gap-3 text-center overflow-hidden px-6 ${
-            settled ? 'min-h-0' : isFinale ? 'min-h-[160px] translate-y-2' : 'min-h-[160px]'
+          <div className={`flex-1 flex flex-col items-center justify-center text-center overflow-hidden px-6 ${
+            settled ? 'min-h-0 gap-3' : isFinale ? 'min-h-[160px] translate-y-2 gap-3' : 'min-h-[160px] gap-3'
           }`}>
             {/* Team Name / Cipher (Persistent single line element, zero layout jump or popping) */}
             <div ref={nameBoxRef} className="w-full flex justify-center overflow-hidden">
@@ -874,7 +874,7 @@ export function PremiumRevealCard({
             </div>
 
             {/* Subtitle Slot (Decrypting badge cross-fades into College & Track smoothly) */}
-            <div className="min-h-[36px] flex items-center justify-center">
+            <div className={`min-h-[36px] flex items-center justify-center ${isDecrypting ? '' : 'mt-8 xl:mt-10'}`}>
               {isDecrypting ? (
                 <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 via-[#1A1208]/90 to-orange-500/15 backdrop-blur-md border border-amber-400/40 text-amber-200/95 text-[11px] sm:text-xs font-bold tracking-[0.18em] uppercase shadow-[0_0_20px_rgba(245,158,11,0.2)] ring-1 ring-amber-400/20">
                   <span className="relative flex h-2 w-2 shrink-0">
