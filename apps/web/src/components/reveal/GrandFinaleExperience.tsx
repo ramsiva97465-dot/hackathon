@@ -46,34 +46,32 @@ function easeOut(t: number, power = 3.4) {
   return 1 - Math.pow(1 - clamp(t), power)
 }
 
-/** Rise first, still edge-on. Face the camera, then stay locked before countdown. */
+/** Shared place-reveal phase map (fraction of the reveal beat after any 5th preface). */
+export const PLACE_CROWN_END = 0.32
+export const PLACE_COUNT_END = 0.52
+export const PLACE_ROLL_END = 0.82
+
+/** Rise + scroll-spin the laurel, then lock face-on before countdown. */
 function wreathYaw(progress: number, live: boolean, tease = false) {
   if (!live) return 0
-  // Crown must be face-on and stable before countdown (~0.32).
-  if (!tease) {
-    if (progress <= 0.08) return 82
-    if (progress < 0.30) return 82 * (1 - easeOut((progress - 0.08) / 0.22, 3.8))
-    return 0
-  }
-  // 4th place tease — still finishes facing before countdown.
-  if (progress <= 0.08) return 82
-  if (progress < 0.22) return 82 * (1 - easeOut((progress - 0.08) / 0.14, 3.4))
-  if (progress < 0.24) return 0
-  if (progress < 0.28) return 70 * easeOut((progress - 0.24) / 0.04, 2.2)
-  if (progress < 0.32) return 70 * (1 - easeOut((progress - 0.28) / 0.04, 3.2))
-  return 0
+  if (progress >= PLACE_CROWN_END) return 0
+  const t = clamp(progress / PLACE_CROWN_END)
+  const eased = easeOut(t, 2.35)
+  // Edge-on start, then scroll ~1+ turns so the crown clearly "rolls" before lock.
+  const turns = tease ? 0.9 : 1.2
+  return (95 + turns * 360) * (1 - eased)
 }
 
 function wreathRise(progress: number, live: boolean) {
   if (!live) return 0
-  if (progress <= 0.04) return 96
-  if (progress >= 0.22) return 0
-  return 96 * (1 - easeOut((progress - 0.04) / 0.18, 3.4))
+  if (progress <= 0.02) return 110
+  if (progress >= PLACE_CROWN_END * 0.75) return 0
+  return 110 * (1 - easeOut(progress / (PLACE_CROWN_END * 0.75), 3.0))
 }
 
-function lockSweep(progress: number, live: boolean, tease: boolean) {
+function lockSweep(progress: number, live: boolean, _tease: boolean) {
   if (!live) return -1
-  const start = tease ? 0.30 : 0.28
+  const start = PLACE_CROWN_END - 0.04
   const t = (progress - start) / 0.08
   if (t <= 0 || t >= 1) return -1
   return t
@@ -218,21 +216,8 @@ function flapGlyph(elapsed: number, index: number, rollT: number) {
   return ALPHA[Math.abs(n) % ALPHA.length]
 }
 
-/**
- * After the crown is stable, name suspense is:
- * countdown → boxed rolling → real name (no unboxed scramble).
- * `wait` is remapped 0→1 from crown-stable → end of beat.
- */
-function isNameCountdown(wait: number) {
-  return wait >= 0 && wait < 0.36
-}
-
-function isNameRolling(wait: number) {
-  return wait >= 0.36 && wait < 0.82
-}
-
-function nameCountdown(wait: number) {
-  const t = clamp(wait / 0.36)
+function placeCountdownDigit(p: number) {
+  const t = clamp((p - PLACE_CROWN_END) / (PLACE_COUNT_END - PLACE_CROWN_END))
   if (t < 0.2) return 5
   if (t < 0.4) return 4
   if (t < 0.6) return 3
@@ -241,21 +226,20 @@ function nameCountdown(wait: number) {
 }
 
 function NameWait({
-  wait,
+  phase,
+  digit,
   rollElapsed,
+  rollT,
 }: {
-  wait: number
+  phase: 'count' | 'roll'
+  digit: number
   rollElapsed: number
+  rollT: number
 }) {
-  const counting = isNameCountdown(wait)
-  const rolling = isNameRolling(wait)
-  const n = nameCountdown(wait)
-  const rollT = clamp((wait - 0.36) / 0.46)
-
-  if (counting) {
+  if (phase === 'count') {
     return (
       <motion.div
-        key={`count-${n}`}
+        key={`count-${digit}`}
         initial={{ opacity: 0, y: 28 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -22 }}
@@ -266,56 +250,52 @@ function NameWait({
           Name in
         </p>
         <p className="mt-1 font-black tabular-nums leading-none text-white text-8xl sm:text-9xl">
-          {n}
+          {digit}
         </p>
       </motion.div>
     )
   }
 
-  if (rolling) {
-    return (
-      <motion.div
-        key="roll"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, filter: 'blur(8px)', y: -8 }}
-        transition={{ duration: 0.55, ease: EASE }}
-        className="mt-6 flex flex-col items-center sm:mt-8"
-      >
-        <div className="flex items-center gap-1.5 sm:gap-2" style={{ perspective: 700 }}>
-          {[0, 1, 2, 3, 4].map((i) => {
-            const glyph = flapGlyph(rollElapsed, i, rollT)
-            return (
-              <div
-                key={i}
-                className="relative h-14 w-11 overflow-hidden rounded-sm border border-white/12 bg-[#0A0908] sm:h-[4.25rem] sm:w-14"
-                style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,.08), 0 8px 20px rgba(0,0,0,.45)' }}
-              >
-                <span className="pointer-events-none absolute inset-x-0 top-1/2 z-10 h-px bg-black/70" />
-                <AnimatePresence mode="popLayout">
-                  <motion.span
-                    key={`${i}-${glyph}`}
-                    initial={{ y: '70%', opacity: 0.35 }}
-                    animate={{ y: '0%', opacity: 1 }}
-                    exit={{ y: '-70%', opacity: 0 }}
-                    transition={{ duration: 0.18, ease: 'easeOut' }}
-                    className="absolute inset-0 flex items-center justify-center font-mono text-2xl font-bold text-white/80 sm:text-3xl"
-                  >
-                    {glyph}
-                  </motion.span>
-                </AnimatePresence>
-              </div>
-            )
-          })}
-        </div>
-        <p className="mt-3 text-[10px] font-medium uppercase tracking-[0.32em] text-white/30">
-          Rolling
-        </p>
-      </motion.div>
-    )
-  }
-
-  return null
+  return (
+    <motion.div
+      key="roll"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, filter: 'blur(8px)', y: -8 }}
+      transition={{ duration: 0.55, ease: EASE }}
+      className="mt-6 flex flex-col items-center sm:mt-8"
+    >
+      <div className="flex items-center gap-1.5 sm:gap-2" style={{ perspective: 700 }}>
+        {[0, 1, 2, 3, 4].map((i) => {
+          const glyph = flapGlyph(rollElapsed, i, rollT)
+          return (
+            <div
+              key={i}
+              className="relative h-14 w-11 overflow-hidden rounded-sm border border-white/12 bg-[#0A0908] sm:h-[4.25rem] sm:w-14"
+              style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,.08), 0 8px 20px rgba(0,0,0,.45)' }}
+            >
+              <span className="pointer-events-none absolute inset-x-0 top-1/2 z-10 h-px bg-black/70" />
+              <AnimatePresence mode="popLayout">
+                <motion.span
+                  key={`${i}-${glyph}`}
+                  initial={{ y: '70%', opacity: 0.35 }}
+                  animate={{ y: '0%', opacity: 1 }}
+                  exit={{ y: '-70%', opacity: 0 }}
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
+                  className="absolute inset-0 flex items-center justify-center font-mono text-2xl font-bold text-white/80 sm:text-3xl"
+                >
+                  {glyph}
+                </motion.span>
+              </AnimatePresence>
+            </div>
+          )
+        })}
+      </div>
+      <p className="mt-3 text-[10px] font-medium uppercase tracking-[0.32em] text-white/30">
+        Rolling
+      </p>
+    </motion.div>
+  )
 }
 
 const STAGE_BG = '/videos/finale-stage-bg.mp4'
@@ -549,20 +529,15 @@ function PlaceReveal({
       : progress
   const revealLive = !isAnimating || !isFifth || !inPreface
   const tease = rank === 4
-  // Sequence: crown rotate → crown stable+number → countdown → boxed roll → real name only.
-  const CROWN_STABLE = 0.34
-  const numberOn = revealLive && (!isAnimating || p >= (tease ? 0.30 : 0.28))
-  const wait =
-    !revealLive || !isAnimating
-      ? 1
-      : p < CROWN_STABLE
-      ? -1
-      : clamp((p - CROWN_STABLE) / (1 - CROWN_STABLE))
-  const nameLive = revealLive && (!isAnimating || wait >= 0.82)
-  const nameLocked = !isAnimating || wait >= 0.82
-  const metaOn = revealLive && (!isAnimating || wait >= 0.88)
-  const scoreOn = revealLive && (!isAnimating || wait >= 0.92)
-  const scoreT = !isAnimating ? 1 : clamp((wait - 0.92) / 0.08)
+  // Sequence: crown scroll → crown lock → countdown → boxed roll → real name.
+  const numberOn = revealLive && (!isAnimating || p >= PLACE_CROWN_END - 0.02)
+  const inCount = revealLive && isAnimating && p >= PLACE_CROWN_END && p < PLACE_COUNT_END
+  const inRoll = revealLive && isAnimating && p >= PLACE_COUNT_END && p < PLACE_ROLL_END
+  const nameLive = revealLive && (!isAnimating || p >= PLACE_ROLL_END)
+  const nameLocked = !isAnimating || p >= PLACE_ROLL_END
+  const metaOn = revealLive && (!isAnimating || p >= PLACE_ROLL_END + 0.04)
+  const scoreOn = revealLive && (!isAnimating || p >= PLACE_ROLL_END + 0.08)
+  const scoreT = !isAnimating ? 1 : clamp((p - (PLACE_ROLL_END + 0.08)) / 0.08)
   const score = Number(entry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
   const track = entry?.track ? getTrackConfig(entry.track) : null
   const yaw = wreathYaw(p, revealLive && isAnimating, tease)
@@ -572,17 +547,17 @@ function PlaceReveal({
     ? 1
     : !revealLive
     ? 0
-    : p < 0.04
+    : p < 0.02
     ? 0
-    : clamp((p - 0.04) / 0.12)
+    : clamp((p - 0.02) / 0.1)
   const titleOn =
-    !isAnimating || (inHold && holdT > 0.2) || (revealLive && p >= 0.03)
-  // Keep the rule with the kicker so early Fourth/Fifth frames still look finished.
+    !isAnimating || (inHold && holdT > 0.2) || (revealLive && p >= 0.02)
   const lineOn = titleOn
   const meta = { kicker: placeKicker(rank, placeKickers) }
   const revealElapsed = Math.max(0, elapsed - (isFifth ? FIFTH_PREFACE_MS : 0))
-  const rollStartMs = CROWN_STABLE * revealSpan + 0.36 * (1 - CROWN_STABLE) * revealSpan
-  const rollElapsed = Math.max(0, revealElapsed - rollStartMs)
+  const rollElapsed = Math.max(0, revealElapsed - PLACE_COUNT_END * revealSpan)
+  const rollT = clamp((p - PLACE_COUNT_END) / (PLACE_ROLL_END - PLACE_COUNT_END))
+  const countDigit = placeCountdownDigit(p)
   const stageProgress = !isAnimating
     ? 1
     : inPreface
@@ -647,11 +622,14 @@ function PlaceReveal({
               >
                 {entry?.teamName || 'Unavailable'}
               </motion.h2>
-            ) : revealLive && wait >= 0 ? (
-              <motion.div
-                key={isNameCountdown(wait) ? `c-${nameCountdown(wait)}` : isNameRolling(wait) ? 'roll' : 'wait'}
-              >
-                <NameWait wait={wait} rollElapsed={rollElapsed} />
+            ) : inCount || inRoll ? (
+              <motion.div key={inCount ? `c-${countDigit}` : 'roll'}>
+                <NameWait
+                  phase={inCount ? 'count' : 'roll'}
+                  digit={countDigit}
+                  rollElapsed={rollElapsed}
+                  rollT={rollT}
+                />
               </motion.div>
             ) : null}
           </AnimatePresence>

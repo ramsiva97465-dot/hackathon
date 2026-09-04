@@ -1,8 +1,15 @@
-/** Ceremony bed + one-shot FX for Top 5 LCD reveals. */
+/** Ceremony bed + one-shot FX for Top 5 LCD reveals.
+ * Phase fractions MUST match GrandFinaleExperience place reveal:
+ *   crown scroll 0→0.32 · countdown 0.32→0.52 · roll 0.52→0.82 · name 0.82→1
+ */
 
 let ctx: AudioContext | null = null
 let activeNodes: Array<AudioScheduledSourceNode | AudioNode> = []
 let stopTimer: number | null = null
+
+const CROWN_END = 0.32
+const COUNT_END = 0.52
+const ROLL_END = 0.82
 
 function getCtx(): AudioContext | null {
   try {
@@ -79,9 +86,9 @@ function noiseBurst(audio: AudioContext, start: number, dur: number, peak: numbe
 
 /**
  * Starts a reveal score sized to `durationMs`.
- * Hits: curtain → roll ticks → 3/2/1 → name lock → seal stamp → score flourish.
+ * Hits sync with crown scroll → 5/4/3/2/1 → letter roll → name lock → score.
  */
-export function playFinaleRevealBed(rank: number, durationMs = 20_000) {
+export function playFinaleRevealBed(rank: number, durationMs = 28_000) {
   clearBed()
   const audio = getCtx()
   if (!audio) return
@@ -90,43 +97,55 @@ export function playFinaleRevealBed(rank: number, durationMs = 20_000) {
   const isChamp = rank === 1
   const isSecond = rank === 2
 
-  // Curtain whoosh + deep pad
-  noiseBurst(audio, t0, Math.min(2.4, d * 0.14), 0.14)
-  tone(audio, 'sine', isChamp ? 48 : 56, t0, d * 0.2, 0.2)
-  tone(audio, 'triangle', isChamp ? 96 : 112, t0 + 0.18, d * 0.18, 0.09)
-  tone(audio, 'sine', isChamp ? 192 : 168, t0 + 0.35, 1.8, 0.05)
+  // ── Crown scroll (0 → CROWN_END) — whoosh + spin ticks ────────────────────
+  noiseBurst(audio, t0, Math.min(2.2, d * CROWN_END * 0.55), 0.16)
+  tone(audio, 'sine', isChamp ? 48 : 56, t0, d * CROWN_END * 0.85, 0.2)
+  tone(audio, 'triangle', isChamp ? 96 : 112, t0 + 0.12, d * CROWN_END * 0.7, 0.1)
+  const crownTicks = Math.max(10, Math.round((d * CROWN_END) / 0.55))
+  for (let i = 0; i < crownTicks; i++) {
+    const at = t0 + (i / crownTicks) * d * CROWN_END * 0.92
+    tone(audio, 'square', 160 + i * 18, at, 0.08, 0.03 + i * 0.002)
+    tone(audio, 'sine', 320 + i * 12, at + 0.01, 0.1, 0.035)
+  }
+  // Crown lock thud
+  noiseBurst(audio, t0 + d * CROWN_END, 0.28, 0.18)
+  tone(audio, 'sine', 72, t0 + d * CROWN_END, 0.7, 0.22)
 
-  // Letter-roll tension ticks (~0.18–0.46)
-  const tickStart = d * 0.18
-  const tickEnd = d * 0.46
-  const tickCount = Math.max(12, Math.round((tickEnd - tickStart) / 0.38))
-  for (let i = 0; i < tickCount; i++) {
-    const at = t0 + tickStart + (i / tickCount) * (tickEnd - tickStart)
-    tone(audio, 'square', 210 + i * 14, at, 0.07, 0.035 + i * 0.002)
-    tone(audio, 'sine', 420 + i * 10, at + 0.01, 0.12, 0.04)
+  // Soft pulse under countdown + roll
+  for (let i = 0; i < Math.floor(d * 0.4); i++) {
+    const at = t0 + d * CROWN_END + 0.4 + i * 1.05
+    if (at >= t0 + d * ROLL_END) break
+    tone(audio, 'sine', isChamp ? 46 : 52, at, 0.5, 0.065)
   }
 
-  // Soft pulse under the wait
-  for (let i = 0; i < Math.floor(d * 0.45); i++) {
-    const at = t0 + 1.4 + i * 1.05
-    if (at >= t0 + d * 0.84) break
-    tone(audio, 'sine', isChamp ? 46 : 52, at, 0.5, 0.07)
-  }
-
-  // Name-in countdown 3 · 2 · 1
+  // ── Countdown 5 · 4 · 3 · 2 · 1 (CROWN_END → COUNT_END) ───────────────────
+  const countSpan = COUNT_END - CROWN_END
   ;[
-    { at: d * 0.46, freq: 392, peak: 0.26 },
-    { at: d * 0.62, freq: 494, peak: 0.28 },
-    { at: d * 0.754, freq: 587, peak: 0.3 },
-  ].forEach(({ at, freq, peak }) => {
-    noiseBurst(audio, t0 + at, 0.12, 0.08)
-    tone(audio, 'triangle', freq, t0 + at, 0.65, peak)
-    tone(audio, 'sine', freq * 2, t0 + at + 0.02, 0.45, peak * 0.45)
-    tone(audio, 'sine', freq * 3, t0 + at + 0.04, 0.3, peak * 0.18)
+    { step: 0, freq: 311 },
+    { step: 1, freq: 349 },
+    { step: 2, freq: 392 },
+    { step: 3, freq: 466 },
+    { step: 4, freq: 523 },
+  ].forEach(({ step, freq }, i) => {
+    const at = t0 + d * (CROWN_END + (step + 0.08) / 5 * countSpan)
+    const peak = 0.22 + i * 0.02
+    noiseBurst(audio, at, 0.1, 0.07)
+    tone(audio, 'triangle', freq, at, 0.55, peak)
+    tone(audio, 'sine', freq * 2, at + 0.02, 0.4, peak * 0.4)
   })
 
-  // Name lock impact — progress 0.88
-  const lock = t0 + d * 0.88
+  // ── Letter-roll ticks (COUNT_END → ROLL_END) ──────────────────────────────
+  const rollStart = d * COUNT_END
+  const rollEnd = d * ROLL_END
+  const tickCount = Math.max(14, Math.round((rollEnd - rollStart) / 0.32))
+  for (let i = 0; i < tickCount; i++) {
+    const at = t0 + rollStart + (i / tickCount) * (rollEnd - rollStart)
+    tone(audio, 'square', 210 + i * 12, at, 0.07, 0.032 + i * 0.0015)
+    tone(audio, 'sine', 420 + i * 8, at + 0.01, 0.11, 0.038)
+  }
+
+  // ── Name lock (ROLL_END) ──────────────────────────────────────────────────
+  const lock = t0 + d * ROLL_END
   noiseBurst(audio, lock, 0.45, 0.28)
   tone(audio, 'sine', isChamp ? 58 : 76, lock, 1.8, 0.34)
   tone(audio, 'triangle', isChamp ? 523 : isSecond ? 440 : 392, lock + 0.04, 1.4, 0.24)
@@ -139,7 +158,7 @@ export function playFinaleRevealBed(rank: number, durationMs = 20_000) {
     ? [587.33, 739.99, 880, 1174.66]
     : [440, 554.37, 659.25, 880]
   endFreqs.forEach((freq, i) => {
-    tone(audio, 'triangle', freq, t0 + d * 0.94 + i * 0.11, 0.95, 0.14)
+    tone(audio, 'triangle', freq, t0 + d * (ROLL_END + 0.08) + i * 0.11, 0.95, 0.14)
   })
 
   stopTimer = window.setTimeout(() => clearBed(), durationMs + 600)
