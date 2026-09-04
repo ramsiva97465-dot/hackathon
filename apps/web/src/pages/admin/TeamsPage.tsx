@@ -166,13 +166,28 @@ function processCsvData(text: string) {
 type Team = {
   id: string; name: string; college: string; track: string
   round?: number
-  members: { name: string; email?: string; phone?: string; role?: string; linkedin?: string; instagram?: string; github?: string; followedInstagram?: boolean; followedLinkedin?: boolean }[]
+  members: {
+    id?: string
+    name: string
+    email?: string
+    phone?: string
+    role?: string
+    linkedin?: string
+    instagram?: string
+    github?: string
+    followedInstagram?: boolean
+    followedLinkedin?: boolean
+    isPresent?: boolean
+    checkedInAt?: string | null
+  }[]
   judgesAssigned: number; totalJudges: number
   assignedJudgeIds?: string[]
   assignedJudgeName?: string | null
   scoresSubmitted?: number
   avgScore: number | null; rank: number | null
-  status: string; tableNumber: string | null
+  status: string
+  attendanceStatus?: string
+  tableNumber: string | null
   projectTitle?: string | null
   projectDescription?: string | null
   agentName?: string | null
@@ -1333,6 +1348,13 @@ export function TeamsPage() {
                               <Layers size={9} /> Multi Agent
                             </span>
                           )}
+                          {team.attendanceStatus === 'CHECKED_IN' && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shrink-0">
+                              <CheckCircle size={9} /> In
+                              {' '}
+                              {team.members.filter(m => m.isPresent).length}/{team.members.length}
+                            </span>
+                          )}
                           {team.round === 2 && (
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
                               ⚡ Round 2
@@ -1834,13 +1856,20 @@ export function TeamsPage() {
                       return (
                         <div key={idx} className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">
                           <div>
-                            <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                            <div className="font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
                               <span>{m.name}</span>
                               {idx === 0 && (
                                 <span className="px-1.5 py-0.2 rounded bg-[#E83C00]/10 text-[#E83C00] text-[9px] font-extrabold uppercase">
                                   Team Lead
                                 </span>
                               )}
+                              <span className={`px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase border ${
+                                m.isPresent
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                  : 'bg-slate-100 text-slate-500 border-slate-200'
+                              }`}>
+                                {m.isPresent ? 'Present ✓' : 'Not checked in'}
+                              </span>
                             </div>
                             <div className="text-[10.5px] text-slate-500 font-mono mt-0.5">{m.email}</div>
                             
@@ -1861,6 +1890,53 @@ export function TeamsPage() {
                           </div>
 
                           <div className="flex items-center gap-2 text-right">
+                            {m.id && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  try {
+                                    const next = !m.isPresent
+                                    const res = await api.attendance.checkIn(m.id!, next)
+                                    const attendanceStatus = res.data?.attendanceStatus
+                                      || (next || viewTarget.members.some(x => x.id !== m.id && x.isPresent)
+                                        ? 'CHECKED_IN'
+                                        : 'PENDING')
+                                    setViewTarget({
+                                      ...viewTarget,
+                                      attendanceStatus,
+                                      members: viewTarget.members.map(x =>
+                                        x.id === m.id
+                                          ? { ...x, isPresent: next, checkedInAt: next ? new Date().toISOString() : null }
+                                          : x
+                                      ),
+                                    })
+                                    setTeams(prev => prev.map(t =>
+                                      t.id === viewTarget.id
+                                        ? {
+                                            ...t,
+                                            attendanceStatus,
+                                            members: t.members.map(x =>
+                                              x.id === m.id
+                                                ? { ...x, isPresent: next, checkedInAt: next ? new Date().toISOString() : null }
+                                                : x
+                                            ),
+                                          }
+                                        : t
+                                    ))
+                                    toast.success(next ? `Marked ${m.name} present` : `Reset ${m.name}`)
+                                  } catch {
+                                    toast.error('Failed to update attendance')
+                                  }
+                                }}
+                                className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold border transition-colors ${
+                                  m.isPresent
+                                    ? 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-red-50 hover:text-red-600'
+                                    : 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700'
+                                }`}
+                              >
+                                {m.isPresent ? 'Undo' : 'Mark Present'}
+                              </button>
+                            )}
                             {m.linkedin && (
                               <a
                                 href={m.linkedin}

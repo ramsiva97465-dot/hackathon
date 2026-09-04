@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
-import { QrCode, Search, CheckCircle2, User, Users, MapPin, Award, RefreshCw, AlertCircle, ShieldCheck, Sparkles, Camera, CameraOff, X } from 'lucide-react'
+import { Search, CheckCircle2, Users, RefreshCw, ShieldCheck, Sparkles, Camera, CameraOff, X } from 'lucide-react'
 import { toast } from 'sonner'
 import api from '@/lib/api'
 
@@ -27,12 +27,13 @@ export function AdminScannerPage() {
   const [loading, setLoading] = useState(false)
   const [teamData, setTeamData] = useState<TeamData | null>(null)
   const [scannedMemberId, setScannedMemberId] = useState<string | null>(null)
-  
+
   // Camera State
   const [isCameraActive, setIsCameraActive] = useState(false)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const scanIntervalRef = useRef<any>(null)
+  const scanLockRef = useRef(false)
 
   // Bonus point task states for on-spot verification
   const [socialTasks, setSocialTasks] = useState({
@@ -45,7 +46,7 @@ export function AdminScannerPage() {
   const [updatingBonus, setUpdatingBonus] = useState(false)
   const [checkingInId, setCheckingInId] = useState<string | null>(null)
 
-  const stopCamera = () => {
+  const stopCamera = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop())
       streamRef.current = null
@@ -55,7 +56,102 @@ export function AdminScannerPage() {
       scanIntervalRef.current = null
     }
     setIsCameraActive(false)
+    scanLockRef.current = false
+  }, [])
+
+  const applyTeamPayload = (team: TeamData, memberId: string | null) => {
+    setTeamData(team)
+    setScannedMemberId(memberId)
+    const pts = team.bonusPoints || 0
+    setSocialTasks({
+      instaSnapserve: pts >= 2,
+      instaVobiz: pts >= 4,
+      linkedinVobiz: pts >= 6,
+      linkedinSnapserve: pts >= 8,
+      linkedinVoiceBuilder: pts >= 10
+    })
   }
+
+  const setMemberAttendance = useCallback(async (team: TeamData, memberId: string, isPresent: boolean) => {
+    const member = team.members.find(m => m.id === memberId)
+    if (!member) return team
+    if (member.isPresent === isPresent) {
+      setTeamData(team)
+      return team
+    }
+
+    setCheckingInId(memberId)
+    try {
+      const res = await api.attendance.checkIn(memberId, isPresent)
+      const nextTeamStatus =
+        res.data?.attendanceStatus
+        || (isPresent
+          ? 'CHECKED_IN'
+          : (team.members.some(m => m.id !== memberId && m.isPresent) ? 'CHECKED_IN' : 'PENDING'))
+
+      const nextTeam: TeamData = {
+        ...team,
+        attendanceStatus: nextTeamStatus,
+        members: team.members.map(m =>
+          m.id === memberId
+            ? {
+                ...m,
+                isPresent,
+                checkedInAt: isPresent ? new Date().toISOString() : undefined,
+              }
+            : m
+        ),
+      }
+      setTeamData(nextTeam)
+      toast.success(
+        isPresent
+          ? `Marked present: ${member.name} ✅`
+          : `Attendance reset: ${member.name}`
+      )
+      return nextTeam
+    } catch (err) {
+      console.error(err)
+      toast.error('Failed to update attendance status.')
+      return team
+    } finally {
+      setCheckingInId(null)
+    }
+  }, [])
+
+  const handleLookup = useCallback(async (query: string, opts?: { autoCheckIn?: boolean }) => {
+    const q = query.trim()
+    if (!q) return
+    const autoCheckIn = opts?.autoCheckIn !== false
+
+    try {
+      setLoading(true)
+      const res = await api.attendance.lookup(q)
+      if (!res.data?.team) {
+        toast.error(`No participant or team found for "${q}"`)
+        return
+      }
+
+      const team = res.data.team as TeamData
+      const memberId = res.data.scannedMemberId as string | null
+      applyTeamPayload(team, memberId)
+      toast.success(`Found Team "${team.name}"!`)
+
+      // Desk flow: QR scan / lookup also marks the matched member present
+      if (autoCheckIn && memberId) {
+        const member = team.members.find(m => m.id === memberId)
+        if (member?.isPresent) {
+          toast.info(`${member.name} is already checked in`)
+        } else {
+          await setMemberAttendance(team, memberId, true)
+        }
+      }
+    } catch (err: any) {
+      console.error(err)
+      toast.error(err.response?.data?.message || `No participant or team found for "${q}"`)
+    } finally {
+      setLoading(false)
+    }
+  }, [setMemberAttendance])
 
   const startCamera = async () => {
     try {
@@ -65,7 +161,7 @@ export function AdminScannerPage() {
       })
       streamRef.current = stream
       setIsCameraActive(true)
-      toast.info('Camera started! Point camera at participant Lanyard Pass QR Code')
+      toast.info('Camera started! Point at participant Lanyard Pass QR — scan will mark them present')
 
       setTimeout(() => {
         if (videoRef.current) {
@@ -74,25 +170,28 @@ export function AdminScannerPage() {
         }
       }, 300)
 
-      // Start detection loop using BarcodeDetector if available
       if ('BarcodeDetector' in window) {
         const barcodeDetector = new (window as any).BarcodeDetector({ formats: ['qr_code', 'code_128'] })
         scanIntervalRef.current = setInterval(async () => {
+          if (scanLockRef.current) return
           if (videoRef.current && videoRef.current.readyState === 4) {
             try {
               const barcodes = await barcodeDetector.detect(videoRef.current)
               if (barcodes.length > 0) {
+                scanLockRef.current = true
                 const qrValue = barcodes[0].rawValue
-                toast.success(`QR Detected: ${qrValue}`)
+                toast.success('QR Detected — checking in…')
                 stopCamera()
                 setSearchQuery(qrValue)
-                handleLookup(qrValue)
+                await handleLookup(qrValue, { autoCheckIn: true })
               }
-            } catch (e) {
+            } catch {
               // Ignore frame scan errors
             }
           }
         }, 500)
+      } else {
+        toast.warning('This browser has no QR detector. Use Chrome/Edge, or paste/type the pass code below.')
       }
     } catch (err) {
       console.error('Camera error:', err)
@@ -105,69 +204,11 @@ export function AdminScannerPage() {
     return () => {
       stopCamera()
     }
-  }, [])
-
-  const handleLookup = async (query: string) => {
-    if (!query.trim()) return
-    try {
-      setLoading(true)
-      const res = await api.attendance.lookup(query.trim())
-      if (res.data) {
-        setTeamData(res.data.team)
-        setScannedMemberId(res.data.scannedMemberId)
-        
-        // Preset social task checkboxes based on team bonus points count
-        const pts = res.data.team.bonusPoints || 0
-        setSocialTasks({
-          instaSnapserve: pts >= 2,
-          instaVobiz: pts >= 4,
-          linkedinVobiz: pts >= 6,
-          linkedinSnapserve: pts >= 8,
-          linkedinVoiceBuilder: pts >= 10
-        })
-        toast.success(`Found Team "${res.data.team.name}"!`)
-      }
-    } catch (err: any) {
-      console.error(err)
-      toast.error(err.response?.data?.message || `No participant or team found for "${query}"`)
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [stopCamera])
 
   const handleToggleMemberAttendance = async (memberId: string, currentStatus: boolean) => {
-    try {
-      setCheckingInId(memberId)
-      const newStatus = !currentStatus
-      const res = await api.attendance.checkIn(memberId, newStatus)
-      const nextTeamStatus =
-        res.data?.attendanceStatus
-        || (newStatus
-          ? 'CHECKED_IN'
-          : (teamData?.members.some(m => m.id !== memberId && m.isPresent) ? 'CHECKED_IN' : 'PENDING'))
-
-      if (teamData) {
-        setTeamData({
-          ...teamData,
-          attendanceStatus: nextTeamStatus,
-          members: teamData.members.map(m =>
-            m.id === memberId
-              ? {
-                  ...m,
-                  isPresent: newStatus,
-                  checkedInAt: newStatus ? new Date().toISOString() : undefined,
-                }
-              : m
-          ),
-        })
-      }
-      toast.success(newStatus ? 'Marked Present & Checked-In! ✅' : 'Attendance Status Reset')
-    } catch (err) {
-      console.error(err)
-      toast.error('Failed to update attendance status.')
-    } finally {
-      setCheckingInId(null)
-    }
+    if (!teamData) return
+    await setMemberAttendance(teamData, memberId, !currentStatus)
   }
 
   const calculatedBonusPts = Object.values(socialTasks).filter(Boolean).length * 2
@@ -214,7 +255,10 @@ export function AdminScannerPage() {
             </button>
           </div>
 
-          {/* ── Live Camera Viewfinder Overlay (When Active) ── */}
+          <p className="text-[11px] text-slate-500 font-medium">
+            Scan a lanyard QR to look up the team and automatically mark that participant present. You can still toggle attendance below.
+          </p>
+
           {isCameraActive && (
             <div className="relative w-full max-w-lg mx-auto bg-black rounded-2xl sm:rounded-3xl overflow-hidden border-2 border-[#E83C00] shadow-2xl space-y-0">
               <video
@@ -224,10 +268,8 @@ export function AdminScannerPage() {
                 className="w-full aspect-[4/3] sm:aspect-video object-cover"
               />
 
-              {/* Viewfinder Target Reticle Overlay */}
               <div className="absolute inset-0 border-[24px] sm:border-[40px] border-black/60 pointer-events-none flex items-center justify-center">
                 <div className="w-40 h-40 sm:w-48 sm:h-48 border-2 border-[#E83C00] rounded-2xl relative shadow-[0_0_20px_rgba(232,60,0,0.6)]">
-                  {/* Laser Scan Line Animation */}
                   <div className="w-full h-0.5 bg-[#E83C00] shadow-[0_0_12px_#E83C00] absolute top-0 animate-[ping_2s_infinite]" />
                   <p className="text-[9px] sm:text-[10px] font-black text-white bg-black/80 px-2 py-0.5 rounded-full absolute bottom-2 left-1/2 -translate-x-1/2 uppercase tracking-widest whitespace-nowrap">
                     Align QR inside box
@@ -235,7 +277,6 @@ export function AdminScannerPage() {
                 </div>
               </div>
 
-              {/* Close Button */}
               <button
                 type="button"
                 onClick={stopCamera}
@@ -249,7 +290,7 @@ export function AdminScannerPage() {
           <form
             onSubmit={(e) => {
               e.preventDefault()
-              handleLookup(searchQuery)
+              handleLookup(searchQuery, { autoCheckIn: true })
             }}
             className="flex flex-col sm:flex-row gap-3"
           >
@@ -257,7 +298,7 @@ export function AdminScannerPage() {
               <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
-                placeholder="Scan QR or type Team Name (e.g. SnapServe AI), Table Number (T-01), or Email..."
+                placeholder="Scan QR or type Team Name, Table Number, or Email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E83C00]/20 focus:border-[#E83C00] transition-all"
@@ -270,33 +311,13 @@ export function AdminScannerPage() {
               className="w-full sm:w-auto px-6 py-3 bg-[#E83C00] hover:bg-[#FF4500] text-white text-xs font-black rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {loading ? <RefreshCw size={15} className="animate-spin" /> : <Search size={15} />}
-              <span>Verify &amp; Lookup</span>
+              <span>Lookup &amp; Check-In</span>
             </button>
           </form>
-
-          {/* Quick Preset Buttons for Live Testing */}
-          <div className="flex items-center gap-2 flex-wrap pt-1">
-            <span className="text-[10px] font-bold text-slate-400 uppercase">Quick Search:</span>
-            {['SnapServe AI', 'Table T-01', 'Healthcare Voice AI'].map((preset) => (
-              <button
-                key={preset}
-                type="button"
-                onClick={() => {
-                  setSearchQuery(preset)
-                  handleLookup(preset)
-                }}
-                className="px-2.5 py-1 bg-slate-100 hover:bg-orange-50 hover:text-[#E83C00] text-slate-600 text-[10px] font-bold rounded-xl border border-slate-200 transition-all cursor-pointer"
-              >
-                {preset}
-              </button>
-            ))}
-          </div>
         </div>
 
-        {/* ── Scan Result Modal / Verification Card ── */}
         {teamData && (
           <div className="bg-white rounded-3xl border border-slate-200 shadow-md overflow-hidden space-y-0 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            {/* Header Banner */}
             <div className="bg-gradient-to-r from-[#12141A] via-slate-900 to-[#12141A] p-6 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800">
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -304,11 +325,13 @@ export function AdminScannerPage() {
                     {teamData.track?.name || 'Voice AI Track'}
                   </span>
                   <span className="px-2.5 py-0.5 bg-amber-500/20 text-[#D4AF37] border border-[#D4AF37]/30 text-[9px] font-black uppercase tracking-widest rounded-md font-mono">
-                    {teamData.tableNumber || 'TABLE T-01'}
+                    {teamData.tableNumber || 'TABLE TBA'}
                   </span>
                 </div>
                 <h2 className="text-xl font-black text-white">{teamData.name}</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Total Members: {teamData.members.length} Participants</p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Present: {teamData.members.filter(m => m.isPresent).length} / {teamData.members.length}
+                </p>
               </div>
 
               <div className="flex items-center gap-2">
@@ -323,15 +346,13 @@ export function AdminScannerPage() {
             </div>
 
             <div className="p-6 space-y-6">
-
-              {/* 1. MEMBERS ATTENDANCE CHECK-IN SECTION */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
                     <Users size={16} className="text-[#E83C00]" />
                     <span>Team Members Attendance ({teamData.members.filter(m => m.isPresent).length} / {teamData.members.length} Present)</span>
                   </h3>
-                  <span className="text-[10px] font-bold text-slate-400">Tap button to check in member</span>
+                  <span className="text-[10px] font-bold text-slate-400">Tap to toggle if needed</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -352,6 +373,7 @@ export function AdminScannerPage() {
                           <div>
                             <span className="text-[9px] font-black text-slate-400 uppercase block">
                               {member.role || 'Team Member'}
+                              {isTarget ? ' · Scanned' : ''}
                             </span>
                             <h4 className="text-sm font-black text-slate-900">{member.name}</h4>
                             <p className="text-[11px] text-slate-500 font-medium truncate">{member.email}</p>
@@ -387,7 +409,6 @@ export function AdminScannerPage() {
 
               <div className="h-px bg-slate-200 w-full" />
 
-              {/* 2. ON-THE-SPOT BONUS POINTS VERIFIER */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -395,7 +416,7 @@ export function AdminScannerPage() {
                       <Sparkles size={16} className="text-amber-500" />
                       <span>On-The-Spot Bonus Points Verifier</span>
                     </h3>
-                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">Verify participant's social task completions on their mobile phone screen &amp; award bonus points!</p>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">Verify social tasks on their phone &amp; award bonus points.</p>
                   </div>
 
                   <div className="px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border border-amber-300 text-center shrink-0">
@@ -404,7 +425,6 @@ export function AdminScannerPage() {
                   </div>
                 </div>
 
-                {/* Social Channels Checklist */}
                 <div className="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-200">
                   {[
                     { key: 'instaSnapserve', label: 'Followed Instagram (@snapserve_ai)', pts: 2 },
@@ -440,7 +460,6 @@ export function AdminScannerPage() {
                   })}
                 </div>
 
-                {/* Save & Award Button */}
                 <button
                   type="button"
                   disabled={updatingBonus}
@@ -451,11 +470,9 @@ export function AdminScannerPage() {
                   <span>Save &amp; Update Live Leaderboard (+{calculatedBonusPts} Pts)</span>
                 </button>
               </div>
-
             </div>
           </div>
         )}
-
       </div>
     </DashboardLayout>
   )
