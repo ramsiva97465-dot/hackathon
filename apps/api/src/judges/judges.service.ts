@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
+import { parseLegacySquadFromTechStack, type SquadAgentInput } from '../teams/squad-agents.util'
 
 @Injectable()
 export class JudgesService {
@@ -200,6 +201,10 @@ export class JudgesService {
           agentName: team.agentName || 'Unknown Agent',
           agentSolution: team.agentSolution || 'No solution provided',
           agentPhoneNumber: team.agentPhoneNumber || null,
+          agentArchitecture: (team as any).agentArchitecture
+            || parseLegacySquadFromTechStack(team.techStack).agentArchitecture,
+          squadAgents: ((team as any).squadAgents as SquadAgentInput[] | null)
+            || parseLegacySquadFromTechStack(team.techStack).squadAgents,
           githubUrl: team.githubUrl || null,
           demoUrl: team.demoUrl || null,
           techStack: team.techStack || [],

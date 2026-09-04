@@ -2,6 +2,12 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service'
 import { LeaderboardGateway } from '../leaderboard/leaderboard.gateway'
 import { LeaderboardService } from '../leaderboard/leaderboard.service'
+import {
+  buildProviderTechStack,
+  normalizeSquadAgents,
+  parseLegacySquadFromTechStack,
+  type SquadAgentInput,
+} from './squad-agents.util'
 
 function formatPhoneNumber(phone?: string | null): string | null {
   if (!phone) return null
@@ -115,6 +121,10 @@ export class TeamsService {
       agentName: t.agentName,
       agentSolution: t.agentSolution,
       agentPhoneNumber: t.agentPhoneNumber,
+      agentArchitecture: (t as any).agentArchitecture
+        || parseLegacySquadFromTechStack(t.techStack).agentArchitecture,
+      squadAgents: ((t as any).squadAgents as SquadAgentInput[] | null)
+        || parseLegacySquadFromTechStack(t.techStack).squadAgents,
       githubUrl: t.githubUrl,
       demoUrl: t.demoUrl,
       techStack: t.techStack,
@@ -573,6 +583,10 @@ export class TeamsService {
         agentName: team.agentName,
         agentSolution: team.agentSolution,
         agentPhoneNumber: team.agentPhoneNumber,
+        agentArchitecture: (team as any).agentArchitecture
+          || parseLegacySquadFromTechStack(team.techStack).agentArchitecture,
+        squadAgents: ((team as any).squadAgents as SquadAgentInput[] | null)
+          || parseLegacySquadFromTechStack(team.techStack).squadAgents,
         githubUrl: team.githubUrl,
         demoUrl: team.demoUrl,
         techStack: team.techStack,
@@ -606,6 +620,8 @@ export class TeamsService {
     agentName?: string
     agentSolution?: string
     agentPhoneNumber?: string
+    agentArchitecture?: string
+    squadAgents?: SquadAgentInput[]
     githubUrl?: string
     demoUrl?: string
     techStack?: string[]
@@ -617,6 +633,44 @@ export class TeamsService {
     
     // We only update the claims. Admin will verify and set bonusPoints.
     const nextName = body.teamName?.trim() || ''
+
+    const hasArchitecturePayload =
+      body.agentArchitecture !== undefined
+      || body.squadAgents !== undefined
+      || Array.isArray(body.techStack)
+
+    let nextArchitecture: string | undefined
+    let nextSquadAgents: SquadAgentInput[] | undefined
+    let nextTechStack = body.techStack
+
+    if (hasArchitecturePayload) {
+      const fromBody = normalizeSquadAgents(body.squadAgents)
+      const fromLegacy = parseLegacySquadFromTechStack(body.techStack || currentTeam?.techStack)
+      const archRaw = String(body.agentArchitecture || '').trim().toUpperCase()
+      const resolvedArch =
+        archRaw === 'MULTI_AGENT' || archRaw === 'SINGLE_AGENT'
+          ? archRaw
+          : (fromBody.length > 0 || fromLegacy.squadAgents.length > 0 ? 'MULTI_AGENT' : 'SINGLE_AGENT')
+
+      nextArchitecture = resolvedArch
+      nextSquadAgents = resolvedArch === 'MULTI_AGENT'
+        ? (fromBody.length > 0 ? fromBody : fromLegacy.squadAgents)
+        : []
+
+      const stackSource = body.techStack || currentTeam?.techStack || []
+      const stt = stackSource.find(s => s.startsWith('STT: '))?.replace('STT: ', '')
+      const llm = stackSource.find(s => s.startsWith('LLM: '))?.replace('LLM: ', '')
+      const tts = stackSource.find(s => s.startsWith('TTS: '))?.replace('TTS: ', '')
+      nextTechStack = buildProviderTechStack({
+        stt,
+        llm,
+        tts,
+        agentArchitecture: nextArchitecture,
+        squadAgents: nextSquadAgents,
+        existing: stackSource,
+      })
+    }
+
     const team = await this.prisma.team.update({
       where: { id: teamId },
       data: {
@@ -628,7 +682,13 @@ export class TeamsService {
         agentPhoneNumber: body.agentPhoneNumber,
         githubUrl: body.githubUrl,
         demoUrl: body.demoUrl,
-        techStack: body.techStack,
+        ...(nextTechStack !== undefined ? { techStack: nextTechStack } : {}),
+        ...(nextArchitecture !== undefined
+          ? {
+              agentArchitecture: nextArchitecture,
+              squadAgents: nextSquadAgents as any,
+            }
+          : {}),
         followedInstagram: body.followedInstagram,
         followedLinkedin: body.followedLinkedin,
       }

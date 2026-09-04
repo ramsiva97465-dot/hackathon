@@ -28,6 +28,8 @@ type Team = {
   agentSolution: string
   tableNumber: string
   agentPhoneNumber: string | null
+  agentArchitecture?: string | null
+  squadAgents?: { name: string; phone?: string; role?: string }[] | null
   githubUrl: string | null
   demoUrl: string | null
   techStack: string[]
@@ -723,14 +725,24 @@ export function JudgeDashboard() {
                         </div>
 
                         {(activeTeam.agentName || activeTeam.agentSolution || activeTeam.agentPhoneNumber) && (
-                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                            {activeTeam.agentName && <h4 className="text-sm font-bold text-slate-900 mb-1">{activeTeam.agentName}</h4>}
+                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {activeTeam.agentName && <h4 className="text-sm font-bold text-slate-900">{activeTeam.agentName}</h4>}
+                              {(String(activeTeam.agentArchitecture || '').toUpperCase() === 'MULTI_AGENT'
+                                || (activeTeam.squadAgents && activeTeam.squadAgents.length > 0)) && (
+                                <span className="px-1.5 py-0.5 rounded bg-[#E83C00]/10 text-[#E83C00] border border-[#E83C00]/20 text-[9px] font-black uppercase tracking-wider">
+                                  Multi Agent
+                                </span>
+                              )}
+                            </div>
                             {activeTeam.agentSolution && <p className="text-xs text-slate-600 leading-relaxed">{activeTeam.agentSolution}</p>}
 
                             {activeTeam.agentPhoneNumber && (
-                              <div className="mt-4 p-3.5 bg-emerald-50 rounded-xl border border-emerald-200/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                              <div className="p-3.5 bg-emerald-50 rounded-xl border border-emerald-200/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                                 <div>
-                                  <span className="text-[9px] font-bold text-emerald-700 uppercase tracking-widest block">Agent Phone Number</span>
+                                  <span className="text-[9px] font-bold text-emerald-700 uppercase tracking-widest block">
+                                    {String(activeTeam.agentArchitecture || '').toUpperCase() === 'MULTI_AGENT' ? 'Master Hotline' : 'Agent Phone Number'}
+                                  </span>
                                   <span className="text-base font-black font-mono text-emerald-950">{activeTeam.agentPhoneNumber}</span>
                                 </div>
                                 <a
@@ -742,12 +754,40 @@ export function JudgeDashboard() {
                                 </a>
                               </div>
                             )}
+
+                            {activeTeam.squadAgents && activeTeam.squadAgents.length > 0 && (
+                              <div className="rounded-xl border border-orange-200/70 bg-orange-50/50 p-3 space-y-2">
+                                <span className="text-[9px] font-black text-[#E83C00] uppercase tracking-widest flex items-center gap-1">
+                                  <Users size={11} /> Sub-Agents & Hotlines
+                                </span>
+                                <div className="space-y-1.5">
+                                  {activeTeam.squadAgents.map((sq, idx) => (
+                                    <div key={`${sq.name}-${idx}`} className="flex items-center justify-between gap-2 bg-white border border-orange-100 rounded-lg px-3 py-2">
+                                      <div className="min-w-0">
+                                        <p className="text-xs font-bold text-slate-900 truncate">{sq.name}</p>
+                                        {sq.role && <p className="text-[10px] text-slate-500">{sq.role}</p>}
+                                      </div>
+                                      {sq.phone && (
+                                        <a
+                                          href={`tel:${sq.phone}`}
+                                          className="text-[11px] font-mono font-bold text-emerald-700 hover:text-emerald-900 shrink-0"
+                                        >
+                                          {sq.phone}
+                                        </a>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
 
-                        {activeTeam.techStack && activeTeam.techStack.length > 0 && (
+                        {activeTeam.techStack && activeTeam.techStack.filter(t => !/^(AgentArchitecture|Squad Hotlines):/i.test(t)).length > 0 && (
                           <div className="flex flex-wrap gap-1.5 pt-2">
-                            {activeTeam.techStack.map(tech => (
+                            {activeTeam.techStack
+                              .filter(t => !/^(AgentArchitecture|Squad Hotlines):/i.test(t))
+                              .map(tech => (
                               <span key={tech} className="px-2 py-1 rounded bg-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                 {tech}
                               </span>

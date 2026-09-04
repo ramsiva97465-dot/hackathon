@@ -26,6 +26,8 @@ type TeamDetails = {
   agentName: string | null
   agentSolution: string | null
   agentPhoneNumber: string | null
+  agentArchitecture?: 'SINGLE_AGENT' | 'MULTI_AGENT' | string | null
+  squadAgents?: { name: string; phone?: string; role?: string }[] | null
   githubUrl: string | null
   demoUrl: string | null
   techStack: string[]
@@ -281,6 +283,25 @@ export function ParticipantDashboard() {
             if (llm) setLlmProvider(llm)
             if (tts) setTtsProvider(tts)
           }
+
+          const arch = String(team.agentArchitecture || '').toUpperCase()
+          const squad = Array.isArray(team.squadAgents) ? team.squadAgents : []
+          if (arch === 'MULTI_AGENT' || squad.length > 0) {
+            setAgentType('MULTI_AGENT')
+            setSquadAgents(
+              squad.length > 0
+                ? squad.map(s => ({
+                    name: s.name || '',
+                    role: s.role || '',
+                    phone: formatPhone(s.phone || ''),
+                  }))
+                : [{ name: '', role: '', phone: '' }],
+            )
+          } else {
+            setAgentType('SINGLE_AGENT')
+            setSquadAgents([{ name: '', role: '', phone: '' }])
+          }
+
           setFollowedInstagram(team.followedInstagram)
           setFollowedLinkedin(team.followedLinkedin)
           const bonusPts = team.bonusPoints || 0
@@ -445,18 +466,31 @@ export function ParticipantDashboard() {
 
     try {
       setSaving(true)
-      let techStack = [
+
+      if (agentType === 'MULTI_AGENT') {
+        const validSquad = squadAgents.filter(s => s.name.trim())
+        if (validSquad.length === 0) {
+          toast.error('Add at least one sub-agent for Multi Agent submissions.')
+          setSaving(false)
+          return
+        }
+      }
+
+      const techStack = [
         `STT: ${sttProvider}`,
         `LLM: ${llmProvider}`,
-        `TTS: ${ttsProvider}`
+        `TTS: ${ttsProvider}`,
       ]
 
-      if (agentType === 'MULTI_AGENT' && squadAgents.length > 0) {
-        const squadSummary = squadAgents
-          .map(sq => `${sq.name} (${sq.role})${sq.phone ? `: ${formatPhone(sq.phone)}` : ''}`)
-          .join(' | ')
-        techStack.push(`Squad Hotlines: ${squadSummary}`)
-      }
+      const cleanedSquad = agentType === 'MULTI_AGENT'
+        ? squadAgents
+            .filter(sq => sq.name.trim())
+            .map(sq => ({
+              name: sq.name.trim().toUpperCase(),
+              ...(sq.role?.trim() ? { role: sq.role.trim() } : {}),
+              ...(sq.phone?.trim() ? { phone: formatPhone(sq.phone) } : {}),
+            }))
+        : []
 
       // Basic validation for members
       const validMembers = membersForm.filter(m => m.name.trim() !== '' && m.email.trim() !== '')
@@ -469,6 +503,8 @@ export function ParticipantDashboard() {
       const res = await api.teams.submitProject({
         teamName, projectTitle, projectDescription, agentName, agentSolution,
         agentPhoneNumber: cleanAgentPhone,
+        agentArchitecture: agentType,
+        squadAgents: cleanedSquad,
         githubUrl, demoUrl, techStack,
         followedInstagram, followedLinkedin,
         members: validMembers.map((m, idx) => ({

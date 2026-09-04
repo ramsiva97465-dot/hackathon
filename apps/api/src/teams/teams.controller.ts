@@ -35,10 +35,14 @@ export class TeamsController {
   submitProject(
     @Req() req: any,
     @Body() body: {
+      teamName?: string
       projectTitle?: string
       projectDescription?: string
       agentName?: string
       agentSolution?: string
+      agentPhoneNumber?: string
+      agentArchitecture?: string
+      squadAgents?: { name: string; phone?: string; role?: string }[]
       githubUrl?: string
       demoUrl?: string
       techStack?: string[]

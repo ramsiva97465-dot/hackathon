@@ -178,6 +178,8 @@ type Team = {
   agentName?: string | null
   agentSolution?: string | null
   agentPhoneNumber?: string | null
+  agentArchitecture?: string | null
+  squadAgents?: { name: string; phone?: string; role?: string }[] | null
   githubUrl?: string | null
   demoUrl?: string | null
   techStack?: string[]
@@ -1325,6 +1327,12 @@ export function TeamsPage() {
                               Special
                             </span>
                           )}
+                          {(String(team.agentArchitecture || '').toUpperCase() === 'MULTI_AGENT'
+                            || (team.squadAgents && team.squadAgents.length > 0)) && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-orange-500/20 text-orange-300 border border-orange-500/40 shrink-0">
+                              <Layers size={9} /> Multi Agent
+                            </span>
+                          )}
                           {team.round === 2 && (
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
                               ⚡ Round 2
@@ -1664,14 +1672,41 @@ export function TeamsPage() {
                       <Cpu size={12} className="text-[#E83C00]" />
                       <span className="text-slate-400">Agent System:</span>
                       <span className="font-bold text-white">{viewTarget.agentName}</span>
+                      {(String(viewTarget.agentArchitecture || '').toUpperCase() === 'MULTI_AGENT'
+                        || (viewTarget.squadAgents && viewTarget.squadAgents.length > 0)) && (
+                        <span className="ml-1 px-1.5 py-0.5 rounded bg-[#E83C00]/25 text-[#FFB089] text-[9px] font-black uppercase tracking-wider">
+                          Multi Agent
+                        </span>
+                      )}
                     </div>
                   )}
 
                   {viewTarget.agentPhoneNumber && (
                     <div className="flex items-center gap-2 text-xs">
                       <Phone size={12} className="text-emerald-400" />
-                      <span className="text-slate-400">Hotline:</span>
+                      <span className="text-slate-400">Master Hotline:</span>
                       <span className="font-mono font-bold text-emerald-400">{viewTarget.agentPhoneNumber}</span>
+                    </div>
+                  )}
+
+                  {viewTarget.squadAgents && viewTarget.squadAgents.length > 0 && (
+                    <div className="pt-2 border-t border-white/10 space-y-1.5">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                        <Layers size={10} className="text-[#E83C00]" /> Sub-Agents Roster
+                      </span>
+                      <div className="space-y-1">
+                        {viewTarget.squadAgents.map((sq, idx) => (
+                          <div key={`${sq.name}-${idx}`} className="flex items-center justify-between gap-2 text-[11px] bg-white/5 rounded-lg px-2.5 py-1.5">
+                            <span className="font-bold text-white truncate">
+                              {sq.name}
+                              {sq.role ? <span className="text-slate-400 font-medium"> · {sq.role}</span> : null}
+                            </span>
+                            {sq.phone && (
+                              <span className="font-mono text-emerald-400 shrink-0">{sq.phone}</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1722,13 +1757,15 @@ export function TeamsPage() {
                 </div>
 
                 {/* Tech Stack */}
-                {viewTarget.techStack && viewTarget.techStack.length > 0 && (
+                {viewTarget.techStack && viewTarget.techStack.filter(t => !/^(AgentArchitecture|Squad Hotlines):/i.test(t)).length > 0 && (
                   <div className="space-y-1 pt-1">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block flex items-center gap-1">
                       <Layers size={11} className="text-[#E83C00]" /> Tech Stack
                     </span>
                     <div className="flex flex-wrap gap-1.5">
-                      {viewTarget.techStack.map((tech, idx) => (
+                      {viewTarget.techStack
+                        .filter(t => !/^(AgentArchitecture|Squad Hotlines):/i.test(t))
+                        .map((tech, idx) => (
                         <span key={idx} className="px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-800 text-[11px] font-bold rounded-md font-mono">
                           {tech}
                         </span>

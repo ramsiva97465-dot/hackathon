@@ -232,6 +232,10 @@ model Team {
   agentName          String?
   agentSolution      String?
   agentPhoneNumber   String?
+  /// SINGLE_AGENT | MULTI_AGENT
+  agentArchitecture  String?
+  /// [{ name, phone?, role? }] sub-agents for MULTI_AGENT submissions
+  squadAgents        Json?
   githubUrl          String?
   demoUrl            String?
   techStack          String[]
