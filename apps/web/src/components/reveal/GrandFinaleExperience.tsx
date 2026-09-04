@@ -530,7 +530,8 @@ function FallingWords({ progress }: { progress: number }) {
       {FALL_WORDS.map((word, i) => {
         const start = (i / FALL_WORDS.length) * 0.55
         const local = clamp((rain - start) / 0.42)
-        const y = -18 + easeOut(local, 2.8) * (58 + (i % 5) * 4)
+        // Settle in the lower half (not mid) so the stage title stays readable above.
+        const y = -8 + easeOut(local, 2.8) * (72 + (i % 5) * 5)
         const opacity = local <= 0 ? 0 : local < 0.12 ? local / 0.12 : hold ? 0.85 : 0.55 + local * 0.3
         const rotate = (1 - easeOut(local, 2.4)) * ((i % 2 === 0 ? -1 : 1) * (4 + (i % 3)))
         return (
