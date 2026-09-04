@@ -1332,13 +1332,17 @@ export function LeaderboardPage() {
       {/* 🎭 DRAMATIC GRAND REVEAL CEREMONY (Round 2: 20➔1 | Round 3: 5➔1)      */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {isRevealing ? (
-        <div ref={scrollContainerRef} className={`relative flex-1 min-h-0 h-0 overflow-y-auto w-full transition-colors duration-700 ${
-          isFinale && revealedStep > 0 ? 'bg-[#070605] px-0 pb-0' : 'px-4 sm:px-8 pb-10'
+        <div ref={scrollContainerRef} className={`relative flex-1 min-h-0 h-0 w-full transition-colors duration-700 ${
+          isFinale && revealedStep > 0
+            ? 'overflow-hidden bg-[#070605] px-0 pb-0'
+            : 'overflow-y-auto px-4 sm:px-8 pb-10'
         }`}>
           
           {!rosterShown && (
-          <div className={`w-full flex flex-col items-center shrink-0 min-h-full ${
-            isFinale && revealedStep > 0 ? 'justify-center py-0' : 'justify-start pt-4 sm:pt-6 pb-8'
+          <div className={`w-full flex flex-col items-stretch shrink-0 ${
+            isFinale && revealedStep > 0
+              ? 'h-full min-h-0 py-0'
+              : 'min-h-full items-center justify-start pt-4 sm:pt-6 pb-8'
           }`}>
             {/* Header */}
             {!(isFinale && revealedStep > 0) && (
@@ -1391,17 +1395,21 @@ export function LeaderboardPage() {
             {/* 🌟 HERO SPOTLIGHT ANNOUNCEMENT CARD — 75% width for 24x10 LED */}
             <div className={`${
               isFinale
-                ? revealedStep === 0 ? 'w-[88%] max-w-7xl' : 'w-full'
-                : 'w-3/4'
-            } mx-auto flex flex-col items-center`}>
+                ? revealedStep === 0
+                  ? 'w-[88%] max-w-7xl mx-auto flex flex-col items-center'
+                  : 'h-full min-h-0 w-full'
+                : 'w-3/4 mx-auto flex flex-col items-center'
+            }`}>
               {isFinale && revealedStep > 0 ? (
-                <GrandFinaleExperience
-                  finalists={finaleRoster}
-                  revealStep={revealedStep}
-                  isAnimating={isDecrypting}
-                  stepStartedAt={finaleStepStartedAt}
-                  stepDurationMs={nameSpinMs}
-                />
+                <div className="h-full w-full min-h-0">
+                  <GrandFinaleExperience
+                    finalists={finaleRoster}
+                    revealStep={revealedStep}
+                    isAnimating={isDecrypting}
+                    stepStartedAt={finaleStepStartedAt}
+                    stepDurationMs={nameSpinMs}
+                  />
+                </div>
               ) : (
                 <PremiumRevealCard
                   isFinale={isFinale}

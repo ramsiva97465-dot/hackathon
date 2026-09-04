@@ -334,7 +334,7 @@ function StageMedia({
       key={mediaKey}
       ref={videoRef}
       aria-hidden
-      className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover"
+      className="pointer-events-none absolute inset-0 z-0 h-full w-full min-h-full min-w-full object-cover"
       src={STAGE_BG}
       muted
       playsInline
@@ -356,13 +356,13 @@ function Stage({
   const settled = !cinematic || progress >= 0.94
 
   return (
-    <div className="relative z-10 flex min-h-[min(78vh,760px)] w-full items-center justify-center overflow-hidden">
+    <div className="relative z-10 flex h-full min-h-full w-full items-center justify-center overflow-hidden">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            'linear-gradient(180deg, rgba(7,6,5,0.55) 0%, rgba(7,6,5,0.72) 45%, rgba(7,6,5,0.88) 100%)',
+            'linear-gradient(180deg, rgba(7,6,5,0.35) 0%, rgba(7,6,5,0.55) 45%, rgba(7,6,5,0.72) 100%)',
         }}
       />
       {cinematic && (
@@ -989,7 +989,7 @@ export function GrandFinaleExperience({
   }
 
   return (
-    <div className="relative w-full overflow-hidden rounded-none">
+    <div className="relative h-full min-h-full w-full overflow-hidden rounded-none">
       <StageMedia mediaKey={stepStartedAt || revealStep} playMedia={playMedia} />
       <AnimatePresence mode="wait">
         <motion.div
@@ -998,7 +998,7 @@ export function GrandFinaleExperience({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.35 }}
-          className="relative z-10 w-full"
+          className="relative z-10 h-full min-h-full w-full"
         >
           {scene}
         </motion.div>
