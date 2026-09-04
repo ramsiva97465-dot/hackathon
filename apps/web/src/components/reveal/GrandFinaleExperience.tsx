@@ -51,7 +51,7 @@ function scrambleName(target: string, progress: number, tick: number) {
       out += ' '
       continue
     }
-    const lockAt = 0.88 + (i / Math.max(name.length, 1)) * 0.07
+    const lockAt = 0.80 + (i / Math.max(name.length, 1)) * 0.09
     if (progress >= 1 || (progress >= lockAt && i !== hold)) out += name[i]
     else out += ALPHA[(tick + i * 5) % ALPHA.length]
   }
@@ -226,19 +226,28 @@ function Wreath({
 }
 
 function flapGlyph(elapsed: number, index: number, progress: number) {
-  const interval = 48 + clamp(progress / 0.44) * 130
+  // Slow split-flap — starts lively, eases slower toward lock.
+  const rollT = clamp((progress - 0.34) / 0.46)
+  const interval = 110 + rollT * 220
   const n = Math.floor(elapsed / interval) + index * 7
   return ALPHA[Math.abs(n) % ALPHA.length]
 }
 
+/** Name suspense: countdown first, then rolling tiles, then the real name. */
 function isNameCountdown(progress: number) {
-  return progress >= 0.46 && progress < 0.88
+  return progress < 0.34
+}
+
+function isNameRolling(progress: number) {
+  return progress >= 0.34 && progress < 0.80
 }
 
 function nameCountdown(progress: number) {
-  const t = clamp((progress - 0.46) / 0.42)
-  if (t < 0.38) return 3
-  if (t < 0.70) return 2
+  const t = clamp(progress / 0.34)
+  if (t < 0.2) return 5
+  if (t < 0.4) return 4
+  if (t < 0.6) return 3
+  if (t < 0.8) return 2
   return 1
 }
 
@@ -250,6 +259,7 @@ function NameWait({
   elapsed: number
 }) {
   const counting = isNameCountdown(progress)
+  const rolling = isNameRolling(progress)
   const n = nameCountdown(progress)
 
   if (counting) {
@@ -259,7 +269,7 @@ function NameWait({
         initial={{ opacity: 0, y: 28 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -22 }}
-        transition={{ duration: 0.28, ease: EASE }}
+        transition={{ duration: 0.38, ease: EASE }}
         className="flex flex-col items-center"
       >
         <p className="text-[11px] font-medium uppercase tracking-[0.34em] text-white/35">
@@ -272,54 +282,61 @@ function NameWait({
     )
   }
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, filter: 'blur(8px)', y: -8 }}
-      transition={{ duration: 0.45, ease: EASE }}
-      className="mt-10 flex flex-col items-center sm:mt-14"
-    >
-      <div className="flex items-center gap-1.5 sm:gap-2" style={{ perspective: 700 }}>
-        {[0, 1, 2, 3, 4].map((i) => {
-          const glyph = flapGlyph(elapsed, i, progress)
-          return (
-            <div
-              key={i}
-              className="relative h-14 w-11 overflow-hidden rounded-sm border border-white/12 bg-[#0A0908] sm:h-[4.25rem] sm:w-14"
-              style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,.08), 0 8px 20px rgba(0,0,0,.45)' }}
-            >
-              <span className="pointer-events-none absolute inset-x-0 top-1/2 z-10 h-px bg-black/70" />
-              <AnimatePresence mode="popLayout">
-                <motion.span
-                  key={`${i}-${glyph}`}
-                  initial={{ y: '70%', opacity: 0.35 }}
-                  animate={{ y: '0%', opacity: 1 }}
-                  exit={{ y: '-70%', opacity: 0 }}
-                  transition={{ duration: 0.12, ease: 'easeOut' }}
-                  className="absolute inset-0 flex items-center justify-center font-mono text-2xl font-bold text-white/80 sm:text-3xl"
-                >
-                  {glyph}
-                </motion.span>
-              </AnimatePresence>
-            </div>
-          )
-        })}
-      </div>
-      <p className="mt-3 text-[10px] font-medium uppercase tracking-[0.32em] text-white/30">
-        Rolling
-      </p>
-    </motion.div>
-  )
+  if (rolling || progress < 0.80) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, filter: 'blur(8px)', y: -8 }}
+        transition={{ duration: 0.55, ease: EASE }}
+        className="mt-10 flex flex-col items-center sm:mt-14"
+      >
+        <div className="flex items-center gap-1.5 sm:gap-2" style={{ perspective: 700 }}>
+          {[0, 1, 2, 3, 4].map((i) => {
+            const glyph = flapGlyph(elapsed, i, progress)
+            return (
+              <div
+                key={i}
+                className="relative h-14 w-11 overflow-hidden rounded-sm border border-white/12 bg-[#0A0908] sm:h-[4.25rem] sm:w-14"
+                style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,.08), 0 8px 20px rgba(0,0,0,.45)' }}
+              >
+                <span className="pointer-events-none absolute inset-x-0 top-1/2 z-10 h-px bg-black/70" />
+                <AnimatePresence mode="popLayout">
+                  <motion.span
+                    key={`${i}-${glyph}`}
+                    initial={{ y: '70%', opacity: 0.35 }}
+                    animate={{ y: '0%', opacity: 1 }}
+                    exit={{ y: '-70%', opacity: 0 }}
+                    transition={{ duration: 0.18, ease: 'easeOut' }}
+                    className="absolute inset-0 flex items-center justify-center font-mono text-2xl font-bold text-white/80 sm:text-3xl"
+                  >
+                    {glyph}
+                  </motion.span>
+                </AnimatePresence>
+              </div>
+            )
+          })}
+        </div>
+        <p className="mt-3 text-[10px] font-medium uppercase tracking-[0.32em] text-white/30">
+          Rolling
+        </p>
+      </motion.div>
+    )
+  }
+
+  return null
 }
 
 const STAGE_BG = '/videos/finale-stage-bg.mp4'
-export const FINALE_BEAT_MS = 20_000
+/** Shared Top 5 place beat (4th–2nd + 5th after rain/hold): countdown → roll → name. */
+export const FINALE_BEAT_MS = 28_000
 /** 5th place opens with a slow word rain, then a held pause, then the shared reveal beat. */
 export const FIFTH_RAIN_MS = 8_000
 export const FIFTH_HOLD_MS = 5_000
 export const FIFTH_PREFACE_MS = FIFTH_RAIN_MS + FIFTH_HOLD_MS
 export const FIFTH_TOTAL_MS = FIFTH_PREFACE_MS + FINALE_BEAT_MS
+/** Grand Champion popup: countdown → rolling → winner hold. */
+export const CHAMPION_TOTAL_MS = 22_000
 
 function StageMedia({
   mediaKey,
@@ -540,12 +557,12 @@ function PlaceReveal({
       : progress
   const revealLive = !isAnimating || !isFifth || !inPreface
   const tease = rank === 4
-  const numberOn = revealLive && (!isAnimating || p >= (tease ? 0.75 : 0.70))
-  const nameLive = revealLive && (!isAnimating || p >= 0.88)
-  const nameLocked = !isAnimating || p >= 0.94
-  const metaOn = revealLive && (!isAnimating || p >= 0.94)
-  const scoreOn = revealLive && (!isAnimating || p >= 0.96)
-  const scoreT = !isAnimating ? 1 : clamp((p - 0.96) / 0.04)
+  const numberOn = revealLive && (!isAnimating || p >= (tease ? 0.72 : 0.68))
+  const nameLive = revealLive && (!isAnimating || p >= 0.80)
+  const nameLocked = !isAnimating || p >= 0.90
+  const metaOn = revealLive && (!isAnimating || p >= 0.90)
+  const scoreOn = revealLive && (!isAnimating || p >= 0.93)
+  const scoreT = !isAnimating ? 1 : clamp((p - 0.93) / 0.07)
   const score = Number(entry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
   const track = entry?.track ? getTrackConfig(entry.track) : null
   const liveName = useMemo(
@@ -638,7 +655,7 @@ function PlaceReveal({
               </motion.h2>
             ) : revealLive ? (
               <motion.div
-                key={isNameCountdown(waitProgress) ? `c-${nameCountdown(waitProgress)}` : 'roll'}
+                key={isNameCountdown(waitProgress) ? `c-${nameCountdown(waitProgress)}` : isNameRolling(waitProgress) ? 'roll' : 'wait'}
               >
                 <NameWait progress={waitProgress} elapsed={elapsed - (isFifth ? FIFTH_PREFACE_MS : 0)} />
               </motion.div>
@@ -881,26 +898,24 @@ function Champion({
   finished: boolean
   placeKickers?: Partial<Record<number, string>>
 }) {
-  // Full champion popup fits a 15s beat: countdown → blackout → winner hold.
-  const stage = finished || elapsed >= 9_000
+  // 22s: countdown → rolling tiles → winner hold.
+  const COUNT_MS = 6_000
+  const ROLL_MS = 6_000
+  const WIN_AT = COUNT_MS + ROLL_MS
+  const stage = finished || elapsed >= WIN_AT
     ? 'winner'
-    : elapsed < 5_000
+    : elapsed < COUNT_MS
     ? 'count'
-    : elapsed < 5_800
-    ? 'hold'
-    : elapsed < 6_600
-    ? 'black'
-    : elapsed < 7_800
-    ? 'spark'
-    : 'flash'
-  const n = Math.max(1, 5 - Math.floor(elapsed / 1_000))
-  const scoreT = finished ? 1 : clamp((elapsed - 9_000) / 800)
+    : 'roll'
+  const n = Math.max(1, 5 - Math.floor(elapsed / 1_200))
+  const rollProgress = clamp((elapsed - COUNT_MS) / ROLL_MS)
+  const scoreT = finished ? 1 : clamp((elapsed - WIN_AT) / 1_000)
   const score = Number(entry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
   const track = entry?.track ? getTrackConfig(entry.track) : null
-  const winOpen = finished ? 1 : clamp((elapsed - 9_000) / 900)
+  const winOpen = finished ? 1 : clamp((elapsed - WIN_AT) / 1_100)
   const champSweep = (() => {
     if (stage !== 'winner' || finished) return -1
-    const t = (elapsed - 9_100) / 900
+    const t = (elapsed - WIN_AT - 200) / 1_000
     if (t <= 0 || t >= 1) return -1
     return t
   })()
@@ -908,13 +923,13 @@ function Champion({
   return (
     <Stage cinematic={stage === 'winner'} progress={stage === 'winner' ? winOpen : 1}>
       <AnimatePresence mode="wait">
-        {(stage === 'count' || stage === 'hold') && (
+        {stage === 'count' && (
           <motion.div
             key={`n-${n}`}
             initial={{ opacity: 0, y: 56 }}
-            animate={{ opacity: 1, y: 0, scale: stage === 'hold' ? 1.04 : 1 }}
+            animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -40 }}
-            transition={{ duration: 0.4, ease: EASE }}
+            transition={{ duration: 0.45, ease: EASE }}
             className="relative z-10 flex flex-col items-center"
           >
             <p className="text-[13px] font-medium uppercase tracking-[0.34em] text-white/35">
@@ -925,27 +940,48 @@ function Champion({
             </p>
           </motion.div>
         )}
-        {stage === 'black' && (
-          <motion.div key="black" className="absolute inset-0 bg-black" />
-        )}
-        {stage === 'spark' && (
-          <motion.div key="spark" className="absolute inset-0 flex items-center justify-center">
-            <motion.span
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: [0, 1, 9], opacity: [0, 1, 0] }}
-              transition={{ duration: 1.1, ease: EASE }}
-              className="h-2 w-2 rounded-full bg-amber-100"
-            />
-          </motion.div>
-        )}
-        {stage === 'flash' && (
+        {stage === 'roll' && (
           <motion.div
-            key="flash"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 1, 0] }}
-            transition={{ duration: 0.42 }}
-            className="absolute inset-0 bg-white"
-          />
+            key="champ-roll"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, filter: 'blur(8px)' }}
+            transition={{ duration: 0.55, ease: EASE }}
+            className="relative z-10 flex flex-col items-center"
+          >
+            <p className="text-[13px] font-medium uppercase tracking-[0.34em] text-white/35">
+              Unsealing champion
+            </p>
+            <div className="mt-8 flex items-center gap-1.5 sm:gap-2" style={{ perspective: 700 }}>
+              {[0, 1, 2, 3, 4].map((i) => {
+                const glyph = flapGlyph(elapsed - COUNT_MS, i, 0.34 + rollProgress * 0.46)
+                return (
+                  <div
+                    key={i}
+                    className="relative h-14 w-11 overflow-hidden rounded-sm border border-white/12 bg-[#0A0908] sm:h-[4.25rem] sm:w-14"
+                    style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,.08), 0 8px 20px rgba(0,0,0,.45)' }}
+                  >
+                    <span className="pointer-events-none absolute inset-x-0 top-1/2 z-10 h-px bg-black/70" />
+                    <AnimatePresence mode="popLayout">
+                      <motion.span
+                        key={`${i}-${glyph}`}
+                        initial={{ y: '70%', opacity: 0.35 }}
+                        animate={{ y: '0%', opacity: 1 }}
+                        exit={{ y: '-70%', opacity: 0 }}
+                        transition={{ duration: 0.18, ease: 'easeOut' }}
+                        className="absolute inset-0 flex items-center justify-center font-mono text-2xl font-bold text-white/80 sm:text-3xl"
+                      >
+                        {glyph}
+                      </motion.span>
+                    </AnimatePresence>
+                  </div>
+                )
+              })}
+            </div>
+            <p className="mt-3 text-[10px] font-medium uppercase tracking-[0.32em] text-white/30">
+              Rolling
+            </p>
+          </motion.div>
         )}
         {stage === 'winner' && (
           <motion.div

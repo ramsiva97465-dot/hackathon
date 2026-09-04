@@ -26,11 +26,11 @@ function finalePlace(rank: number) {
   return { title: '5th Place', decrypt: 'Decrypting 5th Place...', speak: '5th Place, ', locked: '5th Place' }
 }
 
-/** Step 1=5th … 5=champion — 5th rain+hold, places 20s, champion popup 15s then lineup */
+/** Step 1=5th … 5=champion — countdown → rolling → name (slow) */
 function finaleCountdownStart(step: number) {
-  if (step === 1) return 33 // 8s rain + 5s hold + 20s reveal
-  if (step === 5) return 15 // Grand Champion popup, then Top 5 lineup
-  return 20
+  if (step === 1) return 41 // 8s rain + 5s hold + 28s reveal
+  if (step === 5) return 22 // countdown → rolling → champion hold → lineup
+  return 28
 }
 
 // ── Cinematic Confetti FX for Grand Finale ────────────────────────────────────
@@ -60,8 +60,8 @@ function triggerFinaleConfetti(rank: number) {
         colors: ['#78716c', '#a8a29e', '#e7e5e4', '#ffffff']
       })
     } else if (rank === 1) {
-      // 👑 GRAND CHAMPION — full-screen blast for the full 15s champion solo hold
-      const duration = 15 * 1000
+      // 👑 GRAND CHAMPION — full-screen blast for the full champion solo hold
+      const duration = 22 * 1000
       const end = Date.now() + duration
       const colors = ['#E83C00', '#F59E0B', '#FFD700', '#FBBF24', '#FFFFFF', '#10B981']
 
@@ -1247,7 +1247,7 @@ export function LeaderboardPage() {
         triggerFinaleLineupConfetti()
       }
       jumpToTop20Table()
-    }, 15000)
+    }, 22000)
   }, [isRevealing, revealedStep, isFinale, unlockedRanks.length, isDecrypting])
 
   // After the jump, slowly crawl #1 → #20, pause, then return to #1 and repeat.
