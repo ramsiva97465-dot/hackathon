@@ -45,13 +45,38 @@ function triggerFinaleConfetti(rank: number, durationMs?: number) {
         colors: ['#b45309', '#d97706', '#f59e0b', '#fbbf24', '#ffffff']
       })
     } else if (rank === 2) {
-      // Silver confetti burst from left
-      confetti({
-        particleCount: 95,
-        spread: 75,
-        origin: { x: 0.2, y: 0.6 },
-        colors: ['#94a3b8', '#cbd5e1', '#e2e8f0', '#38bdf8', '#ffffff']
-      })
+      // 1st Runner Up — full-screen rain from the top (not side poppers; Champion keeps cannons).
+      const duration = Math.max(2_200, durationMs ?? 3_600)
+      const end = Date.now() + duration
+      const colors = ['#94a3b8', '#cbd5e1', '#e2e8f0', '#38bdf8', '#ffffff', '#64748b']
+
+      ;(function frame() {
+        confetti({
+          particleCount: 4,
+          startVelocity: 12,
+          spread: 360,
+          ticks: 280,
+          gravity: 0.85,
+          scalar: 1.05,
+          drift: (Math.random() - 0.5) * 0.6,
+          origin: { x: Math.random(), y: -0.05 },
+          colors,
+        })
+        confetti({
+          particleCount: 3,
+          startVelocity: 8,
+          spread: 180,
+          ticks: 260,
+          gravity: 0.9,
+          scalar: 0.9,
+          origin: { x: Math.random() * 0.9 + 0.05, y: -0.02 },
+          colors,
+        })
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame)
+        }
+      })()
     } else if (rank === 4 || rank === 5) {
       confetti({
         particleCount: 55,
