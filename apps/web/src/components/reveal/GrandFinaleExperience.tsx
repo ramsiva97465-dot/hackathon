@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { getTrackConfig } from '@/lib/utils'
 import { playFinaleRevealBed, stopFinaleRevealBed } from '@/lib/finaleRevealAudio'
 
 export type GrandFinaleEntry = {
@@ -37,6 +36,8 @@ function placeKicker(rank: number, overrides?: Partial<Record<number, string>>) 
 const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
 const PODIUM = '/images/finale-podium-transparent.png'
 const EASE = [0.22, 1, 0.36, 1] as const
+/** Fixed subtitle under the revealed team name on LCD. */
+const REVEAL_META = 'AI குரல் · VOICE FOR TAMIL NADU · 2026'
 
 function clamp(n: number) {
   return Math.min(1, Math.max(0, n))
@@ -552,7 +553,6 @@ function PlaceReveal({
   const nameLive = revealLive && (!isAnimating || p >= PLACE_SCORE_END)
   const nameLocked = !isAnimating || p >= PLACE_SCORE_END
   const metaOn = revealLive && (!isAnimating || p >= PLACE_SCORE_END + 0.04)
-  const track = entry?.track ? getTrackConfig(entry.track) : null
   const yaw = wreathYaw(p, revealLive && isAnimating, tease)
   const rise = wreathRise(p, revealLive && isAnimating)
   const sweep = lockSweep(p, revealLive && isAnimating, tease)
@@ -668,8 +668,7 @@ function PlaceReveal({
                 transition={{ duration: 0.5, ease: EASE }}
                 className="text-sm text-white/40 sm:text-base"
               >
-                {entry?.college || 'Tamil Nadu'}
-                {track ? ` · ${track.label}` : ''}
+                {REVEAL_META}
               </motion.p>
             )}
           </div>
@@ -739,7 +738,6 @@ function FinalTwoReveal({
   const score = Number(secondEntry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
   const bigNameOn = !isAnimating || p >= 0.96
   const metaOn = !isAnimating || p >= 0.975
-  const track = secondEntry?.track ? getTrackConfig(secondEntry.track) : null
   const secondSweep = (() => {
     const t = (p - 0.9) / 0.06
     if (t <= 0 || t >= 1) return -1
@@ -851,8 +849,7 @@ function FinalTwoReveal({
                   transition={{ duration: 0.55, ease: EASE }}
                   className="text-sm text-white/40 sm:text-base"
                 >
-                  {secondEntry?.college || 'Tamil Nadu'}
-                  {track ? ` · ${track.label}` : ''}
+                  {REVEAL_META}
                 </motion.p>
               )}
             </div>
@@ -887,7 +884,6 @@ function Champion({
   const rollProgress = clamp((elapsed - COUNT_MS) / ROLL_MS)
   const scoreT = finished ? 1 : clamp((elapsed - WIN_AT) / 1_000)
   const score = Number(entry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
-  const track = entry?.track ? getTrackConfig(entry.track) : null
   const winOpen = finished ? 1 : clamp((elapsed - WIN_AT) / 1_100)
   const champSweep = (() => {
     if (stage !== 'winner' || finished) return -1
@@ -1009,8 +1005,7 @@ function Champion({
               transition={{ delay: 0.95, duration: 0.5 }}
               className="mt-3 text-sm text-white/40 sm:text-base"
             >
-              {entry?.college || 'Tamil Nadu'}
-              {track ? ` · ${track.label}` : ''}
+              {REVEAL_META}
             </motion.p>
             <motion.p
               initial={{ opacity: 0, y: 10 }}
@@ -1059,7 +1054,6 @@ export function TopFiveLineup({ finalists }: { finalists: GrandFinaleEntry[] }) 
           <div className="mt-10 flex w-full max-w-7xl items-end justify-center gap-2 sm:gap-4 lg:gap-6">
             {ordered.map((entry, i) => {
               const champ = entry.rank === 1
-              const track = entry.track ? getTrackConfig(entry.track) : null
               return (
                 <motion.div
                   key={entry.teamId || entry.rank}
@@ -1100,8 +1094,7 @@ export function TopFiveLineup({ finalists }: { finalists: GrandFinaleEntry[] }) 
                     {entry.teamName || '—'}
                   </h3>
                   <p className="mt-1 max-w-[14ch] truncate text-[10px] text-white/35 sm:text-xs">
-                    {entry.college || 'Tamil Nadu'}
-                    {track ? ` · ${track.label}` : ''}
+                    {REVEAL_META}
                   </p>
                   <p
                     className={`mt-2 font-black tabular-nums leading-none ${

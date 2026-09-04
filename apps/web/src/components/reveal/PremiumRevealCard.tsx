@@ -2,7 +2,6 @@ import { useEffect, useLayoutEffect, useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { Crown, Medal, Award, ShieldCheck, Lock, Trophy } from 'lucide-react'
-import { getTrackConfig } from '@/lib/utils'
 
 const CIPHER_GLYPHS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789!#%*&?@$'
 
@@ -640,7 +639,6 @@ export function PremiumRevealCard({
   }
 
   // ─── RANK THEME (no green anywhere) ─────────────────────────────────────────
-  const trackConfig = currentSpotlightTeam?.track ? getTrackConfig(currentSpotlightTeam.track) : null
   const isChampion = activeRank === 1
 
   const rankTheme = isChampion
@@ -891,24 +889,9 @@ export function PremiumRevealCard({
                   transition={{ duration: 0.4, ease: 'easeOut' }}
                   className="flex items-center justify-center gap-3 flex-wrap text-lg xl:text-xl font-medium text-slate-300"
                 >
-                  <span className="font-semibold text-white/90">
-                    {currentSpotlightTeam?.college || 'Tamil Nadu'}
+                  <span className="font-semibold text-white/90 text-center text-base xl:text-lg tracking-wide">
+                    AI குரல் · VOICE FOR TAMIL NADU · 2026
                   </span>
-                  {trackConfig && (
-                    <>
-                      <span className="opacity-40 text-xl">·</span>
-                      <span
-                        className="px-3 py-1 rounded-lg text-sm font-black uppercase tracking-wider border"
-                        style={{
-                          backgroundColor: `${trackConfig.color}20`,
-                          color: trackConfig.color,
-                          borderColor: `${trackConfig.color}50`,
-                        }}
-                      >
-                        {trackConfig.label}
-                      </span>
-                    </>
-                  )}
                 </motion.div>
               )}
             </div>
