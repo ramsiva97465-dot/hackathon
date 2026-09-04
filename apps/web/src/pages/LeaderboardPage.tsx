@@ -10,7 +10,7 @@ import { unlockFinaleAudio } from '@/lib/finaleRevealAudio'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { 
     TrendingUp, TrendingDown, Minus, Trophy, ChevronRight, Monitor,
-  Sparkles, Star, CheckCircle2, Lock, Flame, Zap, Award, Crown, Medal, Layers, ShieldCheck
+  Sparkles, Star, CheckCircle2, Lock, Zap, Award, Crown, Medal, Layers, ShieldCheck
 } from 'lucide-react'
 import type { LeaderboardEntry } from '@hackathon/shared'
 import api from '@/lib/api'
@@ -1505,10 +1505,6 @@ export function LeaderboardPage() {
               <VobizLockup className="h-[24.32px] w-auto drop-shadow-sm" />
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 shadow-xs">
-                <Flame size={13} className="text-orange-500 fill-orange-500/20" />
-                <span className="text-[11px] font-black text-[#E83C00] tracking-widest uppercase">Live</span>
-              </div>
               <span className="font-mono text-base sm:text-lg font-bold tracking-wider text-slate-600">
                 {clock.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>
@@ -1643,11 +1639,6 @@ export function LeaderboardPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 shadow-xs">
-            <Flame size={13} className="text-orange-500 fill-orange-500/20" />
-            <span className="text-[11px] font-black text-[#E83C00] tracking-widest uppercase">Live</span>
-          </div>
-
           <span className="font-mono text-base sm:text-lg font-bold tracking-wider text-slate-600">
             {clock.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
           </span>
