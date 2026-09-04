@@ -191,8 +191,8 @@ function Wreath({
           style={{
             left: '50%',
             top: '42%',
-            width: '46%',
-            height: '32%',
+            width: '54%',
+            height: '38%',
             transform: 'translate(-50%, -50%)',
           }}
         >
@@ -207,7 +207,7 @@ function Wreath({
                 className={`flex h-[1em] w-[1em] items-center justify-center text-center font-serif font-black leading-none ${
                   locked ? 'text-amber-200' : 'text-amber-200/40'
                 }`}
-                style={{ fontSize: '1.7em' }}
+                style={{ fontSize: '2.15em' }}
               >
                 {glyph}
               </motion.span>
@@ -414,6 +414,10 @@ function Stage({
 /** Soft rain of stage words — 5th place only. No bounce; ease-out settle then fade. */
 const FALL_WORDS = [
   { text: 'SNAPSERVE', x: 6, size: '1.05rem', weight: 600, gold: true },
+  { text: 'VOBIZ', x: 48, size: '1.1rem', weight: 700, gold: true },
+  { text: 'GENXAI', x: 82, size: '1rem', weight: 650, gold: true },
+  { text: 'TELE CMI', x: 28, size: '0.95rem', weight: 600, gold: true },
+  { text: 'RENDINGTON', x: 60, size: '0.9rem', weight: 600, gold: true },
   { text: 'VOICEATHON', x: 64, size: '0.95rem', weight: 500, gold: false },
   { text: 'GRAND FINALE', x: 26, size: '1.4rem', weight: 700, gold: true },
   { text: 'TOP 5', x: 78, size: '0.85rem', weight: 500, gold: false },
