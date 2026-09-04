@@ -1,13 +1,43 @@
 import { useEffect, useLayoutEffect, useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import confetti from 'canvas-confetti'
-import { Crown, Medal, Award, ShieldCheck, Lock, Sparkles, Trophy } from 'lucide-react'
+import { Crown, Medal, Award, ShieldCheck, Lock, Trophy } from 'lucide-react'
 import { getTrackConfig } from '@/lib/utils'
 
 const CIPHER_GLYPHS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789!#%*&?@$'
 
 function randomChar() {
   return CIPHER_GLYPHS[Math.floor(Math.random() * CIPHER_GLYPHS.length)]
+}
+
+/** Faceted gold spark on the Top 20 vault seal — sharper than Lucide Sparkles. */
+function PremiumSealSpark({ className = '' }: { className?: string }) {
+  return (
+    <motion.span
+      aria-hidden
+      className={`pointer-events-none absolute z-20 ${className}`}
+      animate={{ opacity: [0.55, 1, 0.55], scale: [0.92, 1.08, 0.92] }}
+      transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+    >
+      <svg viewBox="0 0 32 32" className="h-5 w-5 drop-shadow-[0_0_10px_rgba(251,191,36,0.85)]" fill="none">
+        <defs>
+          <linearGradient id="sealSparkFill" x1="6" y1="2" x2="26" y2="30" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#FFF7D6" />
+            <stop offset="45%" stopColor="#FBBF24" />
+            <stop offset="100%" stopColor="#E83C00" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M16 1.5 L18.6 13.4 L30.5 16 L18.6 18.6 L16 30.5 L13.4 18.6 L1.5 16 L13.4 13.4 Z"
+          fill="url(#sealSparkFill)"
+          stroke="#FDE68A"
+          strokeWidth="0.6"
+          strokeLinejoin="round"
+        />
+        <circle cx="16" cy="16" r="1.35" fill="#FFFBEB" />
+      </svg>
+    </motion.span>
+  )
 }
 
 const FINALIST_NODE_POSITIONS = [
@@ -573,7 +603,7 @@ export function PremiumRevealCard({
                 <div className="absolute inset-2 rounded-full border border-amber-200/15" />
                 <>
                   <Trophy size={40} strokeWidth={1.7} className="relative z-10 text-amber-300 fill-amber-400/10 drop-shadow-[0_0_12px_rgba(251,191,36,0.45)]" />
-                  <Sparkles size={12} className="absolute right-1 top-1 text-amber-200 animate-pulse" />
+                  <PremiumSealSpark className="-right-0.5 -top-0.5" />
                 </>
               </div>
             )}
