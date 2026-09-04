@@ -68,6 +68,8 @@ export const api = {
       apiClient.post('/teams/auto-distribute-judges', { judgesPerTeam, round }),
     updateTableNumber: (teamId: string, tableNumber: string) =>
       apiClient.patch(`/teams/${teamId}/table-number`, { tableNumber }),
+    updateName: (teamId: string, name: string) =>
+      apiClient.patch(`/teams/${teamId}/name`, { name }),
     updateBonus: (teamId: string, bonusPoints: number) =>
       apiClient.patch(`/teams/${teamId}/bonus`, { bonusPoints }),
     import: (teams: any[]) =>

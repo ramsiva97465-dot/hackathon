@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { LeaderboardGateway } from '../leaderboard/leaderboard.gateway'
 import { LeaderboardService } from '../leaderboard/leaderboard.service'
@@ -305,6 +305,42 @@ export class TeamsService {
     return { success: true, data: team }
   }
 
+  /** Admin rename — updates Team.name and linked Application.teamName everywhere. */
+  async updateTeamName(teamId: string, name: string) {
+    const trimmed = (name || '').trim()
+    if (!trimmed) {
+      throw new BadRequestException('Team name is required')
+    }
+
+    const existing = await this.prisma.team.findUnique({ where: { id: teamId } })
+    if (!existing) {
+      throw new NotFoundException('Team not found')
+    }
+
+    const team = await this.prisma.team.update({
+      where: { id: teamId },
+      data: { name: trimmed },
+    })
+
+    // Keep registration application snapshot in sync so admin/applications views match.
+    if (existing.applicationId) {
+      await this.prisma.application.update({
+        where: { id: existing.applicationId },
+        data: { teamName: trimmed },
+      }).catch(() => {})
+    }
+
+    try {
+      await this.leaderboardService.getLeaderboard()
+      await this.leaderboardGateway.broadcastLeaderboardUpdate()
+      await this.leaderboardGateway.broadcastSpecialLeaderboardUpdate()
+    } catch (err) {
+      console.error('Failed to update live leaderboard after team rename:', err)
+    }
+
+    return { success: true, data: team }
+  }
+
   async updateBonus(id: string, bonusPoints: number) {
     const team = await this.prisma.team.update({
       where: { id },
@@ -580,10 +616,11 @@ export class TeamsService {
     const currentTeam = await this.prisma.team.findUnique({ where: { id: teamId } })
     
     // We only update the claims. Admin will verify and set bonusPoints.
+    const nextName = body.teamName?.trim() || ''
     const team = await this.prisma.team.update({
       where: { id: teamId },
       data: {
-        ...(body.teamName?.trim() ? { name: body.teamName.trim() } : {}),
+        ...(nextName ? { name: nextName } : {}),
         projectTitle: body.projectTitle,
         projectDescription: body.projectDescription,
         agentName: body.agentName,
@@ -596,6 +633,13 @@ export class TeamsService {
         followedLinkedin: body.followedLinkedin,
       }
     })
+
+    if (nextName && currentTeam?.applicationId) {
+      await this.prisma.application.update({
+        where: { id: currentTeam.applicationId },
+        data: { teamName: nextName },
+      }).catch(() => {})
+    }
 
     if (body.members) {
       for (const member of body.members) {

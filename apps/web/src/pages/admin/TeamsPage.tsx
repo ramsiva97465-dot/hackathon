@@ -287,6 +287,10 @@ export function TeamsPage() {
   const [editingTableValue, setEditingTableValue] = useState('')
   const [savingTable, setSavingTable] = useState(false)
 
+  const [editingNameId, setEditingNameId] = useState<string | null>(null)
+  const [editingNameValue, setEditingNameValue] = useState('')
+  const [savingName, setSavingName] = useState(false)
+
   const [editingBonusId, setEditingBonusId] = useState<string | null>(null)
   const [editingBonusValue, setEditingBonusValue] = useState<number>(0)
   const [savingBonus, setSavingBonus] = useState(false)
@@ -659,6 +663,26 @@ export function TeamsPage() {
       toast.error('Failed to update table number')
     } finally {
       setSavingTable(false)
+    }
+  }
+
+  const handleSaveTeamName = async (teamId: string) => {
+    const next = editingNameValue.trim()
+    if (!next) {
+      toast.error('Team name is required')
+      return
+    }
+    try {
+      setSavingName(true)
+      await api.teams.updateName(teamId, next)
+      toast.success('Team name updated')
+      setEditingNameId(null)
+      setViewTarget(prev => (prev?.id === teamId ? { ...prev, name: next } : prev))
+      fetchTeams()
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to update team name')
+    } finally {
+      setSavingName(false)
     }
   }
 
@@ -1265,7 +1289,37 @@ export function TeamsPage() {
                       <Avatar name={team.name} size="sm" />
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-sm font-bold text-white truncate">{team.name}</p>
+                          {editingNameId === team.id ? (
+                            <div className="flex items-center gap-1 min-w-0">
+                              <input
+                                autoFocus
+                                value={editingNameValue}
+                                onChange={e => setEditingNameValue(e.target.value)}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') handleSaveTeamName(team.id)
+                                  if (e.key === 'Escape') setEditingNameId(null)
+                                }}
+                                className="max-w-[180px] px-2 py-1 text-sm font-bold rounded-lg outline-none transition-all text-slate-900"
+                                style={{ border: '1.5px solid rgba(232,60,0,0.4)', background: '#fff' }}
+                              />
+                              <button disabled={savingName} onClick={() => handleSaveTeamName(team.id)}
+                                className="text-emerald-500 hover:text-emerald-700 transition-colors">
+                                <Check size={13} />
+                              </button>
+                              <button disabled={savingName} onClick={() => setEditingNameId(null)}
+                                className="text-slate-400 hover:text-slate-600 transition-colors">
+                                <X size={13} />
+                              </button>
+                            </div>
+                          ) : (
+                            <p
+                              className="text-sm font-bold text-white truncate cursor-pointer hover:text-[#E83C00] transition-colors"
+                              title="Click to rename team"
+                              onClick={() => { setEditingNameId(team.id); setEditingNameValue(team.name) }}
+                            >
+                              {team.name}
+                            </p>
+                          )}
                           {team.isSpecialCategory && (
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black bg-sky-500/20 text-sky-300 border border-sky-500/40 shrink-0">
                               Special
@@ -1540,7 +1594,37 @@ export function TeamsPage() {
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
                     <span className="text-slate-400 block text-[10px] uppercase font-bold">Team Name</span>
-                    <span className="font-extrabold text-slate-900">{viewTarget.name}</span>
+                    {editingNameId === viewTarget.id ? (
+                      <div className="flex items-center gap-1 mt-1">
+                        <input
+                          autoFocus
+                          value={editingNameValue}
+                          onChange={e => setEditingNameValue(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') handleSaveTeamName(viewTarget.id)
+                            if (e.key === 'Escape') setEditingNameId(null)
+                          }}
+                          className="flex-1 px-2 py-1 text-sm font-bold rounded-lg outline-none border border-[#E83C00]/40"
+                        />
+                        <button disabled={savingName} onClick={() => handleSaveTeamName(viewTarget.id)}
+                          className="text-emerald-500 hover:text-emerald-700">
+                          <Check size={14} />
+                        </button>
+                        <button disabled={savingName} onClick={() => setEditingNameId(null)}
+                          className="text-slate-400 hover:text-slate-600">
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className="font-extrabold text-slate-900 hover:text-[#E83C00] transition-colors text-left"
+                        title="Click to rename"
+                        onClick={() => { setEditingNameId(viewTarget.id); setEditingNameValue(viewTarget.name) }}
+                      >
+                        {viewTarget.name}
+                      </button>
+                    )}
                   </div>
                   <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
                     <span className="text-slate-400 block text-[10px] uppercase font-bold">Track</span>

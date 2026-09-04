@@ -110,6 +110,13 @@ export class TeamsController {
     return this.service.updateTableNumber(id, tableNumber)
   }
 
+  @Patch(':id/name')
+  @UseGuards(AuthGuard, PermissionsGuard)
+  @RequirePermissions('SETTINGS_MANAGE')
+  updateTeamName(@Param('id') id: string, @Body('name') name: string) {
+    return this.service.updateTeamName(id, name)
+  }
+
   @Patch(':id/bonus')
   updateBonus(@Param('id') id: string, @Body('bonusPoints') bonusPoints: number) {
     return this.service.updateBonus(id, bonusPoints)
