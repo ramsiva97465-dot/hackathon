@@ -905,7 +905,7 @@ export function PremiumRevealCard({
             </div>
 
             {/* Subtitle Slot (Decrypting badge cross-fades into College & Track smoothly) */}
-            <div className={`min-h-[36px] flex items-center justify-center ${isDecrypting ? '' : 'mt-8 xl:mt-10'}`}>
+            <div className={`min-h-[36px] flex items-center justify-center ${isDecrypting ? '' : 'mt-14 xl:mt-20'}`}>
               {isDecrypting ? (
                 <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 via-[#1A1208]/90 to-orange-500/15 backdrop-blur-md border border-amber-400/40 text-amber-200/95 text-[11px] sm:text-xs font-bold tracking-[0.18em] uppercase shadow-[0_0_20px_rgba(245,158,11,0.2)] ring-1 ring-amber-400/20">
                   <span className="relative flex h-2 w-2 shrink-0">
@@ -921,7 +921,7 @@ export function PremiumRevealCard({
                   transition={{ duration: 0.4, ease: 'easeOut' }}
                   className="flex items-center justify-center gap-3 flex-wrap text-lg xl:text-xl font-medium text-slate-300"
                 >
-                  <span className="font-semibold text-white/90 text-center text-base xl:text-lg tracking-wide">
+                  <span className="font-semibold text-white/70 text-center text-sm xl:text-base tracking-[0.28em] uppercase">
                     VOICEATHON 2026
                   </span>
                 </motion.div>

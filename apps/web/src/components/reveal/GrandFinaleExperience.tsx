@@ -671,13 +671,13 @@ function PlaceReveal({
             ) : null}
           </AnimatePresence>
 
-          <div className="mt-3 h-6">
+          <div className="mt-8 h-6 sm:mt-10">
             {metaOn && (
               <motion.p
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: EASE }}
-                className="text-sm text-white/40 sm:text-base"
+                className="text-sm tracking-[0.28em] uppercase text-white/40 sm:text-base"
               >
                 {REVEAL_META}
               </motion.p>
@@ -1014,7 +1014,7 @@ function Champion({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.95, duration: 0.5 }}
-              className="mt-3 text-sm text-white/40 sm:text-base"
+              className="mt-8 text-sm tracking-[0.28em] uppercase text-white/40 sm:mt-10 sm:text-base"
             >
               {REVEAL_META}
             </motion.p>
