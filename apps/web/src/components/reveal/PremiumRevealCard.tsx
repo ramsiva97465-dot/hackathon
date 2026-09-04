@@ -698,8 +698,8 @@ export function PremiumRevealCard({
           : { duration: 0.4, ease: 'easeOut' }}
         className={`relative rounded-[2.5rem] overflow-hidden border-2 transition-all ${
           settled
-            ? 'px-8 pt-6 pb-4 sm:pt-7 sm:pb-5'
-            : 'px-10 py-8 sm:py-10 xl:py-12'
+            ? 'px-8 pt-4 pb-4 sm:pt-5 sm:pb-5'
+            : 'px-10 pt-5 pb-8 sm:pt-6 sm:pb-10 xl:pt-7 xl:pb-12'
         } ${rankTheme.cardBg} ${
           isDecrypting
             ? isFinale
@@ -770,9 +770,9 @@ export function PremiumRevealCard({
         <div className={`flex items-center gap-6 w-full ${settled ? 'min-h-[140px]' : 'min-h-[260px]'}`}>
 
           {/* ── LEFT: Badge + Rank ── */}
-          <div className={`flex flex-col items-center self-stretch shrink-0 min-w-[160px] px-2 ${
-            settled ? 'gap-2' : 'gap-4'
-          } ${!isFinale ? 'justify-center' : settled ? 'justify-start pt-1' : 'justify-start pt-3'}`}>
+          <div className={`flex flex-col items-center justify-start self-stretch shrink-0 min-w-[160px] px-2 ${
+            settled ? 'gap-1 pt-0 -mt-1' : 'gap-2.5 pt-0 -mt-3'
+          }`}>
             {/* Badge */}
             <div
               className={`inline-flex min-h-[26px] items-center gap-2 px-3.5 py-1.5 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-[0.16em] shadow-xl transition-all ${
@@ -888,15 +888,15 @@ export function PremiumRevealCard({
           <div className="w-px self-stretch bg-white/10 shrink-0" />
 
           {/* ── RIGHT: Score ── */}
-          <div className={`flex flex-col items-center self-stretch shrink-0 w-[20%] ${
-            settled ? 'gap-2' : 'gap-4'
-          } ${!isFinale ? 'justify-center' : settled ? 'justify-start pt-1' : 'justify-start pt-3'}`}>
+          <div className={`flex flex-col items-center justify-start self-stretch shrink-0 w-[20%] ${
+            settled ? 'gap-1 pt-0 -mt-1' : 'gap-2.5 pt-0 -mt-3'
+          }`}>
             <span className="inline-flex min-h-[26px] items-center text-[11px] font-extrabold uppercase tracking-[0.16em] text-amber-300/90">
               {isDecrypting ? 'CALCULATING' : isFinale ? 'FINAL SCORE' : 'ROUND 1 SCORE'}
             </span>
             <span
               className={`font-black font-mono tracking-wider leading-none ${
-                settled ? 'text-[2.5rem] xl:text-[3.5rem]' : 'mt-2 text-[3.5rem] xl:text-[5rem]'
+                settled ? 'text-[2.5rem] xl:text-[3.5rem]' : 'text-[3.5rem] xl:text-[5rem]'
               } ${isDecrypting ? 'text-amber-300/80 animate-pulse' : rankTheme.scoreTxt}`}
             >
               {isDecrypting ? rollingScore : Number(currentSpotlightTeam?.totalScore || 0).toFixed(1)}
