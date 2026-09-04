@@ -272,7 +272,7 @@ function NameWait({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, filter: 'blur(8px)', y: -8 }}
       transition={{ duration: 0.45, ease: EASE }}
-      className="flex flex-col items-center"
+      className="mt-10 flex flex-col items-center sm:mt-14"
     >
       <div className="flex items-center gap-1.5 sm:gap-2" style={{ perspective: 700 }}>
         {[0, 1, 2, 3, 4].map((i) => {
@@ -602,7 +602,7 @@ function PlaceReveal({
           />
         </div>
 
-        <div className="mt-4 flex h-[8.5rem] w-full flex-col items-center justify-start sm:h-[10.5rem]">
+        <div className="mt-4 flex min-h-[10.5rem] w-full flex-col items-center justify-start sm:min-h-[12.5rem]">
           <AnimatePresence mode="wait">
             {nameLive ? (
               <motion.h2
