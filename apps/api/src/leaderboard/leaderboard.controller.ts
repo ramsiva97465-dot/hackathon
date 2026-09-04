@@ -33,11 +33,13 @@ export class LeaderboardController {
   @Get()
   getLeaderboard(
     @Query('hackathonId') hackathonId?: string,
-    @Query('round') round?: string
+    @Query('round') round?: string,
+    @Query('liveScores') liveScores?: string
   ) {
     return this.service.getLeaderboard({
       hackathonId,
-      round: round ? Number(round) : undefined
+      round: round ? Number(round) : undefined,
+      liveScores: liveScores === 'true' || liveScores === '1',
     })
   }
 

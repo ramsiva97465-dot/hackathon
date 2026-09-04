@@ -116,7 +116,7 @@ export const api = {
 
   // Leaderboard
   leaderboard: {
-    get: (params?: { round?: number; hackathonId?: string }) =>
+    get: (params?: { round?: number; hackathonId?: string; liveScores?: boolean }) =>
       apiClient.get('/leaderboard', { params }),
     getSpecial: (params?: { round?: number; hackathonId?: string }) =>
       apiClient.get('/leaderboard/special', { params }),

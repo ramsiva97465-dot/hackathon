@@ -399,6 +399,8 @@ function Round2Row({ entry, hideStandings }: { entry: LeaderboardEntry; hideStan
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export function LeaderboardPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
+  // Grand Finale scores come from Round 3 (frozen R2). Top 20 board stays on R1.
+  const [finaleEntries, setFinaleEntries] = useState<LeaderboardEntry[]>([])
   const [clock, setClock] = useState(new Date())
   const [activeRound, setActiveRound] = useState<number>(1)
   const [tvMode, setTvMode] = useState(() => {
@@ -514,6 +516,8 @@ export function LeaderboardPage() {
       const fetchRound = activeRoundRef.current === 3 ? 2 : activeRoundRef.current
       const res = await api.leaderboard.get({ round: fetchRound })
       applyLeaderboardRows(res.data)
+      const finaleRes = await api.leaderboard.get({ round: 3 })
+      if (Array.isArray(finaleRes.data)) setFinaleEntries(finaleRes.data)
     } catch {
       // Ignore live refresh errors
     }
@@ -594,6 +598,8 @@ export function LeaderboardPage() {
       const fetchRound = activeRound === 3 ? 2 : activeRound
       const res = await api.leaderboard.get({ round: fetchRound })
       applyLeaderboardRows(res.data)
+      const finaleRes = await api.leaderboard.get({ round: 3 })
+      if (Array.isArray(finaleRes.data)) setFinaleEntries(finaleRes.data)
     } catch (err) {
       // Ignore poll error
     }
@@ -929,9 +935,10 @@ export function LeaderboardPage() {
   const notAdvancing = filtered.slice(ROUND2_CUTOFF)
   if (advancing.length > 0) advancingRef.current = advancing
 
-  // Official Top 5 for Grand Finale.
-  // If teams were promoted to Round 3, use those; otherwise fall back to overall ranking.
-  const r3Teams = rawDisplay.filter(e => ((e as any).round || 1) === 3)
+  // Official Top 5 for Grand Finale — always Round 2 scores (via round=3 payload).
+  // Never reuse Top 20 Round 1 scores for the podium / coronation cards.
+  const r3Teams = (finaleEntries.length > 0 ? finaleEntries : rawDisplay)
+    .filter(e => ((e as any).round || 1) === 3)
   const top5Source = r3Teams.length > 0 ? r3Teams : (filtered.length > 0 ? filtered : rawDisplay)
   const top5 = top5Source
     .slice()

@@ -299,7 +299,10 @@ export function ParticipantDashboard() {
   const fetchLeaderboard = useCallback(async (round: number) => {
     try {
       setLbLoading(true)
-      const res = await api.leaderboard.get({ round })
+      const res = await api.leaderboard.get({
+        round,
+        liveScores: round === 2,
+      })
       if (Array.isArray(res.data)) {
         setLeaderboard(res.data)
         setLastRefresh(new Date())

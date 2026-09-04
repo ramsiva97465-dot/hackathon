@@ -61,7 +61,10 @@ export function LeaderboardAdminPage() {
 
   const fetchLeaderboard = async (round = activeRoundRef.current) => {
     try {
-      const res = await api.leaderboard.get({ round })
+      const res = await api.leaderboard.get({
+        round,
+        liveScores: round === 2,
+      })
       if (round !== activeRoundRef.current) return
       if (Array.isArray(res.data)) setEntries(res.data)
     } catch {

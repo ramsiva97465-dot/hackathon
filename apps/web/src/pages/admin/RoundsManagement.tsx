@@ -222,7 +222,10 @@ export function RoundsManagement() {
   const fetchLeaderboard = async (silent = false) => {
     try {
       if (!silent) setLoading(true)
-      const res = await api.leaderboard.get({ round: activeTab })
+      const res = await api.leaderboard.get({
+        round: activeTab,
+        liveScores: activeTab === 2,
+      })
       if (Array.isArray(res.data)) {
         setTeams(res.data)
       }

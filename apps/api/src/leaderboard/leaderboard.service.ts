@@ -27,7 +27,7 @@ function averageFromSheets(sheets: ScoreSheetWithScores[]) {
 export class LeaderboardService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getLeaderboard(params?: { hackathonId?: string; round?: number }) {
+  async getLeaderboard(params?: { hackathonId?: string; round?: number; liveScores?: boolean }) {
     // Locate hackathon
     const hackathon = params?.hackathonId
       ? { id: params.hackathonId }
@@ -36,6 +36,9 @@ export class LeaderboardService {
     if (!hackathon) return []
 
     const targetRound = params?.round ? Number(params.round) : 1
+    // Public Top 20 LCD always shows frozen Round 1 qualifier scores.
+    // Admin / ops pass liveScores=true to inspect live Round 2 judging.
+    const useLiveRound2Scores = Boolean(params?.liveScores)
     const whereCondition: any = {
       hackathonId: hackathon.id,
       status: 'COMPETING',
@@ -59,14 +62,6 @@ export class LeaderboardService {
         },
         leaderboard: { select: { rank: true } },
       },
-    })
-
-    // Until Round 2 judging starts, the Round 2 board is the Top 20 qualifier
-    // announcement — ranked by frozen Round 1 scores, not empty R2 sheets.
-    const round2JudgingStarted = targetRound === 2 && teams.some((team) => {
-      if (team.round2Score !== null && team.round2Score !== undefined) return true
-      if (team.adminScore !== null && team.adminScore !== undefined && (team.round || 1) === 2) return true
-      return sheetsForRound(team.scoreSheets, 2).length > 0
     })
 
     const entries = teams.map((team) => {
@@ -93,27 +88,28 @@ export class LeaderboardService {
           totalScore += bonus
         }
       } else if (targetRound === 2) {
-        if ((team.round || 1) >= 3 && team.round2Score !== null && team.round2Score !== undefined) {
-          totalScore = team.round2Score
-          judgeCount = team.round2JudgeCount ?? 0
-        } else if (!round2JudgingStarted) {
-          if (team.round1Score !== null && team.round1Score !== undefined) {
-            totalScore = team.round1Score
-            judgeCount = team.round1JudgeCount ?? 0
+        if (useLiveRound2Scores) {
+          if ((team.round || 1) >= 3 && team.round2Score !== null && team.round2Score !== undefined) {
+            totalScore = team.round2Score
+            judgeCount = team.round2JudgeCount ?? 0
           } else {
-            const r1Sheets = sheetsForRound(team.scoreSheets, 1)
-            judgeCount = r1Sheets.length
-            totalScore = averageFromSheets(r1Sheets) + bonus
+            const r2Sheets = sheetsForRound(team.scoreSheets, 2)
+            judgeCount = r2Sheets.length
+            if (team.adminScore !== null && team.adminScore !== undefined && (team.round || 1) === 2) {
+              totalScore = team.adminScore
+            } else {
+              // Round 2: sum every judge's sheet. 5 judges → /50, 4 → /40, 3 → /30.
+              totalScore = sumFromSheets(r2Sheets)
+            }
           }
+        } else if (team.round1Score !== null && team.round1Score !== undefined) {
+          // Qualifier announcement board: always Round 1, even after R2 judging.
+          totalScore = team.round1Score
+          judgeCount = team.round1JudgeCount ?? 0
         } else {
-          const r2Sheets = sheetsForRound(team.scoreSheets, 2)
-          judgeCount = r2Sheets.length
-          if (team.adminScore !== null && team.adminScore !== undefined && (team.round || 1) === 2) {
-            totalScore = team.adminScore
-          } else {
-            // Round 2: sum every judge's sheet. 5 judges → /50, 4 → /40, 3 → /30.
-            totalScore = sumFromSheets(r2Sheets)
-          }
+          const r1Sheets = sheetsForRound(team.scoreSheets, 1)
+          judgeCount = r1Sheets.length
+          totalScore = averageFromSheets(r1Sheets) + bonus
         }
       } else {
         // Round 3 is reveal-only. Final ranking is always the Round 2 score
