@@ -218,31 +218,6 @@ function Wreath({
   )
 }
 
-function Marks({ done, active }: { done: number; active: number }) {
-  return (
-    <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-2">
-      {[5, 4, 3, 2, 1].map((rank, i) => {
-        const filled = done >= i + 1
-        const current = rank === active && !filled
-        return (
-          <span
-            key={rank}
-            className={`h-[3px] rounded-full transition-[width,background-color] duration-700 ${
-              filled ? 'w-7 bg-amber-300' : current ? 'w-4 bg-white/50' : 'w-2 bg-white/15'
-            }`}
-          />
-        )
-      })}
-    </div>
-  )
-}
-
-const SEAL_BARS = [
-  { x: 2, y: 2, fill: '#F4F4F4' },
-  { x: 11, y: 14, fill: '#A3A3A3' },
-  { x: 20, y: 26, fill: '#5C5C5C' },
-] as const
-
 function flapGlyph(elapsed: number, index: number, progress: number) {
   const interval = 48 + clamp(progress / 0.44) * 130
   const n = Math.floor(elapsed / interval) + index * 7
@@ -264,101 +239,81 @@ function nameCountdown(progress: number) {
   return 1
 }
 
-/** SnapServe mark seal — bars build one by one, then a rising heartbeat. */
-function SnapSeal({
-  slamming,
-  progress,
-  elapsed,
-}: {
-  slamming?: boolean
-  progress: number
-  elapsed: number
-}) {
-  const barOn = (i: number) => progress >= 0.12 + i * 0.055 || progress >= 1
-  const dotOn = (i: number) => progress >= 0.30 + i * 0.028 || progress >= 1
-  const wordOn = progress >= 0.46 || progress >= 1
-  const built = progress >= 0.48 || progress >= 1
-  const tension = built ? clamp((progress - 0.48) / 0.34) : 0
-  const tSec = elapsed / 1000
-  const hz = 0.8 + tension * 2.8
-  const phase = tSec * hz * Math.PI * 2
-  const beat =
-    Math.pow(Math.max(0, Math.sin(phase)), 10) +
-    0.5 * Math.pow(Math.max(0, Math.sin(phase - 0.4)), 14)
-  const scale = slamming ? 1 : 1 + beat * (0.04 + tension * 0.1)
-  const shake = !slamming && tension > 0.42
-    ? Math.sin(tSec * 42) * (tension - 0.42) * 4.2
-    : 0
-  const glow = 0.08 + beat * (0.22 + tension * 0.5)
+/**
+ * Official SnapServe seal — drops from above and stamps hard.
+ * Uses the real brand mark (no bar-by-bar logo rebuild).
+ */
+function SnapSeal({ slamming, progress }: { slamming?: boolean; progress: number }) {
+  const t = clamp((progress - 0.08) / 0.14)
+  const falling = progress < 0.08
+  const justHit = progress >= 0.20 && progress < 0.30
+  const landed = progress >= 0.20 || slamming
+  const drop = falling ? -120 : landed ? 0 : -120 * (1 - t * t * t)
+  const tilt = falling ? -14 : landed ? 0 : -14 * (1 - t)
+  const squash = !landed && t > 0.82 ? 0.88 + (1 - t) * 0.45 : 1
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 14 }}
-      animate={
-        slamming
-          ? { opacity: 1, y: 0, scale: [1.2, 0.94, 1] }
-          : { opacity: 1, y: 0 }
-      }
-      exit={{ opacity: 0, scale: 1.22, y: -14, filter: 'blur(10px)' }}
-      transition={{ duration: slamming ? 0.42 : 0.55, ease: EASE }}
+      initial={{ opacity: 0 }}
+      animate={slamming ? { opacity: 1, scale: [1.14, 0.92, 1] } : { opacity: 1 }}
+      exit={{ opacity: 0, y: -36, rotate: -8, filter: 'blur(8px)' }}
+      transition={{ duration: slamming ? 0.4 : 0.28, ease: EASE }}
       className="relative flex flex-col items-center"
+      style={{
+        transform: `translateY(${drop}px) rotate(${tilt}deg) scaleY(${squash})`,
+        transformOrigin: 'center bottom',
+      }}
     >
+      {justHit && (
+        <motion.span
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-1/2 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-200/70"
+          initial={{ scale: 0.5, opacity: 0.85 }}
+          animate={{ scale: 1.9, opacity: 0 }}
+          transition={{ duration: 0.55, ease: EASE }}
+        />
+      )}
       <div
-        aria-hidden
-        className="pointer-events-none absolute left-1/2 top-5 h-[4.5rem] w-[4.5rem] -translate-x-1/2 rounded-full bg-amber-300 blur-2xl"
-        style={{ opacity: glow }}
-      />
-      <div
+        className="relative flex h-[5.75rem] w-[5.75rem] items-center justify-center rounded-full sm:h-[7rem] sm:w-[7rem]"
         style={{
-          transform: `translateX(${shake}px) scale(${scale})`,
-          transformOrigin: 'center center',
+          background:
+            'radial-gradient(circle at 35% 28%, #F0D78A 0%, #C9A227 42%, #7A5410 78%, #3D2A08 100%)',
+          boxShadow:
+            '0 10px 28px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -2px 6px rgba(0,0,0,0.35)',
         }}
       >
-        <svg
-          viewBox="0 0 48 36"
-          className="relative h-12 w-16 sm:h-16 sm:w-[5.25rem]"
-          aria-hidden
+        <div
+          className="absolute inset-[7%] rounded-full"
+          style={{
+            border: '1.5px solid rgba(245,230,168,0.55)',
+            boxShadow: 'inset 0 0 0 1px rgba(90,55,10,0.45)',
+          }}
+        />
+        <div
+          className="relative z-10 flex h-[68%] w-[68%] items-center justify-center rounded-full"
+          style={{
+            background: 'radial-gradient(circle at 50% 40%, #1A1208 0%, #0A0704 100%)',
+            boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.65)',
+          }}
         >
-          {SEAL_BARS.map((bar, i) => (
-            <motion.rect
-              key={bar.fill}
-              x={bar.x}
-              y={bar.y}
-              height="8"
-              rx="4"
-              fill={bar.fill}
-              initial={{ width: 0, opacity: 0 }}
-              animate={barOn(i) ? { width: 26, opacity: 1 } : { width: 0, opacity: 0 }}
-              transition={{ duration: 0.34, ease: EASE }}
-            />
-          ))}
-        </svg>
-
-        <div className="mt-3 flex items-center justify-center gap-1.5">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <motion.span
-              key={i}
-              className="h-[5px] w-[5px] rounded-full bg-amber-200"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={dotOn(i) ? { scale: 1, opacity: 0.85 } : { scale: 0, opacity: 0 }}
-              transition={{ duration: 0.22, ease: EASE }}
-            />
-          ))}
+          <img
+            src="/logos/Snaplogo.png.png"
+            alt=""
+            draggable={false}
+            className="h-[58%] w-[58%] object-contain"
+            style={{ filter: 'brightness(1.15) contrast(1.05)' }}
+          />
         </div>
-
-        <motion.span
-          className="mt-2.5 text-[10px] font-semibold uppercase tracking-[0.38em] text-white/50 sm:text-[11px]"
-          initial={{ opacity: 0, y: 6, letterSpacing: '0.55em' }}
-          animate={
-            wordOn
-              ? { opacity: 0.34 + beat * 0.42, y: 0, letterSpacing: `${0.34 + beat * 0.08}em` }
-              : { opacity: 0, y: 6 }
-          }
-          transition={{ duration: 0.4, ease: EASE }}
+      </div>
+      {landed && (
+        <motion.p
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 0.4, y: 0 }}
+          className="mt-3 text-[10px] font-semibold uppercase tracking-[0.38em] text-white/50"
         >
           Sealed
-        </motion.span>
-      </div>
+        </motion.p>
+      )}
     </motion.div>
   )
 }
@@ -376,7 +331,7 @@ function NameWait({
   const n = nameCountdown(progress)
 
   if (isStamping(progress) || slamming) {
-    return <SnapSeal slamming={slamming} progress={slamming ? 1 : progress} elapsed={elapsed} />
+    return <SnapSeal slamming={slamming} progress={slamming ? 1 : progress} />
   }
 
   if (counting) {
@@ -564,7 +519,6 @@ function PlaceReveal({
   isAnimating,
   tick,
   elapsed,
-  completedSteps,
 }: {
   entry?: GrandFinaleEntry
   rank: number
@@ -572,7 +526,6 @@ function PlaceReveal({
   isAnimating: boolean
   tick: number
   elapsed: number
-  completedSteps: number
 }) {
   // 5th place: falling-word rain first, then remapped reveal timeline.
   const fifthRain = rank === 5 && isAnimating
@@ -704,7 +657,6 @@ function PlaceReveal({
           )}
         </div>
       </motion.div>
-      <Marks done={completedSteps} active={rank} />
     </Stage>
   )
 }
@@ -714,13 +666,11 @@ function FinalTwoReveal({
   championEntry,
   progress,
   isAnimating,
-  completedSteps,
 }: {
   secondEntry?: GrandFinaleEntry
   championEntry?: GrandFinaleEntry
   progress: number
   isAnimating: boolean
-  completedSteps: number
 }) {
   const p = isAnimating ? progress : 1
   const SPREAD = 22 // % offset from centre for each slot
@@ -885,7 +835,6 @@ function FinalTwoReveal({
           )}
         </div>
       </div>
-      <Marks done={completedSteps} active={2} />
     </Stage>
   )
 }
@@ -1019,7 +968,6 @@ function Champion({
           </motion.div>
         )}
       </AnimatePresence>
-      {stage === 'winner' && <Marks done={5} active={1} />}
     </Stage>
   )
 }
@@ -1051,9 +999,6 @@ export function GrandFinaleExperience({
   const tick = Math.floor(elapsed / 80)
   const rank = Math.max(1, 6 - revealStep)
   const entry = finalists.find((item) => item.rank === rank)
-  const completedSteps = revealStep === 5
-    ? (isAnimating ? 4 : 5)
-    : Math.max(0, revealStep - (isAnimating ? 1 : 0))
 
   let scene: ReactNode
   let sceneKey = `place-${rank}`
@@ -1068,7 +1013,6 @@ export function GrandFinaleExperience({
         championEntry={finalists.find((item) => item.rank === 1)}
         progress={progress}
         isAnimating={isAnimating}
-        completedSteps={completedSteps}
       />
     )
     sceneKey = 'final-two'
@@ -1081,7 +1025,6 @@ export function GrandFinaleExperience({
         isAnimating={isAnimating}
         tick={tick}
         elapsed={elapsed}
-        completedSteps={completedSteps}
       />
     )
   }
