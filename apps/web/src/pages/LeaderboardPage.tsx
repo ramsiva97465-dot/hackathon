@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { SnapServeMark, VobizLockup } from '@/components/brand/BrandLogos'
 import { PremiumRevealCard } from '@/components/reveal/PremiumRevealCard'
-import { GrandFinaleExperience, TopFiveLineup, CHAMPION_TOTAL_MS, CHAMPION_WIN_AT_MS } from '@/components/reveal/GrandFinaleExperience'
+import { GrandFinaleExperience, TopFiveLineup, CHAMPION_TOTAL_MS, CHAMPION_WIN_AT_MS, PLACE_SCORE_END, FINALE_BEAT_MS } from '@/components/reveal/GrandFinaleExperience'
 import { Avatar } from '@/components/ui/Avatar'
 import { getTrackConfig } from '@/lib/utils'
 import { unlockFinaleAudio } from '@/lib/finaleRevealAudio'
@@ -486,6 +486,8 @@ export function LeaderboardPage() {
   const specialPhaseRef = useRef<'TOP5' | 'FINALE'>('TOP5')
   const specialDecryptingRef = useRef(false)
   const specialDecryptTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const specialFxTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
+  const specialAnimTokenRef = useRef(0)
 
   useEffect(() => {
     specialIsRevealingRef.current = specialIsRevealing
@@ -738,6 +740,9 @@ export function LeaderboardPage() {
       clearTimeout(specialDecryptTimerRef.current)
       specialDecryptTimerRef.current = null
     }
+    for (const t of specialFxTimersRef.current) clearTimeout(t)
+    specialFxTimersRef.current = []
+    specialAnimTokenRef.current += 1
     specialIsRevealingRef.current = false
     setSpecialIsRevealing(false)
     setSpecialStep(0)
@@ -763,6 +768,9 @@ export function LeaderboardPage() {
     setSpecialPhase(phase)
     void fetchSpecialBoard(phase)
 
+    // Never restart a beat that is already mid-flight (poll / reconnect noise).
+    if (specialDecryptingRef.current && step === specialStepRef.current) return
+
     if (step > specialStepRef.current) {
       runSpecialRevealStep(step, phase)
     } else if (step === 0 && specialStepRef.current === 0) {
@@ -779,13 +787,17 @@ export function LeaderboardPage() {
       clearTimeout(specialDecryptTimerRef.current)
       specialDecryptTimerRef.current = null
     }
+    for (const t of specialFxTimersRef.current) clearTimeout(t)
+    specialFxTimersRef.current = []
+
+    const animToken = ++specialAnimTokenRef.current
     specialPhaseRef.current = phase
     setSpecialPhase(phase)
     specialStepRef.current = step
     setSpecialStep(step)
 
-    // TOP5 shortlist → same Top 20 PremiumRevealCard timing.
-    // FINALE: Runner = place beat (28s), Winner = champion beat (22s).
+    // TOP5 shortlist → PremiumRevealCard (5s).
+    // FINALE Runner → place beat (28s). Winner → champion beat (22s).
     const gfeStep = phase === 'FINALE' ? (step === 1 ? 4 : 5) : 0
     const durationMs = phase === 'FINALE'
       ? finaleCountdownStart(gfeStep) * 1000
@@ -799,37 +811,52 @@ export function LeaderboardPage() {
     const roster = [...specialEntries]
       .sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0))
       .slice(0, 5)
-    const winnerName =
+    const announcedName =
       phase === 'FINALE'
         ? (roster[(step === 1 ? 2 : 1) - 1]?.teamName || '')
-        : ''
+        : (roster[(6 - step) - 1]?.teamName || '')
 
-    // Winner confetti opens with the name popup (same as main champion), not at beat end.
-    if (phase === 'FINALE' && step === 2) {
-      window.setTimeout(() => {
-        if (!specialIsRevealingRef.current || specialStepRef.current !== step) return
+    const stillThisBeat = () =>
+      specialIsRevealingRef.current
+      && specialAnimTokenRef.current === animToken
+      && specialStepRef.current === step
+
+    const scheduleFx = (delayMs: number, fn: () => void) => {
+      const id = window.setTimeout(() => {
+        if (!stillThisBeat()) return
+        fn()
+      }, Math.max(0, delayMs))
+      specialFxTimersRef.current.push(id)
+    }
+
+    if (phase === 'FINALE' && step === 1) {
+      // Name lock + score bed hit at PLACE_SCORE_END of the 28s place beat.
+      const nameAt = Math.round(FINALE_BEAT_MS * PLACE_SCORE_END)
+      scheduleFx(nameAt, () => {
+        triggerFinaleConfetti(2)
+        speakCountdown('Special Category Runner, ' + announcedName)
+      })
+    } else if (phase === 'FINALE' && step === 2) {
+      // Name popup + champion lock audio hit together at WIN_AT (12s).
+      scheduleFx(CHAMPION_WIN_AT_MS, () => {
         triggerFinaleConfetti(1, Math.max(1_000, durationMs - CHAMPION_WIN_AT_MS))
-      }, CHAMPION_WIN_AT_MS)
+        speakCountdown('Special Category Winner, ' + announcedName)
+      })
     }
 
     specialDecryptTimerRef.current = window.setTimeout(() => {
       specialDecryptTimerRef.current = null
+      if (!stillThisBeat()) return
       setSpecialDecrypting(false)
       try {
-        if (phase === 'FINALE') {
-          if (step === 1) {
-            triggerFinaleConfetti(2)
-            speakCountdown('Special Team Runner, ' + winnerName)
-          } else {
-            speakCountdown('Special Team Winner, ' + winnerName)
-          }
-        } else {
+        if (phase === 'TOP5') {
           confetti({
             particleCount: 55,
             spread: 65,
             origin: { y: 0.65 },
             colors: ['#E83C00', '#F59E0B', '#FFD700', '#FFFFFF'],
           })
+          if (announcedName) speakCountdown(`Number ${6 - step}, ` + announcedName)
         }
       } catch {
         // ignore
@@ -1665,6 +1692,7 @@ export function LeaderboardPage() {
                       stepStartedAt={specialFinaleStepStartedAt}
                       stepDurationMs={specialNameSpinMs}
                       placeKickers={SPECIAL_PLACE_KICKERS}
+                      variant="special"
                     />
                   </div>
                 ) : specialStep === 0 ? (

@@ -19,6 +19,8 @@ type Props = {
   stepDurationMs: number
   /** Optional place titles (e.g. Special Category Winner / Runner). Defaults to Grand Finale kickers. */
   placeKickers?: Partial<Record<number, string>>
+  /** Special Category uses place-beat Runner (not Final Two face-off). */
+  variant?: 'main' | 'special'
 }
 
 const PLACE: Record<number, { kicker: string }> = {
@@ -1131,8 +1133,12 @@ export function GrandFinaleExperience({
   stepStartedAt,
   stepDurationMs,
   placeKickers,
+  variant = 'main',
 }: Props) {
   const [now, setNow] = useState(() => Date.now())
+  const isSpecial = variant === 'special'
+  // Special Category Runner reuses step 4 timing but a single place reveal (not Final Two).
+  const specialRunner = isSpecial && revealStep === 4
 
   useEffect(() => {
     setNow(Date.now())
@@ -1148,9 +1154,6 @@ export function GrandFinaleExperience({
 
   // Restart muted stage video + Web Audio bed together for every Top 5 beat.
   // 5th place waits through rain + hold before the reveal score starts.
-  // Special Category Runner reuses step 4 timing but a single place reveal (not Final Two).
-  const specialRunner = Boolean(placeKickers?.[2]) && revealStep === 4
-
   useEffect(() => {
     if (!isAnimating || revealStep < 1) {
       stopFinaleRevealBed()
@@ -1229,10 +1232,10 @@ export function GrandFinaleExperience({
       <AnimatePresence mode="wait">
         <motion.div
           key={sceneKey}
-          initial={{ opacity: 0 }}
+          initial={{ opacity: isSpecial ? 0.35 : 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.35 }}
+          transition={{ duration: isSpecial ? 0.18 : 0.35 }}
           className="relative z-10 h-full min-h-full w-full"
         >
           {scene}
