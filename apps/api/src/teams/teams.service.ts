@@ -522,6 +522,10 @@ export class TeamsService {
   }
 
   async findMyTeam(teamId: string) {
+    if (!teamId) {
+      throw new NotFoundException('Team not found')
+    }
+
     const team = await this.prisma.team.findUnique({
       where: { id: teamId },
       include: {
@@ -538,7 +542,8 @@ export class TeamsService {
       }
     })
 
-    if (!team) throw new Error('Team not found')
+    // Stale participant JWT (team deleted / re-imported) — 404, not a 500 crash.
+    if (!team) throw new NotFoundException('Team not found')
 
     // Fetch all score criteria to ensure we list all criteria even if not graded yet
     const criteriaList = await this.prisma.scoreCriteria.findMany({

@@ -330,8 +330,17 @@ export function ParticipantDashboard() {
           }
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
+      const status = err?.response?.status
+      // Stale participant session — team was deleted/re-imported. Stop polling noise.
+      if (status === 404) {
+        localStorage.removeItem('participant_token')
+        localStorage.removeItem('auth_token')
+        if (!silent) toast.error('Your team session is no longer valid. Please log in again.')
+        window.location.href = '/login'
+        return
+      }
       if (!silent) toast.error('Failed to load team data.')
     } finally {
       if (!silent) setLoading(false)
