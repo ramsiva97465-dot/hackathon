@@ -210,7 +210,8 @@ export class JudgesService {
           totalScore,
           bonusPoints: team.bonusPoints || 0,
           notes: scoreSheet?.notes || null,
-          existingScores
+          existingScores,
+          isSpecialCategory: Boolean(team.isSpecialCategory),
         }
       })
     }

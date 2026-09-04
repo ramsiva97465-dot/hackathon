@@ -38,6 +38,7 @@ type Team = {
   bonusPoints?: number
   notes?: string | null
   existingScores?: Record<string, number>
+  isSpecialCategory?: boolean
 }
 
 const containerVariants = {
@@ -233,6 +234,10 @@ export function JudgeDashboard() {
         }
         const teams = res.data.data as Team[]
         const sorted = [...teams].sort((a, b) => {
+          // Special Category pending first so judges see the separate queue clearly.
+          const aSpecial = a.isSpecialCategory ? 0 : 1
+          const bSpecial = b.isSpecialCategory ? 0 : 1
+          if (aSpecial !== bSpecial) return aSpecial - bSpecial
           if (a.isScored === b.isScored) return 0
           return a.isScored ? 1 : -1
         })
@@ -264,6 +269,9 @@ export function JudgeDashboard() {
 
   const scored = assignedTeams.filter(t => t.isScored).length
   const total = assignedTeams.length
+  const specialAssigned = assignedTeams.filter(t => t.isSpecialCategory)
+  const specialPending = specialAssigned.filter(t => !t.isScored).length
+  const hasSpecialQueue = specialAssigned.length > 0
 
   const activeTeam = assignedTeams.find(t => t.id === selectedId)
   const track = activeTeam ? getTrackConfig(activeTeam.track) : null
@@ -272,6 +280,81 @@ export function JudgeDashboard() {
     t.teamName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     t.projectTitle.toLowerCase().includes(searchQuery.toLowerCase())
   )
+  const filteredSpecial = filteredTeams.filter(t => t.isSpecialCategory)
+  const filteredMain = filteredTeams.filter(t => !t.isSpecialCategory)
+
+  const renderTeamCard = (team: Team) => {
+    const active = team.id === selectedId
+    return (
+      <motion.div
+        key={team.id}
+        variants={itemVariants}
+        onClick={() => setSelectedId(team.id)}
+        className={`group w-full flex items-center justify-between p-4 rounded-2xl border text-left cursor-pointer transition-all duration-300 ${
+          team.isSpecialCategory
+            ? active
+              ? 'bg-sky-50 border-sky-400/50 shadow-[0_10px_25px_rgba(14,165,233,0.12)] ring-1 ring-sky-400/20'
+              : 'bg-sky-50/80 border-sky-300/40 hover:bg-sky-50 hover:border-sky-400/40 shadow-sm'
+            : active
+              ? 'bg-[#F4ECE1] border-[#E83C00]/40 shadow-[0_10px_25px_rgba(232,60,0,0.08)] ring-1 ring-[#E83C00]/10'
+              : 'bg-[#F4ECE1] border-[#EAE4D8] hover:bg-white/50 hover:border-[#E83C00]/20 shadow-sm'
+        }`}
+      >
+        <div className="space-y-1 min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`font-display font-bold text-sm truncate block transition-colors ${
+              active
+                ? team.isSpecialCategory ? 'text-sky-700' : 'text-[#E83C00]'
+                : 'text-slate-900'
+            }`}>
+              {team.teamName}
+            </span>
+            {team.isSpecialCategory && (
+              <span className="px-1.5 py-0.5 rounded bg-sky-500/15 border border-sky-400/40 text-[9px] font-black text-sky-700 uppercase tracking-wider shrink-0">
+                Special Category
+              </span>
+            )}
+            {team.round ? (
+              <span className="px-1.5 py-0.5 rounded bg-slate-200 text-[9px] font-bold text-slate-500 shrink-0">
+                R{team.round}
+              </span>
+            ) : null}
+            {team.tableNumber && (
+              <span className="px-1.5 py-0.5 rounded bg-slate-200 text-[9px] font-bold text-slate-500 shrink-0">
+                T-{team.tableNumber}
+              </span>
+            )}
+            {team.agentPhoneNumber && (
+              <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 text-[9px] font-bold text-emerald-800 font-mono shrink-0">
+                <Phone size={9} /> {team.agentPhoneNumber}
+              </span>
+            )}
+          </div>
+          <span className="text-[11px] text-slate-500 truncate block font-medium">{team.projectTitle}</span>
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0 ml-4">
+          {team.isScored ? (
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border ${
+              team.isSpecialCategory
+                ? 'bg-sky-50 border-sky-200'
+                : 'bg-orange-50/50 border-orange-200/50'
+            }`}>
+              <CheckCircle size={12} className={team.isSpecialCategory ? 'text-sky-600' : 'text-[#E83C00]'} />
+              <span className={`text-[10px] font-bold font-mono ${team.isSpecialCategory ? 'text-sky-700' : 'text-[#E83C00]'}`}>
+                {team.totalScore !== null ? `${(Math.round(team.totalScore * 10) / 10).toFixed(1)} / 20` : 'Scored'}
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200">
+              <Clock size={12} className="text-slate-500" />
+              <span className="text-[10px] font-bold text-slate-600">Pending</span>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    )
+  }
 
   const handleSkip = () => {
     const currentIndex = filteredTeams.findIndex(t => t.id === selectedId)
@@ -422,6 +505,19 @@ export function JudgeDashboard() {
               </div>
             </div>
 
+            {hasSpecialQueue && (
+              <div className="rounded-2xl border border-sky-400/40 bg-sky-50 px-4 py-3.5 shadow-sm space-y-1">
+                <p className="text-xs font-black text-sky-900 uppercase tracking-wider flex items-center gap-2">
+                  <Users size={13} className="text-sky-600" />
+                  Special Category queue ({specialAssigned.length})
+                </p>
+                <p className="text-[11px] text-sky-800/80 font-medium leading-relaxed">
+                  You have school Special Category teams assigned. Score them as their own track — they do not compete in the main Top 20 / Top 5.
+                  {specialPending > 0 ? ` ${specialPending} still pending.` : ' All Special Category scores submitted.'}
+                </p>
+              </div>
+            )}
+
             <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-3">
               {loading ? (
                 <div className="py-12 text-center text-slate-500 text-sm font-medium">Fetching teams...</div>
@@ -448,60 +544,38 @@ export function JudgeDashboard() {
                   </p>
                 </div>
               ) : (
-                filteredTeams.map((team) => {
-                  const active = team.id === selectedId
-                  return (
-                    <motion.div
-                      key={team.id}
-                      variants={itemVariants}
-                      onClick={() => setSelectedId(team.id)}
-                      className={`group w-full flex items-center justify-between p-4 rounded-2xl border text-left cursor-pointer transition-all duration-300 ${active
-                          ? 'bg-[#F4ECE1] border-[#E83C00]/40 shadow-[0_10px_25px_rgba(232,60,0,0.08)] ring-1 ring-[#E83C00]/10'
-                          : 'bg-[#F4ECE1] border-[#EAE4D8] hover:bg-white/50 hover:border-[#E83C00]/20 shadow-sm'
-                        }`}
-                    >
-                      <div className="space-y-1 min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className={`font-display font-bold text-sm truncate block transition-colors ${active ? 'text-[#E83C00]' : 'text-slate-900'}`}>
-                            {team.teamName}
+                <>
+                  {filteredSpecial.length > 0 && (
+                    <div className="space-y-2.5">
+                      <div className="flex items-center gap-2 px-1 pt-1">
+                        <span className="text-[10px] font-black uppercase tracking-[0.14em] text-sky-700">
+                          Special Category · Score separately
+                        </span>
+                        <span className="h-px flex-1 bg-sky-300/50" />
+                        <span className="text-[10px] font-bold text-sky-600">
+                          {filteredSpecial.filter(t => t.isScored).length}/{filteredSpecial.length}
+                        </span>
+                      </div>
+                      {filteredSpecial.map(renderTeamCard)}
+                    </div>
+                  )}
+                  {filteredMain.length > 0 && (
+                    <div className="space-y-2.5">
+                      {filteredSpecial.length > 0 && (
+                        <div className="flex items-center gap-2 px-1 pt-2">
+                          <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+                            Main Competition
                           </span>
-                          {team.round ? (
-                            <span className="px-1.5 py-0.5 rounded bg-slate-200 text-[9px] font-bold text-slate-500 shrink-0">
-                              R{team.round}
-                            </span>
-                          ) : null}
-                          {team.tableNumber && (
-                            <span className="px-1.5 py-0.5 rounded bg-slate-200 text-[9px] font-bold text-slate-500 shrink-0">
-                              T-{team.tableNumber}
-                            </span>
-                          )}
-                          {team.agentPhoneNumber && (
-                            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 text-[9px] font-bold text-emerald-800 font-mono shrink-0">
-                              <Phone size={9} /> {team.agentPhoneNumber}
-                            </span>
-                          )}
+                          <span className="h-px flex-1 bg-slate-300/60" />
+                          <span className="text-[10px] font-bold text-slate-500">
+                            {filteredMain.filter(t => t.isScored).length}/{filteredMain.length}
+                          </span>
                         </div>
-                        <span className="text-[11px] text-slate-500 truncate block font-medium">{team.projectTitle}</span>
-                      </div>
-
-                      <div className="flex items-center gap-3 shrink-0 ml-4">
-                        {team.isScored ? (
-                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-50/50 border border-orange-200/50">
-                            <CheckCircle size={12} className="text-[#E83C00]" />
-                            <span className="text-[10px] font-bold text-[#E83C00] font-mono">
-                              {team.totalScore !== null ? `${(Math.round(team.totalScore * 10) / 10).toFixed(1)} / 20` : 'Scored'}
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200">
-                            <Clock size={12} className="text-slate-500" />
-                            <span className="text-[10px] font-bold text-slate-600">Pending</span>
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  )
-                })
+                      )}
+                      {filteredMain.map(renderTeamCard)}
+                    </div>
+                  )}
+                </>
               )}
             </motion.div>
           </div>
@@ -540,6 +614,17 @@ export function JudgeDashboard() {
                         <X size={18} />
                       </button>
                     </div>
+
+                    {activeTeam.isSpecialCategory && (
+                      <div className="mx-3.5 mt-2.5 px-3 py-2.5 rounded-xl bg-sky-500/10 border border-sky-500/30 shadow-xs">
+                        <p className="text-[11px] font-black text-sky-950 uppercase tracking-wider">
+                          Special Category team
+                        </p>
+                        <p className="text-[10.5px] text-sky-900/80 font-medium mt-0.5 leading-snug">
+                          Score this school team for the Special Category track only. Same rubric — separate competition from the main Top 20 / Top 5.
+                        </p>
+                      </div>
+                    )}
 
                     {/* Organizer Social Bonus Banner */}
                     <div className="mx-3.5 mt-2.5 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between shadow-xs">
@@ -612,7 +697,12 @@ export function JudgeDashboard() {
                   <div className="flex flex-col flex-1 min-h-0">
                     <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
                       <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {activeTeam.isSpecialCategory && (
+                            <span className="text-[10px] font-black px-2.5 py-1 rounded-full border bg-sky-50 text-sky-800 border-sky-300 uppercase tracking-widest">
+                              Special Category
+                            </span>
+                          )}
                           <span
                             className="text-[10px] font-bold px-2.5 py-1 rounded-full border uppercase tracking-widest"
                             style={{ background: `${track.color}10`, color: track.color, borderColor: `${track.color}20` }}
@@ -636,6 +726,17 @@ export function JudgeDashboard() {
                           )}
                         </div>
                       </div>
+
+                      {activeTeam.isSpecialCategory && (
+                        <div className="rounded-xl border border-sky-300/50 bg-sky-50 px-3.5 py-3">
+                          <p className="text-[11px] font-black text-sky-950 uppercase tracking-wider">
+                            Score as Special Category
+                          </p>
+                          <p className="text-[11px] text-sky-900/80 font-medium mt-1 leading-relaxed">
+                            This school team is in the Special Category track. Use the same scoring rubric; results feed the Special Category leaderboard, not the main Top 20 / Top 5.
+                          </p>
+                        </div>
+                      )}
 
                       <div className="space-y-2">
                         <h2 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">{activeTeam.teamName}</h2>
