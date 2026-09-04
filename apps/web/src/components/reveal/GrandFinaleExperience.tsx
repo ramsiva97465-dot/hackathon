@@ -719,51 +719,57 @@ function FinalTwoReveal({
   isAnimating: boolean
 }) {
   const p = isAnimating ? progress : 1
-  const SPREAD = 22 // % offset from centre for each slot
-  const SWAPS = 6 // number of left↔right crossings during the shuffle
+  // Keep both laurels inside the LCD frame — no off-screen slides.
+  const SPREAD = 18
+  const SWAPS = 5
 
-  // Horizontal position (in %) of each laurel plus depth cues.
   let secondLeft = 50 + SPREAD
   let champLeft = 50 - SPREAD
   let secondFront = true
   let backScale = 1
   let pick = 0
 
-  if (p >= 0.06 && p < 0.64) {
-    // The 10-second face-off: both laurels orbit through the centre and swap sides.
-    const sT = (p - 0.06) / 0.58
+  if (p >= 0.05 && p < 0.68) {
+    // Long face-off shuffle — names stay sealed as ???
+    const sT = (p - 0.05) / 0.63
     const theta = sT * Math.PI * SWAPS
     const c = Math.cos(theta)
     secondLeft = 50 + SPREAD * c
     champLeft = 50 - SPREAD * c
     secondFront = Math.sin(theta) > 0
-    const near = 1 - Math.min(1, Math.abs(c) / 0.5) // 1 near the crossing, 0 at the slots
-    backScale = 1 - 0.2 * near
-  } else if (p >= 0.74) {
-    // Pick: the runner-up glides to centre, the champion recedes and dims.
-    pick = clamp((p - 0.74) / 0.16)
+    const near = 1 - Math.min(1, Math.abs(c) / 0.5)
+    backScale = 1 - 0.18 * near
+  } else if (p >= 0.68 && p < 0.78) {
+    // Brief hold at the slots — room still waiting.
+    secondLeft = 50 + SPREAD
+    champLeft = 50 - SPREAD
+    secondFront = true
+  } else if (p >= 0.78) {
+    // Slow pick: runner-up glides to centre; champion dims but stays on-frame.
+    pick = clamp((p - 0.78) / 0.14)
     secondLeft = 50 + SPREAD + (0 - SPREAD) * pick
-    champLeft = 50 - SPREAD + (-34 - -SPREAD) * pick // slides out to the far left
+    champLeft = 50 - SPREAD + (16 - (50 - SPREAD)) * pick // eases toward ~16%, never off-screen
   }
 
-  const secondScale = p < 0.64 ? (secondFront ? 1 : backScale) : 1 + 0.12 * pick
-  const champScale = p < 0.64 ? (secondFront ? backScale : 1) : 1 - 0.12 * pick
-  const secondZ = secondFront ? 3 : 2
-  const champZ = secondFront ? 2 : 3
-  const secondOpacity = p < 0.64 ? (secondFront ? 1 : 0.72) : 1
-  const champOpacity = p < 0.64 ? (secondFront ? 0.72 : 1) : 1 - pick * 0.9
+  const secondScale = p < 0.68 ? (secondFront ? 1 : backScale) : 1 + 0.1 * pick
+  const champScale = p < 0.68 ? (secondFront ? backScale : 1) : 1 - 0.1 * pick
+  const secondZ = p < 0.68 ? (secondFront ? 3 : 2) : 3
+  const champZ = p < 0.68 ? (secondFront ? 2 : 3) : 2
+  const secondOpacity = p < 0.68 ? (secondFront ? 1 : 0.72) : 1
+  const champOpacity = p < 0.68 ? (secondFront ? 0.72 : 1) : Math.max(0.12, 1 - pick * 0.88)
 
-  const numberOn = p >= 0.80
-  const titleSecond = p >= 0.74
-  const smallLabels = p < 0.80 ? 1 : clamp(1 - (p - 0.80) / 0.06)
-  const bigNameOn = p >= 0.86
-  const metaOn = p >= 0.90
-  const scoreOn = p >= 0.94
-  const scoreT = clamp((p - 0.94) / 0.06)
+  // Delay the "Second Place" identity — no sudden lock while champion is still mid-exit.
+  const numberOn = p >= 0.9
+  const titleSecond = p >= 0.88
+  const smallLabels = p < 0.9 ? 1 : clamp(1 - (p - 0.9) / 0.05)
+  const bigNameOn = p >= 0.92
+  const metaOn = p >= 0.95
+  const scoreOn = p >= 0.97
+  const scoreT = clamp((p - 0.97) / 0.03)
   const score = Number(secondEntry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
   const track = secondEntry?.track ? getTrackConfig(secondEntry.track) : null
   const secondSweep = (() => {
-    const t = (p - 0.80) / 0.06
+    const t = (p - 0.9) / 0.05
     if (t <= 0 || t >= 1) return -1
     return t
   })()
@@ -772,14 +778,14 @@ function FinalTwoReveal({
 
   return (
     <Stage cinematic progress={p}>
-      <div className="relative z-10 flex w-full max-w-6xl flex-col items-center px-6 text-center">
+      <div className="relative z-10 flex h-full w-full max-w-6xl flex-col items-center justify-start overflow-visible px-6 pt-[8vh] text-center sm:pt-[10vh]">
         <AnimatePresence mode="wait">
           <motion.p
             key={titleSecond ? 'second' : 'final-two'}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.5, ease: EASE }}
+            transition={{ duration: 0.65, ease: EASE }}
             className="text-sm font-medium tracking-[0.38em] text-white/50 uppercase sm:text-base"
           >
             {titleSecond ? PLACE[2].kicker : 'The Final Two'}
@@ -787,8 +793,8 @@ function FinalTwoReveal({
         </AnimatePresence>
         <span aria-hidden className="mt-3 h-px w-12 bg-amber-200/55" />
 
-        <div className="relative mt-8 h-[268px] w-full sm:h-[320px] lg:h-[356px]">
-          {/* Champion laurel — stays sealed until Step 5 */}
+        <div className="relative mt-8 h-[268px] w-full overflow-visible sm:h-[320px] lg:h-[356px]">
+          {/* Champion laurel — stays sealed until Step 5; fades aside, never clipped */}
           <div
             className="absolute top-0 flex flex-col items-center"
             style={{
@@ -802,17 +808,16 @@ function FinalTwoReveal({
             <div style={{ transform: `scale(${champScale})` }}>
               <Wreath className={laurelCls} glyph="?" />
             </div>
-            {/* Names stay hidden during the face-off — suspense until 2nd locks. */}
             <p
               aria-hidden
               className="mt-3 font-mono text-2xl font-bold tracking-[0.35em] text-white/25 sm:text-3xl"
-              style={{ opacity: p < 0.74 ? 0.7 : 1 - pick }}
+              style={{ opacity: p < 0.78 ? 0.7 : Math.max(0, 0.7 - pick) }}
             >
               ???
             </p>
           </div>
 
-          {/* Runner-up laurel — locks with "2" */}
+          {/* Runner-up laurel — locks with "2" only after the pick settles */}
           <div
             className="absolute top-0 flex flex-col items-center"
             style={{
@@ -847,14 +852,14 @@ function FinalTwoReveal({
             <motion.h2
               initial={{ opacity: 0, y: 14, filter: 'blur(8px)' }}
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              transition={{ duration: 0.7, ease: EASE }}
+              transition={{ duration: 0.85, ease: EASE }}
               className="max-w-[16ch] text-balance text-5xl font-black tracking-tight text-white sm:max-w-[20ch] sm:text-7xl lg:text-8xl"
             >
               {secondEntry?.teamName || 'Unavailable'}
             </motion.h2>
           )}
           <div className="mt-4 flex h-[4.75rem] w-full items-center justify-center sm:h-[5.25rem]">
-            <SealMark show={Boolean(bigNameOn && metaOn)} delay={0.22} />
+            <SealMark show={Boolean(bigNameOn && metaOn)} delay={0.28} />
           </div>
           <div className="mt-1 h-6">
             {metaOn && (
