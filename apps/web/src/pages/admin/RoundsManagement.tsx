@@ -523,9 +523,12 @@ export function RoundsManagement() {
 
     try {
       setLoading(true)
-      await api.leaderboard.adminScore(teamId, score)
+      // Special R1/R2 tabs must write that board's round score (even if the team was promoted).
+      const scoreRound = isSpecialBoard ? activeTab : activeTab === 1 || activeTab === 2 ? activeTab : undefined
+      await api.leaderboard.adminScore(teamId, score, scoreRound)
       toast.success(score === null ? 'Admin override cleared.' : `Score overridden to ${score}.`)
       await fetchLeaderboard(true)
+      if (isSpecialBoard) await fetchSpecialCounts()
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Failed to override score')
     } finally {

@@ -122,8 +122,8 @@ export const api = {
       apiClient.get('/leaderboard', { params }),
     getSpecial: (params?: { round?: number; hackathonId?: string }) =>
       apiClient.get('/leaderboard/special', { params }),
-    adminScore: (teamId: string, score: number | null) =>
-      apiClient.post('/leaderboard/admin-score', { teamId, score }),
+    adminScore: (teamId: string, score: number | null, scoreRound?: number) =>
+      apiClient.post('/leaderboard/admin-score', { teamId, score, scoreRound }),
     getTvMode: () => apiClient.get('/leaderboard/tv-mode'),
     setTvMode: (enabled: boolean) =>
       apiClient.post('/leaderboard/tv-mode', { enabled }),

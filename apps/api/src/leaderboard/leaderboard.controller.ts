@@ -11,6 +11,11 @@ class AdminScoreDto {
   @IsNumber()
   @IsOptional()
   score: number | null
+
+  /** Which frozen score field to sync (1 = Round 1 / Special R1, 2 = Round 2 / Special R2). */
+  @IsNumber()
+  @IsOptional()
+  scoreRound?: number
 }
 
 class TvModeDto {
@@ -138,7 +143,7 @@ export class LeaderboardController {
 
   @Post('admin-score')
   async updateAdminScore(@Body() dto: AdminScoreDto) {
-    await this.service.updateAdminScore(dto.teamId, dto.score)
+    await this.service.updateAdminScore(dto.teamId, dto.score, dto.scoreRound)
     await this.gateway.broadcastLeaderboardUpdate()
     await this.gateway.broadcastSpecialLeaderboardUpdate()
     return { success: true }

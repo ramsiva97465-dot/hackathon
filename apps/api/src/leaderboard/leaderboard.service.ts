@@ -210,16 +210,17 @@ export class LeaderboardService {
 
       if (targetRound === 1) {
         const r1Sheets = sheetsForRound(team.scoreSheets, 1)
-        // Prefer submitted R1 sheets so a leftover round1Score of 0 cannot hide real marks.
-        if (hasAdminOverride && teamRound === 1) {
-          totalScore = team.adminScore!
+        // Special R1 board: admin override always wins (including promoted teams
+        // still listed in the full Special pool). Then frozen R1, then sheets.
+        if (hasAdminOverride) {
+          totalScore = Number(team.adminScore)
           judgeCount = team.round1JudgeCount ?? r1Sheets.length
+        } else if (team.round1Score !== null && team.round1Score !== undefined) {
+          totalScore = Number(team.round1Score)
+          judgeCount = team.round1JudgeCount ?? 0
         } else if (r1Sheets.length > 0) {
           judgeCount = r1Sheets.length
           totalScore = averageFromSheets(r1Sheets) + bonus
-        } else if (team.round1Score !== null && team.round1Score !== undefined) {
-          totalScore = team.round1Score
-          judgeCount = team.round1JudgeCount ?? 0
         } else {
           totalScore = bonus
           judgeCount = 0
@@ -227,14 +228,14 @@ export class LeaderboardService {
       } else {
         // Live Round 2 board for the special Top 5 shortlist — never reuse R1 marks as R2 scores.
         const r2Sheets = sheetsForRound(team.scoreSheets, 2)
-        if (hasAdminOverride && teamRound >= 2) {
-          totalScore = team.adminScore!
+        if (hasAdminOverride) {
+          totalScore = Number(team.adminScore)
           judgeCount = team.round2JudgeCount ?? r2Sheets.length
         } else if (r2Sheets.length > 0) {
           judgeCount = r2Sheets.length
           totalScore = sumFromSheets(r2Sheets)
         } else if (team.round2Score !== null && team.round2Score !== undefined) {
-          totalScore = team.round2Score
+          totalScore = Number(team.round2Score)
           judgeCount = team.round2JudgeCount ?? 0
         } else {
           // Fresh after promote: Round 2 starts at 0 until judges submit R2 sheets.
@@ -245,9 +246,11 @@ export class LeaderboardService {
 
       // Qualifier rank seed (frozen R1) — used only to keep a stable order before R2 scoring.
       const qualifierScore =
-        team.round1Score !== null && team.round1Score !== undefined
-          ? team.round1Score
-          : averageFromSheets(sheetsForRound(team.scoreSheets, 1)) + bonus
+        hasAdminOverride && targetRound === 1
+          ? Number(team.adminScore)
+          : team.round1Score !== null && team.round1Score !== undefined
+            ? Number(team.round1Score)
+            : averageFromSheets(sheetsForRound(team.scoreSheets, 1)) + bonus
 
       return {
         teamId: team.id,
@@ -259,9 +262,7 @@ export class LeaderboardService {
         previousRank: (team as any).leaderboard?.rank ?? undefined,
         round: team.round,
         isSpecialCategory: true,
-        adminOverride:
-          hasAdminOverride &&
-          ((targetRound === 1 && teamRound === 1) || (targetRound === 2 && teamRound >= 2)),
+        adminOverride: hasAdminOverride,
         scores: [],
         _qualifierScore: qualifierScore,
       }
@@ -284,11 +285,13 @@ export class LeaderboardService {
     })
   }
 
-  async updateAdminScore(teamId: string, score: number | null) {
+  async updateAdminScore(teamId: string, score: number | null, scoreRound?: number) {
     const team = await this.prisma.team.findUnique({ where: { id: teamId } })
     if (!team) throw new NotFoundException('Team not found')
 
     const teamRound = team.round || 1
+    // Prefer explicit board round (Special R1 Edit must write Round 1 even if team is already in R2).
+    const effectiveRound = scoreRound && scoreRound >= 1 ? scoreRound : teamRound
 
     if (score === null) {
       // Clear override only — keep frozen round scores / judge sheets intact.
@@ -306,7 +309,7 @@ export class LeaderboardService {
       round2Score?: number
     } = { adminScore: score }
 
-    if (teamRound <= 1) {
+    if (effectiveRound <= 1) {
       data.round1Score = score
     } else {
       data.round2Score = score
