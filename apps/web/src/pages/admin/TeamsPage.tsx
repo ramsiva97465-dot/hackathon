@@ -1007,40 +1007,6 @@ export function TeamsPage() {
             <span className="text-xs font-semibold text-slate-400 shrink-0">{filtered.length} teams in view</span>
           </div>
 
-          {/* Special Category banner */}
-          {specialOnly && (
-            <div className="mx-5 mt-4 p-3.5 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-between flex-wrap gap-3">
-              <div className="flex items-center gap-2.5">
-                <div>
-                  <p className="text-xs font-black text-sky-200">
-                    Special Category ({specialCount} teams · R1 {specialR1Count} · R2 Top 5 {specialR2Count})
-                  </p>
-                  <p className="text-[11px] text-sky-300/70">
-                    All judges score every Special Category team. Promote Top 5 from Rounds Management after Round 1.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  disabled={distributing || specialR1Count === 0}
-                  onClick={() => handleAutoDistribute(1)}
-                  className="px-3.5 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-black text-xs font-black transition-all flex items-center gap-1.5 shadow-md disabled:opacity-50 cursor-pointer"
-                >
-                  <UserPlus size={13} />
-                  {distributing ? 'Assigning…' : 'Assign All Judges (Special · Round 1)'}
-                </button>
-                <button
-                  disabled={distributing || specialR2Count === 0}
-                  onClick={() => handleAutoDistribute(2)}
-                  className="px-3.5 py-1.5 rounded-lg bg-sky-400/20 hover:bg-sky-400/30 text-sky-200 border border-sky-400/40 text-xs font-black transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
-                >
-                  <UserPlus size={13} />
-                  {distributing ? 'Assigning…' : 'Assign All Judges (Special · Round 2)'}
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* Special Context Banner for Round 2 */}
           {selectedRound === 2 && !specialOnly && (
             <div className="mx-5 mt-4 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between flex-wrap gap-3">
