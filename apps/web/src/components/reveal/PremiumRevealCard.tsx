@@ -770,9 +770,9 @@ export function PremiumRevealCard({
         <div className={`flex items-center gap-6 w-full ${settled ? 'min-h-[140px]' : 'min-h-[260px]'}`}>
 
           {/* ── LEFT: Badge + Rank ── */}
-          <div className={`flex flex-col items-center justify-start self-stretch shrink-0 min-w-[160px] px-2 ${
-            settled ? 'gap-2 pt-1' : 'gap-4 pt-3'
-          }`}>
+          <div className={`flex flex-col items-center self-stretch shrink-0 min-w-[160px] px-2 ${
+            settled ? 'gap-2' : 'gap-4'
+          } ${!isFinale ? 'justify-center' : settled ? 'justify-start pt-1' : 'justify-start pt-3'}`}>
             {/* Badge */}
             <div
               className={`inline-flex min-h-[26px] items-center gap-2 px-3.5 py-1.5 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-[0.16em] shadow-xl transition-all ${
@@ -829,7 +829,7 @@ export function PremiumRevealCard({
 
           {/* ── CENTER: Team Name + College/Track ── */}
           <div className={`flex-1 flex flex-col items-center justify-center gap-3 text-center overflow-hidden px-6 ${
-            settled ? 'min-h-0' : 'min-h-[160px] translate-y-2'
+            settled ? 'min-h-0' : isFinale ? 'min-h-[160px] translate-y-2' : 'min-h-[160px]'
           }`}>
             {/* Team Name / Cipher (Persistent single line element, zero layout jump or popping) */}
             <div ref={nameBoxRef} className="w-full flex justify-center overflow-hidden">
@@ -888,9 +888,9 @@ export function PremiumRevealCard({
           <div className="w-px self-stretch bg-white/10 shrink-0" />
 
           {/* ── RIGHT: Score ── */}
-          <div className={`flex flex-col items-center justify-start self-stretch shrink-0 w-[20%] ${
-            settled ? 'gap-2 pt-1' : 'gap-4 pt-3'
-          }`}>
+          <div className={`flex flex-col items-center self-stretch shrink-0 w-[20%] ${
+            settled ? 'gap-2' : 'gap-4'
+          } ${!isFinale ? 'justify-center' : settled ? 'justify-start pt-1' : 'justify-start pt-3'}`}>
             <span className="inline-flex min-h-[26px] items-center text-[11px] font-extrabold uppercase tracking-[0.16em] text-amber-300/90">
               {isDecrypting ? 'CALCULATING' : isFinale ? 'FINAL SCORE' : 'ROUND 1 SCORE'}
             </span>
