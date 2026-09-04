@@ -6,6 +6,7 @@ import { PremiumRevealCard } from '@/components/reveal/PremiumRevealCard'
 import { GrandFinaleExperience } from '@/components/reveal/GrandFinaleExperience'
 import { Avatar } from '@/components/ui/Avatar'
 import { getTrackConfig } from '@/lib/utils'
+import { unlockFinaleAudio } from '@/lib/finaleRevealAudio'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { 
     TrendingUp, TrendingDown, Minus, Trophy, ChevronRight, Monitor,
@@ -25,13 +26,9 @@ function finalePlace(rank: number) {
   return { title: '5th Place', decrypt: 'Decrypting 5th Place...', speak: '5th Place, ', locked: '5th Place' }
 }
 
-/** Step 1=5th, 2=4th, 3=2nd runner-up, 4=1st runner-up, 5=champion */
-function finaleCountdownStart(step: number) {
-  if (step === 1) return 19 // falling-word rain + stamp/roll/countdown
-  if (step === 2) return 15
-  if (step === 3) return 16
-  if (step === 4) return 16
-  return 12
+/** Step 1=5th … 5=champion — each beat matches 10s stage video + audio bed */
+function finaleCountdownStart(_step: number) {
+  return 10
 }
 
 // ── Cinematic Confetti FX for Grand Finale ────────────────────────────────────
@@ -466,6 +463,17 @@ export function LeaderboardPage() {
   useEffect(() => {
     revealRoundRef.current = revealRound
   }, [revealRound])
+
+  // LCD autoplay policy: unlock Web Audio on first gesture so the 10s bed can play.
+  useEffect(() => {
+    const unlock = () => unlockFinaleAudio()
+    window.addEventListener('pointerdown', unlock, { once: true })
+    window.addEventListener('keydown', unlock, { once: true })
+    return () => {
+      window.removeEventListener('pointerdown', unlock)
+      window.removeEventListener('keydown', unlock)
+    }
+  }, [])
 
   const applyLeaderboardRows = (rows: unknown) => {
     if (!Array.isArray(rows)) return
@@ -962,8 +970,8 @@ export function LeaderboardPage() {
           : [...unlockedRanksRef.current, currentRank]
         setUnlockedRanks(unlockedRanksRef.current)
       }
-      if (soundEnabled) {
-        playRevealChime(isFinaleStep && targetStep === FINALE_CUTOFF ? 1 : currentRank)
+      if (soundEnabled && !isFinaleStep) {
+        playRevealChime(currentRank)
       }
       if (isFinaleStep) {
         triggerFinaleConfetti(currentRank)

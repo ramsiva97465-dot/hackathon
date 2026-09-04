@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { getTrackConfig } from '@/lib/utils'
+import { playFinaleRevealBed, stopFinaleRevealBed } from '@/lib/finaleRevealAudio'
 
 export type GrandFinaleEntry = {
   teamId: string
@@ -224,10 +225,6 @@ function flapGlyph(elapsed: number, index: number, progress: number) {
   return ALPHA[Math.abs(n) % ALPHA.length]
 }
 
-function isStamping(progress: number) {
-  return progress < 0.30
-}
-
 function isNameCountdown(progress: number) {
   return progress >= 0.46 && progress < 0.88
 }
@@ -239,100 +236,15 @@ function nameCountdown(progress: number) {
   return 1
 }
 
-/**
- * Official SnapServe seal — drops from above and stamps hard.
- * Uses the real brand mark (no bar-by-bar logo rebuild).
- */
-function SnapSeal({ slamming, progress }: { slamming?: boolean; progress: number }) {
-  const t = clamp((progress - 0.08) / 0.14)
-  const falling = progress < 0.08
-  const justHit = progress >= 0.20 && progress < 0.30
-  const landed = progress >= 0.20 || slamming
-  const drop = falling ? -120 : landed ? 0 : -120 * (1 - t * t * t)
-  const tilt = falling ? -14 : landed ? 0 : -14 * (1 - t)
-  const squash = !landed && t > 0.82 ? 0.88 + (1 - t) * 0.45 : 1
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={slamming ? { opacity: 1, scale: [1.14, 0.92, 1] } : { opacity: 1 }}
-      exit={{ opacity: 0, y: -36, rotate: -8, filter: 'blur(8px)' }}
-      transition={{ duration: slamming ? 0.4 : 0.28, ease: EASE }}
-      className="relative flex flex-col items-center"
-      style={{
-        transform: `translateY(${drop}px) rotate(${tilt}deg) scaleY(${squash})`,
-        transformOrigin: 'center bottom',
-      }}
-    >
-      {justHit && (
-        <motion.span
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-1/2 h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-200/70"
-          initial={{ scale: 0.5, opacity: 0.85 }}
-          animate={{ scale: 1.9, opacity: 0 }}
-          transition={{ duration: 0.55, ease: EASE }}
-        />
-      )}
-      <div
-        className="relative flex h-[5.75rem] w-[5.75rem] items-center justify-center rounded-full sm:h-[7rem] sm:w-[7rem]"
-        style={{
-          background:
-            'radial-gradient(circle at 35% 28%, #F0D78A 0%, #C9A227 42%, #7A5410 78%, #3D2A08 100%)',
-          boxShadow:
-            '0 10px 28px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -2px 6px rgba(0,0,0,0.35)',
-        }}
-      >
-        <div
-          className="absolute inset-[7%] rounded-full"
-          style={{
-            border: '1.5px solid rgba(245,230,168,0.55)',
-            boxShadow: 'inset 0 0 0 1px rgba(90,55,10,0.45)',
-          }}
-        />
-        <div
-          className="relative z-10 flex h-[68%] w-[68%] items-center justify-center rounded-full"
-          style={{
-            background: 'radial-gradient(circle at 50% 40%, #1A1208 0%, #0A0704 100%)',
-            boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.65)',
-          }}
-        >
-          <img
-            src="/logos/Snaplogo.png.png"
-            alt=""
-            draggable={false}
-            className="h-[58%] w-[58%] object-contain"
-            style={{ filter: 'brightness(1.15) contrast(1.05)' }}
-          />
-        </div>
-      </div>
-      {landed && (
-        <motion.p
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 0.4, y: 0 }}
-          className="mt-3 text-[10px] font-semibold uppercase tracking-[0.38em] text-white/50"
-        >
-          Sealed
-        </motion.p>
-      )}
-    </motion.div>
-  )
-}
-
 function NameWait({
   progress,
   elapsed,
-  slamming,
 }: {
   progress: number
   elapsed: number
-  slamming?: boolean
 }) {
   const counting = isNameCountdown(progress)
   const n = nameCountdown(progress)
-
-  if (isStamping(progress) || slamming) {
-    return <SnapSeal slamming={slamming} progress={slamming ? 1 : progress} />
-  }
 
   if (counting) {
     return (
@@ -357,9 +269,9 @@ function NameWait({
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
-      animate={slamming ? { opacity: 1, y: 0, scale: [1.08, 0.96, 1] } : { opacity: 1, y: 0 }}
+      animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, filter: 'blur(8px)', y: -8 }}
-      transition={{ duration: slamming ? 0.4 : 0.45, ease: EASE }}
+      transition={{ duration: 0.45, ease: EASE }}
       className="flex flex-col items-center"
     >
       <div className="flex items-center gap-1.5 sm:gap-2" style={{ perspective: 700 }}>
@@ -395,6 +307,42 @@ function NameWait({
   )
 }
 
+const STAGE_BG = '/videos/finale-stage-bg.mp4'
+export const FINALE_BEAT_MS = 10_000
+
+function StageMedia({
+  mediaKey,
+  playMedia,
+}: {
+  mediaKey: number
+  playMedia: boolean
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    const el = videoRef.current
+    if (!el) return
+    el.pause()
+    el.currentTime = 0
+    if (!playMedia) return
+    el.muted = true
+    void el.play().catch(() => {})
+  }, [mediaKey, playMedia])
+
+  return (
+    <video
+      key={mediaKey}
+      ref={videoRef}
+      aria-hidden
+      className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover"
+      src={STAGE_BG}
+      muted
+      playsInline
+      preload="auto"
+    />
+  )
+}
+
 function Stage({
   children,
   progress = 1,
@@ -408,15 +356,23 @@ function Stage({
   const settled = !cinematic || progress >= 0.94
 
   return (
-    <div className="relative flex min-h-[min(78vh,760px)] w-full items-center justify-center overflow-hidden">
+    <div className="relative z-10 flex min-h-[min(78vh,760px)] w-full items-center justify-center overflow-hidden">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'linear-gradient(180deg, rgba(7,6,5,0.55) 0%, rgba(7,6,5,0.72) 45%, rgba(7,6,5,0.88) 100%)',
+        }}
+      />
       {cinematic && (
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              'radial-gradient(ellipse 78% 88% at 50% 46%, transparent 8%, rgba(0,0,0,0.88) 100%)',
-            opacity: 1 - open * 0.45,
+              'radial-gradient(ellipse 78% 88% at 50% 46%, transparent 8%, rgba(0,0,0,0.55) 100%)',
+            opacity: 1 - open * 0.35,
           }}
         />
       )}
@@ -425,9 +381,9 @@ function Stage({
           aria-hidden
           className="pointer-events-none absolute left-1/2 top-[-14%] h-[80%] w-[min(54%,30rem)] -translate-x-1/2"
           style={{
-            opacity: open * 0.88,
+            opacity: open * 0.7,
             background:
-              'linear-gradient(180deg, rgba(245,214,140,0.15) 0%, rgba(232,197,71,0.06) 40%, transparent 100%)',
+              'linear-gradient(180deg, rgba(245,214,140,0.12) 0%, rgba(232,197,71,0.05) 40%, transparent 100%)',
             clipPath: 'polygon(38% 0%, 62% 0%, 96% 100%, 4% 100%)',
             filter: 'blur(22px)',
           }}
@@ -436,11 +392,11 @@ function Stage({
       <motion.div
         aria-hidden
         className="pointer-events-none absolute inset-0"
-        animate={settled ? { opacity: [0.8, 1, 0.8] } : undefined}
+        animate={settled ? { opacity: [0.55, 0.85, 0.55] } : undefined}
         transition={settled ? { duration: 8, repeat: Infinity, ease: 'easeInOut' } : undefined}
         style={{
-          opacity: settled ? undefined : 0.18 + open * 0.82,
-          background: `radial-gradient(ellipse ${32 + open * 14}% ${38 + open * 14}% at 50% 40%, rgba(232,197,71,${0.05 + open * 0.11}), transparent 70%)`,
+          opacity: settled ? undefined : 0.12 + open * 0.55,
+          background: `radial-gradient(ellipse ${32 + open * 14}% ${38 + open * 14}% at 50% 40%, rgba(232,197,71,${0.04 + open * 0.08}), transparent 70%)`,
         }}
       />
       {children}
@@ -471,10 +427,11 @@ const FALL_WORDS = [
 ] as const
 
 function FallingWords({ progress }: { progress: number }) {
-  const rain = clamp(progress / 0.26)
-  const hold = progress >= 0.22 && progress < 0.30
-  const fade = progress >= 0.26 ? clamp((progress - 0.26) / 0.08) : 0
-  if (progress >= 0.36) return null
+  // `progress` is 0→1 over the rain window only.
+  const rain = clamp(progress)
+  const hold = progress >= 0.78 && progress < 0.9
+  const fade = progress >= 0.85 ? clamp((progress - 0.85) / 0.15) : 0
+  if (progress >= 1) return null
 
   return (
     <div
@@ -527,17 +484,15 @@ function PlaceReveal({
   tick: number
   elapsed: number
 }) {
-  // 5th place: falling-word rain first, then remapped reveal timeline.
+  // 5th place: falling-word rain overlays the first ~2.2s; reveal timeline stays on the shared 10s beat.
   const fifthRain = rank === 5 && isAnimating
-  const p = fifthRain ? clamp((progress - 0.32) / 0.68) : progress
-  const revealLive = !fifthRain || progress >= 0.30
+  const p = progress
   const tease = rank === 4
-  const nameFakeOut = rank === 3 && isAnimating && p >= 0.90 && p < 0.935
   const numberOn = !isAnimating || p >= (tease ? 0.75 : 0.70)
-  const nameLive = revealLive && (!isAnimating || p >= 0.88) && !nameFakeOut
+  const nameLive = !isAnimating || p >= 0.88
   const nameLocked = !isAnimating || p >= 0.94
-  const metaOn = revealLive && (!isAnimating || p >= 0.94)
-  const scoreOn = revealLive && (!isAnimating || p >= 0.96)
+  const metaOn = !isAnimating || p >= 0.94
+  const scoreOn = !isAnimating || p >= 0.96
   const scoreT = !isAnimating ? 1 : clamp((p - 0.96) / 0.04)
   const score = Number(entry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
   const track = entry?.track ? getTrackConfig(entry.track) : null
@@ -545,29 +500,27 @@ function PlaceReveal({
     () => scrambleName(entry?.teamName || '', p, tick),
     [entry?.teamName, p, tick],
   )
-  const yaw = wreathYaw(p, isAnimating && revealLive, tease)
-  const rise = wreathRise(p, isAnimating && revealLive)
-  const sweep = lockSweep(p, isAnimating && revealLive, tease)
+  const yaw = wreathYaw(p, isAnimating, tease)
+  const rise = wreathRise(p, isAnimating)
+  const sweep = lockSweep(p, isAnimating, tease)
   const wreathOpacity = !isAnimating
     ? 1
-    : !revealLive
-    ? 0
     : p < 0.07
     ? 0
     : clamp((p - 0.07) / 0.14)
-  const titleOn = !isAnimating || (fifthRain ? progress >= 0.28 : p >= 0.03)
-  const lineOn = !isAnimating || (fifthRain ? progress >= 0.32 : p >= 0.10)
+  const titleOn = !isAnimating || p >= 0.03
+  const lineOn = !isAnimating || p >= 0.10
   const meta = PLACE[rank]
-  const waitProgress = revealLive ? p : 0
-  const stageProgress = fifthRain ? clamp((progress - 0.18) / 0.82) : isAnimating ? progress : 1
+  const waitProgress = p
+  const stageProgress = isAnimating ? progress : 1
 
   return (
     <Stage cinematic progress={stageProgress}>
-      {fifthRain && <FallingWords progress={progress} />}
+      {fifthRain && <FallingWords progress={clamp(progress / 0.22)} />}
       <motion.div
         key={`place-${rank}`}
         className="relative z-10 flex w-full max-w-6xl flex-col items-center px-6 text-center"
-        style={{ opacity: fifthRain && progress < 0.26 ? 0.15 + clamp((progress - 0.18) / 0.12) * 0.85 : 1 }}
+        style={{ opacity: fifthRain && progress < 0.12 ? 0.35 + clamp(progress / 0.12) * 0.65 : 1 }}
       >
         <motion.p
           initial={{ opacity: 0, y: 10 }}
@@ -614,19 +567,13 @@ function PlaceReveal({
               >
                 {nameLocked ? (entry?.teamName || 'Unavailable') : liveName}
               </motion.h2>
-            ) : revealLive ? (
+            ) : (
               <motion.div
-                key={
-                  nameFakeOut || isStamping(waitProgress)
-                    ? `stamp-${nameFakeOut ? 'slam' : 'drop'}`
-                    : isNameCountdown(waitProgress)
-                    ? `c-${nameCountdown(waitProgress)}`
-                    : 'roll'
-                }
+                key={isNameCountdown(waitProgress) ? `c-${nameCountdown(waitProgress)}` : 'roll'}
               >
-                <NameWait slamming={nameFakeOut} progress={waitProgress} elapsed={elapsed} />
+                <NameWait progress={waitProgress} elapsed={elapsed} />
               </motion.div>
-            ) : null}
+            )}
           </AnimatePresence>
 
           <div className="mt-3 h-6">
@@ -848,25 +795,25 @@ function Champion({
   elapsed: number
   finished: boolean
 }) {
-  const stage = finished || elapsed >= 11_000
+  const stage = finished || elapsed >= 9_200
     ? 'winner'
-    : elapsed < 5_000
+    : elapsed < 3_800
     ? 'count'
-    : elapsed < 6_200
+    : elapsed < 4_600
     ? 'hold'
-    : elapsed < 7_200
+    : elapsed < 5_400
     ? 'black'
-    : elapsed < 8_600
+    : elapsed < 6_600
     ? 'spark'
     : 'flash'
-  const n = Math.max(1, 5 - Math.floor(elapsed / 1_000))
-  const scoreT = finished ? 1 : clamp((elapsed - 11_000) / 700)
+  const n = Math.max(1, 5 - Math.floor(elapsed / 760))
+  const scoreT = finished ? 1 : clamp((elapsed - 9_200) / 600)
   const score = Number(entry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
   const track = entry?.track ? getTrackConfig(entry.track) : null
-  const winOpen = finished ? 1 : clamp((elapsed - 11_000) / 900)
+  const winOpen = finished ? 1 : clamp((elapsed - 9_200) / 700)
   const champSweep = (() => {
     if (stage !== 'winner' || finished) return -1
-    const t = (elapsed - 11_080) / 800
+    const t = (elapsed - 9_280) / 650
     if (t <= 0 || t >= 1) return -1
     return t
   })()
@@ -993,12 +940,24 @@ export function GrandFinaleExperience({
     return () => window.cancelAnimationFrame(raf)
   }, [isAnimating, revealStep, stepStartedAt])
 
+  // Restart muted stage video + Web Audio bed together for every Top 5 beat.
+  useEffect(() => {
+    if (!isAnimating || revealStep < 1) {
+      stopFinaleRevealBed()
+      return
+    }
+    const rank = Math.max(1, 6 - revealStep)
+    playFinaleRevealBed(rank, Math.max(1, stepDurationMs))
+    return () => stopFinaleRevealBed()
+  }, [isAnimating, revealStep, stepStartedAt, stepDurationMs])
+
   const elapsed = Math.max(0, now - (stepStartedAt || now))
   const duration = Math.max(1, stepDurationMs)
   const progress = isAnimating ? clamp(elapsed / duration) : 1
   const tick = Math.floor(elapsed / 80)
   const rank = Math.max(1, 6 - revealStep)
   const entry = finalists.find((item) => item.rank === rank)
+  const playMedia = isAnimating && revealStep >= 1
 
   let scene: ReactNode
   let sceneKey = `place-${rank}`
@@ -1030,17 +989,20 @@ export function GrandFinaleExperience({
   }
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={sceneKey}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.35 }}
-        className="w-full"
-      >
-        {scene}
-      </motion.div>
-    </AnimatePresence>
+    <div className="relative w-full overflow-hidden rounded-none">
+      <StageMedia mediaKey={stepStartedAt || revealStep} playMedia={playMedia} />
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={sceneKey}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.35 }}
+          className="relative z-10 w-full"
+        >
+          {scene}
+        </motion.div>
+      </AnimatePresence>
+    </div>
   )
 }

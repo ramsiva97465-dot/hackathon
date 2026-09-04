@@ -144,7 +144,7 @@ export function RoundsManagement() {
       setIsStageRevealing(true)
       setRevealStep(step)
       setRevealRound(3)
-      const stepLocks = [0, 19000, 15000, 16000, 18000, 12000]
+      const stepLocks = [0, 10000, 10000, 10000, 10000, 10000]
       setRevealNextAllowedAt(Date.now() + stepLocks[step])
       if (step === 1) toast.success('Triggered 5th Place reveal (countdown started on LCD)!')
       else if (step === 2) toast.success('Triggered 4th Place reveal (countdown started on LCD)!')
@@ -452,7 +452,7 @@ export function RoundsManagement() {
                   Top 5 Grand Finale Reveal Controller
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mt-1 font-medium">
-                  Click each button when the stage host speaks. The LCD suspense sequence is <span className="text-amber-300 font-bold">19 seconds for 5th (falling-word rain into reveal)</span>, <span className="text-amber-300 font-bold">15 for 4th</span>, <span className="text-amber-300 font-bold">16 for 2nd Runner Up</span>, <span className="text-amber-300 font-bold">16 for 1st Runner Up shown through a ~10s Final Two face-off</span>, and <span className="text-amber-300 font-bold">12 for the Grand Champion</span>.
+                  Click each button when the stage host speaks. Every Top 5 place runs a <span className="text-amber-300 font-bold">10-second</span> ceremony beat (stage video + synced score) — 5th through Champion.
                 </p>
               </div>
 
@@ -461,11 +461,11 @@ export function RoundsManagement() {
             {/* Step Buttons Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               {([
-                { step: 1, label: 'Reveal 5th Place (#5)', done: '5th Unsealed', accent: 'amber', countdown: '6-second cinematic unsealing' },
-                { step: 2, label: 'Reveal 4th Place (#4)', done: '4th Unsealed', accent: 'slate', countdown: '7-second cinematic unsealing' },
-                { step: 3, label: 'Reveal 2nd Runner Up (#3)', done: '3rd Unsealed', accent: 'bronze', countdown: '8-second cinematic unsealing' },
-                { step: 4, label: 'Reveal 1st Runner Up (#2)', done: '2nd Unsealed', accent: 'silver', countdown: '10-second reveal + Final Vault twist' },
-                { step: 5, label: 'CROWN GRAND CHAMPION (#1)', done: 'Champion Crowned!', accent: 'gold', countdown: '12-second coronation + confetti' },
+                { step: 1, label: 'Reveal 5th Place (#5)', done: '5th Unsealed', accent: 'amber', countdown: '10-second beat + falling words' },
+                { step: 2, label: 'Reveal 4th Place (#4)', done: '4th Unsealed', accent: 'slate', countdown: '10-second cinematic unsealing' },
+                { step: 3, label: 'Reveal 2nd Runner Up (#3)', done: '3rd Unsealed', accent: 'bronze', countdown: '10-second cinematic unsealing' },
+                { step: 4, label: 'Reveal 1st Runner Up (#2)', done: '2nd Unsealed', accent: 'silver', countdown: '10-second Final Two face-off' },
+                { step: 5, label: 'CROWN GRAND CHAMPION (#1)', done: 'Champion Crowned!', accent: 'gold', countdown: '10-second coronation + confetti' },
               ] as const).map(({ step, label, done, accent, countdown }) => {
                 const isGold = accent === 'gold'
                 const finaleProgress = revealRound === 3 ? revealStep : 0
