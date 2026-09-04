@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { getTrackConfig } from '@/lib/utils'
 import { playFinaleRevealBed, stopFinaleRevealBed } from '@/lib/finaleRevealAudio'
@@ -42,53 +42,39 @@ function clamp(n: number) {
   return Math.min(1, Math.max(0, n))
 }
 
-function scrambleName(target: string, progress: number, tick: number) {
-  const name = (target || 'FINALIST').toUpperCase()
-  const hold = Math.max(0, name.trimEnd().length - 1)
-  let out = ''
-  for (let i = 0; i < name.length; i++) {
-    if (name[i] === ' ') {
-      out += ' '
-      continue
-    }
-    const lockAt = 0.80 + (i / Math.max(name.length, 1)) * 0.09
-    if (progress >= 1 || (progress >= lockAt && i !== hold)) out += name[i]
-    else out += ALPHA[(tick + i * 5) % ALPHA.length]
-  }
-  return out
-}
-
 function easeOut(t: number, power = 3.4) {
   return 1 - Math.pow(1 - clamp(t), power)
 }
 
-/** Rise first, still edge-on. Then turn to face. `tease` turns it away once. */
+/** Rise first, still edge-on. Face the camera, then stay locked before countdown. */
 function wreathYaw(progress: number, live: boolean, tease = false) {
   if (!live) return 0
-  if (progress <= 0.30) return 82
+  // Crown must be face-on and stable before countdown (~0.32).
   if (!tease) {
-    if (progress < 0.62) return 82 * (1 - easeOut((progress - 0.30) / 0.32, 3.8))
-    if (progress < 0.70) return -4 * Math.sin(Math.PI * ((progress - 0.62) / 0.08))
+    if (progress <= 0.08) return 82
+    if (progress < 0.30) return 82 * (1 - easeOut((progress - 0.08) / 0.22, 3.8))
     return 0
   }
-  if (progress < 0.50) return 82 * (1 - easeOut((progress - 0.30) / 0.20, 3.4))
-  if (progress < 0.54) return 0
-  if (progress < 0.64) return 78 * easeOut((progress - 0.54) / 0.10, 2.2)
-  if (progress < 0.75) return 78 * (1 - easeOut((progress - 0.64) / 0.11, 3.2))
+  // 4th place tease — still finishes facing before countdown.
+  if (progress <= 0.08) return 82
+  if (progress < 0.22) return 82 * (1 - easeOut((progress - 0.08) / 0.14, 3.4))
+  if (progress < 0.24) return 0
+  if (progress < 0.28) return 70 * easeOut((progress - 0.24) / 0.04, 2.2)
+  if (progress < 0.32) return 70 * (1 - easeOut((progress - 0.28) / 0.04, 3.2))
   return 0
 }
 
 function wreathRise(progress: number, live: boolean) {
   if (!live) return 0
-  if (progress <= 0.08) return 96
-  if (progress >= 0.34) return 0
-  return 96 * (1 - easeOut((progress - 0.08) / 0.26, 3.4))
+  if (progress <= 0.04) return 96
+  if (progress >= 0.22) return 0
+  return 96 * (1 - easeOut((progress - 0.04) / 0.18, 3.4))
 }
 
 function lockSweep(progress: number, live: boolean, tease: boolean) {
   if (!live) return -1
-  const start = tease ? 0.72 : 0.66
-  const t = (progress - start) / 0.13
+  const start = tease ? 0.30 : 0.28
+  const t = (progress - start) / 0.08
   if (t <= 0 || t >= 1) return -1
   return t
 }
@@ -225,25 +211,28 @@ function Wreath({
   )
 }
 
-function flapGlyph(elapsed: number, index: number, progress: number) {
-  // Slow split-flap — starts lively, eases slower toward lock.
-  const rollT = clamp((progress - 0.34) / 0.46)
-  const interval = 110 + rollT * 220
+function flapGlyph(elapsed: number, index: number, rollT: number) {
+  // Slow split-flap — starts lively, eases slower toward lock. rollT is 0→1 within rolling only.
+  const interval = 110 + clamp(rollT) * 220
   const n = Math.floor(elapsed / interval) + index * 7
   return ALPHA[Math.abs(n) % ALPHA.length]
 }
 
-/** Name suspense: countdown first, then rolling tiles, then the real name. */
-function isNameCountdown(progress: number) {
-  return progress < 0.34
+/**
+ * After the crown is stable, name suspense is:
+ * countdown → boxed rolling → real name (no unboxed scramble).
+ * `wait` is remapped 0→1 from crown-stable → end of beat.
+ */
+function isNameCountdown(wait: number) {
+  return wait >= 0 && wait < 0.36
 }
 
-function isNameRolling(progress: number) {
-  return progress >= 0.34 && progress < 0.80
+function isNameRolling(wait: number) {
+  return wait >= 0.36 && wait < 0.82
 }
 
-function nameCountdown(progress: number) {
-  const t = clamp(progress / 0.34)
+function nameCountdown(wait: number) {
+  const t = clamp(wait / 0.36)
   if (t < 0.2) return 5
   if (t < 0.4) return 4
   if (t < 0.6) return 3
@@ -252,15 +241,16 @@ function nameCountdown(progress: number) {
 }
 
 function NameWait({
-  progress,
-  elapsed,
+  wait,
+  rollElapsed,
 }: {
-  progress: number
-  elapsed: number
+  wait: number
+  rollElapsed: number
 }) {
-  const counting = isNameCountdown(progress)
-  const rolling = isNameRolling(progress)
-  const n = nameCountdown(progress)
+  const counting = isNameCountdown(wait)
+  const rolling = isNameRolling(wait)
+  const n = nameCountdown(wait)
+  const rollT = clamp((wait - 0.36) / 0.46)
 
   if (counting) {
     return (
@@ -282,18 +272,19 @@ function NameWait({
     )
   }
 
-  if (rolling || progress < 0.80) {
+  if (rolling) {
     return (
       <motion.div
+        key="roll"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, filter: 'blur(8px)', y: -8 }}
         transition={{ duration: 0.55, ease: EASE }}
-        className="mt-10 flex flex-col items-center sm:mt-14"
+        className="mt-6 flex flex-col items-center sm:mt-8"
       >
         <div className="flex items-center gap-1.5 sm:gap-2" style={{ perspective: 700 }}>
           {[0, 1, 2, 3, 4].map((i) => {
-            const glyph = flapGlyph(elapsed, i, progress)
+            const glyph = flapGlyph(rollElapsed, i, rollT)
             return (
               <div
                 key={i}
@@ -526,7 +517,6 @@ function PlaceReveal({
   rank,
   progress,
   isAnimating,
-  tick,
   elapsed,
   durationMs,
   placeKickers,
@@ -535,7 +525,6 @@ function PlaceReveal({
   rank: number
   progress: number
   isAnimating: boolean
-  tick: number
   elapsed: number
   durationMs: number
   placeKickers?: Partial<Record<number, string>>
@@ -560,18 +549,22 @@ function PlaceReveal({
       : progress
   const revealLive = !isAnimating || !isFifth || !inPreface
   const tease = rank === 4
-  const numberOn = revealLive && (!isAnimating || p >= (tease ? 0.72 : 0.68))
-  const nameLive = revealLive && (!isAnimating || p >= 0.80)
-  const nameLocked = !isAnimating || p >= 0.90
-  const metaOn = revealLive && (!isAnimating || p >= 0.90)
-  const scoreOn = revealLive && (!isAnimating || p >= 0.93)
-  const scoreT = !isAnimating ? 1 : clamp((p - 0.93) / 0.07)
+  // Sequence: crown rotate → crown stable+number → countdown → boxed roll → real name only.
+  const CROWN_STABLE = 0.34
+  const numberOn = revealLive && (!isAnimating || p >= (tease ? 0.30 : 0.28))
+  const wait =
+    !revealLive || !isAnimating
+      ? 1
+      : p < CROWN_STABLE
+      ? -1
+      : clamp((p - CROWN_STABLE) / (1 - CROWN_STABLE))
+  const nameLive = revealLive && (!isAnimating || wait >= 0.82)
+  const nameLocked = !isAnimating || wait >= 0.82
+  const metaOn = revealLive && (!isAnimating || wait >= 0.88)
+  const scoreOn = revealLive && (!isAnimating || wait >= 0.92)
+  const scoreT = !isAnimating ? 1 : clamp((wait - 0.92) / 0.08)
   const score = Number(entry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
   const track = entry?.track ? getTrackConfig(entry.track) : null
-  const liveName = useMemo(
-    () => scrambleName(entry?.teamName || '', p, tick),
-    [entry?.teamName, p, tick],
-  )
   const yaw = wreathYaw(p, revealLive && isAnimating, tease)
   const rise = wreathRise(p, revealLive && isAnimating)
   const sweep = lockSweep(p, revealLive && isAnimating, tease)
@@ -579,15 +572,17 @@ function PlaceReveal({
     ? 1
     : !revealLive
     ? 0
-    : p < 0.07
+    : p < 0.04
     ? 0
-    : clamp((p - 0.07) / 0.14)
+    : clamp((p - 0.04) / 0.12)
   const titleOn =
     !isAnimating || (inHold && holdT > 0.2) || (revealLive && p >= 0.03)
   // Keep the rule with the kicker so early Fourth/Fifth frames still look finished.
   const lineOn = titleOn
   const meta = { kicker: placeKicker(rank, placeKickers) }
-  const waitProgress = revealLive ? p : 0
+  const revealElapsed = Math.max(0, elapsed - (isFifth ? FIFTH_PREFACE_MS : 0))
+  const rollStartMs = CROWN_STABLE * revealSpan + 0.36 * (1 - CROWN_STABLE) * revealSpan
+  const rollElapsed = Math.max(0, revealElapsed - rollStartMs)
   const stageProgress = !isAnimating
     ? 1
     : inPreface
@@ -643,24 +638,20 @@ function PlaceReveal({
           <AnimatePresence mode="wait">
             {nameLive ? (
               <motion.h2
-                key={nameLocked ? 'locked' : 'spin'}
-                initial={nameLocked ? { opacity: 0, y: 14, filter: 'blur(8px)' } : { opacity: 0 }}
+                key="locked-name"
+                initial={{ opacity: 0, y: 14, filter: 'blur(8px)' }}
                 animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                 exit={{ opacity: 0, scale: 0.96 }}
-                transition={{ duration: nameLocked ? 0.7 : 0.35, ease: EASE }}
-                className={`max-w-[16ch] text-balance font-black tracking-tight sm:max-w-[20ch] ${
-                  nameLocked
-                    ? 'text-5xl text-white sm:text-7xl lg:text-8xl'
-                    : 'font-mono text-3xl text-white/40 sm:text-5xl'
-                }`}
+                transition={{ duration: 0.7, ease: EASE }}
+                className="max-w-[16ch] text-balance text-5xl font-black tracking-tight text-white sm:max-w-[20ch] sm:text-7xl lg:text-8xl"
               >
-                {nameLocked ? (entry?.teamName || 'Unavailable') : liveName}
+                {entry?.teamName || 'Unavailable'}
               </motion.h2>
-            ) : revealLive ? (
+            ) : revealLive && wait >= 0 ? (
               <motion.div
-                key={isNameCountdown(waitProgress) ? `c-${nameCountdown(waitProgress)}` : isNameRolling(waitProgress) ? 'roll' : 'wait'}
+                key={isNameCountdown(wait) ? `c-${nameCountdown(wait)}` : isNameRolling(wait) ? 'roll' : 'wait'}
               >
-                <NameWait progress={waitProgress} elapsed={elapsed - (isFifth ? FIFTH_PREFACE_MS : 0)} />
+                <NameWait wait={wait} rollElapsed={rollElapsed} />
               </motion.div>
             ) : null}
           </AnimatePresence>
@@ -957,7 +948,7 @@ function Champion({
             </p>
             <div className="mt-8 flex items-center gap-1.5 sm:gap-2" style={{ perspective: 700 }}>
               {[0, 1, 2, 3, 4].map((i) => {
-                const glyph = flapGlyph(elapsed - COUNT_MS, i, 0.34 + rollProgress * 0.46)
+                const glyph = flapGlyph(elapsed - COUNT_MS, i, rollProgress)
                 return (
                   <div
                     key={i}
@@ -1196,7 +1187,6 @@ export function GrandFinaleExperience({
   const elapsed = Math.max(0, now - (stepStartedAt || now))
   const duration = Math.max(1, stepDurationMs)
   const progress = isAnimating ? clamp(elapsed / duration) : 1
-  const tick = Math.floor(elapsed / 80)
   const rank = Math.max(1, 6 - revealStep)
   const entry = finalists.find((item) => item.rank === rank)
   const playMedia = isAnimating && revealStep >= 1
@@ -1225,7 +1215,6 @@ export function GrandFinaleExperience({
         rank={rank}
         progress={progress}
         isAnimating={isAnimating}
-        tick={tick}
         elapsed={elapsed}
         durationMs={duration}
         placeKickers={placeKickers}
