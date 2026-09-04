@@ -769,11 +769,9 @@ export function PremiumRevealCard({
         {/* ─── HORIZONTAL 3-COLUMN LAYOUT for 24:10 wide LED ─────────────────── */}
         <div className={`flex items-center gap-6 w-full ${settled ? 'min-h-[140px]' : 'min-h-[260px]'}`}>
 
-          {/* ── LEFT: Badge + Rank ── */}
-          <div className={`flex flex-col items-center justify-start self-stretch shrink-0 min-w-[160px] px-2 ${
-            settled ? 'gap-1 pt-0 -mt-1' : 'gap-2.5 pt-0 -mt-3'
-          }`}>
-            {/* Badge */}
+          {/* ── LEFT: Badge top + Rank lowered to team midline ── */}
+          <div className="flex flex-col items-center self-stretch shrink-0 min-w-[160px] px-2">
+            {/* Badge stays pinned to the top */}
             <div
               className={`inline-flex min-h-[26px] items-center gap-2 px-3.5 py-1.5 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-[0.16em] shadow-xl transition-all ${
                 isDecrypting
@@ -810,17 +808,19 @@ export function PremiumRevealCard({
               </span>
             </div>
 
-            {/* Rank Number — Crisp metallic gold typography */}
-            <div
-              className={`font-black tracking-tighter leading-none transition-colors duration-300 ${
-                settled ? 'text-[3.25rem] xl:text-[4rem]' : 'mt-2 text-[4.5rem] xl:text-[6rem]'
-              } ${
-                isDecrypting
-                  ? 'text-amber-400/90 font-mono animate-pulse'
-                  : rankTheme.rankText
-              }`}
-            >
-              #{activeRank}
+            {/* Rank Number — sit on the same vertical band as the team name */}
+            <div className="flex-1 flex items-center justify-center">
+              <div
+                className={`font-black tracking-tighter leading-none transition-colors duration-300 ${
+                  settled ? 'text-[3.25rem] xl:text-[4rem]' : 'text-[4.5rem] xl:text-[6rem]'
+                } ${
+                  isDecrypting
+                    ? 'text-amber-400/90 font-mono animate-pulse'
+                    : rankTheme.rankText
+                }`}
+              >
+                #{activeRank}
+              </div>
             </div>
           </div>
 
@@ -887,20 +887,20 @@ export function PremiumRevealCard({
           {/* ── DIVIDER ── */}
           <div className="w-px self-stretch bg-white/10 shrink-0" />
 
-          {/* ── RIGHT: Score ── */}
-          <div className={`flex flex-col items-center justify-start self-stretch shrink-0 w-[20%] ${
-            settled ? 'gap-1 pt-0 -mt-1' : 'gap-2.5 pt-0 -mt-3'
-          }`}>
+          {/* ── RIGHT: Label top + Score lowered to team midline ── */}
+          <div className="flex flex-col items-center self-stretch shrink-0 w-[20%]">
             <span className="inline-flex min-h-[26px] items-center text-[11px] font-extrabold uppercase tracking-[0.16em] text-amber-300/90">
               {isDecrypting ? 'CALCULATING' : isFinale ? 'FINAL SCORE' : 'ROUND 1 SCORE'}
             </span>
-            <span
-              className={`font-black font-mono tracking-wider leading-none ${
-                settled ? 'text-[2.5rem] xl:text-[3.5rem]' : 'text-[3.5rem] xl:text-[5rem]'
-              } ${isDecrypting ? 'text-amber-300/80 animate-pulse' : rankTheme.scoreTxt}`}
-            >
-              {isDecrypting ? rollingScore : Number(currentSpotlightTeam?.totalScore || 0).toFixed(1)}
-            </span>
+            <div className="flex-1 flex items-center justify-center">
+              <span
+                className={`font-black font-mono tracking-wider leading-none ${
+                  settled ? 'text-[2.5rem] xl:text-[3.5rem]' : 'text-[3.5rem] xl:text-[5rem]'
+                } ${isDecrypting ? 'text-amber-300/80 animate-pulse' : rankTheme.scoreTxt}`}
+              >
+                {isDecrypting ? rollingScore : Number(currentSpotlightTeam?.totalScore || 0).toFixed(1)}
+              </span>
+            </div>
           </div>
         </div>
 
