@@ -298,4 +298,42 @@ export class LeaderboardService {
       data,
     })
   }
+
+  /** Persisted flag — survives API restarts / multi-instance (unlike gateway memory). */
+  async getCertificatesReleasedFlag(): Promise<boolean> {
+    const setting = await this.prisma.setting.findFirst()
+    if (!setting) return false
+    const config = (setting.config as Record<string, unknown> | null) || {}
+    return Boolean(config.certificatesReleased)
+  }
+
+  async setCertificatesReleasedFlag(released: boolean): Promise<boolean> {
+    const hackathon = await this.prisma.hackathon.findFirst()
+    if (!hackathon) return released
+
+    const existing = await this.prisma.setting.findUnique({
+      where: { hackathonId: hackathon.id },
+    })
+
+    if (existing) {
+      const prev = (existing.config as Record<string, unknown> | null) || {}
+      await this.prisma.setting.update({
+        where: { id: existing.id },
+        data: { config: { ...prev, certificatesReleased: released } },
+      })
+    } else {
+      await this.prisma.setting.create({
+        data: {
+          hackathonId: hackathon.id,
+          registrationWindowStart: hackathon.registrationStartDate,
+          registrationWindowEnd: hackathon.registrationEndDate,
+          scoringWindowStart: hackathon.startDate,
+          scoringWindowEnd: hackathon.endDate,
+          config: { certificatesReleased: released },
+        },
+      })
+    }
+
+    return released
+  }
 }

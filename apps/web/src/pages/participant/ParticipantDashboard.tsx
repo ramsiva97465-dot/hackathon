@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { api } from '@/lib/api'
+import { useWebSocket } from '@/hooks/useWebSocket'
 import { toast } from 'sonner'
 import {
   Trophy, Users, BookOpen, FileText, Star, LogOut, Save,
@@ -144,40 +145,42 @@ export function ParticipantDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>('home')
   const [selectedMemberIndex, setSelectedMemberIndex] = useState(0)
 
-  // Certificate release — synced from admin via API (not browser-local only)
+  // Certificate release — always trust the server (persisted in DB), not browser-local alone
   const [certificatesReleased, setCertificatesReleased] = useState(false)
 
-  useEffect(() => {
-    const applyReleased = (released: boolean) => {
-      setCertificatesReleased(released)
-      localStorage.setItem('snapserve_certificates_released', released ? 'true' : 'false')
-      if (!released) {
-        setActiveTab((tab) => (tab === 'certificate' ? 'home' : tab))
-      }
+  const applyReleased = useCallback((released: boolean) => {
+    setCertificatesReleased(released)
+    localStorage.setItem('snapserve_certificates_released', released ? 'true' : 'false')
+    if (!released) {
+      setActiveTab((tab) => (tab === 'certificate' ? 'home' : tab))
     }
+  }, [])
 
+  const { emit: emitLeaderboard } = useWebSocket<{ released?: boolean }>(
+    'leaderboard:certificates_released',
+    (data) => {
+      if (typeof data?.released === 'boolean') applyReleased(data.released)
+    },
+  )
+
+  useEffect(() => {
+    emitLeaderboard('leaderboard:subscribe')
+  }, [emitLeaderboard])
+
+  useEffect(() => {
     const sync = () => {
       void api.leaderboard
         .getCertificatesReleased()
         .then((res) => applyReleased(Boolean(res.data?.released)))
         .catch(() => {
-          applyReleased(localStorage.getItem('snapserve_certificates_released') === 'true')
+          // Keep last known UI state on transient network errors — do not invent from localStorage alone
         })
     }
 
     sync()
-    const poll = window.setInterval(sync, 8000)
-    const handleCertToggle = () => {
-      applyReleased(localStorage.getItem('snapserve_certificates_released') === 'true')
-    }
-    window.addEventListener('storage', handleCertToggle)
-    window.addEventListener('certificates_toggled', handleCertToggle)
-    return () => {
-      window.clearInterval(poll)
-      window.removeEventListener('storage', handleCertToggle)
-      window.removeEventListener('certificates_toggled', handleCertToggle)
-    }
-  }, [])
+    const poll = window.setInterval(sync, 5000)
+    return () => window.clearInterval(poll)
+  }, [applyReleased])
 
   // Form state
   const [teamName, setTeamName] = useState('')

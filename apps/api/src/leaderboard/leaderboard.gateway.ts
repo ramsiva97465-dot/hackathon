@@ -5,7 +5,7 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets'
-import { BadRequestException } from '@nestjs/common'
+import { BadRequestException, OnModuleInit } from '@nestjs/common'
 import { Server, Socket } from 'socket.io'
 import { LeaderboardService } from './leaderboard.service'
 
@@ -16,7 +16,7 @@ import { LeaderboardService } from './leaderboard.service'
   },
   namespace: '/',
 })
-export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit {
   @WebSocketServer()
   server: Server
 
@@ -52,6 +52,20 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
   }
 
   constructor(private readonly leaderboardService: LeaderboardService) {}
+
+  async onModuleInit() {
+    try {
+      this.certificatesReleased = await this.leaderboardService.getCertificatesReleasedFlag()
+      console.log('[WS] Certificates released loaded from DB:', this.certificatesReleased)
+    } catch (err) {
+      console.error('[WS] Failed to load certificatesReleased from DB:', err)
+    }
+  }
+
+  /** Keep in-memory flag aligned with DB (e.g. after GET on another instance). */
+  syncCertificatesReleased(released: boolean) {
+    this.certificatesReleased = released
+  }
 
   async handleConnection(client: Socket) {
     console.log(`[WS] Client connected: ${client.id}`)
@@ -118,7 +132,7 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
     }
   }
 
-  // Called when Admin releases / locks participation certificates
+  // Called when Admin releases / locks participation certificates (DB already written by controller)
   async broadcastCertificatesReleased(released: boolean) {
     this.certificatesReleased = released
     try {

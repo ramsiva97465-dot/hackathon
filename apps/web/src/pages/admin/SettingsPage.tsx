@@ -22,7 +22,9 @@ export function SettingsPage() {
       })
       .catch(() => {
         if (cancelled) return
-        setCertificatesReleased(localStorage.getItem('snapserve_certificates_released') === 'true')
+        // Do not trust localStorage as server truth — show locked until API responds
+        setCertificatesReleased(false)
+        toast.error('Could not load certificate release status from server.')
       })
       .finally(() => {
         if (!cancelled) setLoadingCerts(false)
@@ -37,8 +39,11 @@ export function SettingsPage() {
     localStorage.setItem('snapserve_certificates_released', val ? 'true' : 'false')
     window.dispatchEvent(new Event('certificates_toggled'))
     try {
-      await api.leaderboard.setCertificatesReleased(val)
-      toast.success(val ? 'Certificates RELEASED to participants!' : 'Certificates LOCKED from participants!')
+      const res = await api.leaderboard.setCertificatesReleased(val)
+      const confirmed = Boolean(res.data?.released ?? val)
+      setCertificatesReleased(confirmed)
+      localStorage.setItem('snapserve_certificates_released', confirmed ? 'true' : 'false')
+      toast.success(confirmed ? 'Certificates RELEASED to participants!' : 'Certificates LOCKED from participants!')
     } catch {
       toast.error('Could not sync certificate release to the server. Try again.')
       setCertificatesReleased(!val)

@@ -68,13 +68,16 @@ export class LeaderboardController {
   }
 
   @Get('certificates-released')
-  getCertificatesReleased() {
-    return { released: this.gateway.getCertificatesReleased() }
+  async getCertificatesReleased() {
+    const released = await this.service.getCertificatesReleasedFlag()
+    this.gateway.syncCertificatesReleased(released)
+    return { released }
   }
 
   @Post('certificates-released')
   async setCertificatesReleased(@Body() dto: TvModeDto) {
     const released = Boolean(dto.enabled)
+    await this.service.setCertificatesReleasedFlag(released)
     await this.gateway.broadcastCertificatesReleased(released)
     return { success: true, released }
   }
