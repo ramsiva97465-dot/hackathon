@@ -689,125 +689,6 @@ function PlaceReveal({
   )
 }
 
-/**
- * Second Place only — decelerating cipher marquee that settles into the real
- * name letter-by-letter. Deliberately not a scale popup (Champion owns that).
- */
-function SecondPlaceNameReveal({
-  teamName,
-  progress,
-  live,
-}: {
-  teamName: string
-  progress: number
-  live: boolean
-}) {
-  const raw = (teamName || 'Unavailable').trim() || 'Unavailable'
-  const display = raw.toUpperCase()
-  const chars = Array.from(display)
-
-  // 0.96 → 0.985 scroll/decelerate · 0.985 → 1.0 letter lock
-  const scrollT = live ? clamp((progress - 0.96) / 0.025) : 1
-  const lockT = live ? clamp((progress - 0.985) / 0.015) : 1
-  const decelerate = easeOut(scrollT, 2.8)
-  // Fast → slow strip offset (em units of cipher runway)
-  const stripOffset = live && scrollT < 1 ? (1 - decelerate) * 18 + Math.sin(scrollT * Math.PI * 7) * (1 - decelerate) * 1.2 : 0
-  const sweep = lockT > 0 && lockT < 1 ? lockT : lockT >= 1 ? -1 : -1
-  const showReal = !live || scrollT >= 0.72
-
-  return (
-    <div className="relative mx-auto flex w-full max-w-[20ch] flex-col items-center">
-      {/* Soft gold frame — cinema ticker window */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -inset-x-4 -inset-y-2 rounded-sm"
-        style={{
-          boxShadow:
-            scrollT > 0
-              ? 'inset 0 0 0 1px rgba(245,214,140,0.22), 0 0 28px rgba(245,158,11,0.12)'
-              : 'none',
-        }}
-      />
-      <div className="relative overflow-hidden px-1">
-        {/* Decelerating cipher runway behind / under settling name */}
-        {live && scrollT < 1 && (
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden opacity-40"
-            style={{
-              maskImage: 'linear-gradient(90deg, transparent 0%, #000 18%, #000 82%, transparent 100%)',
-              WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, #000 18%, #000 82%, transparent 100%)',
-            }}
-          >
-            <span
-              className="whitespace-nowrap font-mono text-4xl font-black tracking-[0.14em] text-amber-200/50 sm:text-6xl lg:text-7xl"
-              style={{ transform: `translateX(${stripOffset * -4.5}%)` }}
-            >
-              {Array.from({ length: 28 }, (_, i) => ALPHA[(i * 3 + Math.floor(decelerate * 17)) % ALPHA.length]).join('')}
-            </span>
-          </div>
-        )}
-
-        <h2
-          className="relative z-10 flex max-w-[20ch] flex-wrap items-center justify-center gap-x-[0.02em] text-balance text-5xl font-black tracking-tight text-white sm:text-7xl lg:text-8xl"
-          style={{ fontVariantLigatures: 'none' }}
-        >
-          {chars.map((ch, i) => {
-            const letterLock = chars.length <= 1 ? 1 : clamp((lockT - i / chars.length) / (1 / chars.length))
-            const isSpace = ch === ' '
-            const locked = !live || letterLock >= 1
-            const settling = showReal && letterLock > 0
-            const glyph =
-              !showReal
-                ? ALPHA[(i * 5 + Math.floor(decelerate * 40)) % ALPHA.length]
-                : settling || locked
-                  ? ch
-                  : ALPHA[(i * 5 + Math.floor(decelerate * 40) + Math.floor(lockT * 9)) % ALPHA.length]
-
-            return (
-              <span
-                key={`${i}-${ch}`}
-                className="relative inline-block min-w-[0.28em] overflow-hidden"
-                style={{
-                  opacity: showReal ? 0.35 + 0.65 * Math.max(letterLock, scrollT > 0.85 ? 0.5 : 0) : 0.55,
-                  transform: locked
-                    ? 'translateY(0)'
-                    : settling
-                      ? `translateY(${(1 - easeOut(letterLock, 2.2)) * 18}px)`
-                      : `translateY(${Math.sin((i + decelerate * 8) * 1.7) * 6}px)`,
-                  color: locked ? '#FFFFFF' : 'rgba(253, 230, 138, 0.85)',
-                  textShadow: locked
-                    ? '0 0 28px rgba(245,158,11,0.35)'
-                    : '0 0 12px rgba(245,158,11,0.25)',
-                  transition: 'color 0.25s ease, text-shadow 0.25s ease',
-                }}
-              >
-                {isSpace ? '\u00A0' : glyph}
-              </span>
-            )
-          })}
-        </h2>
-
-        {/* Gold shear across the locked name */}
-        {sweep >= 0 && (
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-y-[-20%] w-[18%]"
-            style={{
-              left: `${-20 + sweep * 140}%`,
-              background:
-                'linear-gradient(105deg, transparent 0%, rgba(255,255,255,0) 36%, rgba(255,255,255,0.55) 50%, rgba(255,214,120,0.22) 58%, transparent 100%)',
-              filter: 'blur(6px)',
-              mixBlendMode: 'screen',
-              opacity: sweep < 0.08 || sweep > 0.92 ? 0.35 : 1,
-            }}
-          />
-        )}
-      </div>
-    </div>
-  )
-}
-
 function FinalTwoReveal({
   secondEntry,
   championEntry: _championEntry,
@@ -958,13 +839,16 @@ function FinalTwoReveal({
               )}
             </div>
 
-            <div className="mt-3 min-h-[4.5rem] w-full sm:min-h-[5.5rem]">
+            <div className="mt-3">
               {bigNameOn && (
-                <SecondPlaceNameReveal
-                  teamName={secondEntry?.teamName || 'Unavailable'}
-                  progress={p}
-                  live={isAnimating}
-                />
+                <motion.h2
+                  initial={{ opacity: 0, y: 18, filter: 'blur(10px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  transition={{ duration: 0.95, ease: EASE }}
+                  className="max-w-[16ch] text-balance text-5xl font-black tracking-tight text-white sm:max-w-[20ch] sm:text-7xl lg:text-8xl"
+                >
+                  {secondEntry?.teamName || 'Unavailable'}
+                </motion.h2>
               )}
             </div>
 
