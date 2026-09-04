@@ -26,8 +26,9 @@ function finalePlace(rank: number) {
   return { title: '5th Place', decrypt: 'Decrypting 5th Place...', speak: '5th Place, ', locked: '5th Place' }
 }
 
-/** Step 1=5th … 5=champion — slow suspense beat (~20s) so the room stays locked in */
-function finaleCountdownStart(_step: number) {
+/** Step 1=5th … 5=champion — 5th gets slow rain + 5s hold, then a 20s reveal */
+function finaleCountdownStart(step: number) {
+  if (step === 1) return 33 // 8s rain + 5s hold + 20s reveal
   return 20
 }
 

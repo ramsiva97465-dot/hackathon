@@ -144,7 +144,7 @@ export function RoundsManagement() {
       setIsStageRevealing(true)
       setRevealStep(step)
       setRevealRound(3)
-      const stepLocks = [0, 20000, 20000, 20000, 20000, 20000]
+      const stepLocks = [0, 33000, 20000, 20000, 20000, 20000]
       setRevealNextAllowedAt(Date.now() + stepLocks[step])
       if (step === 1) toast.success('Triggered 5th Place reveal (countdown started on LCD)!')
       else if (step === 2) toast.success('Triggered 4th Place reveal (countdown started on LCD)!')
@@ -452,7 +452,7 @@ export function RoundsManagement() {
                   Top 5 Grand Finale Reveal Controller
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mt-1 font-medium">
-                  Click each button when the stage host speaks. Every Top 5 place runs a <span className="text-amber-300 font-bold">20-second</span> suspense beat (looping stage video + synced score) — long enough for the room to lean in before the name locks.
+                  Click each button when the stage host speaks. <span className="text-amber-300 font-bold">5th place</span> opens with a slow falling-word rain, holds <span className="text-amber-300 font-bold">5 seconds</span>, then runs the reveal. Places 4th–Champion each run a <span className="text-amber-300 font-bold">20-second</span> suspense beat.
                 </p>
               </div>
 
@@ -461,7 +461,7 @@ export function RoundsManagement() {
             {/* Step Buttons Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               {([
-                { step: 1, label: 'Reveal 5th Place (#5)', done: '5th Unsealed', accent: 'amber', countdown: '20-second suspense beat' },
+                { step: 1, label: 'Reveal 5th Place (#5)', done: '5th Unsealed', accent: 'amber', countdown: '8s rain + 5s hold + 20s reveal' },
                 { step: 2, label: 'Reveal 4th Place (#4)', done: '4th Unsealed', accent: 'slate', countdown: '20-second suspense beat' },
                 { step: 3, label: 'Reveal 2nd Runner Up (#3)', done: '3rd Unsealed', accent: 'bronze', countdown: '20-second suspense beat' },
                 { step: 4, label: 'Reveal 1st Runner Up (#2)', done: '2nd Unsealed', accent: 'silver', countdown: '20-second Final Two face-off' },

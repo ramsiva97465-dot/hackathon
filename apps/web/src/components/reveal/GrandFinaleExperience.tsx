@@ -309,6 +309,11 @@ function NameWait({
 
 const STAGE_BG = '/videos/finale-stage-bg.mp4'
 export const FINALE_BEAT_MS = 20_000
+/** 5th place opens with a slow word rain, then a held pause, then the shared reveal beat. */
+export const FIFTH_RAIN_MS = 8_000
+export const FIFTH_HOLD_MS = 5_000
+export const FIFTH_PREFACE_MS = FIFTH_RAIN_MS + FIFTH_HOLD_MS
+export const FIFTH_TOTAL_MS = FIFTH_PREFACE_MS + FINALE_BEAT_MS
 
 function StageMedia({
   mediaKey,
@@ -428,12 +433,18 @@ const FALL_WORDS = [
   { text: 'NIGHT', x: 76, size: '0.75rem', weight: 500, gold: false },
 ] as const
 
-function FallingWords({ progress }: { progress: number }) {
-  // `progress` is 0→1 over the rain window only.
-  const rain = clamp(progress)
-  const hold = progress >= 0.78 && progress < 0.9
-  const fade = progress >= 0.85 ? clamp((progress - 0.85) / 0.15) : 0
-  if (progress >= 1) return null
+function FallingWords({
+  rain,
+  hold = 0,
+}: {
+  /** 0→1 over the slow fall window */
+  rain: number
+  /** 0→1 after rain settles (hold beat); fades out toward 1 */
+  hold?: number
+}) {
+  const fade = hold > 0.5 ? clamp((hold - 0.5) / 0.5) : 0
+  if (rain <= 0 && hold <= 0) return null
+  if (hold >= 1) return null
 
   return (
     <div
@@ -442,12 +453,23 @@ function FallingWords({ progress }: { progress: number }) {
       style={{ opacity: 1 - fade }}
     >
       {FALL_WORDS.map((word, i) => {
-        const start = (i / FALL_WORDS.length) * 0.55
-        const local = clamp((rain - start) / 0.42)
-        // Settle in the lower half (not mid) so the stage title stays readable above.
-        const y = -8 + easeOut(local, 2.8) * (72 + (i % 5) * 5)
-        const opacity = local <= 0 ? 0 : local < 0.12 ? local / 0.12 : hold ? 0.85 : 0.55 + local * 0.3
-        const rotate = (1 - easeOut(local, 2.4)) * ((i % 2 === 0 ? -1 : 1) * (4 + (i % 3)))
+        // Stagger slowly across most of the rain window so words drift in, not dump.
+        const start = (i / FALL_WORDS.length) * 0.42
+        const local = clamp((rain - start) / 0.58)
+        const settled = local >= 1 || hold > 0
+        // Soft ease — long drift into the lower half.
+        const y = -10 + easeOut(local, 2.1) * (70 + (i % 5) * 5)
+        const opacity =
+          local <= 0
+            ? 0
+            : local < 0.1
+            ? local / 0.1
+            : settled
+            ? 0.78
+            : 0.42 + local * 0.36
+        const rotate = settled
+          ? (i % 2 === 0 ? -1 : 1) * (1.2 + (i % 3) * 0.4)
+          : (1 - easeOut(local, 1.8)) * ((i % 2 === 0 ? -1 : 1) * (6 + (i % 3)))
         return (
           <span
             key={word.text}
@@ -478,6 +500,7 @@ function PlaceReveal({
   isAnimating,
   tick,
   elapsed,
+  durationMs,
 }: {
   entry?: GrandFinaleEntry
   rank: number
@@ -485,16 +508,33 @@ function PlaceReveal({
   isAnimating: boolean
   tick: number
   elapsed: number
+  durationMs: number
 }) {
-  // 5th place: falling-word rain overlays the first ~2.2s; reveal timeline stays on the shared 10s beat.
-  const fifthRain = rank === 5 && isAnimating
-  const p = progress
+  // 5th: slow rain → 5s hold → then the normal place reveal on the remaining beat.
+  const isFifth = rank === 5
+  const inRain = isFifth && isAnimating && elapsed < FIFTH_RAIN_MS
+  const inHold =
+    isFifth && isAnimating && elapsed >= FIFTH_RAIN_MS && elapsed < FIFTH_PREFACE_MS
+  const inPreface = inRain || inHold
+  const rainT = isFifth && isAnimating ? clamp(elapsed / FIFTH_RAIN_MS) : 0
+  const holdT =
+    isFifth && isAnimating && elapsed >= FIFTH_RAIN_MS
+      ? clamp((elapsed - FIFTH_RAIN_MS) / FIFTH_HOLD_MS)
+      : 0
+  const revealSpan = Math.max(1, durationMs - (isFifth ? FIFTH_PREFACE_MS : 0))
+  const p =
+    !isAnimating
+      ? 1
+      : isFifth
+      ? clamp((elapsed - FIFTH_PREFACE_MS) / revealSpan)
+      : progress
+  const revealLive = !isAnimating || !isFifth || !inPreface
   const tease = rank === 4
-  const numberOn = !isAnimating || p >= (tease ? 0.75 : 0.70)
-  const nameLive = !isAnimating || p >= 0.88
+  const numberOn = revealLive && (!isAnimating || p >= (tease ? 0.75 : 0.70))
+  const nameLive = revealLive && (!isAnimating || p >= 0.88)
   const nameLocked = !isAnimating || p >= 0.94
-  const metaOn = !isAnimating || p >= 0.94
-  const scoreOn = !isAnimating || p >= 0.96
+  const metaOn = revealLive && (!isAnimating || p >= 0.94)
+  const scoreOn = revealLive && (!isAnimating || p >= 0.96)
   const scoreT = !isAnimating ? 1 : clamp((p - 0.96) / 0.04)
   const score = Number(entry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
   const track = entry?.track ? getTrackConfig(entry.track) : null
@@ -502,32 +542,42 @@ function PlaceReveal({
     () => scrambleName(entry?.teamName || '', p, tick),
     [entry?.teamName, p, tick],
   )
-  const yaw = wreathYaw(p, isAnimating, tease)
-  const rise = wreathRise(p, isAnimating)
-  const sweep = lockSweep(p, isAnimating, tease)
+  const yaw = wreathYaw(p, revealLive && isAnimating, tease)
+  const rise = wreathRise(p, revealLive && isAnimating)
+  const sweep = lockSweep(p, revealLive && isAnimating, tease)
   const wreathOpacity = !isAnimating
     ? 1
+    : !revealLive
+    ? 0
     : p < 0.07
     ? 0
     : clamp((p - 0.07) / 0.14)
-  const titleOn = !isAnimating || p >= 0.03
-  const lineOn = !isAnimating || p >= 0.10
+  const titleOn = !isAnimating || inHold || (revealLive && p >= 0.03)
+  const lineOn = !isAnimating || (revealLive && p >= 0.10)
   const meta = PLACE[rank]
-  const waitProgress = p
-  const stageProgress = isAnimating ? progress : 1
+  const waitProgress = revealLive ? p : 0
+  const stageProgress = !isAnimating
+    ? 1
+    : inPreface
+    ? clamp(0.08 + rainT * 0.22 + holdT * 0.12)
+    : p
 
   return (
     <Stage cinematic progress={stageProgress}>
-      {fifthRain && <FallingWords progress={clamp(progress / 0.22)} />}
+      {isFifth && isAnimating && (inRain || inHold) && (
+        <FallingWords rain={rainT} hold={inHold ? holdT : 0} />
+      )}
       <motion.div
         key={`place-${rank}`}
         className="relative z-10 flex w-full max-w-6xl flex-col items-center px-6 text-center"
-        style={{ opacity: fifthRain && progress < 0.12 ? 0.35 + clamp(progress / 0.12) * 0.65 : 1 }}
+        style={{
+          opacity: inRain ? 0.2 + rainT * 0.35 : inHold ? 0.55 + holdT * 0.45 : 1,
+        }}
       >
         <motion.p
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: titleOn ? 1 : 0, y: titleOn ? 0 : 10 }}
-          transition={{ duration: 0.85, ease: EASE }}
+          transition={{ duration: 1.1, ease: EASE }}
           className="text-sm font-medium tracking-[0.38em] text-white/50 uppercase sm:text-base"
         >
           {meta.kicker}
@@ -569,13 +619,13 @@ function PlaceReveal({
               >
                 {nameLocked ? (entry?.teamName || 'Unavailable') : liveName}
               </motion.h2>
-            ) : (
+            ) : revealLive ? (
               <motion.div
                 key={isNameCountdown(waitProgress) ? `c-${nameCountdown(waitProgress)}` : 'roll'}
               >
-                <NameWait progress={waitProgress} elapsed={elapsed} />
+                <NameWait progress={waitProgress} elapsed={elapsed - (isFifth ? FIFTH_PREFACE_MS : 0)} />
               </motion.div>
-            )}
+            ) : null}
           </AnimatePresence>
 
           <div className="mt-3 h-6">
@@ -943,14 +993,25 @@ export function GrandFinaleExperience({
   }, [isAnimating, revealStep, stepStartedAt])
 
   // Restart muted stage video + Web Audio bed together for every Top 5 beat.
+  // 5th place waits through rain + hold before the reveal score starts.
   useEffect(() => {
     if (!isAnimating || revealStep < 1) {
       stopFinaleRevealBed()
       return
     }
     const rank = Math.max(1, 6 - revealStep)
-    playFinaleRevealBed(rank, Math.max(1, stepDurationMs))
-    return () => stopFinaleRevealBed()
+    const preface = rank === 5 ? FIFTH_PREFACE_MS : 0
+    const bedMs = Math.max(1, stepDurationMs - preface)
+    let timer: number | null = null
+    if (preface > 0) {
+      timer = window.setTimeout(() => playFinaleRevealBed(rank, bedMs), preface)
+    } else {
+      playFinaleRevealBed(rank, bedMs)
+    }
+    return () => {
+      if (timer != null) window.clearTimeout(timer)
+      stopFinaleRevealBed()
+    }
   }, [isAnimating, revealStep, stepStartedAt, stepDurationMs])
 
   const elapsed = Math.max(0, now - (stepStartedAt || now))
@@ -986,6 +1047,7 @@ export function GrandFinaleExperience({
         isAnimating={isAnimating}
         tick={tick}
         elapsed={elapsed}
+        durationMs={duration}
       />
     )
   }
