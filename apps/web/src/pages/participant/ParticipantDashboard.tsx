@@ -771,6 +771,8 @@ export function ParticipantDashboard() {
                       type="button"
                       onClick={() => {
                         setSelectedMemberIndex(i)
+                        setActiveTab('submission')
+                        setIsEditingSubmission(false)
                       }}
                       className={`w-full flex items-center gap-2 p-2 rounded-xl border text-left transition-all cursor-pointer ${isSelected
                         ? 'bg-orange-50/90 border-[#E83C00] shadow-2xs ring-2 ring-[#E83C00]/20'
@@ -1086,46 +1088,53 @@ export function ParticipantDashboard() {
               {/* ── SUBMISSION TAB ── */}
               {activeTab === 'submission' && (
                 <>
-                  {(data.projectTitle || data.agentName || data.demoUrl) && !isEditingSubmission ? (
-                    <div className="space-y-6">
-                      {/* 3D Interactive Lanyard Pass ONLY */}
-                      <div className="bg-[#F4ECE1]/60 rounded-3xl border border-[#EAE4D8] p-3 sm:p-4 shadow-sm text-center relative overflow-hidden">
-                        <div className="flex items-center justify-between mb-1 px-1">
+                  {/* Check-in pass always available for desk QR (every registered member) */}
+                  <div className="space-y-6 mb-6">
+                    <div className="bg-[#F4ECE1]/60 rounded-3xl border border-[#EAE4D8] p-3 sm:p-4 shadow-sm text-center relative overflow-hidden">
+                      <div className="flex items-center justify-between mb-1 px-1 gap-2">
+                        <div className="text-left min-w-0">
                           <span className="text-[10px] sm:text-xs font-bold text-[#E83C00] uppercase tracking-widest block">OFFICIAL PARTICIPANT PASS</span>
+                          <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                            Show this QR at the admin desk for check-in. Click a teammate on the left to switch pass.
+                          </p>
+                        </div>
+                        {(data.projectTitle || data.agentName || data.demoUrl) && !isEditingSubmission && (
                           <button
                             type="button"
                             onClick={() => setIsEditingSubmission(true)}
-                            className="px-3.5 py-1.5 bg-white border border-[#EAE4D8] hover:border-[#E83C00] text-slate-800 text-xs font-bold rounded-xl shadow-2xs transition-all"
+                            className="px-3.5 py-1.5 bg-white border border-[#EAE4D8] hover:border-[#E83C00] text-slate-800 text-xs font-bold rounded-xl shadow-2xs transition-all shrink-0"
                           >
                             Edit Submission
                           </button>
-                        </div>
-
-                        {(() => {
-                          const activeMember = data.members[selectedMemberIndex] || data.members[0] || { name: 'Participant', role: 'Team Member' }
-                          const activeRole = selectedMemberIndex === 0 ? 'Team Lead' : (activeMember.role || 'Team Member')
-                          return (
-                            <LanyardBadge
-                              participantName={activeMember.name}
-                              memberRole={activeRole}
-                              teamName={data.name}
-                              teamId={data.id}
-                              memberId={activeMember.id || null}
-                              trackName={data.track.name}
-                              tableNumber={data.tableNumber}
-                              agentName={data.agentName}
-                              agentPhoneNumber={data.agentPhoneNumber}
-                              agentNumber={data.tableNumber ? `#${data.tableNumber.replace(/[^0-9]/g, '') || '01'}` : '#01'}
-                              projectTitle={data.projectTitle}
-                              agentSolution={data.agentSolution}
-                              techStack={data.techStack}
-                              members={data.members}
-                            />
-                          )
-                        })()}
+                        )}
                       </div>
+
+                      {(() => {
+                        const activeMember = data.members[selectedMemberIndex] || data.members[0] || { name: 'Participant', role: 'Team Member' }
+                        const activeRole = selectedMemberIndex === 0 ? 'Team Lead' : (activeMember.role || 'Team Member')
+                        return (
+                          <LanyardBadge
+                            participantName={activeMember.name}
+                            memberRole={activeRole}
+                            teamName={data.name}
+                            teamId={data.id}
+                            memberId={activeMember.id || null}
+                            trackName={data.track.name}
+                            tableNumber={data.tableNumber}
+                            agentName={data.agentName}
+                            agentPhoneNumber={data.agentPhoneNumber}
+                            agentNumber={data.tableNumber ? `#${data.tableNumber.replace(/[^0-9]/g, '') || '01'}` : '#01'}
+                            projectTitle={data.projectTitle}
+                            agentSolution={data.agentSolution}
+                            techStack={data.techStack}
+                            members={data.members}
+                          />
+                        )
+                      })()}
                     </div>
-                  ) : (
+                  </div>
+
+                  {(isEditingSubmission || !(data.projectTitle || data.agentName || data.demoUrl)) && (
                     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                       <div className="px-5 pt-5 pb-4 border-b border-slate-100 flex items-center justify-between gap-2.5">
                         <div className="flex items-center gap-2.5">
