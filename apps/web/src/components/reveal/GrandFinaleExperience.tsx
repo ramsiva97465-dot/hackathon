@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { playFinaleRevealBed, stopFinaleRevealBed } from '@/lib/finaleRevealAudio'
+import { playFinaleRevealBed, stopFinaleRevealBed, unlockFinaleAudio } from '@/lib/finaleRevealAudio'
 
 export type GrandFinaleEntry = {
   teamId: string
@@ -1164,10 +1164,14 @@ export function GrandFinaleExperience({
     const bedMs = Math.max(1, stepDurationMs - preface)
     const finalTwo = revealStep === 4 && !specialRunner
     let timer: number | null = null
-    if (preface > 0) {
-      timer = window.setTimeout(() => playFinaleRevealBed(rank, bedMs, { finalTwo }), preface)
-    } else {
+    const startBed = () => {
+      unlockFinaleAudio()
       playFinaleRevealBed(rank, bedMs, { finalTwo })
+    }
+    if (preface > 0) {
+      timer = window.setTimeout(startBed, preface)
+    } else {
+      startBed()
     }
     return () => {
       if (timer != null) window.clearTimeout(timer)

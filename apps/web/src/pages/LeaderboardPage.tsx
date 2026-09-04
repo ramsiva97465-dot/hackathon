@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { SnapServeMark, VobizLockup } from '@/components/brand/BrandLogos'
 import { PremiumRevealCard } from '@/components/reveal/PremiumRevealCard'
-import { GrandFinaleExperience, TopFiveLineup, CHAMPION_TOTAL_MS, CHAMPION_WIN_AT_MS, PLACE_SCORE_END, FINALE_BEAT_MS } from '@/components/reveal/GrandFinaleExperience'
+import { GrandFinaleExperience, TopFiveLineup, CHAMPION_TOTAL_MS, CHAMPION_WIN_AT_MS, PLACE_SCORE_END, FINALE_BEAT_MS, FIFTH_PREFACE_MS } from '@/components/reveal/GrandFinaleExperience'
 import { Avatar } from '@/components/ui/Avatar'
 import { getTrackConfig } from '@/lib/utils'
 import { unlockFinaleAudio } from '@/lib/finaleRevealAudio'
@@ -1228,14 +1228,42 @@ export function LeaderboardPage() {
     setNameSpinMs(spinMs)
     setRevealedStep(targetStep)
 
-    // Champion confetti starts when the name popup opens — ends with the same 22s beat.
-    if (isFinaleStep && currentRank === 1) {
-      const winDelay = Math.max(0, CHAMPION_WIN_AT_MS - elapsed)
-      const confettiMs = Math.max(1_000, remainingMs - winDelay)
+    // Name-lock FX (confetti + TTS) must hit with the visual + bed lock — not at beat end.
+    const scheduleMainFx = (absoluteMs: number, fn: () => void) => {
       window.setTimeout(() => {
         if (!isRevealingRef.current || animatingStepRef.current !== targetStep) return
-        triggerFinaleConfetti(1, confettiMs)
-      }, winDelay)
+        fn()
+      }, Math.max(0, absoluteMs - elapsed))
+    }
+
+    if (isFinaleStep) {
+      unlockFinaleAudio()
+      if (currentRank === 1) {
+        const winDelay = Math.max(0, CHAMPION_WIN_AT_MS - elapsed)
+        const confettiMs = Math.max(1_000, remainingMs - winDelay)
+        scheduleMainFx(CHAMPION_WIN_AT_MS, () => {
+          triggerFinaleConfetti(1, confettiMs)
+          speakCountdown('Grand Champion, ' + winnerName)
+        })
+      } else if (currentRank === 2) {
+        // Final Two name lock at 96% of the 28s beat.
+        scheduleMainFx(Math.round(FINALE_BEAT_MS * 0.96), () => {
+          triggerFinaleConfetti(2)
+          speakCountdown(finalePlace(2).speak + winnerName)
+        })
+      } else if (currentRank === 5) {
+        const nameAt = FIFTH_PREFACE_MS + Math.round(FINALE_BEAT_MS * PLACE_SCORE_END)
+        scheduleMainFx(nameAt, () => {
+          triggerFinaleConfetti(5)
+          speakCountdown(finalePlace(5).speak + winnerName)
+        })
+      } else {
+        // 4th / 3rd — place beat name lock at PLACE_SCORE_END.
+        scheduleMainFx(Math.round(FINALE_BEAT_MS * PLACE_SCORE_END), () => {
+          triggerFinaleConfetti(currentRank)
+          speakCountdown(finalePlace(currentRank).speak + winnerName)
+        })
+      }
     }
 
     if (revealCompletionTimerRef.current) {
@@ -1252,18 +1280,10 @@ export function LeaderboardPage() {
           ? unlockedRanksRef.current
           : [...unlockedRanksRef.current, currentRank]
         setUnlockedRanks(unlockedRanksRef.current)
-      }
-      if (soundEnabled && !isFinaleStep) {
-        playRevealChime(currentRank)
-      }
-      if (isFinaleStep) {
-        // Champion confetti already ran during the winner hold; others burst on lock.
-        if (currentRank !== 1) triggerFinaleConfetti(currentRank)
-        const place = finalePlace(currentRank)
-        speakCountdown((currentRank === 1 ? 'Grand Champion, ' : place.speak) + winnerName)
-      } else {
+        if (soundEnabled) playRevealChime(currentRank)
         speakCountdown(`Number ${currentRank}, ` + winnerName)
       }
+      // Finale confetti + TTS already fired at name lock above.
     }, remainingMs)
   }
 

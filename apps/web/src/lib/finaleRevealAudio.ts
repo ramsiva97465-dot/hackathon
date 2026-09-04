@@ -144,6 +144,7 @@ export function playFinaleRevealBed(
   }
 
   // ── Countdown 5 · 4 · 3 · 2 · 1 (CROWN_END → COUNT_END) ───────────────────
+  // Fire exactly when the on-screen digit switches (0 / 0.2 / 0.4 / 0.6 / 0.8 of the count window).
   const countSpan = COUNT_END - CROWN_END
   ;[
     { step: 0, freq: 311 },
@@ -152,37 +153,46 @@ export function playFinaleRevealBed(
     { step: 3, freq: 466 },
     { step: 4, freq: 523 },
   ].forEach(({ step, freq }, i) => {
-    const at = t0 + d * (CROWN_END + ((step + 0.08) / 5) * countSpan)
-    const peak = 0.22 + i * 0.02
-    noiseBurst(audio, at, 0.1, 0.07)
+    const at = t0 + d * (CROWN_END + (step / 5) * countSpan) + 0.03
+    const peak = 0.24 + i * 0.025
+    noiseBurst(audio, at, 0.12, 0.09)
     tone(audio, 'triangle', freq, at, 0.55, peak)
-    tone(audio, 'sine', freq * 2, at + 0.02, 0.4, peak * 0.4)
+    tone(audio, 'sine', freq * 2, at + 0.02, 0.4, peak * 0.42)
   })
 
   // ── Letter-roll ticks (COUNT_END → ROLL_END) ──────────────────────────────
+  // Match flapGlyph: start lively (~110ms), slow toward lock (~330ms).
   const rollStart = d * COUNT_END
   const rollEnd = d * ROLL_END
-  const tickCount = Math.max(12, Math.round((rollEnd - rollStart) / 0.32))
-  for (let i = 0; i < tickCount; i++) {
-    const at = t0 + rollStart + (i / tickCount) * (rollEnd - rollStart)
-    tone(audio, 'square', 210 + i * 12, at, 0.07, 0.032 + i * 0.0015)
-    tone(audio, 'sine', 420 + i * 8, at + 0.01, 0.11, 0.038)
+  const rollSpan = Math.max(0.4, rollEnd - rollStart)
+  let rollAt = 0
+  let tick = 0
+  while (rollAt < rollSpan - 0.04) {
+    const rollT = rollAt / rollSpan
+    const interval = (110 + rollT * 220) / 1000
+    const at = t0 + rollStart + rollAt
+    tone(audio, 'square', 210 + tick * 12, at, 0.07, 0.034 + tick * 0.0012)
+    tone(audio, 'sine', 420 + tick * 8, at + 0.01, 0.11, 0.04)
+    rollAt += interval
+    tick += 1
+    if (tick > 40) break
   }
 
-  // ── Score flourish (ROLL_END → SCORE_END) ─────────────────────────────────
+  // ── Score flourish (ROLL_END) — hits when score pops on screen ────────────
   const scoreAt = t0 + d * ROLL_END
-  noiseBurst(audio, scoreAt, 0.35, 0.2)
-  tone(audio, 'sine', 76, scoreAt, 1.2, 0.28)
+  noiseBurst(audio, scoreAt, 0.35, 0.22)
+  tone(audio, 'sine', 76, scoreAt, 1.2, 0.3)
   ;[440, 554.37, 659.25].forEach((freq, i) => {
-    tone(audio, 'triangle', freq, scoreAt + 0.06 + i * 0.1, 0.85, 0.13)
+    tone(audio, 'triangle', freq, scoreAt + 0.06 + i * 0.1, 0.85, 0.14)
   })
 
-  // ── Name lock (SCORE_END) ─────────────────────────────────────────────────
+  // ── Name lock / popup (SCORE_END) — hits when team name appears ───────────
   const lock = t0 + d * SCORE_END
-  noiseBurst(audio, lock, 0.45, 0.28)
-  tone(audio, 'sine', 76, lock, 1.8, 0.34)
-  tone(audio, 'triangle', 392, lock + 0.04, 1.4, 0.24)
-  tone(audio, 'sine', 523, lock + 0.08, 1.1, 0.16)
+  noiseBurst(audio, lock, 0.5, 0.32)
+  tone(audio, 'sine', 76, lock, 1.9, 0.36)
+  tone(audio, 'triangle', 392, lock + 0.04, 1.5, 0.26)
+  tone(audio, 'sine', 523, lock + 0.08, 1.2, 0.18)
+  tone(audio, 'triangle', 659, lock + 0.14, 0.9, 0.12)
 
   stopTimer = window.setTimeout(() => clearBed(), durationMs + 600)
 }
