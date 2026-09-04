@@ -92,10 +92,15 @@ export class ScoresService {
       },
     })
 
-    // 5. Trigger websocket (non-blocking)
+    // 5. Trigger websocket (non-blocking) — main + special boards stay in sync
     this.leaderboardGateway.broadcastLeaderboardUpdate().catch(err => {
       console.error('Failed to send leaderboard update:', err)
     })
+    if (team.isSpecialCategory) {
+      this.leaderboardGateway.broadcastSpecialLeaderboardUpdate().catch(err => {
+        console.error('Failed to send special leaderboard update:', err)
+      })
+    }
 
     return { success: true }
   }

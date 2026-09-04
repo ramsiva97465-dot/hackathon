@@ -140,6 +140,7 @@ export class LeaderboardController {
   async updateAdminScore(@Body() dto: AdminScoreDto) {
     await this.service.updateAdminScore(dto.teamId, dto.score)
     await this.gateway.broadcastLeaderboardUpdate()
+    await this.gateway.broadcastSpecialLeaderboardUpdate()
     return { success: true }
   }
 }
