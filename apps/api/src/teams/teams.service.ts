@@ -1095,6 +1095,10 @@ export class TeamsService {
       await this.prisma.scoreSheet.deleteMany({
         where: { teamId: { in: restIds }, round: 2 },
       })
+      // Remove demoted Special teams from judge queues (R1 scores stay on score sheets).
+      await this.prisma.judgeAssignment.deleteMany({
+        where: { teamId: { in: restIds } },
+      })
     }
 
     await this.prisma.team.updateMany({
@@ -1147,6 +1151,23 @@ export class TeamsService {
     }
     if (judges.length === 0) {
       return { success: false, message: 'No judges available.' }
+    }
+
+    // Round 2 shortlist: drop leftover Special R1 assignments so judges only see Top 5.
+    if (targetRound === 2) {
+      const demoted = await this.prisma.team.findMany({
+        where: {
+          status: 'COMPETING',
+          isSpecialCategory: true,
+          round: { not: 2 },
+        },
+        select: { id: true },
+      })
+      if (demoted.length > 0) {
+        await this.prisma.judgeAssignment.deleteMany({
+          where: { teamId: { in: demoted.map((t) => t.id) } },
+        })
+      }
     }
 
     let created = 0

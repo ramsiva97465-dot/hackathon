@@ -139,9 +139,19 @@ export class JudgesService {
     const r2Count = await this.prisma.team.count({ where: { status: 'COMPETING', round: 2 } })
     const eventRound = r3Count >= 1 ? 3 : r2Count >= 1 ? 2 : 1
 
-    // Only this judge's competing teams. Do not hide Round 1 assignments just because
+    // Only this judge's competing teams. Do not hide Round 1 main assignments just because
     // other teams have been promoted to Round 2/3.
-    const filteredAssignments = assignments.filter(a => a.team.status === 'COMPETING')
+    const competing = assignments.filter(a => a.team.status === 'COMPETING')
+
+    // After Special Top 5 promote, hide demoted Special R1 teams from the Round 2 queue.
+    const hasSpecialR2 = competing.some(
+      (a) => a.team.isSpecialCategory && (a.team.round || 1) >= 2,
+    )
+    const filteredAssignments = competing.filter((a) => {
+      if (!a.team.isSpecialCategory) return true
+      if (hasSpecialR2 && (a.team.round || 1) === 1) return false
+      return true
+    })
     const assignmentRounds = filteredAssignments.map(a => a.team.round || 1)
     const activeJudgingRound = assignmentRounds.length > 0
       ? Math.max(...assignmentRounds)
