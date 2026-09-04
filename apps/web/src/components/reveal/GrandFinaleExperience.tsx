@@ -18,7 +18,7 @@ type Props = {
   isAnimating: boolean
   stepStartedAt: number
   stepDurationMs: number
-  /** Optional place titles (e.g. Special Team Winner / Runner). Defaults to Grand Finale kickers. */
+  /** Optional place titles (e.g. Special Category Winner / Runner). Defaults to Grand Finale kickers. */
   placeKickers?: Partial<Record<number, string>>
 }
 

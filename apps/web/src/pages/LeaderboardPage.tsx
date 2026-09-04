@@ -1403,8 +1403,8 @@ export function LeaderboardPage() {
       ? (specialStep === 1 ? 4 : specialStep === 2 ? 5 : 0)
       : 0
   const SPECIAL_PLACE_KICKERS = {
-    1: 'Special Team Winner',
-    2: 'Special Team Runner',
+    1: 'Special Category Winner',
+    2: 'Special Category Runner',
   } as const
 
   // Single-column luxury row grid matching Stage 1 Leaderboard
