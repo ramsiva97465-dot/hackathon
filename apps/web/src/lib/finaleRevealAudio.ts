@@ -1,4 +1,4 @@
-/** Ceremony bed — scales to the finale beat so suspense hits stay locked to progress. */
+/** Ceremony bed + one-shot FX for Top 5 LCD reveals. */
 
 let ctx: AudioContext | null = null
 let activeNodes: Array<AudioScheduledSourceNode | AudioNode> = []
@@ -39,22 +39,23 @@ function tone(
   start: number,
   dur: number,
   peak: number,
+  track = true,
 ) {
   const osc = audio.createOscillator()
   const gain = audio.createGain()
   osc.type = type
   osc.frequency.setValueAtTime(freq, start)
   gain.gain.setValueAtTime(0.0001, start)
-  gain.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), start + 0.03)
+  gain.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), start + 0.025)
   gain.gain.exponentialRampToValueAtTime(0.0001, start + dur)
   osc.connect(gain)
   gain.connect(audio.destination)
   osc.start(start)
   osc.stop(start + dur + 0.02)
-  activeNodes.push(osc, gain)
+  if (track) activeNodes.push(osc, gain)
 }
 
-function noiseBurst(audio: AudioContext, start: number, dur: number, peak: number) {
+function noiseBurst(audio: AudioContext, start: number, dur: number, peak: number, track = true) {
   const length = Math.max(1, Math.floor(audio.sampleRate * dur))
   const buffer = audio.createBuffer(1, length, audio.sampleRate)
   const data = buffer.getChannelData(0)
@@ -64,21 +65,21 @@ function noiseBurst(audio: AudioContext, start: number, dur: number, peak: numbe
   const gain = audio.createGain()
   src.buffer = buffer
   filter.type = 'lowpass'
-  filter.frequency.setValueAtTime(900, start)
+  filter.frequency.setValueAtTime(1100, start)
   gain.gain.setValueAtTime(0.0001, start)
-  gain.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), start + 0.02)
+  gain.gain.exponentialRampToValueAtTime(Math.max(0.0002, peak), start + 0.015)
   gain.gain.exponentialRampToValueAtTime(0.0001, start + dur)
   src.connect(filter)
   filter.connect(gain)
   gain.connect(audio.destination)
   src.start(start)
   src.stop(start + dur + 0.02)
-  activeNodes.push(src, filter, gain)
+  if (track) activeNodes.push(src, filter, gain)
 }
 
 /**
  * Starts a reveal score sized to `durationMs`.
- * Hits align with PlaceReveal progress: roll → 3/2/1 → name lock → score.
+ * Hits: curtain → roll ticks → 3/2/1 → name lock → seal stamp → score flourish.
  */
 export function playFinaleRevealBed(rank: number, durationMs = 20_000) {
   clearBed()
@@ -89,55 +90,59 @@ export function playFinaleRevealBed(rank: number, durationMs = 20_000) {
   const isChamp = rank === 1
   const isSecond = rank === 2
 
-  // Open whoosh + low pad (progress ~0–0.18)
-  noiseBurst(audio, t0, Math.min(2.2, d * 0.12), 0.12)
-  tone(audio, 'sine', isChamp ? 55 : 62, t0, d * 0.18, 0.18)
-  tone(audio, 'triangle', isChamp ? 110 : 124, t0 + 0.2, d * 0.16, 0.08)
+  // Curtain whoosh + deep pad
+  noiseBurst(audio, t0, Math.min(2.4, d * 0.14), 0.14)
+  tone(audio, 'sine', isChamp ? 48 : 56, t0, d * 0.2, 0.2)
+  tone(audio, 'triangle', isChamp ? 96 : 112, t0 + 0.18, d * 0.18, 0.09)
+  tone(audio, 'sine', isChamp ? 192 : 168, t0 + 0.35, 1.8, 0.05)
 
-  // Rising tension ticks through the letter-roll window (~0.18–0.46)
+  // Letter-roll tension ticks (~0.18–0.46)
   const tickStart = d * 0.18
   const tickEnd = d * 0.46
-  const tickCount = Math.max(10, Math.round((tickEnd - tickStart) / 0.45))
+  const tickCount = Math.max(12, Math.round((tickEnd - tickStart) / 0.38))
   for (let i = 0; i < tickCount; i++) {
     const at = t0 + tickStart + (i / tickCount) * (tickEnd - tickStart)
-    tone(audio, 'sine', 170 + i * 12, at, 0.18, 0.055 + i * 0.004)
+    tone(audio, 'square', 210 + i * 14, at, 0.07, 0.035 + i * 0.002)
+    tone(audio, 'sine', 420 + i * 10, at + 0.01, 0.12, 0.04)
   }
 
-  // Soft heartbeat under the long wait
-  for (let i = 0; i < Math.floor(d * 0.4); i++) {
-    const at = t0 + 1.2 + i * 1.15
-    if (at >= t0 + d * 0.86) break
-    tone(audio, 'sine', isChamp ? 48 : 54, at, 0.55, 0.06)
+  // Soft pulse under the wait
+  for (let i = 0; i < Math.floor(d * 0.45); i++) {
+    const at = t0 + 1.4 + i * 1.05
+    if (at >= t0 + d * 0.84) break
+    tone(audio, 'sine', isChamp ? 46 : 52, at, 0.5, 0.07)
   }
 
-  // Name-in countdown 3 · 2 · 1 — progress 0.46 / 0.62 / 0.754
+  // Name-in countdown 3 · 2 · 1
   ;[
-    { at: d * 0.46, freq: 392 },
-    { at: d * 0.62, freq: 494 },
-    { at: d * 0.754, freq: 587 },
-  ].forEach(({ at, freq }) => {
-    tone(audio, 'triangle', freq, t0 + at, 0.55, 0.24)
-    tone(audio, 'sine', freq * 2, t0 + at + 0.02, 0.4, 0.11)
+    { at: d * 0.46, freq: 392, peak: 0.26 },
+    { at: d * 0.62, freq: 494, peak: 0.28 },
+    { at: d * 0.754, freq: 587, peak: 0.3 },
+  ].forEach(({ at, freq, peak }) => {
+    noiseBurst(audio, t0 + at, 0.12, 0.08)
+    tone(audio, 'triangle', freq, t0 + at, 0.65, peak)
+    tone(audio, 'sine', freq * 2, t0 + at + 0.02, 0.45, peak * 0.45)
+    tone(audio, 'sine', freq * 3, t0 + at + 0.04, 0.3, peak * 0.18)
   })
 
   // Name lock impact — progress 0.88
   const lock = t0 + d * 0.88
-  noiseBurst(audio, lock, 0.4, 0.24)
-  tone(audio, 'sine', isChamp ? 65 : 82, lock, 1.6, 0.3)
-  tone(audio, 'triangle', isChamp ? 523 : isSecond ? 440 : 392, lock + 0.04, 1.3, 0.22)
-  tone(audio, 'sine', isChamp ? 784 : isSecond ? 659 : 523, lock + 0.08, 1.0, 0.15)
+  noiseBurst(audio, lock, 0.45, 0.28)
+  tone(audio, 'sine', isChamp ? 58 : 76, lock, 1.8, 0.34)
+  tone(audio, 'triangle', isChamp ? 523 : isSecond ? 440 : 392, lock + 0.04, 1.4, 0.24)
+  tone(audio, 'sine', isChamp ? 784 : isSecond ? 659 : 523, lock + 0.08, 1.1, 0.16)
 
-  // Score settle flourish — progress ~0.915
+  // Score flourish
   const endFreqs = isChamp
-    ? [523.25, 659.25, 783.99, 1046.5]
+    ? [523.25, 659.25, 783.99, 1046.5, 1318.5]
     : isSecond
-    ? [587.33, 739.99, 880]
-    : [440, 554.37, 659.25]
+    ? [587.33, 739.99, 880, 1174.66]
+    : [440, 554.37, 659.25, 880]
   endFreqs.forEach((freq, i) => {
-    tone(audio, 'triangle', freq, t0 + d * 0.915 + i * 0.12, 0.85, 0.13)
+    tone(audio, 'triangle', freq, t0 + d * 0.94 + i * 0.11, 0.95, 0.14)
   })
 
-  stopTimer = window.setTimeout(() => clearBed(), durationMs + 500)
+  stopTimer = window.setTimeout(() => clearBed(), durationMs + 600)
 }
 
 export function stopFinaleRevealBed() {

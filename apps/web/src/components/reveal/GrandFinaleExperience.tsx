@@ -191,8 +191,8 @@ function Wreath({
           style={{
             left: '50%',
             top: '42%',
-            width: '46%',
-            height: '32%',
+            width: '54%',
+            height: '38%',
             transform: 'translate(-50%, -50%)',
           }}
         >
@@ -207,7 +207,7 @@ function Wreath({
                 className={`flex h-[1em] w-[1em] items-center justify-center text-center font-serif font-black leading-none ${
                   locked ? 'text-amber-200' : 'text-amber-200/40'
                 }`}
-                style={{ fontSize: '1.7em' }}
+                style={{ fontSize: '2.15em' }}
               >
                 {glyph}
               </motion.span>
@@ -411,26 +411,28 @@ function Stage({
   )
 }
 
-/** Soft rain of stage words — 5th place only. No bounce; ease-out settle then fade. */
+/** Soft rain of stage words — 5th place only. No place-rank words (avoids “Fourth/Fifth” ghosting in the title zone). */
 const FALL_WORDS = [
-  { text: 'SNAPSERVE', x: 6, size: '1.05rem', weight: 600, gold: true },
-  { text: 'VOICEATHON', x: 64, size: '0.95rem', weight: 500, gold: false },
-  { text: 'GRAND FINALE', x: 26, size: '1.4rem', weight: 700, gold: true },
-  { text: 'TOP 5', x: 78, size: '0.85rem', weight: 500, gold: false },
-  { text: 'FIFTH PLACE', x: 16, size: '1.6rem', weight: 800, gold: true },
-  { text: '2026', x: 72, size: '1.15rem', weight: 600, gold: false },
-  { text: 'VOICE AI', x: 40, size: '0.9rem', weight: 500, gold: false },
-  { text: 'CHAMPIONS', x: 50, size: '1.25rem', weight: 700, gold: true },
-  { text: 'STAGE', x: 10, size: '0.8rem', weight: 500, gold: false },
-  { text: 'UNSEAL', x: 84, size: '0.85rem', weight: 500, gold: false },
-  { text: 'REVEAL', x: 34, size: '1rem', weight: 600, gold: false },
-  { text: 'RANK 5', x: 56, size: '1rem', weight: 600, gold: true },
-  { text: 'LIVE', x: 22, size: '0.75rem', weight: 500, gold: false },
-  { text: 'PODIUM', x: 68, size: '0.85rem', weight: 500, gold: false },
-  { text: 'FINALISTS', x: 44, size: '1.05rem', weight: 600, gold: true },
-  { text: 'AWARD', x: 8, size: '0.8rem', weight: 500, gold: false },
-  { text: 'CORONATION', x: 58, size: '0.9rem', weight: 600, gold: false },
-  { text: 'NIGHT', x: 76, size: '0.75rem', weight: 500, gold: false },
+  { text: 'SNAPSERVE', x: 8, size: '1.1rem', weight: 700, gold: true },
+  { text: 'VOBIZ', x: 38, size: '1.05rem', weight: 700, gold: true },
+  { text: 'GENXAI', x: 68, size: '1rem', weight: 650, gold: true },
+  { text: 'TELE CMI', x: 18, size: '0.95rem', weight: 600, gold: true },
+  { text: 'RENDINGTON', x: 52, size: '0.95rem', weight: 600, gold: true },
+  { text: 'VOICEATHON', x: 78, size: '0.9rem', weight: 500, gold: false },
+  { text: 'GRAND FINALE', x: 30, size: '1.25rem', weight: 700, gold: true },
+  { text: 'TOP 5', x: 88, size: '0.85rem', weight: 500, gold: false },
+  { text: '2026', x: 12, size: '1.05rem', weight: 600, gold: false },
+  { text: 'VOICE AI', x: 58, size: '0.85rem', weight: 500, gold: false },
+  { text: 'CHAMPIONS', x: 42, size: '1.1rem', weight: 700, gold: true },
+  { text: 'STAGE', x: 74, size: '0.8rem', weight: 500, gold: false },
+  { text: 'UNSEAL', x: 24, size: '0.85rem', weight: 500, gold: false },
+  { text: 'REVEAL', x: 84, size: '0.9rem', weight: 600, gold: false },
+  { text: 'LIVE', x: 46, size: '0.75rem', weight: 500, gold: false },
+  { text: 'PODIUM', x: 62, size: '0.85rem', weight: 500, gold: false },
+  { text: 'FINALISTS', x: 34, size: '0.95rem', weight: 600, gold: true },
+  { text: 'AWARD', x: 6, size: '0.8rem', weight: 500, gold: false },
+  { text: 'CORONATION', x: 70, size: '0.85rem', weight: 600, gold: false },
+  { text: 'NIGHT', x: 90, size: '0.75rem', weight: 500, gold: false },
 ] as const
 
 function FallingWords({
@@ -457,8 +459,8 @@ function FallingWords({
         const start = (i / FALL_WORDS.length) * 0.42
         const local = clamp((rain - start) / 0.58)
         const settled = local >= 1 || hold > 0
-        // Soft ease — long drift into the lower half.
-        const y = -10 + easeOut(local, 2.1) * (70 + (i % 5) * 5)
+        // Keep the top title zone clear — drift only through the lower two-thirds.
+        const y = 32 + easeOut(local, 2.1) * (48 + (i % 5) * 4)
         const opacity =
           local <= 0
             ? 0
@@ -469,7 +471,7 @@ function FallingWords({
             : 0.42 + local * 0.36
         const rotate = settled
           ? (i % 2 === 0 ? -1 : 1) * (1.2 + (i % 3) * 0.4)
-          : (1 - easeOut(local, 1.8)) * ((i % 2 === 0 ? -1 : 1) * (6 + (i % 3)))
+          : (1 - easeOut(local, 1.8)) * ((i % 2 === 0 ? -1 : 1) * (5 + (i % 3)))
         return (
           <span
             key={word.text}
@@ -552,8 +554,10 @@ function PlaceReveal({
     : p < 0.07
     ? 0
     : clamp((p - 0.07) / 0.14)
-  const titleOn = !isAnimating || inHold || (revealLive && p >= 0.03)
-  const lineOn = !isAnimating || (revealLive && p >= 0.10)
+  const titleOn =
+    !isAnimating || (inHold && holdT > 0.2) || (revealLive && p >= 0.03)
+  // Keep the rule with the kicker so early Fourth/Fifth frames still look finished.
+  const lineOn = titleOn
   const meta = PLACE[rank]
   const waitProgress = revealLive ? p : 0
   const stageProgress = !isAnimating
@@ -569,25 +573,30 @@ function PlaceReveal({
       )}
       <motion.div
         key={`place-${rank}`}
-        className="relative z-10 flex w-full max-w-6xl flex-col items-center px-6 text-center"
+        className="relative z-10 flex h-full w-full max-w-6xl flex-col items-center justify-start px-6 pt-[3.5vh] text-center sm:pt-[4.5vh]"
         style={{
-          opacity: inRain ? 0.2 + rainT * 0.35 : inHold ? 0.55 + holdT * 0.45 : 1,
+          opacity: inRain ? 0 : inHold ? 0.45 + holdT * 0.55 : 1,
         }}
       >
         <motion.p
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: titleOn ? 1 : 0, y: titleOn ? 0 : 10 }}
           transition={{ duration: 1.1, ease: EASE }}
-          className="text-sm font-medium tracking-[0.38em] text-white/50 uppercase sm:text-base"
+          className="text-sm font-medium tracking-[0.38em] text-white/55 uppercase sm:text-base"
         >
           {meta.kicker}
         </motion.p>
         <motion.span
           aria-hidden
-          className="mt-3 h-px w-12 origin-center bg-amber-200/55"
+          className="mt-2.5 h-px w-[3.25rem] origin-center sm:w-16"
           initial={{ scaleX: 0, opacity: 0 }}
           animate={{ scaleX: lineOn ? 1 : 0, opacity: lineOn ? 1 : 0 }}
-          transition={{ duration: 0.7, ease: EASE }}
+          transition={{ duration: 0.85, delay: lineOn ? 0.12 : 0, ease: EASE }}
+          style={{
+            background:
+              'linear-gradient(90deg, transparent 0%, rgba(245,214,140,0.25) 18%, rgba(245,214,140,0.95) 50%, rgba(245,214,140,0.25) 82%, transparent 100%)',
+            boxShadow: '0 0 10px rgba(245,214,140,0.28)',
+          }}
         />
 
         <div className="mt-6" style={{ opacity: wreathOpacity }}>
@@ -602,7 +611,7 @@ function PlaceReveal({
           />
         </div>
 
-        <div className="mt-4 flex min-h-[10.5rem] w-full flex-col items-center justify-start sm:min-h-[12.5rem]">
+        <div className="mt-4 flex min-h-[12rem] w-full flex-col items-center justify-start sm:min-h-[13.5rem]">
           <AnimatePresence mode="wait">
             {nameLive ? (
               <motion.h2
@@ -672,51 +681,57 @@ function FinalTwoReveal({
   isAnimating: boolean
 }) {
   const p = isAnimating ? progress : 1
-  const SPREAD = 22 // % offset from centre for each slot
-  const SWAPS = 6 // number of left↔right crossings during the shuffle
+  // Keep both laurels inside the LCD frame — no off-screen slides.
+  const SPREAD = 18
+  const SWAPS = 5
 
-  // Horizontal position (in %) of each laurel plus depth cues.
   let secondLeft = 50 + SPREAD
   let champLeft = 50 - SPREAD
   let secondFront = true
   let backScale = 1
   let pick = 0
 
-  if (p >= 0.06 && p < 0.64) {
-    // The 10-second face-off: both laurels orbit through the centre and swap sides.
-    const sT = (p - 0.06) / 0.58
+  if (p >= 0.05 && p < 0.68) {
+    // Long face-off shuffle — names stay sealed as ???
+    const sT = (p - 0.05) / 0.63
     const theta = sT * Math.PI * SWAPS
     const c = Math.cos(theta)
     secondLeft = 50 + SPREAD * c
     champLeft = 50 - SPREAD * c
     secondFront = Math.sin(theta) > 0
-    const near = 1 - Math.min(1, Math.abs(c) / 0.5) // 1 near the crossing, 0 at the slots
-    backScale = 1 - 0.2 * near
-  } else if (p >= 0.74) {
-    // Pick: the runner-up glides to centre, the champion recedes and dims.
-    pick = clamp((p - 0.74) / 0.16)
+    const near = 1 - Math.min(1, Math.abs(c) / 0.5)
+    backScale = 1 - 0.18 * near
+  } else if (p >= 0.68 && p < 0.78) {
+    // Brief hold at the slots — room still waiting.
+    secondLeft = 50 + SPREAD
+    champLeft = 50 - SPREAD
+    secondFront = true
+  } else if (p >= 0.78) {
+    // Slow pick: runner-up glides to centre; champion dims but stays on-frame.
+    pick = clamp((p - 0.78) / 0.14)
     secondLeft = 50 + SPREAD + (0 - SPREAD) * pick
-    champLeft = 50 - SPREAD + (-34 - -SPREAD) * pick // slides out to the far left
+    champLeft = 50 - SPREAD + (16 - (50 - SPREAD)) * pick // eases toward ~16%, never off-screen
   }
 
-  const secondScale = p < 0.64 ? (secondFront ? 1 : backScale) : 1 + 0.12 * pick
-  const champScale = p < 0.64 ? (secondFront ? backScale : 1) : 1 - 0.12 * pick
-  const secondZ = secondFront ? 3 : 2
-  const champZ = secondFront ? 2 : 3
-  const secondOpacity = p < 0.64 ? (secondFront ? 1 : 0.72) : 1
-  const champOpacity = p < 0.64 ? (secondFront ? 0.72 : 1) : 1 - pick * 0.9
+  const secondScale = p < 0.68 ? (secondFront ? 1 : backScale) : 1 + 0.1 * pick
+  const champScale = p < 0.68 ? (secondFront ? backScale : 1) : 1 - 0.1 * pick
+  const secondZ = p < 0.68 ? (secondFront ? 3 : 2) : 3
+  const champZ = p < 0.68 ? (secondFront ? 2 : 3) : 2
+  const secondOpacity = p < 0.68 ? (secondFront ? 1 : 0.72) : 1
+  const champOpacity = p < 0.68 ? (secondFront ? 0.72 : 1) : Math.max(0.12, 1 - pick * 0.88)
 
-  const numberOn = p >= 0.80
-  const titleSecond = p >= 0.74
-  const smallLabels = p < 0.80 ? 1 : clamp(1 - (p - 0.80) / 0.06)
-  const bigNameOn = p >= 0.86
-  const metaOn = p >= 0.90
-  const scoreOn = p >= 0.94
-  const scoreT = clamp((p - 0.94) / 0.06)
+  // Delay the "Second Place" identity — no sudden lock while champion is still mid-exit.
+  const numberOn = p >= 0.9
+  const titleSecond = p >= 0.88
+  const smallLabels = p < 0.9 ? 1 : clamp(1 - (p - 0.9) / 0.05)
+  const bigNameOn = p >= 0.92
+  const metaOn = p >= 0.95
+  const scoreOn = p >= 0.97
+  const scoreT = clamp((p - 0.97) / 0.03)
   const score = Number(secondEntry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
   const track = secondEntry?.track ? getTrackConfig(secondEntry.track) : null
   const secondSweep = (() => {
-    const t = (p - 0.80) / 0.06
+    const t = (p - 0.9) / 0.05
     if (t <= 0 || t >= 1) return -1
     return t
   })()
@@ -725,23 +740,31 @@ function FinalTwoReveal({
 
   return (
     <Stage cinematic progress={p}>
-      <div className="relative z-10 flex w-full max-w-6xl flex-col items-center px-6 text-center">
+      <div className="relative z-10 flex h-full w-full max-w-6xl flex-col items-center justify-start overflow-visible px-6 pt-[3.5vh] text-center sm:pt-[4.5vh]">
         <AnimatePresence mode="wait">
           <motion.p
             key={titleSecond ? 'second' : 'final-two'}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.5, ease: EASE }}
+            transition={{ duration: 0.65, ease: EASE }}
             className="text-sm font-medium tracking-[0.38em] text-white/50 uppercase sm:text-base"
           >
             {titleSecond ? PLACE[2].kicker : 'The Final Two'}
           </motion.p>
         </AnimatePresence>
-        <span aria-hidden className="mt-3 h-px w-12 bg-amber-200/55" />
+        <span
+          aria-hidden
+          className="mt-2.5 h-px w-[3.25rem] sm:w-16"
+          style={{
+            background:
+              'linear-gradient(90deg, transparent 0%, rgba(245,214,140,0.25) 18%, rgba(245,214,140,0.95) 50%, rgba(245,214,140,0.25) 82%, transparent 100%)',
+            boxShadow: '0 0 10px rgba(245,214,140,0.28)',
+          }}
+        />
 
-        <div className="relative mt-8 h-[268px] w-full sm:h-[320px] lg:h-[356px]">
-          {/* Champion laurel — stays sealed until Step 5 */}
+        <div className="relative mt-8 h-[268px] w-full overflow-visible sm:h-[320px] lg:h-[356px]">
+          {/* Champion laurel — stays sealed until Step 5; fades aside, never clipped */}
           <div
             className="absolute top-0 flex flex-col items-center"
             style={{
@@ -755,17 +778,16 @@ function FinalTwoReveal({
             <div style={{ transform: `scale(${champScale})` }}>
               <Wreath className={laurelCls} glyph="?" />
             </div>
-            {/* Names stay hidden during the face-off — suspense until 2nd locks. */}
             <p
               aria-hidden
               className="mt-3 font-mono text-2xl font-bold tracking-[0.35em] text-white/25 sm:text-3xl"
-              style={{ opacity: p < 0.74 ? 0.7 : 1 - pick }}
+              style={{ opacity: p < 0.78 ? 0.7 : Math.max(0, 0.7 - pick) }}
             >
               ???
             </p>
           </div>
 
-          {/* Runner-up laurel — locks with "2" */}
+          {/* Runner-up laurel — locks with "2" only after the pick settles */}
           <div
             className="absolute top-0 flex flex-col items-center"
             style={{
@@ -800,7 +822,7 @@ function FinalTwoReveal({
             <motion.h2
               initial={{ opacity: 0, y: 14, filter: 'blur(8px)' }}
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              transition={{ duration: 0.7, ease: EASE }}
+              transition={{ duration: 0.85, ease: EASE }}
               className="max-w-[16ch] text-balance text-5xl font-black tracking-tight text-white sm:max-w-[20ch] sm:text-7xl lg:text-8xl"
             >
               {secondEntry?.teamName || 'Unavailable'}
