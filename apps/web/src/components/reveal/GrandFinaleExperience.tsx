@@ -612,7 +612,7 @@ function PlaceReveal({
       )}
       <motion.div
         key={`place-${rank}`}
-        className="relative z-10 flex w-full max-w-6xl flex-col items-center px-6 text-center"
+        className="relative z-10 flex h-full w-full max-w-6xl flex-col items-center justify-start px-6 pt-[8vh] text-center sm:pt-[10vh]"
         style={{
           opacity: inRain ? 0 : inHold ? 0.45 + holdT * 0.55 : 1,
         }}
