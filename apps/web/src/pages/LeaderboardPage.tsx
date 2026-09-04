@@ -448,6 +448,8 @@ export function LeaderboardPage() {
   const [specialStep, setSpecialStep] = useState(0)
   const [specialEntries, setSpecialEntries] = useState<LeaderboardEntry[]>([])
   const [specialDecrypting, setSpecialDecrypting] = useState(false)
+  const [specialFinaleStepStartedAt, setSpecialFinaleStepStartedAt] = useState(0)
+  const [specialNameSpinMs, setSpecialNameSpinMs] = useState(5000)
   const specialIsRevealingRef = useRef(false)
   const specialStepRef = useRef(0)
   const specialPhaseRef = useRef<'TOP5' | 'FINALE'>('TOP5')
@@ -744,23 +746,38 @@ export function LeaderboardPage() {
     }
     specialPhaseRef.current = phase
     setSpecialPhase(phase)
-    setSpecialDecrypting(true)
     specialStepRef.current = step
     setSpecialStep(step)
+
+    // TOP5 shortlist → same Top 20 PremiumRevealCard timing.
+    // FINALE Runner/Winner → same Grand Finale beats (mapped to steps 4 then 5).
+    const gfeStep = phase === 'FINALE' ? (step === 1 ? 4 : 5) : 0
+    const durationMs = phase === 'FINALE'
+      ? finaleCountdownStart(gfeStep) * 1000
+      : 5000
+    const startedAt = Date.now()
+    setSpecialNameSpinMs(durationMs)
+    setSpecialFinaleStepStartedAt(startedAt)
+    setSpecialDecrypting(true)
+
     specialDecryptTimerRef.current = window.setTimeout(() => {
       specialDecryptTimerRef.current = null
       setSpecialDecrypting(false)
       try {
-        confetti({
-          particleCount: phase === 'FINALE' && step === 2 ? 120 : 60,
-          spread: 70,
-          origin: { y: 0.65 },
-          colors: ['#0EA5E9', '#38BDF8', '#E83C00', '#F59E0B', '#FFFFFF'],
-        })
+        if (phase === 'FINALE') {
+          triggerFinaleConfetti(step === 2 ? 1 : 2)
+        } else {
+          confetti({
+            particleCount: 55,
+            spread: 65,
+            origin: { y: 0.65 },
+            colors: ['#E83C00', '#F59E0B', '#FFD700', '#FFFFFF'],
+          })
+        }
       } catch {
         // ignore
       }
-    }, 4500)
+    }, durationMs)
   }
 
   useEffect(() => { emit('leaderboard:subscribe') }, [emit])
@@ -1340,12 +1357,15 @@ export function LeaderboardPage() {
     specialSpotlightRank > 0
       ? (specialRoster.find((t) => t.rank === specialSpotlightRank) || null)
       : null
-  const specialPlaceLabel =
-    specialPhase === 'FINALE'
-      ? (specialStep === 1 ? 'Runner Up' : specialStep === 2 ? 'Winner' : 'Special Category Finale')
-      : specialSpotlightRank
-        ? `Special Shortlist · #${specialSpotlightRank}`
-        : 'Special Category · Top 5'
+  const specialIsFinalePhase = specialPhase === 'FINALE'
+  const specialGfeStep =
+    specialIsFinalePhase
+      ? (specialStep === 1 ? 4 : specialStep === 2 ? 5 : 0)
+      : 0
+  const SPECIAL_PLACE_KICKERS = {
+    1: 'Special Team Winner',
+    2: 'Special Team Runner',
+  } as const
 
   // Single-column luxury row grid matching Stage 1 Leaderboard
   const QUALIFIER_GRID = 'grid grid-cols-[64px_minmax(0,1fr)_170px_110px_120px] px-6 py-3.5 items-center min-h-[56px]'
@@ -1454,18 +1474,22 @@ export function LeaderboardPage() {
   return (
     <div className="h-screen flex flex-col relative overflow-hidden" style={{
       backgroundColor: specialIsRevealing
-        ? '#071018'
+        ? (specialIsFinalePhase && specialStep > 0 ? '#070605' : '#EBE3D5')
         : isFinale && revealedStep > 0
           ? '#070605'
           : '#EBE3D5',
       fontFamily: "'Space Grotesk', 'Inter', system-ui, sans-serif",
-      color: specialIsRevealing || (isFinale && revealedStep > 0) ? '#F5F5F5' : '#1A1A1A',
+      color: (specialIsRevealing && specialIsFinalePhase && specialStep > 0) || (isFinale && revealedStep > 0)
+        ? '#F5F5F5'
+        : '#1A1A1A',
       transition: 'background-color 700ms ease, color 700ms ease',
     }}>
 
       {specialIsRevealing ? (
         <>
-          <div className="shrink-0 z-30 flex items-center justify-between px-6 sm:px-10 py-4 border-b border-sky-500/20 bg-[#071018]/95 backdrop-blur-md">
+          {/* Same top bar as Top 20 reveal — hidden during Special Winner/Runner (Grand Finale chrome) */}
+          {!(specialIsFinalePhase && specialStep > 0) && (
+          <div className="shrink-0 z-30 flex items-center justify-between px-6 sm:px-10 py-4 border-b backdrop-blur-md bg-[#EBE3D5]/90 border-black/5 text-[#1A1A1A]">
             <div className="flex items-end gap-4 sm:gap-6">
               <div className="flex items-end gap-2">
                 <SnapServeMark className="h-[24.32px] w-[24.32px] shrink-0 object-contain translate-y-[5px]" />
@@ -1473,97 +1497,128 @@ export function LeaderboardPage() {
                   className="text-[19.456px] leading-none tracking-tight"
                   style={{ fontFamily: "'Plus Jakarta Sans', 'Montserrat', system-ui, sans-serif" }}
                 >
-                  <span style={{ fontWeight: 800, color: '#F8FAFC' }}>Snap</span>
-                  <span style={{ fontWeight: 800, color: '#94A3B8' }}>Serve</span>
+                  <span style={{ fontWeight: 800, color: '#0A0A0A' }}>Snap</span>
+                  <span style={{ fontWeight: 800, color: '#6F6F6F' }}>Serve</span>
                 </span>
               </div>
+              <span className="opacity-20 text-lg font-light leading-none pb-[1px]" aria-hidden>|</span>
+              <VobizLockup className="h-[24.32px] w-auto drop-shadow-sm" />
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-sky-400/40 bg-sky-500/15">
-                <Medal size={13} className="text-sky-300" />
-                <span className="text-[11px] font-black text-sky-200 tracking-widest uppercase">Special Category</span>
+              <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 shadow-xs">
+                <Flame size={13} className="text-orange-500 fill-orange-500/20" />
+                <span className="text-[11px] font-black text-[#E83C00] tracking-widest uppercase">Live</span>
               </div>
-              <span className="font-mono text-base sm:text-lg font-bold tracking-wider text-slate-400">
+              <span className="font-mono text-base sm:text-lg font-bold tracking-wider text-slate-600">
                 {clock.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>
             </div>
           </div>
+          )}
 
-          <div className="relative flex-1 min-h-0 w-full overflow-y-auto px-4 sm:px-8 pb-10">
-            <div className="w-full min-h-full flex flex-col items-center justify-start pt-6 sm:pt-10 pb-8 gap-8">
+          <div className={`relative flex-1 min-h-0 w-full transition-colors duration-700 ${
+            specialIsFinalePhase && specialStep > 0
+              ? 'overflow-hidden bg-[#070605] px-0 pb-0'
+              : 'overflow-y-auto px-4 sm:px-8 pb-10'
+          }`}>
+            <div className={`w-full flex flex-col items-stretch shrink-0 ${
+              specialIsFinalePhase && specialStep > 0
+                ? 'h-full min-h-0 py-0'
+                : 'min-h-full items-center justify-start pt-4 sm:pt-6 pb-8'
+            }`}>
+              {!(specialIsFinalePhase && specialStep > 0) && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-center flex flex-col items-center gap-3"
+                className="text-center flex flex-col items-center gap-4 sm:gap-5 mb-10 sm:mb-14"
               >
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-500/15 border border-sky-400/35 text-sky-100">
-                  <Trophy size={13} className="text-sky-300" />
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full shadow-xl bg-white/90 border border-amber-500/30 text-amber-950 shadow-amber-900/5 ring-1 ring-amber-500/10 backdrop-blur-md">
+                  {specialIsFinalePhase
+                    ? <Crown size={13} className="text-amber-500 fill-amber-500/40" />
+                    : <Trophy size={13} className="text-amber-500" />}
                   <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.16em]">
-                    {specialPhase === 'FINALE' ? 'Special Category · Winner & Runner' : 'Special Category · Top 5 Shortlist'}
+                    {specialIsFinalePhase
+                      ? 'Special Team · Winner & Runner'
+                      : 'Special Team · Top 5 Shortlist Ceremony'}
                   </span>
                 </div>
-                <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-white">
-                  {specialPlaceLabel}
+                <div className="flex items-center justify-center gap-3">
+                  <span className="h-px w-10 sm:w-12 bg-gradient-to-r from-transparent to-[#E83C00]/40" />
+                  <h2 className="text-[#E83C00] font-black tracking-[0.28em] uppercase text-xs">
+                    AI குரல் · VOICE FOR TAMIL NADU · 2026
+                  </h2>
+                  <span className="h-px w-10 sm:w-12 bg-gradient-to-l from-transparent to-[#E83C00]/40" />
+                </div>
+                <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-[1.1] pb-1">
+                  {specialIsFinalePhase ? (
+                    <span className="inline-flex items-center gap-3 flex-wrap justify-center">
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E83C00] via-amber-600 to-[#E83C00] drop-shadow-xs">
+                        Special Team
+                      </span>
+                      <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#111111] via-[#2A241E] to-[#0A0A0A]">
+                        Winner & Runner
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-3 flex-wrap justify-center">
+                      <span className="text-transparent bg-clip-text bg-gradient-to-b from-[#111111] via-[#2A241E] to-[#0A0A0A]">
+                        Meet The
+                      </span>
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E83C00] via-amber-600 to-[#E83C00] drop-shadow-xs">
+                        Special Top 5
+                      </span>
+                    </span>
+                  )}
                 </h1>
               </motion.div>
+              )}
 
-              <div className="w-full max-w-5xl">
-                {specialStep === 0 ? (
-                  <div className="rounded-3xl border border-sky-400/25 bg-sky-950/40 px-8 py-16 text-center">
-                    <Lock size={36} className="mx-auto text-sky-300/80 mb-4" />
-                    <p className="text-lg font-black text-sky-100 uppercase tracking-widest">
-                      {specialPhase === 'FINALE' ? 'Awaiting Runner reveal' : 'Awaiting #5 reveal'}
-                    </p>
-                    <p className="text-sm text-slate-400 mt-2">Admin triggers each place from Rounds Management.</p>
+              <div className={`${
+                specialIsFinalePhase
+                  ? specialStep === 0
+                    ? 'w-[88%] max-w-7xl mx-auto flex flex-col items-center'
+                    : 'h-full min-h-0 w-full'
+                  : 'w-3/4 mx-auto flex flex-col items-center'
+              }`}>
+                {specialIsFinalePhase && specialStep > 0 ? (
+                  <div className="h-full w-full min-h-0">
+                    <GrandFinaleExperience
+                      finalists={specialRoster}
+                      revealStep={specialGfeStep}
+                      isAnimating={specialDecrypting}
+                      stepStartedAt={specialFinaleStepStartedAt}
+                      stepDurationMs={specialNameSpinMs}
+                      placeKickers={SPECIAL_PLACE_KICKERS}
+                    />
                   </div>
+                ) : specialStep === 0 ? (
+                  <PremiumRevealCard
+                    isFinale={specialIsFinalePhase}
+                    currentSpotlightRank={0}
+                    currentSpotlightTeam={null}
+                    revealedStep={0}
+                    maxSteps={specialIsFinalePhase ? 2 : 5}
+                    isDecrypting={false}
+                    decryptingRank={null}
+                    revealingTeamName=""
+                    nameSpinMs={specialNameSpinMs}
+                    settled={false}
+                  />
                 ) : (
                   <PremiumRevealCard
-                    isFinale={specialPhase === 'FINALE'}
+                    isFinale={false}
                     currentSpotlightRank={specialSpotlightRank || 1}
                     currentSpotlightTeam={specialSpotlightTeam}
                     revealedStep={specialStep}
-                    maxSteps={specialPhase === 'FINALE' ? 2 : 5}
+                    maxSteps={5}
                     isDecrypting={specialDecrypting}
                     decryptingRank={specialDecrypting ? specialSpotlightRank : null}
                     revealingTeamName={specialSpotlightTeam?.teamName || ''}
-                    nameSpinMs={4500}
+                    nameSpinMs={specialNameSpinMs}
                     settled={false}
                   />
                 )}
               </div>
-
-              {specialRoster.length > 0 && (
-                <div className="w-full max-w-3xl space-y-2">
-                  {specialRoster.map((team) => {
-                    const showName = specialPhase === 'FINALE'
-                      ? (team.rank === 2 && specialStep >= 1 && !(specialDecrypting && specialStep === 1))
-                        || (team.rank === 1 && specialStep >= 2 && !(specialDecrypting && specialStep === 2))
-                        || (team.rank > 2)
-                      : specialStep >= (6 - team.rank) && !(specialDecrypting && specialSpotlightRank === team.rank)
-                    const isSpotlight = team.rank === specialSpotlightRank && specialStep > 0
-                    return (
-                      <div
-                        key={team.teamId}
-                        className={`flex items-center justify-between gap-3 rounded-xl px-4 py-3 border ${
-                          isSpotlight
-                            ? 'border-sky-400/50 bg-sky-500/15'
-                            : 'border-white/10 bg-white/5'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <span className="font-mono text-sm font-black text-sky-300 w-8">#{team.rank}</span>
-                          <span className="text-sm font-bold text-white truncate">
-                            {showName ? team.teamName : '••••••••'}
-                          </span>
-                        </div>
-                        <span className="font-mono text-sm font-black text-slate-300">
-                          {showName ? Number(team.totalScore || 0).toFixed(1) : '—'}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
             </div>
           </div>
         </>

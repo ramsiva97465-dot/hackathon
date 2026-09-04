@@ -18,6 +18,8 @@ type Props = {
   isAnimating: boolean
   stepStartedAt: number
   stepDurationMs: number
+  /** Optional place titles (e.g. Special Team Winner / Runner). Defaults to Grand Finale kickers. */
+  placeKickers?: Partial<Record<number, string>>
 }
 
 const PLACE: Record<number, { kicker: string }> = {
@@ -26,6 +28,10 @@ const PLACE: Record<number, { kicker: string }> = {
   3: { kicker: 'Third Place' },
   4: { kicker: 'Fourth Place' },
   5: { kicker: 'Fifth Place' },
+}
+
+function placeKicker(rank: number, overrides?: Partial<Record<number, string>>) {
+  return overrides?.[rank] || PLACE[rank]?.kicker || `Place ${rank}`
 }
 
 const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
@@ -503,6 +509,7 @@ function PlaceReveal({
   tick,
   elapsed,
   durationMs,
+  placeKickers,
 }: {
   entry?: GrandFinaleEntry
   rank: number
@@ -511,6 +518,7 @@ function PlaceReveal({
   tick: number
   elapsed: number
   durationMs: number
+  placeKickers?: Partial<Record<number, string>>
 }) {
   // 5th: slow rain → 5s hold → then the normal place reveal on the remaining beat.
   const isFifth = rank === 5
@@ -558,7 +566,7 @@ function PlaceReveal({
     !isAnimating || (inHold && holdT > 0.2) || (revealLive && p >= 0.03)
   // Keep the rule with the kicker so early Fourth/Fifth frames still look finished.
   const lineOn = titleOn
-  const meta = PLACE[rank]
+  const meta = { kicker: placeKicker(rank, placeKickers) }
   const waitProgress = revealLive ? p : 0
   const stageProgress = !isAnimating
     ? 1
@@ -674,11 +682,13 @@ function FinalTwoReveal({
   championEntry,
   progress,
   isAnimating,
+  placeKickers,
 }: {
   secondEntry?: GrandFinaleEntry
   championEntry?: GrandFinaleEntry
   progress: number
   isAnimating: boolean
+  placeKickers?: Partial<Record<number, string>>
 }) {
   const p = isAnimating ? progress : 1
   // Keep both laurels inside the LCD frame — no off-screen slides.
@@ -750,7 +760,7 @@ function FinalTwoReveal({
             transition={{ duration: 0.65, ease: EASE }}
             className="text-sm font-medium tracking-[0.38em] text-white/50 uppercase sm:text-base"
           >
-            {titleSecond ? PLACE[2].kicker : 'The Final Two'}
+            {titleSecond ? placeKicker(2, placeKickers) : 'The Final Two'}
           </motion.p>
         </AnimatePresence>
         <span
@@ -864,10 +874,12 @@ function Champion({
   entry,
   elapsed,
   finished,
+  placeKickers,
 }: {
   entry?: GrandFinaleEntry
   elapsed: number
   finished: boolean
+  placeKickers?: Partial<Record<number, string>>
 }) {
   // Full champion popup fits a 15s beat: countdown → blackout → winner hold.
   const stage = finished || elapsed >= 9_000
@@ -944,7 +956,7 @@ function Champion({
             className="relative z-10 flex w-full max-w-4xl flex-col items-center px-6 text-center"
           >
             <p className="text-[13px] font-medium uppercase tracking-[0.34em] text-amber-300/90">
-              Grand Champion
+              {placeKicker(1, placeKickers)}
             </p>
             <span
               aria-hidden
@@ -1104,6 +1116,7 @@ export function GrandFinaleExperience({
   isAnimating,
   stepStartedAt,
   stepDurationMs,
+  placeKickers,
 }: Props) {
   const [now, setNow] = useState(() => Date.now())
 
@@ -1153,7 +1166,7 @@ export function GrandFinaleExperience({
   let sceneKey = `place-${rank}`
 
   if (revealStep === 5) {
-    scene = <Champion entry={entry} elapsed={elapsed} finished={!isAnimating} />
+    scene = <Champion entry={entry} elapsed={elapsed} finished={!isAnimating} placeKickers={placeKickers} />
     sceneKey = 'champion'
   } else if (revealStep === 4) {
     scene = (
@@ -1162,6 +1175,7 @@ export function GrandFinaleExperience({
         championEntry={finalists.find((item) => item.rank === 1)}
         progress={progress}
         isAnimating={isAnimating}
+        placeKickers={placeKickers}
       />
     )
     sceneKey = 'final-two'
@@ -1175,6 +1189,7 @@ export function GrandFinaleExperience({
         tick={tick}
         elapsed={elapsed}
         durationMs={duration}
+        placeKickers={placeKickers}
       />
     )
   }
