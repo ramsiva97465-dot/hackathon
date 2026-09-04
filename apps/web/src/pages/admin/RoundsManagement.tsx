@@ -568,15 +568,27 @@ export function RoundsManagement() {
                 </button>
                 <button
                   onClick={() => {
+                    openSpecialTrackPanel(1)
+                    toast.success('Special Category Top 5 shortlist reveal controls are open below.')
+                  }}
+                  disabled={loading}
+                  className="flex items-center gap-1.5 px-4 py-2.5 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-[#E83C00]/15 cursor-pointer"
+                  title="Open Special Category Top 5 shortlist reveal (#5 → #1)"
+                >
+                  <Crown size={14} />
+                  <span>👑 Promote Top 5 Special category to round 2</span>
+                </button>
+                <button
+                  onClick={() => {
                     openSpecialTrackPanel(2)
                     toast.success('Special Category Winner / Runner controls are open below.')
                   }}
                   disabled={loading}
-                  className="flex items-center gap-1.5 px-4 py-2.5 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-[#E83C00]/15 cursor-pointer"
-                  title="Open the Special Category track card for assign judges and Winner / Runner reveal"
+                  className="flex items-center gap-1.5 px-4 py-2.5 bg-sky-500/15 hover:bg-sky-500/25 text-sky-200 border border-sky-400/40 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                  title="Open Special Category Runner / Winner reveal"
                 >
                   <Crown size={14} />
-                  <span>👑 Promote Top 5 Special category to round 2</span>
+                  <span>👑 Promote Top 5 Special category to Top 2</span>
                 </button>
               </>
             )}
