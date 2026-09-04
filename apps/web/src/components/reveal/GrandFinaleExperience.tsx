@@ -30,7 +30,47 @@ const PLACE: Record<number, { kicker: string }> = {
 
 const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
 const PODIUM = '/images/finale-podium-transparent.png'
+const SEAL = '/images/snapserve-seal.png'
 const EASE = [0.22, 1, 0.36, 1] as const
+
+/** Official seal — stamps once when a place locks. Gold on black; no pulse, no corner spam. */
+function SealMark({
+  show,
+  size = 'md',
+  delay = 0.15,
+}: {
+  show: boolean
+  size?: 'md' | 'lg'
+  delay?: number
+}) {
+  const dim = size === 'lg' ? 'h-[5.5rem] w-[5.5rem] sm:h-28 sm:w-28' : 'h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem]'
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          key="seal"
+          initial={{ opacity: 0, scale: 1.22, y: -14 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.94 }}
+          transition={{ duration: 0.55, delay, ease: EASE }}
+          className={`relative mx-auto ${dim}`}
+          aria-hidden
+        >
+          <img
+            src={SEAL}
+            alt=""
+            className="h-full w-full object-contain"
+            style={{
+              // Black seal → warm gold for the dark LCD stage
+              filter:
+                'brightness(0) invert(82%) sepia(28%) saturate(650%) hue-rotate(2deg) drop-shadow(0 6px 18px rgba(0,0,0,0.45))',
+            }}
+          />
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
 
 function clamp(n: number) {
   return Math.min(1, Math.max(0, n))
@@ -605,7 +645,7 @@ function PlaceReveal({
           />
         </div>
 
-        <div className="mt-4 flex min-h-[10.5rem] w-full flex-col items-center justify-start sm:min-h-[12.5rem]">
+        <div className="mt-4 flex min-h-[15rem] w-full flex-col items-center justify-start sm:min-h-[17rem]">
           <AnimatePresence mode="wait">
             {nameLive ? (
               <motion.h2
@@ -631,7 +671,11 @@ function PlaceReveal({
             ) : null}
           </AnimatePresence>
 
-          <div className="mt-3 h-6">
+          <div className="mt-4 flex h-[4.75rem] w-full items-center justify-center sm:h-[5.25rem]">
+            <SealMark show={Boolean(nameLocked && nameLive)} delay={0.28} />
+          </div>
+
+          <div className="mt-1 h-6">
             {metaOn && (
               <motion.p
                 initial={{ opacity: 0, y: 8 }}
@@ -809,7 +853,10 @@ function FinalTwoReveal({
               {secondEntry?.teamName || 'Unavailable'}
             </motion.h2>
           )}
-          <div className="mt-3 h-6">
+          <div className="mt-4 flex h-[4.75rem] w-full items-center justify-center sm:h-[5.25rem]">
+            <SealMark show={Boolean(bigNameOn && metaOn)} delay={0.22} />
+          </div>
+          <div className="mt-1 h-6">
             {metaOn && (
               <motion.p
                 initial={{ opacity: 0, y: 8 }}
@@ -950,11 +997,14 @@ function Champion({
             >
               {entry?.teamName || 'Unavailable'}
             </motion.h2>
+            <div className="mt-5 flex h-28 w-full items-center justify-center sm:h-32">
+              <SealMark show size="lg" delay={1.05} />
+            </div>
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.95, duration: 0.5 }}
-              className="mt-3 text-sm text-white/40 sm:text-base"
+              transition={{ delay: 1.25, duration: 0.5 }}
+              className="mt-1 text-sm text-white/40 sm:text-base"
             >
               {entry?.college || 'Tamil Nadu'}
               {track ? ` · ${track.label}` : ''}
@@ -962,7 +1012,7 @@ function Champion({
             <motion.p
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.1, duration: 0.5, ease: EASE }}
+              transition={{ delay: 1.4, duration: 0.5, ease: EASE }}
               className="mt-5 font-black tabular-nums leading-none text-amber-200 text-[2.8rem] sm:text-5xl"
             >
               {score.toFixed(1)}
