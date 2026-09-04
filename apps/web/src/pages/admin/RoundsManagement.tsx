@@ -867,6 +867,11 @@ export function RoundsManagement() {
                   Listed #20 → #1. Each Reveal unseals only that team on the live leaderboard (5➔0 countdown).
                 </p>
               )}
+              {isSpecialBoard && activeTab === 2 && (
+                <p className="text-[10px] text-sky-400/70 font-medium mt-1">
+                  Round 2 scores start at 0 — R1 marks stay on Special R1. Numbers update when judges submit Round 2 sheets.
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-3">
               {!isSpecialBoard && activeTab === 2 && tableTeams.length > 0 && (

@@ -225,7 +225,7 @@ export class LeaderboardService {
           judgeCount = 0
         }
       } else {
-        // Live Round 2 board for the special Top 5 shortlist.
+        // Live Round 2 board for the special Top 5 shortlist — never reuse R1 marks as R2 scores.
         const r2Sheets = sheetsForRound(team.scoreSheets, 2)
         if (hasAdminOverride && teamRound >= 2) {
           totalScore = team.adminScore!
@@ -236,21 +236,18 @@ export class LeaderboardService {
         } else if (team.round2Score !== null && team.round2Score !== undefined) {
           totalScore = team.round2Score
           judgeCount = team.round2JudgeCount ?? 0
-        } else if (!round2JudgingStarted) {
-          // Before any R2 marks: show frozen/qualifier R1 so the shortlist is readable.
-          if (team.round1Score !== null && team.round1Score !== undefined) {
-            totalScore = team.round1Score
-            judgeCount = team.round1JudgeCount ?? 0
-          } else {
-            const r1Sheets = sheetsForRound(team.scoreSheets, 1)
-            judgeCount = r1Sheets.length
-            totalScore = averageFromSheets(r1Sheets) + bonus
-          }
         } else {
+          // Fresh after promote: Round 2 starts at 0 until judges submit R2 sheets.
           judgeCount = 0
           totalScore = 0
         }
       }
+
+      // Qualifier rank seed (frozen R1) — used only to keep a stable order before R2 scoring.
+      const qualifierScore =
+        team.round1Score !== null && team.round1Score !== undefined
+          ? team.round1Score
+          : averageFromSheets(sheetsForRound(team.scoreSheets, 1)) + bonus
 
       return {
         teamId: team.id,
@@ -263,12 +260,17 @@ export class LeaderboardService {
         round: team.round,
         isSpecialCategory: true,
         scores: [],
+        _qualifierScore: qualifierScore,
       }
     })
 
     return entries
-      .sort((a, b) => b.totalScore - a.totalScore)
-      .map((entry, i) => ({ ...entry, rank: i + 1 }))
+      .sort((a, b) => {
+        // Once R2 scoring starts, rank by live R2 score; otherwise keep R1 promote order.
+        if (round2JudgingStarted) return b.totalScore - a.totalScore
+        return (b as any)._qualifierScore - (a as any)._qualifierScore
+      })
+      .map(({ _qualifierScore, ...entry }, i) => ({ ...entry, rank: i + 1 }))
   }
 
   async getEntry(teamId: string) {
