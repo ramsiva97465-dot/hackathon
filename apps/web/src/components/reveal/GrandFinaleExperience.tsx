@@ -448,6 +448,69 @@ function Stage({
   )
 }
 
+/** Soft rain of stage words — 5th place only. No bounce; ease-out settle then fade. */
+const FALL_WORDS = [
+  { text: 'SNAPSERVE', x: 6, size: '1.05rem', weight: 600, gold: true },
+  { text: 'VOICEATHON', x: 64, size: '0.95rem', weight: 500, gold: false },
+  { text: 'GRAND FINALE', x: 26, size: '1.4rem', weight: 700, gold: true },
+  { text: 'TOP 5', x: 78, size: '0.85rem', weight: 500, gold: false },
+  { text: 'FIFTH PLACE', x: 16, size: '1.6rem', weight: 800, gold: true },
+  { text: '2026', x: 72, size: '1.15rem', weight: 600, gold: false },
+  { text: 'VOICE AI', x: 40, size: '0.9rem', weight: 500, gold: false },
+  { text: 'CHAMPIONS', x: 50, size: '1.25rem', weight: 700, gold: true },
+  { text: 'STAGE', x: 10, size: '0.8rem', weight: 500, gold: false },
+  { text: 'UNSEAL', x: 84, size: '0.85rem', weight: 500, gold: false },
+  { text: 'REVEAL', x: 34, size: '1rem', weight: 600, gold: false },
+  { text: 'RANK 5', x: 56, size: '1rem', weight: 600, gold: true },
+  { text: 'LIVE', x: 22, size: '0.75rem', weight: 500, gold: false },
+  { text: 'PODIUM', x: 68, size: '0.85rem', weight: 500, gold: false },
+  { text: 'FINALISTS', x: 44, size: '1.05rem', weight: 600, gold: true },
+  { text: 'AWARD', x: 8, size: '0.8rem', weight: 500, gold: false },
+  { text: 'CORONATION', x: 58, size: '0.9rem', weight: 600, gold: false },
+  { text: 'NIGHT', x: 76, size: '0.75rem', weight: 500, gold: false },
+] as const
+
+function FallingWords({ progress }: { progress: number }) {
+  const rain = clamp(progress / 0.26)
+  const hold = progress >= 0.22 && progress < 0.30
+  const fade = progress >= 0.26 ? clamp((progress - 0.26) / 0.08) : 0
+  if (progress >= 0.36) return null
+
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 z-20 overflow-hidden"
+      style={{ opacity: 1 - fade }}
+    >
+      {FALL_WORDS.map((word, i) => {
+        const start = (i / FALL_WORDS.length) * 0.55
+        const local = clamp((rain - start) / 0.42)
+        const y = -18 + easeOut(local, 2.8) * (58 + (i % 5) * 4)
+        const opacity = local <= 0 ? 0 : local < 0.12 ? local / 0.12 : hold ? 0.85 : 0.55 + local * 0.3
+        const rotate = (1 - easeOut(local, 2.4)) * ((i % 2 === 0 ? -1 : 1) * (4 + (i % 3)))
+        return (
+          <span
+            key={word.text}
+            className="absolute whitespace-nowrap uppercase tracking-[0.22em]"
+            style={{
+              left: `${word.x}%`,
+              top: `${y}%`,
+              fontSize: word.size,
+              fontWeight: word.weight,
+              color: word.gold ? 'rgba(245,214,140,0.72)' : 'rgba(255,255,255,0.38)',
+              opacity,
+              transform: `rotate(${rotate}deg)`,
+              willChange: 'transform, opacity',
+            }}
+          >
+            {word.text}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
 function PlaceReveal({
   entry,
   rank,
@@ -465,33 +528,47 @@ function PlaceReveal({
   elapsed: number
   completedSteps: number
 }) {
+  // 5th place: falling-word rain first, then remapped reveal timeline.
+  const fifthRain = rank === 5 && isAnimating
+  const p = fifthRain ? clamp((progress - 0.32) / 0.68) : progress
+  const revealLive = !fifthRain || progress >= 0.30
   const tease = rank === 4
-  const nameFakeOut = rank === 3 && isAnimating && progress >= 0.90 && progress < 0.935
-  const numberOn = !isAnimating || progress >= (tease ? 0.75 : 0.70)
-  const nameLive = (!isAnimating || progress >= 0.88) && !nameFakeOut
-  const nameLocked = !isAnimating || progress >= 0.94
-  const metaOn = !isAnimating || progress >= 0.94
-  const scoreOn = !isAnimating || progress >= 0.96
-  const scoreT = !isAnimating ? 1 : clamp((progress - 0.96) / 0.04)
+  const nameFakeOut = rank === 3 && isAnimating && p >= 0.90 && p < 0.935
+  const numberOn = !isAnimating || p >= (tease ? 0.75 : 0.70)
+  const nameLive = revealLive && (!isAnimating || p >= 0.88) && !nameFakeOut
+  const nameLocked = !isAnimating || p >= 0.94
+  const metaOn = revealLive && (!isAnimating || p >= 0.94)
+  const scoreOn = revealLive && (!isAnimating || p >= 0.96)
+  const scoreT = !isAnimating ? 1 : clamp((p - 0.96) / 0.04)
   const score = Number(entry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
   const track = entry?.track ? getTrackConfig(entry.track) : null
   const liveName = useMemo(
-    () => scrambleName(entry?.teamName || '', progress, tick),
-    [entry?.teamName, progress, tick],
+    () => scrambleName(entry?.teamName || '', p, tick),
+    [entry?.teamName, p, tick],
   )
-  const yaw = wreathYaw(progress, isAnimating, tease)
-  const rise = wreathRise(progress, isAnimating)
-  const sweep = lockSweep(progress, isAnimating, tease)
-  const wreathOpacity = !isAnimating ? 1 : progress < 0.07 ? 0 : clamp((progress - 0.07) / 0.14)
-  const titleOn = !isAnimating || progress >= 0.03
-  const lineOn = !isAnimating || progress >= 0.10
+  const yaw = wreathYaw(p, isAnimating && revealLive, tease)
+  const rise = wreathRise(p, isAnimating && revealLive)
+  const sweep = lockSweep(p, isAnimating && revealLive, tease)
+  const wreathOpacity = !isAnimating
+    ? 1
+    : !revealLive
+    ? 0
+    : p < 0.07
+    ? 0
+    : clamp((p - 0.07) / 0.14)
+  const titleOn = !isAnimating || (fifthRain ? progress >= 0.28 : p >= 0.03)
+  const lineOn = !isAnimating || (fifthRain ? progress >= 0.32 : p >= 0.10)
   const meta = PLACE[rank]
+  const waitProgress = revealLive ? p : 0
+  const stageProgress = fifthRain ? clamp((progress - 0.18) / 0.82) : isAnimating ? progress : 1
 
   return (
-    <Stage cinematic progress={isAnimating ? progress : 1}>
+    <Stage cinematic progress={stageProgress}>
+      {fifthRain && <FallingWords progress={progress} />}
       <motion.div
         key={`place-${rank}`}
         className="relative z-10 flex w-full max-w-6xl flex-col items-center px-6 text-center"
+        style={{ opacity: fifthRain && progress < 0.26 ? 0.15 + clamp((progress - 0.18) / 0.12) * 0.85 : 1 }}
       >
         <motion.p
           initial={{ opacity: 0, y: 10 }}
@@ -538,19 +615,19 @@ function PlaceReveal({
               >
                 {nameLocked ? (entry?.teamName || 'Unavailable') : liveName}
               </motion.h2>
-            ) : (
+            ) : revealLive ? (
               <motion.div
                 key={
-                  nameFakeOut || isStamping(progress)
+                  nameFakeOut || isStamping(waitProgress)
                     ? `stamp-${nameFakeOut ? 'slam' : 'drop'}`
-                    : isNameCountdown(progress)
-                    ? `c-${nameCountdown(progress)}`
+                    : isNameCountdown(waitProgress)
+                    ? `c-${nameCountdown(waitProgress)}`
                     : 'roll'
                 }
               >
-                <NameWait slamming={nameFakeOut} progress={progress} elapsed={elapsed} />
+                <NameWait slamming={nameFakeOut} progress={waitProgress} elapsed={elapsed} />
               </motion.div>
-            )}
+            ) : null}
           </AnimatePresence>
 
           <div className="mt-3 h-6">

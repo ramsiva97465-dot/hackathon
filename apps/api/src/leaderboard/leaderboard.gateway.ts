@@ -119,7 +119,7 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
     const now = Date.now()
     // Step 4 runs the Final Two face-off: a ~10s left↔right shuffle of the two
     // remaining laurels before the runner-up locks in as 2nd place.
-    const finaleDurations = [0, 14000, 15000, 16000, 18000, 12000]
+    const finaleDurations = [0, 19000, 15000, 16000, 18000, 12000]
 
     if (normalizedRound === 3) {
       if (step === this.revealStep && this.revealRound === 3) return

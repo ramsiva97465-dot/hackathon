@@ -144,7 +144,7 @@ export function RoundsManagement() {
       setIsStageRevealing(true)
       setRevealStep(step)
       setRevealRound(3)
-      const stepLocks = [0, 14000, 15000, 16000, 18000, 12000]
+      const stepLocks = [0, 19000, 15000, 16000, 18000, 12000]
       setRevealNextAllowedAt(Date.now() + stepLocks[step])
       if (step === 1) toast.success('Triggered 5th Place reveal (countdown started on LCD)!')
       else if (step === 2) toast.success('Triggered 4th Place reveal (countdown started on LCD)!')
@@ -452,7 +452,7 @@ export function RoundsManagement() {
                   Top 5 Grand Finale Reveal Controller
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mt-1 font-medium">
-                  Click each button when the stage host speaks. The LCD suspense sequence is <span className="text-amber-300 font-bold">14 seconds for 5th</span>, <span className="text-amber-300 font-bold">15 for 4th</span>, <span className="text-amber-300 font-bold">16 for 2nd Runner Up</span>, <span className="text-amber-300 font-bold">16 for 1st Runner Up shown through a ~10s Final Two face-off</span>, and <span className="text-amber-300 font-bold">12 for the Grand Champion</span>.
+                  Click each button when the stage host speaks. The LCD suspense sequence is <span className="text-amber-300 font-bold">19 seconds for 5th (falling-word rain into reveal)</span>, <span className="text-amber-300 font-bold">15 for 4th</span>, <span className="text-amber-300 font-bold">16 for 2nd Runner Up</span>, <span className="text-amber-300 font-bold">16 for 1st Runner Up shown through a ~10s Final Two face-off</span>, and <span className="text-amber-300 font-bold">12 for the Grand Champion</span>.
                 </p>
               </div>
 

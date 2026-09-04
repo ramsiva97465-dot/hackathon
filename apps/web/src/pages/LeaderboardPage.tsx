@@ -27,7 +27,7 @@ function finalePlace(rank: number) {
 
 /** Step 1=5th, 2=4th, 3=2nd runner-up, 4=1st runner-up, 5=champion */
 function finaleCountdownStart(step: number) {
-  if (step === 1) return 14
+  if (step === 1) return 19 // falling-word rain + stamp/roll/countdown
   if (step === 2) return 15
   if (step === 3) return 16
   if (step === 4) return 16
