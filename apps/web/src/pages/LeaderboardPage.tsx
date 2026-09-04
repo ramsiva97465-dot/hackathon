@@ -26,9 +26,9 @@ function finalePlace(rank: number) {
   return { title: '5th Place', decrypt: 'Decrypting 5th Place...', speak: '5th Place, ', locked: '5th Place' }
 }
 
-/** Step 1=5th … 5=champion — each beat matches 10s stage video + audio bed */
+/** Step 1=5th … 5=champion — slow suspense beat (~20s) so the room stays locked in */
 function finaleCountdownStart(_step: number) {
-  return 10
+  return 20
 }
 
 // ── Cinematic Confetti FX for Grand Finale ────────────────────────────────────

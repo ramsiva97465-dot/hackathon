@@ -1,4 +1,4 @@
-/** 10-second ceremony bed — timed to match finale-stage-bg.mp4 + place reveal progress. */
+/** Ceremony bed — scales to the finale beat so suspense hits stay locked to progress. */
 
 let ctx: AudioContext | null = null
 let activeNodes: Array<AudioScheduledSourceNode | AudioNode> = []
@@ -77,56 +77,67 @@ function noiseBurst(audio: AudioContext, start: number, dur: number, peak: numbe
 }
 
 /**
- * Starts a one-shot 10s reveal score. Call at step start; cancels any previous bed.
+ * Starts a reveal score sized to `durationMs`.
  * Hits align with PlaceReveal progress: roll → 3/2/1 → name lock → score.
  */
-export function playFinaleRevealBed(rank: number, durationMs = 10_000) {
+export function playFinaleRevealBed(rank: number, durationMs = 20_000) {
   clearBed()
   const audio = getCtx()
   if (!audio) return
   const t0 = audio.currentTime + 0.02
+  const d = Math.max(8, durationMs / 1000)
   const isChamp = rank === 1
   const isSecond = rank === 2
 
-  // 0.00–2.2s — open whoosh + low pad (video curtain)
-  noiseBurst(audio, t0, 1.4, 0.12)
-  tone(audio, 'sine', isChamp ? 55 : 62, t0, 2.4, 0.18)
-  tone(audio, 'triangle', isChamp ? 110 : 124, t0 + 0.15, 2.2, 0.08)
+  // Open whoosh + low pad (progress ~0–0.18)
+  noiseBurst(audio, t0, Math.min(2.2, d * 0.12), 0.12)
+  tone(audio, 'sine', isChamp ? 55 : 62, t0, d * 0.18, 0.18)
+  tone(audio, 'triangle', isChamp ? 110 : 124, t0 + 0.2, d * 0.16, 0.08)
 
-  // 2.2–4.6s — rising tension ticks (letter roll)
-  for (let i = 0; i < 8; i++) {
-    const at = t0 + 2.2 + i * 0.28
-    tone(audio, 'sine', 180 + i * 18, at, 0.16, 0.07 + i * 0.008)
+  // Rising tension ticks through the letter-roll window (~0.18–0.46)
+  const tickStart = d * 0.18
+  const tickEnd = d * 0.46
+  const tickCount = Math.max(10, Math.round((tickEnd - tickStart) / 0.45))
+  for (let i = 0; i < tickCount; i++) {
+    const at = t0 + tickStart + (i / tickCount) * (tickEnd - tickStart)
+    tone(audio, 'sine', 170 + i * 12, at, 0.18, 0.055 + i * 0.004)
   }
 
-  // Name-in countdown 3 · 2 · 1 — matches PlaceReveal progress 0.46 / 0.62 / 0.754
+  // Soft heartbeat under the long wait
+  for (let i = 0; i < Math.floor(d * 0.4); i++) {
+    const at = t0 + 1.2 + i * 1.15
+    if (at >= t0 + d * 0.86) break
+    tone(audio, 'sine', isChamp ? 48 : 54, at, 0.55, 0.06)
+  }
+
+  // Name-in countdown 3 · 2 · 1 — progress 0.46 / 0.62 / 0.754
   ;[
-    { at: 4.6, freq: 392 },
-    { at: 6.2, freq: 494 },
-    { at: 7.55, freq: 587 },
+    { at: d * 0.46, freq: 392 },
+    { at: d * 0.62, freq: 494 },
+    { at: d * 0.754, freq: 587 },
   ].forEach(({ at, freq }) => {
-    tone(audio, 'triangle', freq, t0 + at, 0.45, 0.22)
-    tone(audio, 'sine', freq * 2, t0 + at + 0.02, 0.35, 0.1)
+    tone(audio, 'triangle', freq, t0 + at, 0.55, 0.24)
+    tone(audio, 'sine', freq * 2, t0 + at + 0.02, 0.4, 0.11)
   })
 
-  // 8.8s — name lock impact
-  const lock = t0 + 8.8
-  noiseBurst(audio, lock, 0.35, 0.22)
-  tone(audio, 'sine', isChamp ? 65 : 82, lock, 1.4, 0.28)
-  tone(audio, 'triangle', isChamp ? 523 : isSecond ? 440 : 392, lock + 0.04, 1.1, 0.2)
-  tone(audio, 'sine', isChamp ? 784 : isSecond ? 659 : 523, lock + 0.08, 0.9, 0.14)
+  // Name lock impact — progress 0.88
+  const lock = t0 + d * 0.88
+  noiseBurst(audio, lock, 0.4, 0.24)
+  tone(audio, 'sine', isChamp ? 65 : 82, lock, 1.6, 0.3)
+  tone(audio, 'triangle', isChamp ? 523 : isSecond ? 440 : 392, lock + 0.04, 1.3, 0.22)
+  tone(audio, 'sine', isChamp ? 784 : isSecond ? 659 : 523, lock + 0.08, 1.0, 0.15)
 
-  // 9.2–10s — score settle flourish
+  // Score settle flourish — progress ~0.915
   const endFreqs = isChamp
     ? [523.25, 659.25, 783.99, 1046.5]
     : isSecond
     ? [587.33, 739.99, 880]
     : [440, 554.37, 659.25]
   endFreqs.forEach((freq, i) => {
-    tone(audio, 'triangle', freq, t0 + 9.15 + i * 0.1, 0.7, 0.12)
+    tone(audio, 'triangle', freq, t0 + d * 0.915 + i * 0.12, 0.85, 0.13)
   })
 
-  stopTimer = window.setTimeout(() => clearBed(), durationMs + 400)
+  stopTimer = window.setTimeout(() => clearBed(), durationMs + 500)
 }
 
 export function stopFinaleRevealBed() {

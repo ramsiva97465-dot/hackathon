@@ -308,7 +308,7 @@ function NameWait({
 }
 
 const STAGE_BG = '/videos/finale-stage-bg.mp4'
-export const FINALE_BEAT_MS = 10_000
+export const FINALE_BEAT_MS = 20_000
 
 function StageMedia({
   mediaKey,
@@ -326,6 +326,7 @@ function StageMedia({
     el.currentTime = 0
     if (!playMedia) return
     el.muted = true
+    el.loop = true
     void el.play().catch(() => {})
   }, [mediaKey, playMedia])
 
@@ -337,6 +338,7 @@ function StageMedia({
       className="pointer-events-none absolute inset-0 z-0 h-full w-full min-h-full min-w-full object-cover"
       src={STAGE_BG}
       muted
+      loop
       playsInline
       preload="auto"
     />
@@ -795,25 +797,25 @@ function Champion({
   elapsed: number
   finished: boolean
 }) {
-  const stage = finished || elapsed >= 9_200
+  const stage = finished || elapsed >= 18_400
     ? 'winner'
-    : elapsed < 3_800
+    : elapsed < 7_600
     ? 'count'
-    : elapsed < 4_600
+    : elapsed < 9_200
     ? 'hold'
-    : elapsed < 5_400
+    : elapsed < 10_800
     ? 'black'
-    : elapsed < 6_600
+    : elapsed < 13_200
     ? 'spark'
     : 'flash'
-  const n = Math.max(1, 5 - Math.floor(elapsed / 760))
-  const scoreT = finished ? 1 : clamp((elapsed - 9_200) / 600)
+  const n = Math.max(1, 5 - Math.floor(elapsed / 1_520))
+  const scoreT = finished ? 1 : clamp((elapsed - 18_400) / 1_000)
   const score = Number(entry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
   const track = entry?.track ? getTrackConfig(entry.track) : null
-  const winOpen = finished ? 1 : clamp((elapsed - 9_200) / 700)
+  const winOpen = finished ? 1 : clamp((elapsed - 18_400) / 1_200)
   const champSweep = (() => {
     if (stage !== 'winner' || finished) return -1
-    const t = (elapsed - 9_280) / 650
+    const t = (elapsed - 18_500) / 1_100
     if (t <= 0 || t >= 1) return -1
     return t
   })()
