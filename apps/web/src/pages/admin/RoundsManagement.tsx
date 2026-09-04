@@ -21,6 +21,7 @@ type TeamOverview = {
 export function RoundsManagement() {
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<number>(1) // 1 = Round 1, 2 = Round 2, 3 = Winners
+  const [isSpecialBoard, setIsSpecialBoard] = useState(false)
   const [teams, setTeams] = useState<TeamOverview[]>([])
   const [isStageRevealing, setIsStageRevealing] = useState(false)
   const [revealStep, setRevealStep] = useState(0)
@@ -56,7 +57,7 @@ export function RoundsManagement() {
       fetchSpecialCounts(true)
     }, 4000)
     return () => clearInterval(interval)
-  }, [activeTab])
+  }, [activeTab, isSpecialBoard])
 
   useEffect(() => {
     const timer = setInterval(() => setStageClock(Date.now()), 500)
@@ -127,11 +128,25 @@ export function RoundsManagement() {
   }
 
   const openSpecialTrackPanel = (roundTab?: 1 | 2) => {
-    if (roundTab) setActiveTab(roundTab)
+    if (roundTab) {
+      setIsSpecialBoard(false)
+      setActiveTab(roundTab)
+    }
     setShowSpecialTrackPanel(true)
     window.setTimeout(() => {
       specialTrackPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 50)
+  }
+
+  const selectMainTab = (tab: number) => {
+    setIsSpecialBoard(false)
+    setActiveTab(tab)
+  }
+
+  const selectSpecialTab = (tab: 1 | 2) => {
+    setIsSpecialBoard(true)
+    setActiveTab(tab)
+    setShowSpecialTrackPanel(true)
   }
 
   const handlePromoteSpecial = async () => {
@@ -233,15 +248,24 @@ export function RoundsManagement() {
   const fetchLeaderboard = async (silent = false) => {
     try {
       if (!silent) setLoading(true)
-      const res = await api.leaderboard.get({
-        round: activeTab,
-        liveScores: activeTab === 2,
-      })
-      if (Array.isArray(res.data)) {
-        setTeams(res.data)
+
+      if (isSpecialBoard) {
+        const specialRound = activeTab === 2 ? 2 : 1
+        const res = await api.leaderboard.getSpecial({ round: specialRound })
+        if (Array.isArray(res.data)) {
+          setTeams(res.data)
+        }
+      } else {
+        const res = await api.leaderboard.get({
+          round: activeTab,
+          liveScores: activeTab === 2,
+        })
+        if (Array.isArray(res.data)) {
+          setTeams(res.data)
+        }
       }
 
-      // Fetch overall stats by querying all
+      // Fetch overall stats by querying all (main track only for counts)
       const statsRes = await api.leaderboard.get()
       if (Array.isArray(statsRes.data)) {
         const all: TeamOverview[] = statsRes.data
@@ -442,6 +466,7 @@ export function RoundsManagement() {
       if (res.data?.success) {
         toast.success(res.data.message || 'Reset complete: teams back to Round 1, all judge assignments cleared.')
         setActiveTab(1)
+        setIsSpecialBoard(false)
         fetchLeaderboard()
       }
     } catch (err) {
@@ -453,13 +478,15 @@ export function RoundsManagement() {
   }
 
   const activeRoundNum = winnersCount > 0 ? 3 : round2Count > 0 ? 2 : 1
-  const displayTeams = activeTab === 2
-    ? teams.filter(t => (t.round || 1) >= 2)
-    : activeTab === 3
-      ? teams.filter(t => t.round === 3)
-      : teams
+  const displayTeams = isSpecialBoard
+    ? teams
+    : activeTab === 2
+      ? teams.filter(t => (t.round || 1) >= 2)
+      : activeTab === 3
+        ? teams.filter(t => t.round === 3)
+        : teams
 
-  const tableTeams = (activeTab === 2
+  const tableTeams = (!isSpecialBoard && activeTab === 2
     ? displayTeams
         .slice()
         .sort((a, b) => Number(b.totalScore ?? b.overallScore ?? 0) - Number(a.totalScore ?? a.overallScore ?? 0))
@@ -468,7 +495,7 @@ export function RoundsManagement() {
         .reverse()
     : displayTeams.map((t, i) => ({ ...t, standing: i + 1 })))
 
-  const showRound2Reveals = activeTab === 2 && winnersCount === 0
+  const showRound2Reveals = !isSpecialBoard && activeTab === 2 && winnersCount === 0
 
   return (
     <DashboardLayout role="admin">
@@ -588,7 +615,7 @@ export function RoundsManagement() {
                   title="Open Special Category Runner / Winner reveal"
                 >
                   <Crown size={14} />
-                  <span>👑 Promote Top 5 Special category to Top 2</span>
+                  <span>👑 Reveal Special category Winners</span>
                 </button>
               </>
             )}
@@ -742,29 +769,42 @@ export function RoundsManagement() {
         )}
 
         {/* Round Tab Selector */}
-        <div className="flex border-b border-white/10 gap-6">
+        <div className="flex flex-wrap border-b border-white/10 gap-4 sm:gap-6">
           <button
-            onClick={() => setActiveTab(1)}
-            className={`pb-3 text-xs font-bold tracking-wider uppercase border-b-2 transition-all ${activeTab === 1 ? 'border-[#E83C00] text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+            onClick={() => selectMainTab(1)}
+            className={`pb-3 text-xs font-bold tracking-wider uppercase border-b-2 transition-all ${!isSpecialBoard && activeTab === 1 ? 'border-[#E83C00] text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
           >
             Round 1 ({round1Count})
           </button>
           <button
-            onClick={() => setActiveTab(2)}
-            className={`pb-3 text-xs font-bold tracking-wider uppercase border-b-2 transition-all ${activeTab === 2 ? 'border-[#E83C00] text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+            onClick={() => selectMainTab(2)}
+            className={`pb-3 text-xs font-bold tracking-wider uppercase border-b-2 transition-all ${!isSpecialBoard && activeTab === 2 ? 'border-[#E83C00] text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
           >
             Round 2 ({round2Count > 20 ? 20 : round2Count})
           </button>
           <button
-            onClick={() => setActiveTab(3)}
-            className={`pb-3 text-xs font-bold tracking-wider uppercase border-b-2 transition-all ${activeTab === 3 ? 'border-[#E83C00] text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+            onClick={() => selectMainTab(3)}
+            className={`pb-3 text-xs font-bold tracking-wider uppercase border-b-2 transition-all ${!isSpecialBoard && activeTab === 3 ? 'border-[#E83C00] text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
           >
             Winners ({winnersCount})
+          </button>
+          <span className="hidden sm:block w-px self-stretch bg-white/10 mb-3" aria-hidden />
+          <button
+            onClick={() => selectSpecialTab(1)}
+            className={`pb-3 text-xs font-bold tracking-wider uppercase border-b-2 transition-all ${isSpecialBoard && activeTab === 1 ? 'border-sky-400 text-sky-300' : 'border-transparent text-slate-500 hover:text-sky-300/80'}`}
+          >
+            Special R1 ({specialR1Count})
+          </button>
+          <button
+            onClick={() => selectSpecialTab(2)}
+            className={`pb-3 text-xs font-bold tracking-wider uppercase border-b-2 transition-all ${isSpecialBoard && activeTab === 2 ? 'border-sky-400 text-sky-300' : 'border-transparent text-slate-500 hover:text-sky-300/80'}`}
+          >
+            Special R2 ({specialR2Count})
           </button>
         </div>
 
         {/* Winners Podium Component (If Tab 3 / Winners Active) */}
-        {activeTab === 3 && teams.length >= 1 && (
+        {!isSpecialBoard && activeTab === 3 && teams.length >= 1 && (
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-6xl mx-auto py-6">
             {[0, 1, 2, 3, 4].map((i) => {
               const t = teams[i]
@@ -792,7 +832,15 @@ export function RoundsManagement() {
           <div className="px-6 py-4 border-b border-white/5 bg-[#111] flex items-center justify-between">
             <div>
               <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                {activeTab === 3 ? 'Winners Standings' : activeTab === 2 ? 'Round 2 Qualified Teams' : 'Round 1 Leaderboard'}
+                {isSpecialBoard
+                  ? activeTab === 2
+                    ? 'Special Category · Round 2 (Top 5)'
+                    : 'Special Category · Round 1'
+                  : activeTab === 3
+                    ? 'Winners Standings'
+                    : activeTab === 2
+                      ? 'Round 2 Qualified Teams'
+                      : 'Round 1 Leaderboard'}
               </h3>
               {showRound2Reveals && (
                 <p className="text-[10px] text-slate-500 font-medium mt-1">
@@ -801,7 +849,7 @@ export function RoundsManagement() {
               )}
             </div>
             <div className="flex items-center gap-3">
-              {activeTab === 2 && tableTeams.length > 0 && (
+              {!isSpecialBoard && activeTab === 2 && tableTeams.length > 0 && (
                 <button
                   disabled={loading}
                   onClick={async () => {
@@ -908,7 +956,7 @@ export function RoundsManagement() {
         </div>
 
         {/* Special Category — Round 1: Top 5 shortlist reveal | Round 2: Winner / Runner */}
-        {showSpecialTrackPanel && activeTab !== 3 && (
+        {showSpecialTrackPanel && (isSpecialBoard || activeTab !== 3) && (
         <div
           ref={specialTrackPanelRef}
           className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-5 sm:p-6 space-y-5 shadow-2xl relative overflow-hidden"
@@ -917,11 +965,11 @@ export function RoundsManagement() {
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-300 text-[11px] font-black uppercase tracking-widest mb-2">
                 <Medal size={13} />
-                Special Category Track · Round {activeTab}
+                Special Category Track · {isSpecialBoard ? 'Scores' : `Round ${activeTab}`}
               </div>
               <h2 className="text-lg font-black text-white">School Special Category</h2>
               <p className="text-sm text-slate-400 mt-1 max-w-2xl">
-                {activeTab === 1
+                {activeTab === 1 || (isSpecialBoard && activeTab !== 2)
                   ? 'After promote, reveal the Top 5 shortlist (#5 → #1) on the /leaderboard LCD — separate from main Top 20.'
                   : 'After Special Round 2 judging, reveal Runner then Winner on the /leaderboard LCD — separate from main Top 5.'}
               </p>

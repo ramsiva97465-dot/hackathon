@@ -9,17 +9,6 @@ import { useWebSocket } from '@/hooks/useWebSocket'
 import { api } from '@/lib/api'
 import type { LeaderboardEntry } from '@hackathon/shared'
 
-const mockLeaderboard: LeaderboardEntry[] = [
-  { rank: 1, teamId: '1', teamName: 'SpeakSense',    college: 'BITS Pilani',    track: 'REAL_WORLD_DEPLOYMENT', totalScore: 18.4, judgeCount: 1, previousRank: 2, scores: [] },
-  { rank: 2, teamId: '2', teamName: 'AudioMind',     college: 'VIT Chennai',    track: 'VOICE_AI_AGENT',        totalScore: 17.7, judgeCount: 1, previousRank: 1, scores: [] },
-  { rank: 3, teamId: '3', teamName: 'NovaTalk',      college: 'NIT Trichy',     track: 'MULTIMODAL_AI',         totalScore: 16.5, judgeCount: 1, previousRank: 3, scores: [] },
-  { rank: 4, teamId: '4', teamName: 'VoiceForge AI', college: 'IIT Madras',     track: 'VOICE_AI_AGENT',        totalScore: 16.0, judgeCount: 1, previousRank: 5, scores: [] },
-  { rank: 5, teamId: '5', teamName: 'EchoBot Labs',  college: 'SRM University', track: 'MULTIMODAL_AI',         totalScore: 15.3, judgeCount: 1, previousRank: 4, scores: [] },
-  { rank: 6, teamId: '6', teamName: 'DeepVoice',     college: 'SASTRA',         track: 'VOICE_AI_AGENT',        totalScore: 14.8, judgeCount: 1, previousRank: 6, scores: [] },
-  { rank: 7, teamId: '7', teamName: 'TalkFlow',      college: 'Amrita',         track: 'REAL_WORLD_DEPLOYMENT', totalScore: 13.1, judgeCount: 1, previousRank: 8, scores: [] },
-  { rank: 8, teamId: '8', teamName: 'MindSpeak',     college: 'SSN Engineering',track: 'MULTIMODAL_AI',         totalScore: 12.4, judgeCount: 1, previousRank: 7, scores: [] },
-]
-
 function RankBadge({ rank }: { rank: number }) {
   if (rank === 1) return (
     <div className="w-9 h-9 rounded-xl rank-1 flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.4)]">
@@ -49,43 +38,60 @@ function DeltaIcon({ curr, prev }: { curr: number; prev: number }) {
   return <Minus size={13} className="text-muted" />
 }
 
+type BoardKind = 'main' | 'special'
+
 export function LeaderboardAdminPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
+  const [boardKind, setBoardKind] = useState<BoardKind>('main')
   const [activeRound, setActiveRound] = useState<number>(1)
   const [loadingRound, setLoadingRound] = useState(true)
+  const boardKindRef = useRef(boardKind)
   const activeRoundRef = useRef(activeRound)
+
+  useEffect(() => {
+    boardKindRef.current = boardKind
+  }, [boardKind])
 
   useEffect(() => {
     activeRoundRef.current = activeRound
   }, [activeRound])
 
-  const fetchLeaderboard = async (round = activeRoundRef.current) => {
+  const fetchLeaderboard = async (
+    kind = boardKindRef.current,
+    round = activeRoundRef.current,
+  ) => {
     try {
-      const res = await api.leaderboard.get({
-        round,
-        liveScores: round === 2,
-      })
-      if (round !== activeRoundRef.current) return
+      const res = kind === 'special'
+        ? await api.leaderboard.getSpecial({ round: round === 2 ? 2 : 1 })
+        : await api.leaderboard.get({
+            round,
+            liveScores: round === 2,
+          })
+      if (kind !== boardKindRef.current || round !== activeRoundRef.current) return
       if (Array.isArray(res.data)) setEntries(res.data)
     } catch {
       // Ignore poll error
     } finally {
-      if (round === activeRoundRef.current) setLoadingRound(false)
+      if (kind === boardKindRef.current && round === activeRoundRef.current) {
+        setLoadingRound(false)
+      }
     }
   }
 
-  // Live socket payloads are always the default (Round 1) board. Refetch the
-  // selected round instead of painting those scores onto Round 2 / Winners.
   const { emit } = useWebSocket<LeaderboardEntry[]>('leaderboard:update', () => {
-    fetchLeaderboard(activeRoundRef.current)
+    if (boardKindRef.current === 'main') fetchLeaderboard()
+  })
+
+  useWebSocket<LeaderboardEntry[]>('leaderboard:special_update', () => {
+    if (boardKindRef.current === 'special') fetchLeaderboard()
   })
 
   useEffect(() => {
     emit('leaderboard:subscribe')
-    fetchLeaderboard(activeRound)
+    fetchLeaderboard(boardKind, activeRound)
 
-    const interval = setInterval(() => fetchLeaderboard(activeRoundRef.current), 3000)
-    const handleUpdate = () => fetchLeaderboard(activeRoundRef.current)
+    const interval = setInterval(() => fetchLeaderboard(), 3000)
+    const handleUpdate = () => fetchLeaderboard()
 
     window.addEventListener('leaderboard_updated', handleUpdate)
     window.addEventListener('storage', handleUpdate)
@@ -95,10 +101,11 @@ export function LeaderboardAdminPage() {
       window.removeEventListener('leaderboard_updated', handleUpdate)
       window.removeEventListener('storage', handleUpdate)
     }
-  }, [emit, activeRound])
+  }, [emit, boardKind, activeRound])
 
-  const handleRoundChange = (round: number) => {
-    if (round === activeRound) return
+  const handleBoardChange = (kind: BoardKind, round: number) => {
+    if (kind === boardKind && round === activeRound) return
+    setBoardKind(kind)
     setActiveRound(round)
     setEntries([])
     setLoadingRound(true)
@@ -109,7 +116,7 @@ export function LeaderboardAdminPage() {
     if (newVal === null) return
     const trimmed = newVal.trim()
     if (trimmed === '') return
-    
+
     let score: number | null = null
     if (trimmed.toLowerCase() === 'clear') {
       score = null
@@ -131,12 +138,22 @@ export function LeaderboardAdminPage() {
   const rawDisplay = entries
   const display = rawDisplay
     .filter(e => {
+      if (boardKind === 'special') return true
       const teamRound = (e as any).round || 1
       if (activeRound === 3) return teamRound === 3
       if (activeRound === 2) return teamRound >= 2
       return true
     })
     .map((e, idx) => ({ ...e, rank: idx + 1 }))
+
+  const tabClass = (active: boolean, special = false) =>
+    `px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+      active
+        ? special
+          ? 'bg-sky-500/20 text-sky-300 shadow-sm'
+          : 'bg-[#222] text-[#E83C00] shadow-sm'
+        : 'text-slate-500 hover:text-slate-300'
+    }`
 
   return (
     <DashboardLayout role="admin">
@@ -153,29 +170,42 @@ export function LeaderboardAdminPage() {
         </div>
 
         {/* Round Tab Selector */}
-        <div className="flex bg-[#111] p-1 rounded-2xl gap-1 w-max border border-white/10">
+        <div className="flex flex-wrap bg-[#111] p-1 rounded-2xl gap-1 w-max max-w-full border border-white/10">
           <button
-            onClick={() => handleRoundChange(1)}
-            className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${activeRound === 1 ? 'bg-[#222] text-[#E83C00] shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
+            onClick={() => handleBoardChange('main', 1)}
+            className={tabClass(boardKind === 'main' && activeRound === 1)}
           >
             Round 1 (All)
           </button>
           <button
-            onClick={() => handleRoundChange(2)}
-            className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${activeRound === 2 ? 'bg-[#222] text-[#E83C00] shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
+            onClick={() => handleBoardChange('main', 2)}
+            className={tabClass(boardKind === 'main' && activeRound === 2)}
           >
             Round 2 (Top 20)
           </button>
           <button
-            onClick={() => handleRoundChange(3)}
-            className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${activeRound === 3 ? 'bg-[#222] text-[#E83C00] shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
+            onClick={() => handleBoardChange('main', 3)}
+            className={tabClass(boardKind === 'main' && activeRound === 3)}
           >
             Winners (Top 5)
           </button>
+          <span className="w-px bg-white/10 self-stretch mx-0.5" aria-hidden />
+          <button
+            onClick={() => handleBoardChange('special', 1)}
+            className={tabClass(boardKind === 'special' && activeRound === 1, true)}
+          >
+            Special R1
+          </button>
+          <button
+            onClick={() => handleBoardChange('special', 2)}
+            className={tabClass(boardKind === 'special' && activeRound === 2, true)}
+          >
+            Special R2 (Top 5)
+          </button>
         </div>
 
-        {/* Top 5 podium — winners tab only */}
-        {activeRound === 3 && (
+        {/* Top 5 podium — main winners tab only */}
+        {boardKind === 'main' && activeRound === 3 && (
         <div className="grid grid-cols-5 gap-3">
           {display.slice(0, 5).map((_, i) => {
             const podiumOrder = [3, 1, 0, 2, 4]
@@ -214,6 +244,20 @@ export function LeaderboardAdminPage() {
           animate="visible"
           className="bg-[#0A0A0A] border border-white/10 rounded-2xl overflow-hidden shadow-2xl"
         >
+          <div className="px-5 py-3 border-b border-white/5 bg-[#111] flex items-center justify-between">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              {boardKind === 'special'
+                ? activeRound === 2
+                  ? 'Special Category · Round 2 (Top 5)'
+                  : 'Special Category · Round 1'
+                : activeRound === 3
+                  ? 'Main · Winners (Top 5)'
+                  : activeRound === 2
+                    ? 'Main · Round 2 (Top 20)'
+                    : 'Main · Round 1 (All)'}
+            </p>
+            <span className="text-[11px] font-bold text-slate-500">{display.length} teams</span>
+          </div>
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/5 bg-[#111]">
@@ -231,6 +275,13 @@ export function LeaderboardAdminPage() {
                 <tr>
                   <td colSpan={7} className="px-5 py-10 text-center text-sm text-slate-500 font-medium">
                     Loading this round's scores...
+                  </td>
+                </tr>
+              )}
+              {!loadingRound && display.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-5 py-10 text-center text-sm text-slate-500 font-medium">
+                    No teams on this board yet.
                   </td>
                 </tr>
               )}
@@ -260,7 +311,7 @@ export function LeaderboardAdminPage() {
                         {track.label}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-slate-400 font-medium text-xs hidden lg:table-cell">{entry.judgeCount > 0 ? '1 / 1' : '0 / 1'}</td>
+                    <td className="px-5 py-4 text-slate-400 font-medium text-xs hidden lg:table-cell">{entry.judgeCount > 0 ? `${entry.judgeCount}` : '0'}</td>
                     <td className="px-5 py-4 text-right">
                       <div className="font-display font-bold text-xl text-white">{entry.totalScore.toFixed(1)}</div>
                       {(entry as { adminOverride?: boolean }).adminOverride && (
@@ -271,7 +322,7 @@ export function LeaderboardAdminPage() {
                       <DeltaIcon curr={entry.rank} prev={entry.previousRank || entry.rank} />
                     </td>
                     <td className="px-5 py-4 text-center">
-                      <button 
+                      <button
                         onClick={() => handleEditScore(entry.teamId, entry.totalScore)}
                         className="text-slate-500 hover:text-white transition-colors inline-flex p-1.5 rounded-lg hover:bg-white/10"
                         title="Override score"
