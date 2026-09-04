@@ -411,30 +411,28 @@ function Stage({
   )
 }
 
-/** Soft rain of stage words — 5th place only. No bounce; ease-out settle then fade. */
+/** Soft rain of stage words — 5th place only. No place-rank words (avoids “Fourth/Fifth” ghosting in the title zone). */
 const FALL_WORDS = [
-  { text: 'SNAPSERVE', x: 6, size: '1.05rem', weight: 600, gold: true },
-  { text: 'VOBIZ', x: 48, size: '1.1rem', weight: 700, gold: true },
-  { text: 'GENXAI', x: 82, size: '1rem', weight: 650, gold: true },
-  { text: 'TELE CMI', x: 28, size: '0.95rem', weight: 600, gold: true },
-  { text: 'RENDINGTON', x: 60, size: '0.9rem', weight: 600, gold: true },
-  { text: 'VOICEATHON', x: 64, size: '0.95rem', weight: 500, gold: false },
-  { text: 'GRAND FINALE', x: 26, size: '1.4rem', weight: 700, gold: true },
-  { text: 'TOP 5', x: 78, size: '0.85rem', weight: 500, gold: false },
-  { text: 'FIFTH PLACE', x: 16, size: '1.6rem', weight: 800, gold: true },
-  { text: '2026', x: 72, size: '1.15rem', weight: 600, gold: false },
-  { text: 'VOICE AI', x: 40, size: '0.9rem', weight: 500, gold: false },
-  { text: 'CHAMPIONS', x: 50, size: '1.25rem', weight: 700, gold: true },
-  { text: 'STAGE', x: 10, size: '0.8rem', weight: 500, gold: false },
-  { text: 'UNSEAL', x: 84, size: '0.85rem', weight: 500, gold: false },
-  { text: 'REVEAL', x: 34, size: '1rem', weight: 600, gold: false },
-  { text: 'RANK 5', x: 56, size: '1rem', weight: 600, gold: true },
-  { text: 'LIVE', x: 22, size: '0.75rem', weight: 500, gold: false },
-  { text: 'PODIUM', x: 68, size: '0.85rem', weight: 500, gold: false },
-  { text: 'FINALISTS', x: 44, size: '1.05rem', weight: 600, gold: true },
-  { text: 'AWARD', x: 8, size: '0.8rem', weight: 500, gold: false },
-  { text: 'CORONATION', x: 58, size: '0.9rem', weight: 600, gold: false },
-  { text: 'NIGHT', x: 76, size: '0.75rem', weight: 500, gold: false },
+  { text: 'SNAPSERVE', x: 8, size: '1.1rem', weight: 700, gold: true },
+  { text: 'VOBIZ', x: 38, size: '1.05rem', weight: 700, gold: true },
+  { text: 'GENXAI', x: 68, size: '1rem', weight: 650, gold: true },
+  { text: 'TELE CMI', x: 18, size: '0.95rem', weight: 600, gold: true },
+  { text: 'RENDINGTON', x: 52, size: '0.95rem', weight: 600, gold: true },
+  { text: 'VOICEATHON', x: 78, size: '0.9rem', weight: 500, gold: false },
+  { text: 'GRAND FINALE', x: 30, size: '1.25rem', weight: 700, gold: true },
+  { text: 'TOP 5', x: 88, size: '0.85rem', weight: 500, gold: false },
+  { text: '2026', x: 12, size: '1.05rem', weight: 600, gold: false },
+  { text: 'VOICE AI', x: 58, size: '0.85rem', weight: 500, gold: false },
+  { text: 'CHAMPIONS', x: 42, size: '1.1rem', weight: 700, gold: true },
+  { text: 'STAGE', x: 74, size: '0.8rem', weight: 500, gold: false },
+  { text: 'UNSEAL', x: 24, size: '0.85rem', weight: 500, gold: false },
+  { text: 'REVEAL', x: 84, size: '0.9rem', weight: 600, gold: false },
+  { text: 'LIVE', x: 46, size: '0.75rem', weight: 500, gold: false },
+  { text: 'PODIUM', x: 62, size: '0.85rem', weight: 500, gold: false },
+  { text: 'FINALISTS', x: 34, size: '0.95rem', weight: 600, gold: true },
+  { text: 'AWARD', x: 6, size: '0.8rem', weight: 500, gold: false },
+  { text: 'CORONATION', x: 70, size: '0.85rem', weight: 600, gold: false },
+  { text: 'NIGHT', x: 90, size: '0.75rem', weight: 500, gold: false },
 ] as const
 
 function FallingWords({
@@ -461,8 +459,8 @@ function FallingWords({
         const start = (i / FALL_WORDS.length) * 0.42
         const local = clamp((rain - start) / 0.58)
         const settled = local >= 1 || hold > 0
-        // Soft ease — long drift into the lower half.
-        const y = -10 + easeOut(local, 2.1) * (70 + (i % 5) * 5)
+        // Keep the top title zone clear — drift only through the lower two-thirds.
+        const y = 32 + easeOut(local, 2.1) * (48 + (i % 5) * 4)
         const opacity =
           local <= 0
             ? 0
@@ -473,7 +471,7 @@ function FallingWords({
             : 0.42 + local * 0.36
         const rotate = settled
           ? (i % 2 === 0 ? -1 : 1) * (1.2 + (i % 3) * 0.4)
-          : (1 - easeOut(local, 1.8)) * ((i % 2 === 0 ? -1 : 1) * (6 + (i % 3)))
+          : (1 - easeOut(local, 1.8)) * ((i % 2 === 0 ? -1 : 1) * (5 + (i % 3)))
         return (
           <span
             key={word.text}
@@ -556,7 +554,8 @@ function PlaceReveal({
     : p < 0.07
     ? 0
     : clamp((p - 0.07) / 0.14)
-  const titleOn = !isAnimating || inHold || (revealLive && p >= 0.03)
+  const titleOn =
+    !isAnimating || (inHold && holdT > 0.2) || (revealLive && p >= 0.03)
   const lineOn = !isAnimating || (revealLive && p >= 0.10)
   const meta = PLACE[rank]
   const waitProgress = revealLive ? p : 0
@@ -575,7 +574,7 @@ function PlaceReveal({
         key={`place-${rank}`}
         className="relative z-10 flex w-full max-w-6xl flex-col items-center px-6 text-center"
         style={{
-          opacity: inRain ? 0.2 + rainT * 0.35 : inHold ? 0.55 + holdT * 0.45 : 1,
+          opacity: inRain ? 0 : inHold ? 0.45 + holdT * 0.55 : 1,
         }}
       >
         <motion.p
