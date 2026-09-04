@@ -47,12 +47,19 @@ const FINALIST_NODE_POSITIONS = [
   'left-0 top-[31%]',
 ]
 
-function FinalFiveVaultSeal() {
+const FINAL_TWO_NODE_POSITIONS = [
+  'left-0 top-[31%]',
+  'right-0 top-[31%]',
+]
+
+function FinaleVaultSeal({ places }: { places: number }) {
+  const isFinalTwo = places === 2
+  const nodes = isFinalTwo ? FINAL_TWO_NODE_POSITIONS : FINALIST_NODE_POSITIONS
   return (
     <div
       className="relative h-24 w-24 sm:h-28 sm:w-28"
       role="img"
-      aria-label="Five finalists secured for the winner reveal"
+      aria-label={isFinalTwo ? 'Winner and Runner secured for Special Category finale' : 'Five finalists secured for the winner reveal'}
     >
       <div className="absolute inset-3 rounded-full bg-amber-400/20 blur-2xl" />
       <motion.div
@@ -68,7 +75,7 @@ function FinalFiveVaultSeal() {
         <span className="absolute left-1/2 top-0 h-1 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-r from-transparent via-amber-200 to-transparent shadow-[0_0_12px_rgba(253,230,138,0.8)]" />
       </motion.div>
 
-      {FINALIST_NODE_POSITIONS.map((position, index) => (
+      {nodes.map((position, index) => (
         <motion.span
           key={position}
           className={`absolute z-20 flex h-3 w-3 items-center justify-center rounded-full border border-amber-200/70 bg-[#211205] shadow-[0_0_12px_rgba(251,191,36,0.7)] ${position}`}
@@ -97,10 +104,10 @@ function FinalFiveVaultSeal() {
         </svg>
         <Crown size={34} strokeWidth={1.8} className="relative z-10 text-amber-200 fill-amber-400/25 drop-shadow-[0_0_12px_rgba(251,191,36,0.65)]" />
       </div>
-      <div className="absolute left-1/2 -bottom-7 flex w-36 -translate-x-1/2 flex-col items-center gap-1.5">
+      <div className="absolute left-1/2 -bottom-7 flex w-40 -translate-x-1/2 flex-col items-center gap-1.5">
         <span className="h-px w-full bg-gradient-to-r from-transparent via-amber-400/55 to-transparent" />
         <span className="font-mono text-[8px] font-black tracking-[0.32em] text-amber-300/80">
-          FINAL FIVE
+          {isFinalTwo ? 'FINAL TWO' : 'FINAL FIVE'}
         </span>
         <span className="h-px w-full bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
       </div>
@@ -114,18 +121,20 @@ const READY_PARTICLES = [
   ['86%', '24%', 18, 0.7], ['93%', '61%', -20, 1.6],
 ] as const
 
-function FinaleReadyPodiums() {
+function FinaleReadyPodiums({ places = 5 }: { places?: number }) {
+  const isFinalTwo = places === 2
+  const placeList = isFinalTwo ? [1, 2] : [1, 2, 3, 4, 5]
   return (
-    <div className="mt-6 w-full max-w-5xl">
+    <div className={`mt-6 w-full ${isFinalTwo ? 'max-w-xl' : 'max-w-5xl'}`}>
       <div className="mb-4 flex items-center justify-center gap-5">
         <span className="h-px flex-1 bg-gradient-to-r from-transparent to-amber-400/30" />
         <span className="font-mono text-[10px] font-black uppercase tracking-[0.35em] text-amber-300/85">
-          5 Champions · One Stage
+          {isFinalTwo ? 'Winner · Runner' : '5 Champions · One Stage'}
         </span>
         <span className="h-px flex-1 bg-gradient-to-l from-transparent to-amber-400/30" />
       </div>
-      <div className="grid grid-cols-5 gap-2 sm:gap-6">
-        {[1, 2, 3, 4, 5].map((place, index) => (
+      <div className={`grid gap-4 sm:gap-8 ${isFinalTwo ? 'grid-cols-2' : 'grid-cols-5 gap-2 sm:gap-6'}`}>
+        {placeList.map((place, index) => (
           <motion.div
             key={place}
             className="flex min-w-0 flex-col items-center"
@@ -133,8 +142,10 @@ function FinaleReadyPodiums() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.08 * index }}
           >
-            <span className="mb-1 font-mono text-[10px] font-black text-amber-200/90 drop-shadow-[0_0_8px_rgba(251,191,36,0.45)]">{place}</span>
-            <div className="relative aspect-[640/583] w-full">
+            <span className="mb-1 font-mono text-[10px] font-black uppercase tracking-[0.18em] text-amber-200/90 drop-shadow-[0_0_8px_rgba(251,191,36,0.45)]">
+              {isFinalTwo ? (place === 1 ? 'Winner' : 'Runner') : place}
+            </span>
+            <div className={`relative aspect-[640/583] w-full ${isFinalTwo ? 'max-w-[200px]' : ''}`}>
               <motion.img
                 src="/images/finale-podium-transparent.png"
                 alt=""
@@ -145,10 +156,10 @@ function FinaleReadyPodiums() {
               <motion.span
                 className="absolute left-1/2 top-[43%] z-10 -translate-x-1/2 -translate-y-1/2 text-xl font-black text-amber-200 drop-shadow-[0_0_12px_rgba(251,191,36,0.8)] sm:text-3xl"
                 style={{ fontFamily: '"Libre Baskerville", "Times New Roman", Georgia, serif' }}
-                animate={place <= 2 ? { opacity: [0.55, 1, 0.55] } : undefined}
-                transition={place <= 2 ? { duration: 2.2, repeat: Infinity, delay: index * 0.25 } : undefined}
+                animate={{ opacity: [0.55, 1, 0.55] }}
+                transition={{ duration: 2.2, repeat: Infinity, delay: index * 0.25 }}
               >
-                {place <= 2 ? '?' : place}
+                {isFinalTwo || place <= 2 ? '?' : place}
               </motion.span>
             </div>
           </motion.div>
@@ -552,6 +563,7 @@ export function PremiumRevealCard({
 
   // ─── READY STATE ────────────────────────────────────────────────────────────
   if (revealedStep === 0 && !isDecrypting) {
+    const isSpecialFinale = isFinale && maxSteps === 2
     return (
       <div className="relative w-full">
         {/* Ambient Backlight Glow */}
@@ -594,7 +606,7 @@ export function PremiumRevealCard({
           }`}>
             {isFinale ? (
               <div className="mb-10">
-                <FinalFiveVaultSeal />
+                <FinaleVaultSeal places={maxSteps} />
               </div>
             ) : (
               <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center mx-auto mb-6">
@@ -614,25 +626,44 @@ export function PremiumRevealCard({
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
               </span>
-              <span>{isFinale ? 'GRAND FINALE • WINNER REVEAL' : `STAGE READY · TOP ${maxSteps} CEREMONY`}</span>
+              <span>
+                {isSpecialFinale
+                  ? 'SPECIAL CATEGORY • WINNER & RUNNER'
+                  : isFinale
+                    ? 'GRAND FINALE • WINNER REVEAL'
+                    : `STAGE READY · TOP ${maxSteps} CEREMONY`}
+              </span>
             </div>
 
             {/* Heading */}
             <h3 className="text-3xl sm:text-4xl font-black mb-2.5 text-white tracking-tight">
-              {isFinale ? 'The Champions Await' : 'Round 1 Graded & Verified'}
+              {isSpecialFinale
+                ? 'Winner & Runner Await'
+                : isFinale
+                  ? 'The Champions Await'
+                  : 'Round 1 Graded & Verified'}
             </h3>
             <p className="max-w-xl mx-auto text-xs sm:text-sm font-medium text-slate-300 leading-relaxed">
-              {isFinale
-                ? '5 Winners. One Unforgettable Reveal !!'
-                : `Waiting for admin to initiate the Top ${maxSteps} announcement (#${maxSteps} ➔ #1).`}
+              {isSpecialFinale
+                ? 'Two titles. One Special Category reveal.'
+                : isFinale
+                  ? '5 Winners. One Unforgettable Reveal !!'
+                  : `Waiting for admin to initiate the Top ${maxSteps} announcement (#${maxSteps} ➔ #1).`}
             </p>
-            {isFinale && <FinaleReadyPodiums />}
+            {isFinale && <FinaleReadyPodiums places={maxSteps} />}
           </div>
 
           {/* Footnote divider */}
           <div className="w-full pt-7 mt-7 border-t border-white/10 flex items-center justify-between text-xs font-mono text-slate-400 tracking-wider">
             <span>{isFinale ? 'Status: Vault Sealed' : 'Status: Ready'}</span>
-            <span>Next: {isFinale ? 'Unseal 5th Place' : `#${maxSteps}`}</span>
+            <span>
+              Next:{' '}
+              {isSpecialFinale
+                ? 'Reveal Runner'
+                : isFinale
+                  ? 'Unseal 5th Place'
+                  : `#${maxSteps}`}
+            </span>
           </div>
         </motion.div>
       </div>
