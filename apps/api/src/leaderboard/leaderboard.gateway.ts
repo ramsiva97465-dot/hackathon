@@ -21,6 +21,7 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
   server: Server
 
   private isTvMode = false
+  private certificatesReleased = false
   private isRevealing = false
   private revealRound = 2
   private revealStep = 0
@@ -59,6 +60,7 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
       const leaderboard = await this.leaderboardService.getLeaderboard()
       client.emit('leaderboard:update', leaderboard)
       client.emit('leaderboard:tv_mode', { tvMode: this.isTvMode })
+      client.emit('leaderboard:certificates_released', { released: this.certificatesReleased })
       client.emit('leaderboard:reveal_state', this.getRevealStatePayload())
       client.emit('leaderboard:special_reveal_state', this.getSpecialRevealStatePayload())
     } catch (err) {
@@ -75,12 +77,17 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
     const leaderboard = await this.leaderboardService.getLeaderboard()
     client.emit('leaderboard:update', leaderboard)
     client.emit('leaderboard:tv_mode', { tvMode: this.isTvMode })
+    client.emit('leaderboard:certificates_released', { released: this.certificatesReleased })
     client.emit('leaderboard:reveal_state', this.getRevealStatePayload())
     client.emit('leaderboard:special_reveal_state', this.getSpecialRevealStatePayload())
   }
 
   getTvMode(): boolean {
     return this.isTvMode
+  }
+
+  getCertificatesReleased(): boolean {
+    return this.certificatesReleased
   }
 
   getRevealState() {
@@ -111,6 +118,18 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
     }
   }
 
+  // Called when Admin releases / locks participation certificates
+  async broadcastCertificatesReleased(released: boolean) {
+    this.certificatesReleased = released
+    try {
+      if (!this.server) return
+      this.server.to('leaderboard').emit('leaderboard:certificates_released', { released })
+      console.log('[WS] Certificates released broadcast sent:', released)
+    } catch (err) {
+      console.error('[WS] Certificates released broadcast failed:', err)
+    }
+  }
+
   // Called when Admin triggers Stage Grand Reveal
   async broadcastRevealEvent(payload: { round: number; type: string; timestamp: number }) {
     if (this.specialIsRevealing) {
@@ -137,7 +156,7 @@ export class LeaderboardGateway implements OnGatewayConnection, OnGatewayDisconn
     const now = Date.now()
     // Step 4 runs the Final Two face-off: a ~10s left↔right shuffle of the two
     // remaining laurels before the runner-up locks in as 2nd place.
-    const finaleDurations = [0, 33000, 20000, 20000, 20000, 15000]
+    const finaleDurations = [0, 41000, 28000, 28000, 28000, 22000]
 
     if (normalizedRound === 3) {
       if (step === this.revealStep && this.revealRound === 3) return

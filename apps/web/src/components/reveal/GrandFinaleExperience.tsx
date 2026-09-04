@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { getTrackConfig } from '@/lib/utils'
 import { playFinaleRevealBed, stopFinaleRevealBed } from '@/lib/finaleRevealAudio'
 
 export type GrandFinaleEntry = {
@@ -37,58 +36,57 @@ function placeKicker(rank: number, overrides?: Partial<Record<number, string>>) 
 const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
 const PODIUM = '/images/finale-podium-transparent.png'
 const EASE = [0.22, 1, 0.36, 1] as const
+/** Fixed subtitle under the revealed team name on LCD. */
+const REVEAL_META = 'AI குரல் · VOICE FOR TAMIL NADU · 2026'
 
 function clamp(n: number) {
   return Math.min(1, Math.max(0, n))
-}
-
-function scrambleName(target: string, progress: number, tick: number) {
-  const name = (target || 'FINALIST').toUpperCase()
-  const hold = Math.max(0, name.trimEnd().length - 1)
-  let out = ''
-  for (let i = 0; i < name.length; i++) {
-    if (name[i] === ' ') {
-      out += ' '
-      continue
-    }
-    const lockAt = 0.88 + (i / Math.max(name.length, 1)) * 0.07
-    if (progress >= 1 || (progress >= lockAt && i !== hold)) out += name[i]
-    else out += ALPHA[(tick + i * 5) % ALPHA.length]
-  }
-  return out
 }
 
 function easeOut(t: number, power = 3.4) {
   return 1 - Math.pow(1 - clamp(t), power)
 }
 
-/** Rise first, still edge-on. Then turn to face. `tease` turns it away once. */
+/** Shared place-reveal phase map (fraction of the reveal beat after any 5th preface).
+ * crown fast→slow rise · countdown · roll · score · name
+ */
+export const PLACE_CROWN_END = 0.36
+export const PLACE_COUNT_END = 0.52
+export const PLACE_ROLL_END = 0.70
+export const PLACE_SCORE_END = 0.82
+
+/** Fast spin from bottom, then slow while rising into the final slot. */
 function wreathYaw(progress: number, live: boolean, tease = false) {
   if (!live) return 0
-  if (progress <= 0.30) return 82
-  if (!tease) {
-    if (progress < 0.62) return 82 * (1 - easeOut((progress - 0.30) / 0.32, 3.8))
-    if (progress < 0.70) return -4 * Math.sin(Math.PI * ((progress - 0.62) / 0.08))
-    return 0
+  if (progress >= PLACE_CROWN_END) return 0
+  const t = clamp(progress / PLACE_CROWN_END)
+  // First half: fast spin (many turns). Second half: slow settle to face-on.
+  if (t < 0.45) {
+    const ft = t / 0.45
+    const turns = tease ? 1.6 : 2.2
+    return (100 + turns * 360) * (1 - easeOut(ft, 1.6))
   }
-  if (progress < 0.50) return 82 * (1 - easeOut((progress - 0.30) / 0.20, 3.4))
-  if (progress < 0.54) return 0
-  if (progress < 0.64) return 78 * easeOut((progress - 0.54) / 0.10, 2.2)
-  if (progress < 0.75) return 78 * (1 - easeOut((progress - 0.64) / 0.11, 3.2))
-  return 0
+  const st = (t - 0.45) / 0.55
+  const turns = tease ? 0.35 : 0.45
+  return (turns * 360) * (1 - easeOut(st, 3.2))
 }
 
 function wreathRise(progress: number, live: boolean) {
   if (!live) return 0
-  if (progress <= 0.08) return 96
-  if (progress >= 0.34) return 0
-  return 96 * (1 - easeOut((progress - 0.08) / 0.26, 3.4))
+  if (progress >= PLACE_CROWN_END) return 0
+  const t = clamp(progress / PLACE_CROWN_END)
+  // Start deep below the frame, rise quickly early, then ease into final seat.
+  const from = 220
+  if (t < 0.4) {
+    return from * (1 - easeOut(t / 0.4, 1.8) * 0.55)
+  }
+  return from * 0.45 * (1 - easeOut((t - 0.4) / 0.6, 3.4))
 }
 
-function lockSweep(progress: number, live: boolean, tease: boolean) {
+function lockSweep(progress: number, live: boolean, _tease: boolean) {
   if (!live) return -1
-  const start = tease ? 0.72 : 0.66
-  const t = (progress - start) / 0.13
+  const start = PLACE_CROWN_END - 0.03
+  const t = (progress - start) / 0.07
   if (t <= 0 || t >= 1) return -1
   return t
 }
@@ -196,24 +194,30 @@ function Wreath({
           className="pointer-events-none absolute z-10 flex items-center justify-center"
           style={{
             left: '50%',
-            top: '42%',
-            width: '54%',
-            height: '38%',
+            top: '43%',
+            width: '58%',
+            height: '46%',
             transform: 'translate(-50%, -50%)',
+            containerType: 'size',
           }}
         >
           <AnimatePresence mode="wait">
-            {showGlyph && (
+            {showGlyph && glyph !== '' && (
               <motion.span
                 key={glyph}
                 initial={{ opacity: 0, scale: 0.86 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.28, ease: EASE }}
-                className={`flex h-[1em] w-[1em] items-center justify-center text-center font-serif font-black leading-none ${
+                className={`flex items-center justify-center text-center font-serif font-black leading-none ${
                   locked ? 'text-amber-200' : 'text-amber-200/40'
                 }`}
-                style={{ fontSize: '2.15em' }}
+                style={{
+                  fontSize: 'clamp(2.75rem, 82cqh, 9rem)',
+                  textShadow: locked
+                    ? '0 0 28px rgba(251, 191, 36, 0.45), 0 2px 0 rgba(0,0,0,0.35)'
+                    : undefined,
+                }}
               >
                 {glyph}
               </motion.span>
@@ -225,48 +229,48 @@ function Wreath({
   )
 }
 
-function flapGlyph(elapsed: number, index: number, progress: number) {
-  const interval = 48 + clamp(progress / 0.44) * 130
+function flapGlyph(elapsed: number, index: number, rollT: number) {
+  // Slow split-flap — starts lively, eases slower toward lock. rollT is 0→1 within rolling only.
+  const interval = 110 + clamp(rollT) * 220
   const n = Math.floor(elapsed / interval) + index * 7
   return ALPHA[Math.abs(n) % ALPHA.length]
 }
 
-function isNameCountdown(progress: number) {
-  return progress >= 0.46 && progress < 0.88
-}
-
-function nameCountdown(progress: number) {
-  const t = clamp((progress - 0.46) / 0.42)
-  if (t < 0.38) return 3
-  if (t < 0.70) return 2
+function placeCountdownDigit(p: number) {
+  const t = clamp((p - PLACE_CROWN_END) / (PLACE_COUNT_END - PLACE_CROWN_END))
+  if (t < 0.2) return 5
+  if (t < 0.4) return 4
+  if (t < 0.6) return 3
+  if (t < 0.8) return 2
   return 1
 }
 
 function NameWait({
-  progress,
-  elapsed,
+  phase,
+  digit,
+  rollElapsed,
+  rollT,
 }: {
-  progress: number
-  elapsed: number
+  phase: 'count' | 'roll'
+  digit: number
+  rollElapsed: number
+  rollT: number
 }) {
-  const counting = isNameCountdown(progress)
-  const n = nameCountdown(progress)
-
-  if (counting) {
+  if (phase === 'count') {
     return (
       <motion.div
-        key={`count-${n}`}
+        key={`count-${digit}`}
         initial={{ opacity: 0, y: 28 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -22 }}
-        transition={{ duration: 0.28, ease: EASE }}
+        transition={{ duration: 0.38, ease: EASE }}
         className="flex flex-col items-center"
       >
         <p className="text-[11px] font-medium uppercase tracking-[0.34em] text-white/35">
           Name in
         </p>
         <p className="mt-1 font-black tabular-nums leading-none text-white text-8xl sm:text-9xl">
-          {n}
+          {digit}
         </p>
       </motion.div>
     )
@@ -274,15 +278,16 @@ function NameWait({
 
   return (
     <motion.div
+      key="roll"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, filter: 'blur(8px)', y: -8 }}
-      transition={{ duration: 0.45, ease: EASE }}
-      className="mt-10 flex flex-col items-center sm:mt-14"
+      transition={{ duration: 0.55, ease: EASE }}
+      className="mt-6 flex flex-col items-center sm:mt-8"
     >
       <div className="flex items-center gap-1.5 sm:gap-2" style={{ perspective: 700 }}>
         {[0, 1, 2, 3, 4].map((i) => {
-          const glyph = flapGlyph(elapsed, i, progress)
+          const glyph = flapGlyph(rollElapsed, i, rollT)
           return (
             <div
               key={i}
@@ -296,7 +301,7 @@ function NameWait({
                   initial={{ y: '70%', opacity: 0.35 }}
                   animate={{ y: '0%', opacity: 1 }}
                   exit={{ y: '-70%', opacity: 0 }}
-                  transition={{ duration: 0.12, ease: 'easeOut' }}
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
                   className="absolute inset-0 flex items-center justify-center font-mono text-2xl font-bold text-white/80 sm:text-3xl"
                 >
                   {glyph}
@@ -314,12 +319,18 @@ function NameWait({
 }
 
 const STAGE_BG = '/videos/finale-stage-bg.mp4'
-export const FINALE_BEAT_MS = 20_000
+/** Shared Top 5 place beat (4th–2nd + 5th after rain/hold): countdown → roll → name. */
+export const FINALE_BEAT_MS = 28_000
 /** 5th place opens with a slow word rain, then a held pause, then the shared reveal beat. */
 export const FIFTH_RAIN_MS = 8_000
 export const FIFTH_HOLD_MS = 5_000
 export const FIFTH_PREFACE_MS = FIFTH_RAIN_MS + FIFTH_HOLD_MS
 export const FIFTH_TOTAL_MS = FIFTH_PREFACE_MS + FINALE_BEAT_MS
+/** Grand Champion popup: countdown → rolling → winner hold. */
+export const CHAMPION_COUNT_MS = 6_000
+export const CHAMPION_ROLL_MS = 6_000
+export const CHAMPION_WIN_AT_MS = CHAMPION_COUNT_MS + CHAMPION_ROLL_MS
+export const CHAMPION_TOTAL_MS = 22_000
 
 function StageMedia({
   mediaKey,
@@ -421,7 +432,7 @@ function Stage({
 const FALL_WORDS = [
   { text: 'SNAPSERVE', x: 8, size: '1.1rem', weight: 700, gold: true },
   { text: 'VOBIZ', x: 38, size: '1.05rem', weight: 700, gold: true },
-  { text: 'GENXAI', x: 68, size: '1rem', weight: 650, gold: true },
+  { text: 'zenXai', x: 68, size: '1rem', weight: 650, gold: true },
   { text: 'TELE CMI', x: 18, size: '0.95rem', weight: 600, gold: true },
   { text: 'RENDINGTON', x: 52, size: '0.95rem', weight: 600, gold: true },
   { text: 'VOICEATHON', x: 78, size: '0.9rem', weight: 500, gold: false },
@@ -506,7 +517,6 @@ function PlaceReveal({
   rank,
   progress,
   isAnimating,
-  tick,
   elapsed,
   durationMs,
   placeKickers,
@@ -515,7 +525,6 @@ function PlaceReveal({
   rank: number
   progress: number
   isAnimating: boolean
-  tick: number
   elapsed: number
   durationMs: number
   placeKickers?: Partial<Record<number, string>>
@@ -540,18 +549,16 @@ function PlaceReveal({
       : progress
   const revealLive = !isAnimating || !isFifth || !inPreface
   const tease = rank === 4
-  const numberOn = revealLive && (!isAnimating || p >= (tease ? 0.75 : 0.70))
-  const nameLive = revealLive && (!isAnimating || p >= 0.88)
-  const nameLocked = !isAnimating || p >= 0.94
-  const metaOn = revealLive && (!isAnimating || p >= 0.94)
-  const scoreOn = revealLive && (!isAnimating || p >= 0.96)
-  const scoreT = !isAnimating ? 1 : clamp((p - 0.96) / 0.04)
+  // Sequence: crown fast→slow rise → countdown → roll → score → team name.
+  const numberOn = revealLive && (!isAnimating || p >= PLACE_CROWN_END - 0.02)
+  const inCount = revealLive && isAnimating && p >= PLACE_CROWN_END && p < PLACE_COUNT_END
+  const inRoll = revealLive && isAnimating && p >= PLACE_COUNT_END && p < PLACE_ROLL_END
+  const scoreOn = revealLive && (!isAnimating || p >= PLACE_ROLL_END)
+  const scoreT = !isAnimating ? 1 : clamp((p - PLACE_ROLL_END) / (PLACE_SCORE_END - PLACE_ROLL_END))
   const score = Number(entry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
-  const track = entry?.track ? getTrackConfig(entry.track) : null
-  const liveName = useMemo(
-    () => scrambleName(entry?.teamName || '', p, tick),
-    [entry?.teamName, p, tick],
-  )
+  const nameLive = revealLive && (!isAnimating || p >= PLACE_SCORE_END)
+  const nameLocked = !isAnimating || p >= PLACE_SCORE_END
+  const metaOn = revealLive && (!isAnimating || p >= PLACE_SCORE_END + 0.04)
   const yaw = wreathYaw(p, revealLive && isAnimating, tease)
   const rise = wreathRise(p, revealLive && isAnimating)
   const sweep = lockSweep(p, revealLive && isAnimating, tease)
@@ -559,15 +566,17 @@ function PlaceReveal({
     ? 1
     : !revealLive
     ? 0
-    : p < 0.07
+    : p < 0.02
     ? 0
-    : clamp((p - 0.07) / 0.14)
+    : clamp((p - 0.02) / 0.1)
   const titleOn =
-    !isAnimating || (inHold && holdT > 0.2) || (revealLive && p >= 0.03)
-  // Keep the rule with the kicker so early Fourth/Fifth frames still look finished.
+    !isAnimating || (inHold && holdT > 0.2) || (revealLive && p >= 0.02)
   const lineOn = titleOn
   const meta = { kicker: placeKicker(rank, placeKickers) }
-  const waitProgress = revealLive ? p : 0
+  const revealElapsed = Math.max(0, elapsed - (isFifth ? FIFTH_PREFACE_MS : 0))
+  const rollElapsed = Math.max(0, revealElapsed - PLACE_COUNT_END * revealSpan)
+  const rollT = clamp((p - PLACE_COUNT_END) / (PLACE_ROLL_END - PLACE_COUNT_END))
+  const countDigit = placeCountdownDigit(p)
   const stageProgress = !isAnimating
     ? 1
     : inPreface
@@ -610,7 +619,7 @@ function PlaceReveal({
         <div className="mt-6" style={{ opacity: wreathOpacity }}>
           <Wreath
             className="h-[300px] w-[328px] sm:h-[380px] sm:w-[416px] lg:h-[420px] lg:w-[460px]"
-            glyph={numberOn ? String(rank) : '?'}
+            glyph={numberOn ? String(rank) : ''}
             locked={numberOn}
             rotateY={yaw}
             y={rise}
@@ -619,28 +628,40 @@ function PlaceReveal({
           />
         </div>
 
-        <div className="mt-4 flex min-h-[12rem] w-full flex-col items-center justify-start sm:min-h-[13.5rem]">
+        <div className="mt-5 h-16 sm:h-20">
+          {scoreOn && (
+            <motion.p
+              initial={{ opacity: 0, y: 12, scale: 0.92 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.7, ease: EASE }}
+              className="font-black tabular-nums leading-none text-amber-200 text-5xl sm:text-6xl lg:text-7xl"
+            >
+              {score.toFixed(1)}
+            </motion.p>
+          )}
+        </div>
+
+        <div className="mt-2 flex min-h-[10rem] w-full flex-col items-center justify-start sm:min-h-[11.5rem]">
           <AnimatePresence mode="wait">
             {nameLive ? (
               <motion.h2
-                key={nameLocked ? 'locked' : 'spin'}
-                initial={nameLocked ? { opacity: 0, y: 14, filter: 'blur(8px)' } : { opacity: 0 }}
+                key="locked-name"
+                initial={{ opacity: 0, y: 14, filter: 'blur(8px)' }}
                 animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                 exit={{ opacity: 0, scale: 0.96 }}
-                transition={{ duration: nameLocked ? 0.7 : 0.35, ease: EASE }}
-                className={`max-w-[16ch] text-balance font-black tracking-tight sm:max-w-[20ch] ${
-                  nameLocked
-                    ? 'text-5xl text-white sm:text-7xl lg:text-8xl'
-                    : 'font-mono text-3xl text-white/40 sm:text-5xl'
-                }`}
+                transition={{ duration: 0.75, ease: EASE }}
+                className="max-w-[16ch] text-balance text-5xl font-black tracking-tight text-white sm:max-w-[20ch] sm:text-7xl lg:text-8xl"
               >
-                {nameLocked ? (entry?.teamName || 'Unavailable') : liveName}
+                {entry?.teamName || 'Unavailable'}
               </motion.h2>
-            ) : revealLive ? (
-              <motion.div
-                key={isNameCountdown(waitProgress) ? `c-${nameCountdown(waitProgress)}` : 'roll'}
-              >
-                <NameWait progress={waitProgress} elapsed={elapsed - (isFifth ? FIFTH_PREFACE_MS : 0)} />
+            ) : inCount || inRoll ? (
+              <motion.div key={inCount ? `c-${countDigit}` : 'roll'}>
+                <NameWait
+                  phase={inCount ? 'count' : 'roll'}
+                  digit={countDigit}
+                  rollElapsed={rollElapsed}
+                  rollT={rollT}
+                />
               </motion.div>
             ) : null}
           </AnimatePresence>
@@ -653,24 +674,10 @@ function PlaceReveal({
                 transition={{ duration: 0.5, ease: EASE }}
                 className="text-sm text-white/40 sm:text-base"
               >
-                {entry?.college || 'Tamil Nadu'}
-                {track ? ` · ${track.label}` : ''}
+                {REVEAL_META}
               </motion.p>
             )}
           </div>
-        </div>
-
-        <div className="mt-1 h-16 sm:h-20">
-          {scoreOn && (
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, ease: EASE }}
-              className="font-black tabular-nums leading-none text-amber-200 text-5xl sm:text-6xl lg:text-7xl"
-            >
-              {score.toFixed(1)}
-            </motion.p>
-          )}
         </div>
       </motion.div>
     </Stage>
@@ -679,7 +686,7 @@ function PlaceReveal({
 
 function FinalTwoReveal({
   secondEntry,
-  championEntry,
+  championEntry: _championEntry,
   progress,
   isAnimating,
   placeKickers,
@@ -701,9 +708,9 @@ function FinalTwoReveal({
   let backScale = 1
   let pick = 0
 
-  if (p >= 0.05 && p < 0.68) {
-    // Long face-off shuffle — names stay sealed as ???
-    const sT = (p - 0.05) / 0.63
+  if (p >= 0.05 && p < 0.66) {
+    // Long face-off shuffle — wreaths stay blank (no ? / ???).
+    const sT = (p - 0.05) / 0.61
     const theta = sT * Math.PI * SWAPS
     const c = Math.cos(theta)
     secondLeft = 50 + SPREAD * c
@@ -711,159 +718,148 @@ function FinalTwoReveal({
     secondFront = Math.sin(theta) > 0
     const near = 1 - Math.min(1, Math.abs(c) / 0.5)
     backScale = 1 - 0.18 * near
-  } else if (p >= 0.68 && p < 0.78) {
-    // Brief hold at the slots — room still waiting.
+  } else if (p >= 0.66 && p < 0.76) {
     secondLeft = 50 + SPREAD
     champLeft = 50 - SPREAD
     secondFront = true
-  } else if (p >= 0.78) {
-    // Slow pick: runner-up glides to centre; champion dims but stays on-frame.
-    pick = clamp((p - 0.78) / 0.14)
+  } else if (p >= 0.76) {
+    // Slow pick: runner-up eases to centre; champion dims but stays on-frame.
+    pick = easeOut(clamp((p - 0.76) / 0.14), 2.6)
     secondLeft = 50 + SPREAD + (0 - SPREAD) * pick
-    champLeft = 50 - SPREAD + (16 - (50 - SPREAD)) * pick // eases toward ~16%, never off-screen
+    champLeft = 50 - SPREAD + (16 - (50 - SPREAD)) * pick
   }
 
-  const secondScale = p < 0.68 ? (secondFront ? 1 : backScale) : 1 + 0.1 * pick
-  const champScale = p < 0.68 ? (secondFront ? backScale : 1) : 1 - 0.1 * pick
-  const secondZ = p < 0.68 ? (secondFront ? 3 : 2) : 3
-  const champZ = p < 0.68 ? (secondFront ? 2 : 3) : 2
-  const secondOpacity = p < 0.68 ? (secondFront ? 1 : 0.72) : 1
-  const champOpacity = p < 0.68 ? (secondFront ? 0.72 : 1) : Math.max(0.12, 1 - pick * 0.88)
+  const secondScale = p < 0.66 ? (secondFront ? 1 : backScale) : 1 + 0.08 * pick
+  const champScale = p < 0.66 ? (secondFront ? backScale : 1) : 1 - 0.1 * pick
+  const secondZ = p < 0.66 ? (secondFront ? 3 : 2) : 3
+  const champZ = p < 0.66 ? (secondFront ? 2 : 3) : 2
+  const secondOpacity = p < 0.66 ? (secondFront ? 1 : 0.72) : 1
+  const champOpacity = p < 0.66 ? (secondFront ? 0.72 : 1) : Math.max(0.1, 1 - pick * 0.9)
 
-  // Delay the "Second Place" identity — no sudden lock while champion is still mid-exit.
-  const numberOn = p >= 0.9
-  const titleSecond = p >= 0.88
-  const smallLabels = p < 0.9 ? 1 : clamp(1 - (p - 0.9) / 0.05)
-  const bigNameOn = p >= 0.92
-  const metaOn = p >= 0.95
-  const scoreOn = p >= 0.97
-  const scoreT = clamp((p - 0.97) / 0.03)
+  // Soft lock-in — no sudden pop: glyph → score → name.
+  const numberOn = !isAnimating || p >= 0.9
+  const titleSecond = !isAnimating || p >= 0.88
+  const scoreOn = !isAnimating || p >= 0.92
+  const scoreT = !isAnimating ? 1 : clamp((p - 0.92) / 0.04)
   const score = Number(secondEntry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
-  const track = secondEntry?.track ? getTrackConfig(secondEntry.track) : null
+  const bigNameOn = !isAnimating || p >= 0.96
+  const metaOn = !isAnimating || p >= 0.975
   const secondSweep = (() => {
-    const t = (p - 0.9) / 0.05
+    const t = (p - 0.9) / 0.06
     if (t <= 0 || t >= 1) return -1
     return t
   })()
+  void _championEntry
 
   const laurelCls = 'h-[200px] w-[220px] sm:h-[248px] sm:w-[272px] lg:h-[280px] lg:w-[308px]'
 
   return (
     <Stage cinematic progress={p}>
-      <div className="relative z-10 flex h-full w-full max-w-6xl flex-col items-center justify-start overflow-visible px-6 pt-[3.5vh] text-center sm:pt-[4.5vh]">
-        <AnimatePresence mode="wait">
-          <motion.p
-            key={titleSecond ? 'second' : 'final-two'}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.65, ease: EASE }}
-            className="text-sm font-medium tracking-[0.38em] text-white/50 uppercase sm:text-base"
-          >
-            {titleSecond ? placeKicker(2, placeKickers) : 'The Final Two'}
-          </motion.p>
-        </AnimatePresence>
-        <span
-          aria-hidden
-          className="mt-2.5 h-px w-[3.25rem] sm:w-16"
-          style={{
-            background:
-              'linear-gradient(90deg, transparent 0%, rgba(245,214,140,0.25) 18%, rgba(245,214,140,0.95) 50%, rgba(245,214,140,0.25) 82%, transparent 100%)',
-            boxShadow: '0 0 10px rgba(245,214,140,0.28)',
-          }}
-        />
-
-        <div className="relative mt-8 h-[268px] w-full overflow-visible sm:h-[320px] lg:h-[356px]">
-          {/* Champion laurel — stays sealed until Step 5; fades aside, never clipped */}
-          <div
-            className="absolute top-0 flex flex-col items-center"
-            style={{
-              left: `${champLeft}%`,
-              transform: 'translateX(-50%)',
-              zIndex: champZ,
-              opacity: champOpacity,
-              willChange: 'left, opacity',
-            }}
-          >
-            <div style={{ transform: `scale(${champScale})` }}>
-              <Wreath className={laurelCls} glyph="?" />
-            </div>
-            <p
-              aria-hidden
-              className="mt-3 font-mono text-2xl font-bold tracking-[0.35em] text-white/25 sm:text-3xl"
-              style={{ opacity: p < 0.78 ? 0.7 : Math.max(0, 0.7 - pick) }}
-            >
-              ???
-            </p>
-          </div>
-
-          {/* Runner-up laurel — locks with "2" only after the pick settles */}
-          <div
-            className="absolute top-0 flex flex-col items-center"
-            style={{
-              left: `${secondLeft}%`,
-              transform: 'translateX(-50%)',
-              zIndex: secondZ,
-              opacity: secondOpacity,
-              willChange: 'left',
-            }}
-          >
-            <div style={{ transform: `scale(${secondScale})` }}>
-              <Wreath
-                className={laurelCls}
-                glyph={numberOn ? '2' : '?'}
-                locked={numberOn}
-                sweep={secondSweep}
-                idle={!isAnimating}
-              />
-            </div>
-            <p
-              aria-hidden
-              className="mt-3 font-mono text-2xl font-bold tracking-[0.35em] text-white/25 sm:text-3xl"
-              style={{ opacity: smallLabels }}
-            >
-              ???
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-2 flex min-h-[7rem] flex-col items-center justify-start sm:min-h-[8.5rem]">
-          {bigNameOn && (
-            <motion.h2
-              initial={{ opacity: 0, y: 14, filter: 'blur(8px)' }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              transition={{ duration: 0.85, ease: EASE }}
-              className="max-w-[16ch] text-balance text-5xl font-black tracking-tight text-white sm:max-w-[20ch] sm:text-7xl lg:text-8xl"
-            >
-              {secondEntry?.teamName || 'Unavailable'}
-            </motion.h2>
-          )}
-          <div className="mt-3 h-6">
-            {metaOn && (
-              <motion.p
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, ease: EASE }}
-                className="text-sm text-white/40 sm:text-base"
-              >
-                {secondEntry?.college || 'Tamil Nadu'}
-                {track ? ` · ${track.label}` : ''}
-              </motion.p>
-            )}
-          </div>
-        </div>
-
-        <div className="mt-1 h-16 sm:h-20">
-          {scoreOn && (
+      <div className="relative z-10 flex h-full w-full max-w-6xl flex-col items-center overflow-visible px-6 text-center">
+        {/* Title stays top — crowns sit in the vertical middle */}
+        <div className="shrink-0 pt-[3.5vh] sm:pt-[4.5vh]">
+          <AnimatePresence mode="wait">
             <motion.p
-              initial={{ opacity: 0, y: 10 }}
+              key={titleSecond ? 'second' : 'final-two'}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, ease: EASE }}
-              className="font-black tabular-nums leading-none text-amber-200 text-5xl sm:text-6xl lg:text-7xl"
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.7, ease: EASE }}
+              className="text-sm font-medium tracking-[0.38em] text-white/50 uppercase sm:text-base"
             >
-              {score.toFixed(1)}
+              {titleSecond ? placeKicker(2, placeKickers) : 'The Final Two'}
             </motion.p>
-          )}
+          </AnimatePresence>
+          <span
+            aria-hidden
+            className="mx-auto mt-2.5 block h-px w-[3.25rem] sm:w-16"
+            style={{
+              background:
+                'linear-gradient(90deg, transparent 0%, rgba(245,214,140,0.25) 18%, rgba(245,214,140,0.95) 50%, rgba(245,214,140,0.25) 82%, transparent 100%)',
+              boxShadow: '0 0 10px rgba(245,214,140,0.28)',
+            }}
+          />
+        </div>
+
+        <div className="relative flex min-h-0 w-full flex-1 flex-col items-center justify-center pb-[6vh]">
+          <div className="relative h-[220px] w-full overflow-visible sm:h-[268px] lg:h-[300px]">
+            <div
+              className="absolute top-1/2 flex flex-col items-center"
+              style={{
+                left: `${champLeft}%`,
+                transform: 'translate(-50%, -50%)',
+                zIndex: champZ,
+                opacity: champOpacity,
+                willChange: 'left, opacity',
+              }}
+            >
+              <div style={{ transform: `scale(${champScale})` }}>
+                <Wreath className={laurelCls} glyph="" />
+              </div>
+            </div>
+
+            <div
+              className="absolute top-1/2 flex flex-col items-center"
+              style={{
+                left: `${secondLeft}%`,
+                transform: 'translate(-50%, -50%)',
+                zIndex: secondZ,
+                opacity: secondOpacity,
+                willChange: 'left',
+              }}
+            >
+              <div style={{ transform: `scale(${secondScale})` }}>
+                <Wreath
+                  className={laurelCls}
+                  glyph={numberOn ? '2' : ''}
+                  locked={numberOn}
+                  sweep={secondSweep}
+                  idle={!isAnimating || p >= 0.96}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 flex min-h-[9rem] flex-col items-center justify-start sm:min-h-[10.5rem]">
+            <div className="h-14 sm:h-16">
+              {scoreOn && (
+                <motion.p
+                  initial={{ opacity: 0, y: 16, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.85, ease: EASE }}
+                  className="font-black tabular-nums leading-none text-amber-200 text-5xl sm:text-6xl lg:text-7xl"
+                >
+                  {score.toFixed(1)}
+                </motion.p>
+              )}
+            </div>
+
+            <div className="mt-3">
+              {bigNameOn && (
+                <motion.h2
+                  initial={{ opacity: 0, y: 18, filter: 'blur(10px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  transition={{ duration: 0.95, ease: EASE }}
+                  className="max-w-[16ch] text-balance text-5xl font-black tracking-tight text-white sm:max-w-[20ch] sm:text-7xl lg:text-8xl"
+                >
+                  {secondEntry?.teamName || 'Unavailable'}
+                </motion.h2>
+              )}
+            </div>
+
+            <div className="mt-3 h-6">
+              {metaOn && (
+                <motion.p
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.55, ease: EASE }}
+                  className="text-sm text-white/40 sm:text-base"
+                >
+                  {REVEAL_META}
+                </motion.p>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </Stage>
@@ -881,26 +877,23 @@ function Champion({
   finished: boolean
   placeKickers?: Partial<Record<number, string>>
 }) {
-  // Full champion popup fits a 15s beat: countdown → blackout → winner hold.
-  const stage = finished || elapsed >= 9_000
+  // One 22s beat: countdown → rolling tiles → winner hold (until stepDuration ends).
+  const COUNT_MS = CHAMPION_COUNT_MS
+  const ROLL_MS = CHAMPION_ROLL_MS
+  const WIN_AT = CHAMPION_WIN_AT_MS
+  const stage = finished || elapsed >= WIN_AT
     ? 'winner'
-    : elapsed < 5_000
+    : elapsed < COUNT_MS
     ? 'count'
-    : elapsed < 5_800
-    ? 'hold'
-    : elapsed < 6_600
-    ? 'black'
-    : elapsed < 7_800
-    ? 'spark'
-    : 'flash'
-  const n = Math.max(1, 5 - Math.floor(elapsed / 1_000))
-  const scoreT = finished ? 1 : clamp((elapsed - 9_000) / 800)
+    : 'roll'
+  const n = Math.max(1, 5 - Math.floor(elapsed / 1_200))
+  const rollProgress = clamp((elapsed - COUNT_MS) / ROLL_MS)
+  const scoreT = finished ? 1 : clamp((elapsed - WIN_AT) / 1_000)
   const score = Number(entry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
-  const track = entry?.track ? getTrackConfig(entry.track) : null
-  const winOpen = finished ? 1 : clamp((elapsed - 9_000) / 900)
+  const winOpen = finished ? 1 : clamp((elapsed - WIN_AT) / 1_100)
   const champSweep = (() => {
     if (stage !== 'winner' || finished) return -1
-    const t = (elapsed - 9_100) / 900
+    const t = (elapsed - WIN_AT - 200) / 1_000
     if (t <= 0 || t >= 1) return -1
     return t
   })()
@@ -908,13 +901,13 @@ function Champion({
   return (
     <Stage cinematic={stage === 'winner'} progress={stage === 'winner' ? winOpen : 1}>
       <AnimatePresence mode="wait">
-        {(stage === 'count' || stage === 'hold') && (
+        {stage === 'count' && (
           <motion.div
             key={`n-${n}`}
             initial={{ opacity: 0, y: 56 }}
-            animate={{ opacity: 1, y: 0, scale: stage === 'hold' ? 1.04 : 1 }}
+            animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -40 }}
-            transition={{ duration: 0.4, ease: EASE }}
+            transition={{ duration: 0.45, ease: EASE }}
             className="relative z-10 flex flex-col items-center"
           >
             <p className="text-[13px] font-medium uppercase tracking-[0.34em] text-white/35">
@@ -925,27 +918,48 @@ function Champion({
             </p>
           </motion.div>
         )}
-        {stage === 'black' && (
-          <motion.div key="black" className="absolute inset-0 bg-black" />
-        )}
-        {stage === 'spark' && (
-          <motion.div key="spark" className="absolute inset-0 flex items-center justify-center">
-            <motion.span
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: [0, 1, 9], opacity: [0, 1, 0] }}
-              transition={{ duration: 1.1, ease: EASE }}
-              className="h-2 w-2 rounded-full bg-amber-100"
-            />
-          </motion.div>
-        )}
-        {stage === 'flash' && (
+        {stage === 'roll' && (
           <motion.div
-            key="flash"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 1, 0] }}
-            transition={{ duration: 0.42 }}
-            className="absolute inset-0 bg-white"
-          />
+            key="champ-roll"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, filter: 'blur(8px)' }}
+            transition={{ duration: 0.55, ease: EASE }}
+            className="relative z-10 flex flex-col items-center"
+          >
+            <p className="text-[13px] font-medium uppercase tracking-[0.34em] text-white/35">
+              Unsealing champion
+            </p>
+            <div className="mt-8 flex items-center gap-1.5 sm:gap-2" style={{ perspective: 700 }}>
+              {[0, 1, 2, 3, 4].map((i) => {
+                const glyph = flapGlyph(elapsed - COUNT_MS, i, rollProgress)
+                return (
+                  <div
+                    key={i}
+                    className="relative h-14 w-11 overflow-hidden rounded-sm border border-white/12 bg-[#0A0908] sm:h-[4.25rem] sm:w-14"
+                    style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,.08), 0 8px 20px rgba(0,0,0,.45)' }}
+                  >
+                    <span className="pointer-events-none absolute inset-x-0 top-1/2 z-10 h-px bg-black/70" />
+                    <AnimatePresence mode="popLayout">
+                      <motion.span
+                        key={`${i}-${glyph}`}
+                        initial={{ y: '70%', opacity: 0.35 }}
+                        animate={{ y: '0%', opacity: 1 }}
+                        exit={{ y: '-70%', opacity: 0 }}
+                        transition={{ duration: 0.18, ease: 'easeOut' }}
+                        className="absolute inset-0 flex items-center justify-center font-mono text-2xl font-bold text-white/80 sm:text-3xl"
+                      >
+                        {glyph}
+                      </motion.span>
+                    </AnimatePresence>
+                  </div>
+                )
+              })}
+            </div>
+            <p className="mt-3 text-[10px] font-medium uppercase tracking-[0.32em] text-white/30">
+              Rolling
+            </p>
+          </motion.div>
         )}
         {stage === 'winner' && (
           <motion.div
@@ -997,8 +1011,7 @@ function Champion({
               transition={{ delay: 0.95, duration: 0.5 }}
               className="mt-3 text-sm text-white/40 sm:text-base"
             >
-              {entry?.college || 'Tamil Nadu'}
-              {track ? ` · ${track.label}` : ''}
+              {REVEAL_META}
             </motion.p>
             <motion.p
               initial={{ opacity: 0, y: 10 }}
@@ -1047,7 +1060,6 @@ export function TopFiveLineup({ finalists }: { finalists: GrandFinaleEntry[] }) 
           <div className="mt-10 flex w-full max-w-7xl items-end justify-center gap-2 sm:gap-4 lg:gap-6">
             {ordered.map((entry, i) => {
               const champ = entry.rank === 1
-              const track = entry.track ? getTrackConfig(entry.track) : null
               return (
                 <motion.div
                   key={entry.teamId || entry.rank}
@@ -1088,8 +1100,7 @@ export function TopFiveLineup({ finalists }: { finalists: GrandFinaleEntry[] }) 
                     {entry.teamName || '—'}
                   </h3>
                   <p className="mt-1 max-w-[14ch] truncate text-[10px] text-white/35 sm:text-xs">
-                    {entry.college || 'Tamil Nadu'}
-                    {track ? ` · ${track.label}` : ''}
+                    {REVEAL_META}
                   </p>
                   <p
                     className={`mt-2 font-black tabular-nums leading-none ${
@@ -1157,7 +1168,6 @@ export function GrandFinaleExperience({
   const elapsed = Math.max(0, now - (stepStartedAt || now))
   const duration = Math.max(1, stepDurationMs)
   const progress = isAnimating ? clamp(elapsed / duration) : 1
-  const tick = Math.floor(elapsed / 80)
   const rank = Math.max(1, 6 - revealStep)
   const entry = finalists.find((item) => item.rank === rank)
   const playMedia = isAnimating && revealStep >= 1
@@ -1186,7 +1196,6 @@ export function GrandFinaleExperience({
         rank={rank}
         progress={progress}
         isAnimating={isAnimating}
-        tick={tick}
         elapsed={elapsed}
         durationMs={duration}
         placeKickers={placeKickers}

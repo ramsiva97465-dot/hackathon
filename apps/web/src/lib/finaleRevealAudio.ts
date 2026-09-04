@@ -1,8 +1,17 @@
-/** Ceremony bed + one-shot FX for Top 5 LCD reveals. */
+/** Ceremony bed + one-shot FX for Top 5 LCD reveals.
+ * Place (5/4/3): crown 0→0.36 · count 0.36→0.52 · roll 0.52→0.70 · score 0.70→0.82 · name 0.82→1
+ * Final Two (2): dedicated shuffle/pick/score/name bed
+ * Champion (1): 6s countdown · 6s roll · winner lock at 12s (22s total)
+ */
 
 let ctx: AudioContext | null = null
 let activeNodes: Array<AudioScheduledSourceNode | AudioNode> = []
 let stopTimer: number | null = null
+
+const CROWN_END = 0.36
+const COUNT_END = 0.52
+const ROLL_END = 0.70
+const SCORE_END = 0.82
 
 function getCtx(): AudioContext | null {
   try {
@@ -79,9 +88,10 @@ function noiseBurst(audio: AudioContext, start: number, dur: number, peak: numbe
 
 /**
  * Starts a reveal score sized to `durationMs`.
- * Hits: curtain → roll ticks → 3/2/1 → name lock → seal stamp → score flourish.
+ * Hits sync with crown rise → 5/4/3/2/1 → letter roll → score → name lock.
+ * Rank 2 uses Final Two face-off timing; rank 1 uses Champion countdown/roll/win.
  */
-export function playFinaleRevealBed(rank: number, durationMs = 20_000) {
+export function playFinaleRevealBed(rank: number, durationMs = 28_000) {
   clearBed()
   const audio = getCtx()
   if (!audio) return
@@ -90,57 +100,180 @@ export function playFinaleRevealBed(rank: number, durationMs = 20_000) {
   const isChamp = rank === 1
   const isSecond = rank === 2
 
-  // Curtain whoosh + deep pad
-  noiseBurst(audio, t0, Math.min(2.4, d * 0.14), 0.14)
-  tone(audio, 'sine', isChamp ? 48 : 56, t0, d * 0.2, 0.2)
-  tone(audio, 'triangle', isChamp ? 96 : 112, t0 + 0.18, d * 0.18, 0.09)
-  tone(audio, 'sine', isChamp ? 192 : 168, t0 + 0.35, 1.8, 0.05)
-
-  // Letter-roll tension ticks (~0.18–0.46)
-  const tickStart = d * 0.18
-  const tickEnd = d * 0.46
-  const tickCount = Math.max(12, Math.round((tickEnd - tickStart) / 0.38))
-  for (let i = 0; i < tickCount; i++) {
-    const at = t0 + tickStart + (i / tickCount) * (tickEnd - tickStart)
-    tone(audio, 'square', 210 + i * 14, at, 0.07, 0.035 + i * 0.002)
-    tone(audio, 'sine', 420 + i * 10, at + 0.01, 0.12, 0.04)
+  if (isSecond) {
+    playFinalTwoBed(audio, t0, d, durationMs)
+    return
+  }
+  if (isChamp) {
+    playChampionBed(audio, t0, d, durationMs)
+    return
   }
 
-  // Soft pulse under the wait
-  for (let i = 0; i < Math.floor(d * 0.45); i++) {
-    const at = t0 + 1.4 + i * 1.05
-    if (at >= t0 + d * 0.84) break
-    tone(audio, 'sine', isChamp ? 46 : 52, at, 0.5, 0.07)
+  // ── Crown fast→slow rise (0 → CROWN_END) ─────────────────────────────────
+  // Opening whoosh + dense ticks (fast spin), then spaced ticks (slow settle).
+  noiseBurst(audio, t0, Math.min(1.6, d * CROWN_END * 0.35), 0.18)
+  tone(audio, 'sine', 56, t0, d * CROWN_END * 0.9, 0.2)
+  tone(audio, 'triangle', 112, t0 + 0.1, d * CROWN_END * 0.75, 0.1)
+
+  const fastSpan = d * CROWN_END * 0.45
+  const slowSpan = d * CROWN_END * 0.5
+  const fastTicks = Math.max(12, Math.round(fastSpan / 0.22))
+  for (let i = 0; i < fastTicks; i++) {
+    const at = t0 + (i / fastTicks) * fastSpan * 0.98
+    tone(audio, 'square', 170 + i * 22, at, 0.06, 0.028 + i * 0.0018)
+    tone(audio, 'sine', 340 + i * 14, at + 0.01, 0.08, 0.032)
+  }
+  const slowTicks = Math.max(6, Math.round(slowSpan / 0.55))
+  for (let i = 0; i < slowTicks; i++) {
+    const at = t0 + fastSpan + (i / slowTicks) * slowSpan * 0.95
+    tone(audio, 'square', 200 + i * 10, at, 0.09, 0.04)
+    tone(audio, 'sine', 400 + i * 8, at + 0.015, 0.12, 0.045)
+  }
+  // Crown lock thud
+  noiseBurst(audio, t0 + d * CROWN_END, 0.3, 0.2)
+  tone(audio, 'sine', 72, t0 + d * CROWN_END, 0.75, 0.24)
+
+  // Soft pulse under countdown + roll
+  for (let i = 0; i < Math.floor(d * 0.4); i++) {
+    const at = t0 + d * CROWN_END + 0.4 + i * 1.05
+    if (at >= t0 + d * ROLL_END) break
+    tone(audio, 'sine', 52, at, 0.5, 0.065)
   }
 
-  // Name-in countdown 3 · 2 · 1
+  // ── Countdown 5 · 4 · 3 · 2 · 1 (CROWN_END → COUNT_END) ───────────────────
+  const countSpan = COUNT_END - CROWN_END
   ;[
-    { at: d * 0.46, freq: 392, peak: 0.26 },
-    { at: d * 0.62, freq: 494, peak: 0.28 },
-    { at: d * 0.754, freq: 587, peak: 0.3 },
-  ].forEach(({ at, freq, peak }) => {
-    noiseBurst(audio, t0 + at, 0.12, 0.08)
-    tone(audio, 'triangle', freq, t0 + at, 0.65, peak)
-    tone(audio, 'sine', freq * 2, t0 + at + 0.02, 0.45, peak * 0.45)
-    tone(audio, 'sine', freq * 3, t0 + at + 0.04, 0.3, peak * 0.18)
+    { step: 0, freq: 311 },
+    { step: 1, freq: 349 },
+    { step: 2, freq: 392 },
+    { step: 3, freq: 466 },
+    { step: 4, freq: 523 },
+  ].forEach(({ step, freq }, i) => {
+    const at = t0 + d * (CROWN_END + ((step + 0.08) / 5) * countSpan)
+    const peak = 0.22 + i * 0.02
+    noiseBurst(audio, at, 0.1, 0.07)
+    tone(audio, 'triangle', freq, at, 0.55, peak)
+    tone(audio, 'sine', freq * 2, at + 0.02, 0.4, peak * 0.4)
   })
 
-  // Name lock impact — progress 0.88
-  const lock = t0 + d * 0.88
+  // ── Letter-roll ticks (COUNT_END → ROLL_END) ──────────────────────────────
+  const rollStart = d * COUNT_END
+  const rollEnd = d * ROLL_END
+  const tickCount = Math.max(12, Math.round((rollEnd - rollStart) / 0.32))
+  for (let i = 0; i < tickCount; i++) {
+    const at = t0 + rollStart + (i / tickCount) * (rollEnd - rollStart)
+    tone(audio, 'square', 210 + i * 12, at, 0.07, 0.032 + i * 0.0015)
+    tone(audio, 'sine', 420 + i * 8, at + 0.01, 0.11, 0.038)
+  }
+
+  // ── Score flourish (ROLL_END → SCORE_END) ─────────────────────────────────
+  const scoreAt = t0 + d * ROLL_END
+  noiseBurst(audio, scoreAt, 0.35, 0.2)
+  tone(audio, 'sine', 76, scoreAt, 1.2, 0.28)
+  ;[440, 554.37, 659.25].forEach((freq, i) => {
+    tone(audio, 'triangle', freq, scoreAt + 0.06 + i * 0.1, 0.85, 0.13)
+  })
+
+  // ── Name lock (SCORE_END) ─────────────────────────────────────────────────
+  const lock = t0 + d * SCORE_END
   noiseBurst(audio, lock, 0.45, 0.28)
-  tone(audio, 'sine', isChamp ? 58 : 76, lock, 1.8, 0.34)
-  tone(audio, 'triangle', isChamp ? 523 : isSecond ? 440 : 392, lock + 0.04, 1.4, 0.24)
-  tone(audio, 'sine', isChamp ? 784 : isSecond ? 659 : 523, lock + 0.08, 1.1, 0.16)
+  tone(audio, 'sine', 76, lock, 1.8, 0.34)
+  tone(audio, 'triangle', 392, lock + 0.04, 1.4, 0.24)
+  tone(audio, 'sine', 523, lock + 0.08, 1.1, 0.16)
 
-  // Score flourish
-  const endFreqs = isChamp
-    ? [523.25, 659.25, 783.99, 1046.5, 1318.5]
-    : isSecond
-    ? [587.33, 739.99, 880, 1174.66]
-    : [440, 554.37, 659.25, 880]
-  endFreqs.forEach((freq, i) => {
-    tone(audio, 'triangle', freq, t0 + d * 0.94 + i * 0.11, 0.95, 0.14)
+  stopTimer = window.setTimeout(() => clearBed(), durationMs + 600)
+}
+
+/** Champion: 6s countdown → 6s roll → winner (name + score) hold. Matches CHAMPION_*_MS. */
+function playChampionBed(audio: AudioContext, t0: number, d: number, durationMs: number) {
+  const COUNT_S = 6
+  const ROLL_S = 6
+  const WIN_AT = COUNT_S + ROLL_S
+
+  // Low tension bed through countdown + roll
+  tone(audio, 'sine', 46, t0, WIN_AT + 0.5, 0.16)
+  tone(audio, 'triangle', 92, t0 + 0.15, WIN_AT, 0.07)
+
+  // Countdown 5→1 every 1.2s (matches Champion UI)
+  ;[
+    { step: 0, freq: 311 },
+    { step: 1, freq: 349 },
+    { step: 2, freq: 392 },
+    { step: 3, freq: 466 },
+    { step: 4, freq: 523 },
+  ].forEach(({ step, freq }, i) => {
+    const at = t0 + step * 1.2 + 0.08
+    const peak = 0.24 + i * 0.025
+    noiseBurst(audio, at, 0.12, 0.08)
+    tone(audio, 'triangle', freq, at, 0.6, peak)
+    tone(audio, 'sine', freq * 2, at + 0.02, 0.45, peak * 0.42)
   })
+
+  // Letter-roll ticks during 6→12s
+  const rollTicks = Math.max(14, Math.round(ROLL_S / 0.35))
+  for (let i = 0; i < rollTicks; i++) {
+    const at = t0 + COUNT_S + (i / rollTicks) * ROLL_S
+    tone(audio, 'square', 210 + i * 10, at, 0.07, 0.034 + i * 0.0012)
+    tone(audio, 'sine', 420 + i * 7, at + 0.01, 0.11, 0.04)
+  }
+
+  // Winner lock — name + score together at WIN_AT
+  const win = t0 + WIN_AT
+  noiseBurst(audio, win, 0.55, 0.32)
+  tone(audio, 'sine', 58, win, 2.2, 0.38)
+  tone(audio, 'triangle', 523, win + 0.04, 1.8, 0.26)
+  tone(audio, 'sine', 784, win + 0.08, 1.4, 0.18)
+  ;[523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((freq, i) => {
+    tone(audio, 'triangle', freq, win + 0.12 + i * 0.1, 1.0, 0.14)
+  })
+
+  // Soft sustain under winner hold remainder
+  const holdLeft = Math.max(1, d - WIN_AT - 1)
+  tone(audio, 'sine', 52, win + 0.8, holdLeft, 0.08)
+
+  stopTimer = window.setTimeout(() => clearBed(), durationMs + 600)
+}
+
+/** Final Two: shuffle bed → pick whoosh → glyph lock → score → name. */
+function playFinalTwoBed(audio: AudioContext, t0: number, d: number, durationMs: number) {
+  // Soft tension bed under the swap
+  tone(audio, 'sine', 48, t0, d * 0.76, 0.14)
+  tone(audio, 'triangle', 96, t0 + 0.2, d * 0.7, 0.06)
+  const swaps = 10
+  for (let i = 0; i < swaps; i++) {
+    const at = t0 + 0.05 * d + (i / swaps) * d * 0.58
+    noiseBurst(audio, at, 0.12, 0.05 + (i % 2) * 0.02)
+    tone(audio, 'sine', 180 + (i % 3) * 40, at, 0.18, 0.04)
+  }
+
+  // Hold breath
+  tone(audio, 'sine', 62, t0 + d * 0.66, d * 0.1, 0.1)
+
+  // Pick: runner-up glides center
+  const pickAt = t0 + d * 0.76
+  noiseBurst(audio, pickAt, 0.45, 0.16)
+  tone(audio, 'sine', 80, pickAt, 1.4, 0.2)
+  tone(audio, 'triangle', 220, pickAt + 0.08, 1.1, 0.08)
+
+  // Glyph "2" lock
+  const glyphAt = t0 + d * 0.9
+  noiseBurst(audio, glyphAt, 0.28, 0.18)
+  tone(audio, 'triangle', 440, glyphAt, 0.7, 0.22)
+  tone(audio, 'sine', 880, glyphAt + 0.03, 0.5, 0.1)
+
+  // Score first
+  const scoreAt = t0 + d * 0.92
+  noiseBurst(audio, scoreAt, 0.32, 0.2)
+  ;[587.33, 739.99, 880].forEach((freq, i) => {
+    tone(audio, 'triangle', freq, scoreAt + i * 0.1, 0.9, 0.14)
+  })
+
+  // Name last
+  const nameAt = t0 + d * 0.96
+  noiseBurst(audio, nameAt, 0.45, 0.26)
+  tone(audio, 'sine', 70, nameAt, 1.6, 0.32)
+  tone(audio, 'triangle', 440, nameAt + 0.04, 1.3, 0.22)
+  tone(audio, 'sine', 659, nameAt + 0.08, 1.0, 0.14)
 
   stopTimer = window.setTimeout(() => clearBed(), durationMs + 600)
 }

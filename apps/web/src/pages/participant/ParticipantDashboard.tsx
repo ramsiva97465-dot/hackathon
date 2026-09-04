@@ -144,18 +144,36 @@ export function ParticipantDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>('home')
   const [selectedMemberIndex, setSelectedMemberIndex] = useState(0)
 
-  // Certificate release toggle state controlled by Admin
-  const [certificatesReleased, setCertificatesReleased] = useState(() => {
-    return localStorage.getItem('snapserve_certificates_released') === 'true'
-  })
+  // Certificate release — synced from admin via API (not browser-local only)
+  const [certificatesReleased, setCertificatesReleased] = useState(false)
 
   useEffect(() => {
+    const applyReleased = (released: boolean) => {
+      setCertificatesReleased(released)
+      localStorage.setItem('snapserve_certificates_released', released ? 'true' : 'false')
+      if (!released) {
+        setActiveTab((tab) => (tab === 'certificate' ? 'home' : tab))
+      }
+    }
+
+    const sync = () => {
+      void api.leaderboard
+        .getCertificatesReleased()
+        .then((res) => applyReleased(Boolean(res.data?.released)))
+        .catch(() => {
+          applyReleased(localStorage.getItem('snapserve_certificates_released') === 'true')
+        })
+    }
+
+    sync()
+    const poll = window.setInterval(sync, 8000)
     const handleCertToggle = () => {
-      setCertificatesReleased(localStorage.getItem('snapserve_certificates_released') === 'true')
+      applyReleased(localStorage.getItem('snapserve_certificates_released') === 'true')
     }
     window.addEventListener('storage', handleCertToggle)
     window.addEventListener('certificates_toggled', handleCertToggle)
     return () => {
+      window.clearInterval(poll)
       window.removeEventListener('storage', handleCertToggle)
       window.removeEventListener('certificates_toggled', handleCertToggle)
     }

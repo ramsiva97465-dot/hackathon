@@ -1,25 +1,54 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { Button } from '@/components/ui/Button'
 import { Save, Monitor } from 'lucide-react'
 import { toast } from 'sonner'
+import { api } from '@/lib/api'
 
 export function SettingsPage() {
   const [saving, setSaving] = useState(false)
-  const [certificatesReleased, setCertificatesReleased] = useState(() => {
-    return localStorage.getItem('snapserve_certificates_released') === 'true'
-  })
+  const [certificatesReleased, setCertificatesReleased] = useState(false)
+  const [loadingCerts, setLoadingCerts] = useState(true)
 
-  const handleToggleCertificates = (val: boolean) => {
+  useEffect(() => {
+    let cancelled = false
+    void api.leaderboard
+      .getCertificatesReleased()
+      .then((res) => {
+        if (cancelled) return
+        const released = Boolean(res.data?.released)
+        setCertificatesReleased(released)
+        localStorage.setItem('snapserve_certificates_released', released ? 'true' : 'false')
+      })
+      .catch(() => {
+        if (cancelled) return
+        setCertificatesReleased(localStorage.getItem('snapserve_certificates_released') === 'true')
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingCerts(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const handleToggleCertificates = async (val: boolean) => {
     setCertificatesReleased(val)
     localStorage.setItem('snapserve_certificates_released', val ? 'true' : 'false')
     window.dispatchEvent(new Event('certificates_toggled'))
-    toast.success(val ? 'Certificates RELEASED to participants!' : 'Certificates LOCKED from participants!')
+    try {
+      await api.leaderboard.setCertificatesReleased(val)
+      toast.success(val ? 'Certificates RELEASED to participants!' : 'Certificates LOCKED from participants!')
+    } catch {
+      toast.error('Could not sync certificate release to the server. Try again.')
+      setCertificatesReleased(!val)
+      localStorage.setItem('snapserve_certificates_released', !val ? 'true' : 'false')
+    }
   }
 
   const handleSave = async () => {
     setSaving(true)
-    await new Promise(r => setTimeout(r, 800))
+    await new Promise((r) => setTimeout(r, 800))
     setSaving(false)
     toast.success('Settings saved successfully!')
   }
@@ -32,7 +61,6 @@ export function SettingsPage() {
           <p className="text-sm text-slate-400">Configure SnapServe live stage displays, TV mode, and participant controls.</p>
         </div>
 
-        {/* ── TV Mode & Stage Projection Controls ── */}
         <div className="bg-[#0A0A0A] p-6 rounded-2xl border border-white/10 shadow-2xl space-y-4">
           <div className="flex items-center justify-between border-b border-white/10 pb-3">
             <div className="flex items-center gap-2">
@@ -53,29 +81,36 @@ export function SettingsPage() {
           </p>
         </div>
 
-        {/* ── Registration & Release Control ── */}
         <div className="bg-[#0A0A0A] p-6 rounded-2xl border border-white/10 shadow-2xl space-y-4">
           <h3 className="font-display font-bold text-white border-b border-white/10 pb-2">Release Controls</h3>
-          
-          {/* Certificate Release Toggle */}
+
           <div className="flex items-center justify-between p-4 rounded-xl bg-[#111] border border-amber-500/30">
             <div>
               <div className="flex items-center gap-2">
                 <p className="text-sm font-bold text-white">Release Participation Certificates</p>
-                <span className={`px-2 py-0.5 text-[10px] font-black uppercase rounded-full ${certificatesReleased ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'}`}>
-                  {certificatesReleased ? 'VISIBLE TO PARTICIPANTS' : 'LOCKED'}
+                <span
+                  className={`px-2 py-0.5 text-[10px] font-black uppercase rounded-full ${
+                    certificatesReleased
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                      : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
+                  }`}
+                >
+                  {loadingCerts ? 'SYNCING…' : certificatesReleased ? 'VISIBLE TO PARTICIPANTS' : 'LOCKED'}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">Toggle ON to enable Certificate download tab on participant dashboards</p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Toggle ON to enable Certificate download tab on every participant dashboard
+              </p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer ml-4 shrink-0">
               <input
                 type="checkbox"
                 checked={certificatesReleased}
-                onChange={(e) => handleToggleCertificates(e.target.checked)}
+                disabled={loadingCerts}
+                onChange={(e) => void handleToggleCertificates(e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-amber-500 transition-all peer-checked:after:translate-x-5 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
+              <div className="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-amber-500 transition-all peer-checked:after:translate-x-5 after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-disabled:opacity-50" />
             </label>
           </div>
 
@@ -91,8 +126,14 @@ export function SettingsPage() {
           </div>
         </div>
 
-        {/* Save Button */}
-        <Button loading={saving} onClick={handleSave} size="lg" glow leftIcon={<Save size={18} />} className="bg-[#5B5CEB] hover:bg-[#4a4bcf] cursor-pointer">
+        <Button
+          loading={saving}
+          onClick={() => void handleSave()}
+          size="lg"
+          glow
+          leftIcon={<Save size={18} />}
+          className="bg-[#5B5CEB] hover:bg-[#4a4bcf] cursor-pointer"
+        >
           Save Settings
         </Button>
       </div>
