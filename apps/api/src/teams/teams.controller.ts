@@ -2,18 +2,22 @@ import { Controller, Get, Post, Body, Param, Patch, UseGuards, Req, Delete } fro
 import { TeamsService } from './teams.service'
 import { ParticipantGuard } from '../auth/participant.guard'
 import { AuthGuard, PermissionsGuard, RequirePermissions } from '../auth/guards'
+import { Type } from 'class-transformer'
 import { IsNumber, IsOptional } from 'class-validator'
 
 class PromoteTeamsDto {
+  @Type(() => Number)
   @IsNumber()
   currentRound: number
 }
 
 class AutoDistributeJudgesDto {
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   judgesPerTeam?: number
 
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   round?: number

@@ -150,20 +150,25 @@ export function RoundsManagement() {
   }
 
   const handlePromoteSpecial = async () => {
-    if (!window.confirm('Promote the Top 5 Special Category teams from Round 1 to Round 2?')) return
+    if (!window.confirm('Promote exactly the Top 5 Special Category teams to Round 2 and assign them to ALL judges? The other Special teams stay in Round 1.')) return
     try {
       setLoading(true)
       const res = await api.teams.promoteSpecial()
       if (res.data?.success) {
-        toast.success(res.data.message || `Promoted ${res.data.promotedCount ?? 5} Special Category teams to Round 2.`)
+        toast.success(
+          res.data.message ||
+            `Promoted Top ${res.data.promotedCount ?? 5} Special teams to Round 2 and assigned all judges.`,
+        )
         await fetchSpecialCounts()
         await fetchLeaderboard(true)
-        openSpecialTrackPanel(1)
+        selectSpecialTab(2)
+        openSpecialTrackPanel(2)
       } else {
         toast.error(res.data?.message || 'Special Category promote failed.')
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to promote Special Category teams.')
+      const msg = err.response?.data?.message
+      toast.error(Array.isArray(msg) ? msg.join(', ') : (msg || 'Failed to promote Special Category teams.'))
     } finally {
       setLoading(false)
     }
@@ -461,10 +466,13 @@ export function RoundsManagement() {
         // Shift active view tab to next round
         setActiveTab(currentRound + 1)
         fetchLeaderboard()
+      } else {
+        toast.error(res.data?.message || 'Promotion failed.')
       }
     } catch (err: any) {
       console.error(err)
-      toast.error(err.response?.data?.message || 'Promotion failed. Make sure teams have scores.')
+      const msg = err.response?.data?.message
+      toast.error(Array.isArray(msg) ? msg.join(', ') : (msg || 'Promotion failed. Make sure teams have scores.'))
     } finally {
       setLoading(false)
     }
@@ -578,7 +586,7 @@ export function RoundsManagement() {
                   title="Promote the Top 5 Special Category teams from Round 1 to Round 2"
                 >
                   <Play size={13} fill="white" />
-                  <span>⚡ Promote special category to round 2</span>
+                  <span>⚡ Promote Top 5 Special → Round 2 + assign judges</span>
                 </button>
                 <button
                   onClick={() => handleStartReveal(2)}
@@ -609,16 +617,13 @@ export function RoundsManagement() {
                   <span>👑 Promote Top 5</span>
                 </button>
                 <button
-                  onClick={() => {
-                    openSpecialTrackPanel(1)
-                    toast.success('Special Category Top 5 shortlist reveal controls are open below.')
-                  }}
+                  onClick={handlePromoteSpecial}
                   disabled={loading}
                   className="flex items-center gap-1.5 px-4 py-2.5 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-[#E83C00]/15 cursor-pointer"
-                  title="Open Special Category Top 5 shortlist reveal (#5 → #1)"
+                  title="Promote the Top 5 Special Category teams into Round 2 (safe to re-run)"
                 >
                   <Crown size={14} />
-                  <span>👑 Promote Top 5 Special category to round 2</span>
+                  <span>👑 Promote Top 5 Special → Round 2 + assign judges</span>
                 </button>
                 <button
                   onClick={() => {
@@ -877,8 +882,8 @@ export function RoundsManagement() {
                       } else {
                         toast.error(res.data?.message || 'Assignment failed')
                       }
-                    } catch (e) {
-                      toast.error('Failed to auto-assign Round 2')
+                    } catch (e: any) {
+                      toast.error(e?.response?.data?.message || 'Failed to auto-assign Round 2')
                     } finally {
                       setLoading(false)
                     }
@@ -887,6 +892,32 @@ export function RoundsManagement() {
                 >
                   <Users size={12} className="text-amber-400" />
                   <span>⚡ Assign All Judges to Top 20</span>
+                </button>
+              )}
+              {isSpecialBoard && (activeTab === 1 || activeTab === 2) && tableTeams.length > 0 && (
+                <button
+                  disabled={loading}
+                  onClick={async () => {
+                    try {
+                      setLoading(true)
+                      const res = await api.teams.autoDistributeSpecialJudges(activeTab === 2 ? 2 : 1)
+                      if (res.data?.success) {
+                        toast.success(res.data.message || `Assigned all judges to Special Round ${activeTab}!`)
+                        fetchLeaderboard(true)
+                        await fetchSpecialCounts()
+                      } else {
+                        toast.error(res.data?.message || 'Special judge assignment failed')
+                      }
+                    } catch (e: any) {
+                      toast.error(e?.response?.data?.message || 'Failed to assign judges to Special Category')
+                    } finally {
+                      setLoading(false)
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/30 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                >
+                  <Users size={12} className="text-sky-400" />
+                  <span>⚡ Assign All Judges to Special {activeTab === 2 ? 'Top 5' : 'R1'}</span>
                 </button>
               )}
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
@@ -985,11 +1016,12 @@ export function RoundsManagement() {
               <h2 className="text-lg font-black text-white">School Special Category</h2>
               <p className="text-sm text-slate-400 mt-1 max-w-2xl">
                 {activeTab === 1 || (isSpecialBoard && activeTab !== 2)
-                  ? 'After promote, reveal the Top 5 shortlist (#5 → #1) on the /leaderboard LCD — separate from main Top 20.'
+                  ? 'Click Promote Top 5 to lock exactly 5 teams into Round 2 and assign every judge. The R1 board still shows the full Special pool.'
                   : 'After Special Round 2 judging, reveal Runner then Winner on the /leaderboard LCD — separate from main Top 5.'}
               </p>
               <p className="text-xs text-sky-300/80 mt-2 font-semibold">
-                R1 pool: {specialR1Count} · R2 finalists: {specialR2Count}
+                R1 pool (all Special): {specialR1Count} · R2 Top 5 shortlist: {specialR2Count}
+                {specialR2Count > 5 ? ' · ⚠ should be 5 — click Promote Top 5 to re-lock' : ''}
                 {specialIsRevealing ? ` · Live: ${specialPhase} step ${specialStep}` : ''}
               </p>
             </div>
@@ -1011,11 +1043,36 @@ export function RoundsManagement() {
                 <button
                   type="button"
                   onClick={handlePromoteSpecial}
-                  disabled={loading || specialR1Count === 0}
+                  disabled={loading || (specialR1Count === 0 && specialR2Count === 0)}
                   className="flex items-center gap-1.5 px-4 py-2.5 bg-[#E83C00] hover:bg-[#c93400] text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
                 >
                   <Play size={13} fill="white" />
-                  Promote Special Category to Round 2
+                  Promote Top 5 Special → Round 2 + assign all judges
+                </button>
+                <button
+                  type="button"
+                  disabled={loading || specialR2Count === 0}
+                  onClick={async () => {
+                    try {
+                      setLoading(true)
+                      const res = await api.teams.autoDistributeSpecialJudges(2)
+                      if (res.data?.success) {
+                        toast.success(res.data.message || 'Assigned all judges to Special Top 5!')
+                        fetchLeaderboard(true)
+                        await fetchSpecialCounts()
+                      } else {
+                        toast.error(res.data?.message || 'Assignment failed')
+                      }
+                    } catch (e: any) {
+                      toast.error(e?.response?.data?.message || 'Failed to assign Special judges')
+                    } finally {
+                      setLoading(false)
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-4 py-2.5 bg-sky-500/20 hover:bg-sky-500/30 text-sky-200 border border-sky-400/40 rounded-xl text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  <Users size={13} />
+                  Re-assign All Judges to Special Top 5
                 </button>
               </div>
 

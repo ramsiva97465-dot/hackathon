@@ -915,7 +915,15 @@ export class TeamsService {
 
       const top5 = sortedTeams.slice(0, 5)
       if (top5.length === 0) {
-        throw new Error('No teams found in Round 2.')
+        throw new BadRequestException('No teams found in Round 2 to promote.')
+      }
+
+      // Prefer teams that actually have Round 2 scores; warn if none do.
+      const withScores = sortedTeams.filter((t) => t.overallScore > 0 || t.judgeCount > 0)
+      if (withScores.length === 0) {
+        throw new BadRequestException(
+          'Round 2 teams have no submitted scores yet. Finish Round 2 judging (or Assign All Judges to Top 20 first), then promote Top 5.',
+        )
       }
 
       const top5Ids = top5.map(t => t.id)
@@ -997,17 +1005,18 @@ export class TeamsService {
     }
   }
 
-  /** Promote Special Category Round 1 → Top 5 in Round 2. Never touches main teams. */
+  /** Promote Special Category → exactly Top 5 in Round 2, then assign every judge. Idempotent; never touches main teams. */
   async promoteSpecialCategory() {
     const hackathon = await this.prisma.hackathon.findFirst()
-    if (!hackathon) throw new Error('No hackathon found')
+    if (!hackathon) throw new BadRequestException('No hackathon found')
 
+    // Rank the full Special Category pool (any round) so re-running stays safe
+    // even when a bad promote left every special team in Round 2.
     const teams = await this.prisma.team.findMany({
       where: {
         hackathonId: hackathon.id,
         status: 'COMPETING',
         isSpecialCategory: true,
-        round: 1,
       },
       include: {
         scoreSheets: {
@@ -1018,33 +1027,45 @@ export class TeamsService {
     })
 
     if (teams.length === 0) {
-      throw new Error('No Special Category Round 1 teams found to promote.')
+      throw new BadRequestException('No Special Category teams found to promote.')
     }
 
     const scored = teams.map((t) => {
       const submittedSheets = t.scoreSheets.filter((s) => s.isSubmitted && (s.round || 1) === 1)
       let overallScore = 0
-      if (t.adminScore !== null && t.adminScore !== undefined) {
-        overallScore = t.adminScore
-      } else if (submittedSheets.length > 0) {
+      let judgeCount = submittedSheets.length
+      // Prefer live R1 sheets, then frozen round1Score (works even if team.round is already 2).
+      if (submittedSheets.length > 0) {
         const total = submittedSheets.reduce((sum, sheet) => {
           return sum + sheet.scores.reduce((sSum, sc) => sSum + sc.score, 0)
         }, 0)
         overallScore = total / submittedSheets.length
+        judgeCount = submittedSheets.length
+      } else if (t.round1Score !== null && t.round1Score !== undefined) {
+        overallScore = t.round1Score
+        judgeCount = t.round1JudgeCount ?? 0
+      } else if (t.adminScore !== null && t.adminScore !== undefined && (t.round || 1) === 1) {
+        overallScore = t.adminScore
       }
       if (t.bonusVerifiedAt || t.bonusVerifiedBy) {
         overallScore += t.bonusPoints || 0
       }
-      return { id: t.id, overallScore, judgeCount: submittedSheets.length }
+      return { id: t.id, name: t.name, overallScore, judgeCount }
     })
+
+    const scoredWithPoints = scored.filter((t) => t.overallScore > 0 || t.judgeCount > 0)
+    if (scoredWithPoints.length === 0) {
+      throw new BadRequestException(
+        'Special Category teams have no Round 1 scores yet. Finish judging before promoting Top 5.',
+      )
+    }
 
     const sorted = [...scored].sort((a, b) => b.overallScore - a.overallScore)
     const top5 = sorted.slice(0, 5)
     const top5Ids = top5.map((t) => t.id)
     const restIds = sorted.slice(5).map((t) => t.id)
 
-    // Freeze Round 1 scores for every special team so Special R1 stays complete
-    // after the Top 5 move to round 2.
+    // Freeze Round 1 scores for the whole Special pool so Special R1 stays readable.
     await Promise.all(
       scored.map((t) =>
         this.prisma.team.update({
@@ -1054,27 +1075,50 @@ export class TeamsService {
       ),
     )
 
+    // Demote everyone not in Top 5 back to Round 1 (fixes stacked / all-in-R2 state).
     if (restIds.length > 0) {
       await this.prisma.team.updateMany({
         where: { id: { in: restIds } },
-        data: { round: 1 },
+        data: {
+          round: 1,
+          adminScore: null,
+          round2Score: null,
+          round2JudgeCount: null,
+        },
+      })
+      // Drop Round 2 sheets for demoted teams so they cannot keep scoring in R2.
+      await this.prisma.scoreSheet.deleteMany({
+        where: { teamId: { in: restIds }, round: 2 },
       })
     }
 
     await this.prisma.team.updateMany({
       where: { id: { in: top5Ids } },
-      data: { round: 2, adminScore: null },
+      data: { round: 2, adminScore: null, round2Score: null, round2JudgeCount: null },
     })
 
+    // Clear prior assignments on the new Top 5, then assign every judge automatically.
     await this.prisma.judgeAssignment.deleteMany({
       where: { teamId: { in: top5Ids } },
     })
+
+    const assignResult = await this.autoDistributeSpecialJudges(2)
 
     this.leaderboardGateway.broadcastSpecialLeaderboardUpdate().catch((err) =>
       console.error('[WS] Special promote broadcast failed:', err),
     )
 
-    return { success: true, promotedCount: top5Ids.length }
+    return {
+      success: true,
+      promotedCount: top5Ids.length,
+      demotedCount: restIds.length,
+      top5: top5.map((t) => ({ id: t.id, name: t.name, score: t.overallScore })),
+      assigned: assignResult.success,
+      assignmentsCreated: assignResult.created ?? 0,
+      message: assignResult.success
+        ? `Special Top 5 locked into Round 2 and assigned to all judges (${top5Ids.length} teams, ${restIds.length} kept in Round 1).`
+        : `Special Top 5 locked into Round 2, but judge assign failed: ${assignResult.message}`,
+    }
   }
 
   /** Assign every judge to every Special Category team in the given round. */
