@@ -556,7 +556,8 @@ function PlaceReveal({
     : clamp((p - 0.07) / 0.14)
   const titleOn =
     !isAnimating || (inHold && holdT > 0.2) || (revealLive && p >= 0.03)
-  const lineOn = !isAnimating || (revealLive && p >= 0.10)
+  // Keep the rule with the kicker so early Fourth/Fifth frames still look finished.
+  const lineOn = titleOn
   const meta = PLACE[rank]
   const waitProgress = revealLive ? p : 0
   const stageProgress = !isAnimating
@@ -581,16 +582,21 @@ function PlaceReveal({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: titleOn ? 1 : 0, y: titleOn ? 0 : 10 }}
           transition={{ duration: 1.1, ease: EASE }}
-          className="text-sm font-medium tracking-[0.38em] text-white/50 uppercase sm:text-base"
+          className="text-sm font-medium tracking-[0.38em] text-white/55 uppercase sm:text-base"
         >
           {meta.kicker}
         </motion.p>
         <motion.span
           aria-hidden
-          className="mt-3 h-px w-12 origin-center bg-amber-200/55"
+          className="mt-2.5 h-px w-[3.25rem] origin-center sm:w-16"
           initial={{ scaleX: 0, opacity: 0 }}
           animate={{ scaleX: lineOn ? 1 : 0, opacity: lineOn ? 1 : 0 }}
-          transition={{ duration: 0.7, ease: EASE }}
+          transition={{ duration: 0.85, delay: lineOn ? 0.12 : 0, ease: EASE }}
+          style={{
+            background:
+              'linear-gradient(90deg, transparent 0%, rgba(245,214,140,0.25) 18%, rgba(245,214,140,0.95) 50%, rgba(245,214,140,0.25) 82%, transparent 100%)',
+            boxShadow: '0 0 10px rgba(245,214,140,0.28)',
+          }}
         />
 
         <div className="mt-6" style={{ opacity: wreathOpacity }}>
@@ -747,7 +753,15 @@ function FinalTwoReveal({
             {titleSecond ? PLACE[2].kicker : 'The Final Two'}
           </motion.p>
         </AnimatePresence>
-        <span aria-hidden className="mt-3 h-px w-12 bg-amber-200/55" />
+        <span
+          aria-hidden
+          className="mt-2.5 h-px w-[3.25rem] sm:w-16"
+          style={{
+            background:
+              'linear-gradient(90deg, transparent 0%, rgba(245,214,140,0.25) 18%, rgba(245,214,140,0.95) 50%, rgba(245,214,140,0.25) 82%, transparent 100%)',
+            boxShadow: '0 0 10px rgba(245,214,140,0.28)',
+          }}
+        />
 
         <div className="relative mt-8 h-[268px] w-full overflow-visible sm:h-[320px] lg:h-[356px]">
           {/* Champion laurel — stays sealed until Step 5; fades aside, never clipped */}
