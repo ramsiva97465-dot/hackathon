@@ -869,25 +869,26 @@ function Champion({
   elapsed: number
   finished: boolean
 }) {
-  const stage = finished || elapsed >= 18_400
+  // Full champion popup fits a 15s beat: countdown → blackout → winner hold.
+  const stage = finished || elapsed >= 9_000
     ? 'winner'
-    : elapsed < 7_600
+    : elapsed < 5_000
     ? 'count'
-    : elapsed < 9_200
+    : elapsed < 5_800
     ? 'hold'
-    : elapsed < 10_800
+    : elapsed < 6_600
     ? 'black'
-    : elapsed < 13_200
+    : elapsed < 7_800
     ? 'spark'
     : 'flash'
-  const n = Math.max(1, 5 - Math.floor(elapsed / 1_520))
-  const scoreT = finished ? 1 : clamp((elapsed - 18_400) / 1_000)
+  const n = Math.max(1, 5 - Math.floor(elapsed / 1_000))
+  const scoreT = finished ? 1 : clamp((elapsed - 9_000) / 800)
   const score = Number(entry?.totalScore || 0) * (1 - Math.pow(1 - scoreT, 3))
   const track = entry?.track ? getTrackConfig(entry.track) : null
-  const winOpen = finished ? 1 : clamp((elapsed - 18_400) / 1_200)
+  const winOpen = finished ? 1 : clamp((elapsed - 9_000) / 900)
   const champSweep = (() => {
     if (stage !== 'winner' || finished) return -1
-    const t = (elapsed - 18_500) / 1_100
+    const t = (elapsed - 9_100) / 900
     if (t <= 0 || t >= 1) return -1
     return t
   })()
@@ -945,6 +946,15 @@ function Champion({
             <p className="text-[13px] font-medium uppercase tracking-[0.34em] text-amber-300/90">
               Grand Champion
             </p>
+            <span
+              aria-hidden
+              className="mt-2.5 h-px w-[3.25rem] sm:w-16"
+              style={{
+                background:
+                  'linear-gradient(90deg, transparent 0%, rgba(245,214,140,0.25) 18%, rgba(245,214,140,0.95) 50%, rgba(245,214,140,0.25) 82%, transparent 100%)',
+                boxShadow: '0 0 10px rgba(245,214,140,0.28)',
+              }}
+            />
             <motion.div
               initial={{ rotateY: 72, y: 72, opacity: 0.2 }}
               animate={{ rotateY: 0, y: 0, opacity: 1 }}
@@ -990,6 +1000,101 @@ function Champion({
         )}
       </AnimatePresence>
     </Stage>
+  )
+}
+
+/** Final board — all five places in one horizontal line after the champion popup. */
+export function TopFiveLineup({ finalists }: { finalists: GrandFinaleEntry[] }) {
+  const ordered = [5, 4, 3, 2, 1]
+    .map((rank) => finalists.find((f) => f.rank === rank))
+    .filter(Boolean) as GrandFinaleEntry[]
+
+  return (
+    <div className="relative h-full min-h-full w-full overflow-hidden">
+      <StageMedia mediaKey={1} playMedia />
+      <Stage cinematic progress={1}>
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: EASE }}
+          className="relative z-10 flex h-full w-full flex-col items-center justify-center px-4 py-8 sm:px-8"
+        >
+          <p className="text-sm font-medium tracking-[0.38em] text-amber-200/80 uppercase sm:text-base">
+            Grand Finale · Top 5
+          </p>
+          <span
+            aria-hidden
+            className="mt-2.5 h-px w-20"
+            style={{
+              background:
+                'linear-gradient(90deg, transparent 0%, rgba(245,214,140,0.25) 18%, rgba(245,214,140,0.95) 50%, rgba(245,214,140,0.25) 82%, transparent 100%)',
+              boxShadow: '0 0 10px rgba(245,214,140,0.28)',
+            }}
+          />
+
+          <div className="mt-10 flex w-full max-w-7xl items-end justify-center gap-2 sm:gap-4 lg:gap-6">
+            {ordered.map((entry, i) => {
+              const champ = entry.rank === 1
+              const track = entry.track ? getTrackConfig(entry.track) : null
+              return (
+                <motion.div
+                  key={entry.teamId || entry.rank}
+                  initial={{ opacity: 0, y: 36 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.65, delay: 0.08 * i, ease: EASE }}
+                  className={`flex min-w-0 flex-1 flex-col items-center text-center ${
+                    champ ? 'pb-2' : 'pb-0'
+                  }`}
+                >
+                  <p
+                    className={`text-[9px] font-medium uppercase tracking-[0.28em] sm:text-[10px] ${
+                      champ ? 'text-amber-300/90' : 'text-white/40'
+                    }`}
+                  >
+                    {PLACE[entry.rank]?.kicker || `Place ${entry.rank}`}
+                  </p>
+                  <div className="mt-3" style={{ transform: champ ? 'scale(1.08)' : 'scale(1)' }}>
+                    <Wreath
+                      className={
+                        champ
+                          ? 'h-[120px] w-[132px] sm:h-[150px] sm:w-[164px] lg:h-[168px] lg:w-[184px]'
+                          : 'h-[96px] w-[105px] sm:h-[120px] sm:w-[132px] lg:h-[132px] lg:w-[145px]'
+                      }
+                      glyph={String(entry.rank)}
+                      locked
+                      idle
+                      idleDelay={0.2 * i}
+                    />
+                  </div>
+                  <h3
+                    className={`mt-3 max-w-[9ch] text-balance font-black tracking-tight text-white sm:max-w-[11ch] ${
+                      champ
+                        ? 'text-lg sm:text-2xl lg:text-3xl'
+                        : 'text-sm sm:text-base lg:text-lg'
+                    }`}
+                  >
+                    {entry.teamName || '—'}
+                  </h3>
+                  <p className="mt-1 max-w-[14ch] truncate text-[10px] text-white/35 sm:text-xs">
+                    {entry.college || 'Tamil Nadu'}
+                    {track ? ` · ${track.label}` : ''}
+                  </p>
+                  <p
+                    className={`mt-2 font-black tabular-nums leading-none ${
+                      champ
+                        ? 'text-amber-200 text-xl sm:text-2xl'
+                        : 'text-amber-200/85 text-base sm:text-lg'
+                    }`}
+                  >
+                    {Number(entry.totalScore || 0).toFixed(1)}
+                  </p>
+                </motion.div>
+              )
+            })}
+          </div>
+        </motion.div>
+      </Stage>
+    </div>
   )
 }
 

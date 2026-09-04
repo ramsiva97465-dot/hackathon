@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { SnapServeMark, VobizLockup } from '@/components/brand/BrandLogos'
 import { PremiumRevealCard } from '@/components/reveal/PremiumRevealCard'
-import { GrandFinaleExperience } from '@/components/reveal/GrandFinaleExperience'
+import { GrandFinaleExperience, TopFiveLineup } from '@/components/reveal/GrandFinaleExperience'
 import { Avatar } from '@/components/ui/Avatar'
 import { getTrackConfig } from '@/lib/utils'
 import { unlockFinaleAudio } from '@/lib/finaleRevealAudio'
@@ -26,9 +26,10 @@ function finalePlace(rank: number) {
   return { title: '5th Place', decrypt: 'Decrypting 5th Place...', speak: '5th Place, ', locked: '5th Place' }
 }
 
-/** Step 1=5th … 5=champion — 5th gets slow rain + 5s hold, then a 20s reveal */
+/** Step 1=5th … 5=champion — 5th rain+hold, places 20s, champion popup 15s then lineup */
 function finaleCountdownStart(step: number) {
   if (step === 1) return 33 // 8s rain + 5s hold + 20s reveal
+  if (step === 5) return 15 // Grand Champion popup, then Top 5 lineup
   return 20
 }
 
@@ -1673,13 +1674,17 @@ export function LeaderboardPage() {
             }`}>
               {isFinale && revealedStep > 0 ? (
                 <div className="h-full w-full min-h-0">
-                  <GrandFinaleExperience
-                    finalists={finaleRoster}
-                    revealStep={revealedStep}
-                    isAnimating={isDecrypting}
-                    stepStartedAt={finaleStepStartedAt}
-                    stepDurationMs={nameSpinMs}
-                  />
+                  {allPlacesAnnounced ? (
+                    <TopFiveLineup finalists={finaleRoster} />
+                  ) : (
+                    <GrandFinaleExperience
+                      finalists={finaleRoster}
+                      revealStep={revealedStep}
+                      isAnimating={isDecrypting}
+                      stepStartedAt={finaleStepStartedAt}
+                      stepDurationMs={nameSpinMs}
+                    />
+                  )}
                 </div>
               ) : (
                 <PremiumRevealCard
