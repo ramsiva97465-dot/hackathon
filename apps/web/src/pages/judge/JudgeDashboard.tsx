@@ -74,10 +74,10 @@ function AnimatedSignOutButton({ onClick }: { onClick: () => void }) {
         e.stopPropagation()
         onClick()
       }}
-      className="relative inline-flex items-center justify-center px-10 py-2.5 text-xs font-extrabold tracking-wide text-[#1a1a1a] bg-[#ffc4a3] hover:bg-[#ffb38a] rounded-xl shadow-xs transition-all duration-300 hover:-translate-y-0.5 cursor-pointer shrink-0 my-1 overflow-visible border-none"
+      className="relative inline-flex items-center justify-center px-10 max-sm:px-4 py-2.5 text-xs font-extrabold tracking-wide text-[#1a1a1a] bg-[#ffc4a3] hover:bg-[#ffb38a] rounded-xl shadow-xs transition-all duration-300 hover:-translate-y-0.5 cursor-pointer shrink-0 my-1 overflow-visible border-none"
     >
-      {/* Left Vine 1 - Ivy Vine (Far Left) */}
-      <div className="absolute left-2 -top-3 h-[calc(100%+22px)] w-3.5 pointer-events-none z-10 text-[#1a1a1a]">
+      {/* Left Vine 1 - Ivy Vine (Far Left) — hidden on phones only */}
+      <div className="absolute left-2 -top-3 h-[calc(100%+22px)] w-3.5 pointer-events-none z-10 text-[#1a1a1a] max-sm:hidden">
         <svg
           viewBox="0 0 11.67 37.63"
           className="h-full w-auto fill-[#1a1a1a]"
@@ -87,8 +87,8 @@ function AnimatedSignOutButton({ onClick }: { onClick: () => void }) {
         </svg>
       </div>
 
-      {/* Left Vine 2 - Ivy Vine (Second from Left) */}
-      <div className="absolute left-6 -top-3 h-[calc(100%+16px)] w-3.5 pointer-events-none z-10 text-[#1a1a1a]">
+      {/* Left Vine 2 - Ivy Vine (Second from Left) — hidden on phones only */}
+      <div className="absolute left-6 -top-3 h-[calc(100%+16px)] w-3.5 pointer-events-none z-10 text-[#1a1a1a] max-sm:hidden">
         <svg
           viewBox="0 0 25.29 76.92"
           className="h-full w-auto fill-[#1a1a1a]"
@@ -123,51 +123,59 @@ function StarScore({
 
   return (
     <div className="rounded-xl border border-[#EAE4D8] bg-white p-2.5 space-y-1.5 shadow-xs hover:shadow-sm transition-all">
-      {/* Top Row: Title + 5 Stars + Score Badge */}
-      <div className="flex items-center justify-between gap-2">
+      {/* Top Row: Title + 5 Stars + Score Badge — stacks only on phones */}
+      <div className="flex items-center justify-between gap-2 max-sm:flex-col max-sm:items-stretch max-sm:gap-2">
         <h4 className="text-xs font-black text-slate-900 truncate min-w-0 flex-1">{label}</h4>
 
-        {/* 5 Compact Stars */}
-        <div
-          className="flex items-center gap-0.5 shrink-0"
-          onMouseLeave={() => setHoveredStar(null)}
-        >
-          {[1, 2, 3, 4, 5].map((starIndex) => {
-            const isFilled = starIndex <= currentStarCount
-            const pts = Math.round(starIndex * 0.4 * 10) / 10
+        {/* contents on sm+ restores original 3-column row (label | stars | badge) */}
+        <div className="contents max-sm:flex max-sm:w-full max-sm:items-center max-sm:justify-between max-sm:gap-2">
+          <div
+            className="flex items-center gap-0.5 shrink-0"
+            onMouseLeave={() => setHoveredStar(null)}
+          >
+            {[1, 2, 3, 4, 5].map((starIndex) => {
+              const isFilled = starIndex <= currentStarCount
+              const pts = Math.round(starIndex * 0.4 * 10) / 10
 
-            return (
-              <button
-                key={starIndex}
-                type="button"
-                onMouseEnter={() => setHoveredStar(starIndex)}
-                onClick={() => {
-                  const newScore = currentStarCount === starIndex && hoveredStar === null ? 0 : pts
-                  onChange(newScore)
-                }}
-                className="p-0.5 rounded-md transition-transform hover:scale-125 focus:outline-none cursor-pointer"
-                title={`${starIndex} Star${starIndex > 1 ? 's' : ''} = ${pts} Pts`}
-              >
-                <Star
-                  size={16}
-                  className={`transition-all duration-150 ${
-                    isFilled
-                      ? 'fill-amber-400 text-amber-500 drop-shadow-xs scale-105'
-                      : 'fill-slate-100 text-slate-300 hover:text-amber-300'
-                  }`}
-                />
-              </button>
-            )
-          })}
+              return (
+                <button
+                  key={starIndex}
+                  type="button"
+                  onMouseEnter={() => setHoveredStar(starIndex)}
+                  onClick={() => {
+                    const newScore = currentStarCount === starIndex && hoveredStar === null ? 0 : pts
+                    onChange(newScore)
+                  }}
+                  className="p-0.5 max-sm:p-1.5 rounded-md transition-transform hover:scale-125 max-sm:hover:scale-100 max-sm:active:scale-95 focus:outline-none cursor-pointer touch-manipulation"
+                  title={`${starIndex} Star${starIndex > 1 ? 's' : ''} = ${pts} Pts`}
+                >
+                  <Star
+                    size={16}
+                    className={`max-sm:hidden transition-all duration-150 ${
+                      isFilled
+                        ? 'fill-amber-400 text-amber-500 drop-shadow-xs scale-105'
+                        : 'fill-slate-100 text-slate-300 hover:text-amber-300'
+                    }`}
+                  />
+                  <Star
+                    size={22}
+                    className={`hidden max-sm:block transition-all duration-150 ${
+                      isFilled
+                        ? 'fill-amber-400 text-amber-500 drop-shadow-xs scale-105'
+                        : 'fill-slate-100 text-slate-300'
+                    }`}
+                  />
+                </button>
+              )
+            })}
+          </div>
+
+          <span className="w-9 py-0.5 text-center rounded-md bg-orange-50 text-[#E83C00] border border-orange-200 font-mono font-black text-[11px] shrink-0">
+            {displayScore.toFixed(1)}
+          </span>
         </div>
-
-        {/* Numerical Badge */}
-        <span className="w-9 py-0.5 text-center rounded-md bg-orange-50 text-[#E83C00] border border-orange-200 font-mono font-black text-[11px] shrink-0">
-          {displayScore.toFixed(1)}
-        </span>
       </div>
 
-      {/* Description Subtext */}
       {description && (
         <p className="text-[10px] text-slate-500 font-medium leading-tight">{description}</p>
       )}
@@ -289,7 +297,7 @@ export function JudgeDashboard() {
         key={team.id}
         variants={itemVariants}
         onClick={() => setSelectedId(team.id)}
-        className={`group w-full flex items-center justify-between p-4 rounded-2xl border text-left cursor-pointer transition-all duration-300 ${
+        className={`group w-full flex items-center justify-between p-4 max-sm:p-3.5 rounded-2xl border text-left cursor-pointer transition-all duration-300 touch-manipulation ${
           active
             ? 'bg-[#F4ECE1] border-[#E83C00]/40 shadow-[0_10px_25px_rgba(232,60,0,0.08)] ring-1 ring-[#E83C00]/10'
             : 'bg-[#F4ECE1] border-[#EAE4D8] hover:bg-white/50 hover:border-[#E83C00]/20 shadow-sm'
@@ -324,16 +332,16 @@ export function JudgeDashboard() {
           <span className="text-[11px] text-slate-500 truncate block font-medium">{team.projectTitle}</span>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0 ml-4">
+        <div className="flex items-center gap-3 shrink-0 ml-4 max-sm:ml-2">
           {team.isScored ? (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-50/50 border border-orange-200/50">
+            <div className="flex items-center gap-1.5 px-2.5 max-sm:px-2 py-1 rounded-full bg-orange-50/50 border border-orange-200/50">
               <CheckCircle size={12} className="text-[#E83C00]" />
               <span className="text-[10px] font-bold font-mono text-[#E83C00]">
                 {team.totalScore !== null ? `${(Math.round(team.totalScore * 10) / 10).toFixed(1)} / 20` : 'Scored'}
               </span>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200">
+            <div className="flex items-center gap-1.5 px-2.5 max-sm:px-2 py-1 rounded-full bg-slate-100 border border-slate-200">
               <Clock size={12} className="text-slate-500" />
               <span className="text-[10px] font-bold text-slate-600">Pending</span>
             </div>
@@ -425,7 +433,7 @@ export function JudgeDashboard() {
       <div className="relative z-10 flex flex-col min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Header */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 py-5 border-b border-[#EAE4D8]/80 mb-2">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 py-5 max-sm:py-4 border-b border-[#EAE4D8]/80 mb-2">
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex items-center gap-1.5 shrink-0">
               <SnapServeLogo />
@@ -433,7 +441,7 @@ export function JudgeDashboard() {
               <VobizLogo />
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="font-[family-name:var(--font-space-grotesk,'Space_Grotesk',sans-serif)] font-black text-sm sm:text-base md:text-lg tracking-tight leading-none text-slate-900 whitespace-nowrap">
+              <h1 className="font-[family-name:var(--font-space-grotesk,'Space_Grotesk',sans-serif)] font-black text-sm sm:text-base md:text-lg tracking-tight leading-none max-sm:leading-snug text-slate-900 whitespace-nowrap max-sm:whitespace-normal">
                 <span className="bg-gradient-to-r from-[#E83C00] via-orange-500 to-amber-500 bg-clip-text text-transparent">
                   AI குரல்
                 </span>
@@ -446,7 +454,7 @@ export function JudgeDashboard() {
                 <span className="text-[9px] font-black px-2 py-0.5 rounded-md bg-[#E83C00] text-white tracking-widest uppercase shadow-xs shrink-0 whitespace-nowrap">
                   JUDGE PANEL
                 </span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate hidden xs:inline sm:inline">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest truncate hidden sm:inline">
                   India's Biggest Voice-a-thon
                 </span>
               </div>
@@ -554,13 +562,24 @@ export function JudgeDashboard() {
             </motion.div>
           </div>
 
-          {/* Right Column: Preview Panel */}
+          {/* Right Column: Preview / Score Panel */}
           <div className={`
             lg:w-[460px] shrink-0
-            ${activeTeam ? 'fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm lg:static lg:block lg:bg-transparent lg:p-0 lg:backdrop-blur-none' : 'hidden lg:block'}
+            ${activeTeam
+              ? `fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm lg:static lg:block lg:bg-transparent lg:p-0 lg:backdrop-blur-none ${
+                  isEvaluating ? 'max-lg:items-stretch max-lg:p-0' : ''
+                }`
+              : 'hidden lg:block'}
           `}>
             {activeTeam && track ? (
-              <div className="w-full max-w-lg lg:max-w-none border border-[#EAE4D8] rounded-3xl lg:sticky lg:top-8 shadow-xl flex flex-col overflow-hidden max-h-[92dvh] lg:max-h-[calc(100vh-100px)]" style={{ backgroundColor: '#F4ECE1' }}>
+              <div
+                className={`w-full max-w-lg lg:max-w-none border border-[#EAE4D8] rounded-3xl lg:sticky lg:top-8 shadow-xl flex flex-col overflow-hidden max-h-[92dvh] lg:max-h-[calc(100vh-100px)] bg-[#F4ECE1] ${
+                  isEvaluating
+                    ? 'max-lg:max-w-none max-lg:h-[100dvh] max-lg:max-h-[100dvh] max-lg:rounded-none'
+                    : ''
+                }`}
+                style={{ backgroundColor: '#F4ECE1' }}
+              >
 
                 {/* Mobile Close Handle/Button for Preview Mode */}
                 {!isEvaluating && (
@@ -576,14 +595,15 @@ export function JudgeDashboard() {
                   // --- EVALUATION FORM ---
                   <div className="flex flex-col flex-1 min-h-0">
                     {/* Header */}
-                    <div className="flex items-center justify-between p-5 border-b border-[#EAE4D8] shrink-0">
-                      <div>
+                    <div className="flex items-center justify-between p-5 max-sm:p-4 border-b border-[#EAE4D8] shrink-0 max-sm:pt-[max(1rem,env(safe-area-inset-top))]">
+                      <div className="min-w-0">
                         <h3 className="font-bold text-[#1A1A1A]">Score sheet</h3>
-                        <p className="text-xs text-slate-500 font-medium">Evaluating {activeTeam.teamName}</p>
+                        <p className="text-xs text-slate-500 font-medium truncate">Evaluating {activeTeam.teamName}</p>
                       </div>
                       <button
                         onClick={() => setIsEvaluating(false)}
-                        className="p-2 text-slate-400 hover:text-slate-700 hover:bg-white/50 rounded-full transition-colors"
+                        className="p-2 max-sm:p-2.5 text-slate-400 hover:text-slate-700 hover:bg-white/50 rounded-full transition-colors shrink-0 touch-manipulation"
+                        aria-label="Close score sheet"
                       >
                         <X size={18} />
                       </button>
@@ -601,20 +621,20 @@ export function JudgeDashboard() {
                     )}
 
                     {/* Organizer Social Bonus Banner */}
-                    <div className="mx-3.5 mt-2.5 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between shadow-xs">
-                      <div className="flex items-center gap-2">
+                    <div className="mx-3.5 mt-2.5 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between max-sm:flex-col max-sm:items-start max-sm:gap-1.5 shadow-xs">
+                      <div className="flex items-center gap-2 min-w-0">
                         <Star className="text-amber-600 fill-amber-500 shrink-0" size={14} />
                         <p className="text-[11px] font-black text-amber-950">
                           Social Bonus: <span className="text-[#E83C00]">+{activeTeam.bonusPoints || 0} / 10 Pts</span>
                         </p>
                       </div>
-                      <span className="text-[10px] font-bold text-amber-800 bg-amber-500/15 px-2 py-0.5 rounded-md">
+                      <span className="text-[10px] font-bold text-amber-800 bg-amber-500/15 px-2 py-0.5 rounded-md shrink-0">
                         {activeTeam.bonusPoints && activeTeam.bonusPoints >= 10 ? '⭐ Completed' : `+${activeTeam.bonusPoints || 0} Pts`}
                       </span>
                     </div>
 
                     {/* Compact Criteria List (Fits on 1 Screen) */}
-                    <div className="flex-1 overflow-y-auto px-3.5 py-2.5 space-y-1.5">
+                    <div className="flex-1 overflow-y-auto overscroll-contain px-3.5 py-2.5 space-y-1.5 [-webkit-overflow-scrolling:touch]">
                       {Object.entries(SCORING_RUBRIC).map(([key, item]) => (
                         <StarScore
                           key={key}
@@ -648,9 +668,9 @@ export function JudgeDashboard() {
                       </div>
                     </div>
 
-                    {/* Compact Footer */}
-                    <div className="px-4 py-3 border-t border-[#EAE4D8] shrink-0 pb-6 sm:pb-4 space-y-2.5">
-                      <div className="p-3.5 px-4 rounded-2xl bg-white border border-[#EAE4D8] flex items-center justify-between text-xs sm:text-sm font-extrabold shadow-xs">
+                    {/* Compact Footer — sticky on mobile with safe-area */}
+                    <div className="px-4 py-3 border-t border-[#EAE4D8] shrink-0 pb-4 max-sm:pb-[max(1.25rem,env(safe-area-inset-bottom))] space-y-2.5">
+                      <div className="p-3.5 px-4 rounded-2xl bg-white border border-[#EAE4D8] flex items-center justify-between max-sm:flex-col max-sm:items-start max-sm:gap-1.5 text-xs sm:text-sm font-extrabold shadow-xs">
                         <span className="text-slate-700">Test Call ({(totalScore).toFixed(1)}) + Bonus ({activeTeam.bonusPoints || 0})</span>
                         <span className="font-mono text-sm font-black text-[#E83C00]">
                           Total: {(totalScore + (activeTeam.bonusPoints || 0)).toFixed(1)} <span className="text-xs text-slate-400 font-bold">/ 20 Pts</span>
@@ -660,7 +680,7 @@ export function JudgeDashboard() {
                       <button
                         onClick={handleSubmitEvaluation}
                         disabled={submitting || totalScore === 0}
-                        className="w-full py-3.5 rounded-2xl bg-[#E83C00] text-white font-black text-sm shadow-[0_4px_15px_rgba(232,60,0,0.25)] hover:bg-[#FF4500] hover:shadow-[0_6px_20px_rgba(232,60,0,0.35)] transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                        className="w-full py-3.5 rounded-2xl bg-[#E83C00] text-white font-black text-sm shadow-[0_4px_15px_rgba(232,60,0,0.25)] hover:bg-[#FF4500] hover:shadow-[0_6px_20px_rgba(232,60,0,0.35)] transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer touch-manipulation"
                       >
                         {submitting ? 'Submitting...' : activeTeam.isScored ? `Update Score (${(totalScore + (activeTeam.bonusPoints || 0)).toFixed(1)} / 20)` : `Submit Evaluation (${(totalScore + (activeTeam.bonusPoints || 0)).toFixed(1)} / 20)`}
                       </button>
@@ -824,23 +844,23 @@ export function JudgeDashboard() {
                       </div>
                     </div>
 
-                    <div className="p-5 sm:p-6 border-t border-slate-200 shrink-0 pb-8 sm:pb-6" style={{ backgroundColor: '#F4ECE1' }}>
+                    <div className="p-5 sm:p-6 border-t border-slate-200 shrink-0 pb-6 max-sm:pb-[max(2rem,env(safe-area-inset-bottom))]" style={{ backgroundColor: '#F4ECE1' }}>
                       {activeTeam.isScored && activeTeam.totalScore !== null ? (
                         <div className="space-y-3">
                           <div className="flex justify-between items-center bg-orange-50/50 border border-orange-200 p-4 rounded-xl">
-                            <div>
+                            <div className="min-w-0">
                               <span className="text-[10px] text-[#E83C00] uppercase tracking-wider block font-bold">Evaluated Score</span>
                               <span className="text-xl font-mono font-bold text-[#E83C00]">{activeTeam.totalScore} / 20</span>
                               {activeTeam.notes && (
-                                <p className="text-xs text-slate-600 font-medium mt-1 font-sans italic">"{activeTeam.notes}"</p>
+                                <p className="text-xs text-slate-600 font-medium mt-1 font-sans italic max-sm:line-clamp-2">"{activeTeam.notes}"</p>
                               )}
                             </div>
-                            <CheckCircle size={24} className="text-[#E83C00]" />
+                            <CheckCircle size={24} className="text-[#E83C00] shrink-0" />
                           </div>
                           {!activeTeam.isLocked && (
                             <button
                               onClick={() => setIsEvaluating(true)}
-                              className="w-full py-3.5 rounded-xl bg-[#E83C00] text-white hover:bg-[#FF4500] font-bold text-sm transition-all shadow-sm"
+                              className="w-full py-3.5 rounded-xl bg-[#E83C00] text-white hover:bg-[#FF4500] font-bold text-sm transition-all shadow-sm touch-manipulation"
                             >
                               Edit Evaluation ({activeTeam.totalScore} / 20)
                             </button>
@@ -850,13 +870,13 @@ export function JudgeDashboard() {
                         <div className="flex flex-col-reverse sm:flex-row gap-3">
                           <button
                             onClick={handleSkip}
-                            className="flex-1 flex items-center justify-center gap-2 py-3.5 sm:py-4 rounded-xl bg-slate-100 text-slate-500 hover:text-slate-700 hover:bg-slate-200 transition-all font-bold text-sm shadow-sm"
+                            className="flex-1 flex items-center justify-center gap-2 py-3.5 sm:py-4 rounded-xl bg-slate-100 text-slate-500 hover:text-slate-700 hover:bg-slate-200 transition-all font-bold text-sm shadow-sm touch-manipulation"
                           >
                             Skip for Now <FastForward size={16} />
                           </button>
                           <button
                             onClick={() => setIsEvaluating(true)}
-                            className="flex-[2] flex items-center justify-center gap-2 py-3.5 sm:py-4 rounded-xl bg-[#E83C00] text-white hover:bg-[#FF4500] hover:shadow-[0_8px_25px_rgba(232,60,0,0.25)] transition-all font-bold text-sm transform hover:-translate-y-0.5"
+                            className="flex-[2] flex items-center justify-center gap-2 py-3.5 sm:py-4 rounded-xl bg-[#E83C00] text-white hover:bg-[#FF4500] hover:shadow-[0_8px_25px_rgba(232,60,0,0.25)] transition-all font-bold text-sm transform hover:-translate-y-0.5 touch-manipulation"
                           >
                             Start Evaluation <ArrowUpRight size={16} />
                           </button>
