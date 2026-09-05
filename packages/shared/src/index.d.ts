@@ -64,8 +64,14 @@ export declare const ROUND_2_SCORING_RUBRIC: {
     readonly escalationFraudAmbiguityHandling: { readonly max: 15; readonly label: "Escalation & Fraud/Ambiguity Handling"; readonly description: string };
     readonly conversationDesignRecovery: { readonly max: 10; readonly label: "Conversation Design & Recovery"; readonly description: string };
 };
-export type ScoringRubric = typeof SCORING_RUBRIC | typeof ROUND_2_SCORING_RUBRIC;
+export type RubricCriterion = {
+    max: number;
+    label: string;
+    description: string;
+};
+export type ScoringRubric = Record<string, RubricCriterion>;
 export declare function getScoringRubricForRound(round: number): ScoringRubric;
+export declare function getRubricCriterion(round: number, criteriaId: string): RubricCriterion | undefined;
 export declare function getRubricMaxScore(round: number): number;
 export declare const SCHEDULE_ITEMS: readonly [{
     readonly date: "Sep 05";

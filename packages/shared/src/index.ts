@@ -79,14 +79,25 @@ export const ROUND_2_SCORING_RUBRIC = {
   },
 } as const;
 
-export type ScoringRubric = typeof SCORING_RUBRIC | typeof ROUND_2_SCORING_RUBRIC;
+export type RubricCriterion = {
+  max: number
+  label: string
+  description: string
+}
+
+/** Round-aware lookup map — keys differ between R1 and R2. */
+export type ScoringRubric = Record<string, RubricCriterion>
 
 export function getScoringRubricForRound(round: number): ScoringRubric {
-  return round >= 2 ? ROUND_2_SCORING_RUBRIC : SCORING_RUBRIC;
+  return (round >= 2 ? ROUND_2_SCORING_RUBRIC : SCORING_RUBRIC) as ScoringRubric
+}
+
+export function getRubricCriterion(round: number, criteriaId: string): RubricCriterion | undefined {
+  return getScoringRubricForRound(round)[criteriaId]
 }
 
 export function getRubricMaxScore(round: number): number {
-  return Object.values(getScoringRubricForRound(round)).reduce((sum, item) => sum + item.max, 0);
+  return Object.values(getScoringRubricForRound(round)).reduce((sum, item) => sum + item.max, 0)
 }
 
 export const SCHEDULE_ITEMS = [

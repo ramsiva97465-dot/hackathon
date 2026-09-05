@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { LeaderboardGateway } from '../leaderboard/leaderboard.gateway'
-import { getScoringRubricForRound } from '@hackathon/shared'
+import { getRubricCriterion } from '@hackathon/shared'
 
 @Injectable()
 export class ScoresService {
@@ -19,7 +19,6 @@ export class ScoresService {
     const team = await this.prisma.team.findUnique({ where: { id: teamId } })
     if (!team) throw new NotFoundException('Team not found')
     const judgingRound = team.round || 1
-    const rubric = getScoringRubricForRound(judgingRound)
 
     // 2. Fetch or create scoreSheet for this round only (Round 1 sheets stay frozen)
     let scoreSheet = await this.prisma.scoreSheet.findFirst({
@@ -43,7 +42,7 @@ export class ScoresService {
 
     // 3. Process each score criteria safely (round-aware rubric)
     for (const s of scores) {
-      const rubricItem = rubric[s.criteriaId as keyof typeof rubric]
+      const rubricItem = getRubricCriterion(judgingRound, s.criteriaId)
       if (!rubricItem) {
         throw new BadRequestException(
           `Unknown criteria "${s.criteriaId}" for Round ${judgingRound}. Use the Round ${judgingRound} score card.`
