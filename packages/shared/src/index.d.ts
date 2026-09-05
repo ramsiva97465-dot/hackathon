@@ -31,31 +31,42 @@ export declare const CHALLENGE_TRACKS: readonly [{
 }];
 export declare const SCORING_RUBRIC: {
     readonly latency: {
-        readonly max: 10;
+        readonly max: 2;
         readonly label: "Latency & Speed";
-        readonly description: "Response time and real-time conversational capability on the phone call";
+        readonly description: string;
     };
     readonly conversationalQuality: {
-        readonly max: 10;
+        readonly max: 2;
         readonly label: "Conversational Flow";
-        readonly description: "Natural turn-taking, handling interruptions and context";
+        readonly description: string;
     };
     readonly languageAccuracy: {
-        readonly max: 10;
-        readonly label: "Tamil Language Accuracy";
-        readonly description: "Fluency, grammar, and pronunciation in Tamil/regional languages";
+        readonly max: 2;
+        readonly label: "Language Accuracy";
+        readonly description: string;
     };
     readonly aiUsage: {
-        readonly max: 10;
-        readonly label: "Voice Realism & Persona";
-        readonly description: "Quality of TTS, emotion, and character consistency";
+        readonly max: 2;
+        readonly label: "Problem-Solving Ability";
+        readonly description: string;
     };
     readonly technicalQuality: {
-        readonly max: 10;
-        readonly label: "Technical Implementation";
-        readonly description: "Code quality, architecture, and telephony integration";
+        readonly max: 2;
+        readonly label: "Real-World Implementation & Viability";
+        readonly description: string;
     };
 };
+export declare const ROUND_2_SCORING_RUBRIC: {
+    readonly languageCommunicationFidelity: { readonly max: 20; readonly label: "Language & Communication Fidelity"; readonly description: string };
+    readonly dataGroundedReasoning: { readonly max: 20; readonly label: "Data-Grounded Reasoning"; readonly description: string };
+    readonly schemeKnowledgeEligibilityAccuracy: { readonly max: 15; readonly label: "Scheme Knowledge & Eligibility Accuracy"; readonly description: string };
+    readonly guardrailsAgainstOverpromising: { readonly max: 20; readonly label: "Guardrails Against Overpromising"; readonly description: string };
+    readonly escalationFraudAmbiguityHandling: { readonly max: 15; readonly label: "Escalation & Fraud/Ambiguity Handling"; readonly description: string };
+    readonly conversationDesignRecovery: { readonly max: 10; readonly label: "Conversation Design & Recovery"; readonly description: string };
+};
+export type ScoringRubric = typeof SCORING_RUBRIC | typeof ROUND_2_SCORING_RUBRIC;
+export declare function getScoringRubricForRound(round: number): ScoringRubric;
+export declare function getRubricMaxScore(round: number): number;
 export declare const SCHEDULE_ITEMS: readonly [{
     readonly date: "Sep 05";
     readonly time: "09:00 AM";

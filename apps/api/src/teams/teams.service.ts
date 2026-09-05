@@ -205,7 +205,7 @@ export class TeamsService {
       message: replaced
         ? `Judge updated for Round ${judgingRound}.`
         : judgingRound === 2
-          ? `Judge added for Round 2. All assigned judges score this team (10 pts each).`
+          ? `Judge added for Round 2. All assigned judges score this team (100 pts each).`
           : `Judge assigned for Round ${judgingRound}.`,
     }
   }
@@ -235,7 +235,7 @@ export class TeamsService {
     if (judges.length === 0) return { success: false, message: 'No judges available.' }
 
     // Round 2: every available judge scores every shortlisted team.
-    // Max score is 10 × judge count (5 judges → 50, 4 → 40, 3 → 30).
+    // Max score is 100 × judge count (5 judges → 500, 4 → 400, 3 → 300).
     if (Number(round) === 2) {
       let count = 0
       for (const team of teams) {
@@ -272,7 +272,7 @@ export class TeamsService {
       }
       return {
         success: true,
-        message: `Assigned all ${judges.length} judges to all ${teams.length} Round 2 teams. Team totals are out of ${judges.length * 10}.`,
+        message: `Assigned all ${judges.length} judges to all ${teams.length} Round 2 teams. Team totals are out of ${judges.length * 100}.`,
       }
     }
 
@@ -831,7 +831,7 @@ export class TeamsService {
           const sheetTotal = sheet.scores.reduce((sSum, sc) => sSum + sc.score, 0)
           return sum + sheetTotal
         }, 0)
-        // Round 1 stays a single-judge average. Round 2 sums every judge (10 × judges).
+        // Round 1 stays a single-judge average. Round 2 sums every judge (100 × judges).
         overallScore = round === 2 ? total : total / submittedSheets.length
       }
       if (round === 1 && (t.bonusVerifiedAt || t.bonusVerifiedBy)) {
@@ -1207,7 +1207,7 @@ export class TeamsService {
 
     return {
       success: true,
-      message: `Assigned all ${judges.length} judges to all ${teams.length} Special Category Round ${targetRound} teams. Team totals are out of ${judges.length * 10}.`,
+      message: `Assigned all ${judges.length} judges to all ${teams.length} Special Category Round ${targetRound} teams. Team totals are out of ${judges.length * (targetRound >= 2 ? 100 : 10)}.`,
       created,
     }
   }

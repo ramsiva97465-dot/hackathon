@@ -102,7 +102,7 @@ export class LeaderboardService {
             judgeCount = team.round2JudgeCount ?? r2Sheets.length
           } else {
             judgeCount = r2Sheets.length
-            // Round 2: sum every judge's sheet. 5 judges → /50, 4 → /40, 3 → /30.
+            // Round 2: sum every judge's sheet. 5 judges → /500, 4 → /400, 3 → /300 (100 pts each).
             totalScore = sumFromSheets(r2Sheets)
           }
         } else if (team.round1Score !== null && team.round1Score !== undefined) {

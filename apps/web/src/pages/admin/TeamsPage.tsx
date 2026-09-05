@@ -1017,7 +1017,7 @@ export function TeamsPage() {
                     Viewing Round 2 Qualified Teams ({round2Count} Teams)
                   </p>
                   <p className="text-[11px] text-amber-300/70">
-                    Every available judge is assigned to all 20 teams. Team totals are 10 × judge count (5 judges → 50).
+                    Every available judge is assigned to all 20 teams. Team totals are 100 × judge count (5 judges → 500).
                   </p>
                 </div>
               </div>

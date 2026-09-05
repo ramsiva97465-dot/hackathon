@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 import { LeaderboardGateway } from '../leaderboard/leaderboard.gateway'
-import { SCORING_RUBRIC } from '@hackathon/shared'
+import { getScoringRubricForRound } from '@hackathon/shared'
 
 @Injectable()
 export class ScoresService {
@@ -19,6 +19,7 @@ export class ScoresService {
     const team = await this.prisma.team.findUnique({ where: { id: teamId } })
     if (!team) throw new NotFoundException('Team not found')
     const judgingRound = team.round || 1
+    const rubric = getScoringRubricForRound(judgingRound)
 
     // 2. Fetch or create scoreSheet for this round only (Round 1 sheets stay frozen)
     let scoreSheet = await this.prisma.scoreSheet.findFirst({
@@ -40,14 +41,28 @@ export class ScoresService {
       })
     }
 
-    // 3. Process each score criteria safely
+    // 3. Process each score criteria safely (round-aware rubric)
     for (const s of scores) {
+      const rubricItem = rubric[s.criteriaId as keyof typeof rubric]
+      if (!rubricItem) {
+        throw new BadRequestException(
+          `Unknown criteria "${s.criteriaId}" for Round ${judgingRound}. Use the Round ${judgingRound} score card.`
+        )
+      }
+
+      const maxAllowed = rubricItem.max
+      const numericScore = Number(s.score)
+      if (!Number.isFinite(numericScore) || numericScore < 0 || numericScore > maxAllowed) {
+        throw new BadRequestException(
+          `Score for "${rubricItem.label}" must be between 0 and ${maxAllowed}.`
+        )
+      }
+
       let criteria = await this.prisma.scoreCriteria.findFirst({
         where: { hackathonId: scoreSheet.hackathonId, name: s.criteriaId }
       })
 
       if (!criteria) {
-        const rubricItem = SCORING_RUBRIC[s.criteriaId as keyof typeof SCORING_RUBRIC]
         criteria = await this.prisma.scoreCriteria.upsert({
           where: {
             hackathonId_name: {
@@ -55,14 +70,25 @@ export class ScoresService {
               name: s.criteriaId
             }
           },
-          update: {},
+          update: {
+            description: rubricItem.description,
+            maxScore: maxAllowed,
+          },
           create: {
             hackathonId: scoreSheet.hackathonId,
             name: s.criteriaId,
-            description: rubricItem?.description || s.criteriaId,
-            maxScore: rubricItem?.max || 10,
+            description: rubricItem.description,
+            maxScore: maxAllowed,
             weight: 1.0
           }
+        })
+      } else if (criteria.maxScore !== maxAllowed || criteria.description !== rubricItem.description) {
+        criteria = await this.prisma.scoreCriteria.update({
+          where: { id: criteria.id },
+          data: {
+            maxScore: maxAllowed,
+            description: rubricItem.description,
+          },
         })
       }
 
@@ -73,11 +99,11 @@ export class ScoresService {
             criteriaId: criteria.id,
           },
         },
-        update: { score: s.score },
+        update: { score: numericScore },
         create: {
           scoreSheetId: scoreSheet.id,
           criteriaId: criteria.id,
-          score: s.score,
+          score: numericScore,
         },
       })
     }
@@ -102,6 +128,6 @@ export class ScoresService {
       })
     }
 
-    return { success: true }
+    return { success: true, round: judgingRound }
   }
 }

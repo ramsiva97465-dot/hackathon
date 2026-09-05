@@ -8,13 +8,68 @@ import { useSession, signOut } from '@/lib/auth-client'
 import { Avatar } from '@/components/ui/Avatar'
 import { getTrackConfig } from '@/lib/utils'
 
-const SCORING_RUBRIC = {
+/** Round 1 — 5 × 2.0 = 10 (+ social bonus → /20). */
+const ROUND_1_SCORING_RUBRIC = {
   latency: { max: 2, label: 'Latency & Speed', description: 'response time, real-time performance, minimal pauses during calls' },
   conversationalQuality: { max: 2, label: 'Conversational Flow', description: 'natural turn-taking, interruptions, context retention, handling unexpected responses' },
   languageAccuracy: { max: 2, label: 'Language Accuracy', description: 'Tamil/regional fluency, pronunciation, grammar, understanding and response accuracy' },
   aiUsage: { max: 2, label: 'Problem-Solving Ability', description: 'does the agent actually solve the intended problem, reason through edge cases, and take the right action' },
   technicalQuality: { max: 2, label: 'Real-World Implementation & Viability', description: 'is the use case practical, can it run in a real business environment, quality of implementation, integrations, architecture and scalability' },
 } as const
+
+/** Round 2+ (main + Special) — 100 pts per judge sheet. */
+const ROUND_2_SCORING_RUBRIC = {
+  languageCommunicationFidelity: {
+    max: 20,
+    label: 'Language & Communication Fidelity',
+    description: 'clarity, Tamil/regional fluency, pronunciation, and how faithfully the agent communicates intent',
+  },
+  dataGroundedReasoning: {
+    max: 20,
+    label: 'Data-Grounded Reasoning',
+    description: 'answers grounded in provided data/context; correct reasoning without inventing facts',
+  },
+  schemeKnowledgeEligibilityAccuracy: {
+    max: 15,
+    label: 'Scheme Knowledge & Eligibility Accuracy',
+    description: 'accurate scheme/policy knowledge and correct eligibility determination',
+  },
+  guardrailsAgainstOverpromising: {
+    max: 20,
+    label: 'Guardrails Against Overpromising',
+    description: 'does not overpromise outcomes, benefits, or approvals beyond what is allowed',
+  },
+  escalationFraudAmbiguityHandling: {
+    max: 15,
+    label: 'Escalation & Fraud/Ambiguity Handling',
+    description: 'handles fraud signals, ambiguity, and escalates appropriately when unsure',
+  },
+  conversationDesignRecovery: {
+    max: 10,
+    label: 'Conversation Design & Recovery',
+    description: 'smooth conversation design, repair, and recovery from misunderstandings',
+  },
+} as const
+
+type RubricMap = typeof ROUND_1_SCORING_RUBRIC | typeof ROUND_2_SCORING_RUBRIC
+
+function getRubricForRound(round?: number): RubricMap {
+  return (round || 1) >= 2 ? ROUND_2_SCORING_RUBRIC : ROUND_1_SCORING_RUBRIC
+}
+
+function emptyScoresFromRubric(rubric: RubricMap): Record<string, number> {
+  return Object.fromEntries(Object.keys(rubric).map((key) => [key, 0]))
+}
+
+function scoresFromExisting(rubric: RubricMap, existing?: Record<string, number> | null): Record<string, number> {
+  return Object.fromEntries(
+    Object.keys(rubric).map((key) => [key, existing?.[key] ?? 0])
+  )
+}
+
+function formatScore(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1)
+}
 
 type Team = {
   id: string
@@ -108,26 +163,34 @@ function StarScore({
   label,
   description,
   value,
+  max,
   onChange,
 }: {
   label: string
   description?: string
   value: number
+  max: number
   onChange: (points: number) => void
 }) {
   const [hoveredStar, setHoveredStar] = useState<number | null>(null)
-
-  // 5 Stars: 1 Star = 0.4 Pts, 5 Stars = 2.0 Pts
-  const currentStarCount = hoveredStar !== null ? hoveredStar : Math.round(value / 0.4)
-  const displayScore = hoveredStar !== null ? Math.round(hoveredStar * 0.4 * 10) / 10 : value
+  const step = max / 5
+  const currentStarCount = hoveredStar !== null
+    ? hoveredStar
+    : value <= 0
+      ? 0
+      : Math.min(5, Math.max(0, Math.round(value / step)))
+  const displayScore = hoveredStar !== null
+    ? Math.round(hoveredStar * step * 10) / 10
+    : value
 
   return (
     <div className="rounded-xl border border-[#EAE4D8] bg-white p-2.5 space-y-1.5 shadow-xs hover:shadow-sm transition-all">
-      {/* Top Row: Title + 5 Stars + Score Badge — stacks only on phones */}
       <div className="flex items-center justify-between gap-2 max-sm:flex-col max-sm:items-stretch max-sm:gap-2">
-        <h4 className="text-xs font-black text-slate-900 truncate min-w-0 flex-1">{label}</h4>
+        <div className="min-w-0 flex-1">
+          <h4 className="text-xs font-black text-slate-900 truncate">{label}</h4>
+          <p className="text-[9px] font-bold text-slate-400 mt-0.5">Max {max} Pts</p>
+        </div>
 
-        {/* contents on sm+ restores original 3-column row (label | stars | badge) */}
         <div className="contents max-sm:flex max-sm:w-full max-sm:items-center max-sm:justify-between max-sm:gap-2">
           <div
             className="flex items-center gap-0.5 shrink-0"
@@ -135,7 +198,7 @@ function StarScore({
           >
             {[1, 2, 3, 4, 5].map((starIndex) => {
               const isFilled = starIndex <= currentStarCount
-              const pts = Math.round(starIndex * 0.4 * 10) / 10
+              const pts = Math.round(starIndex * step * 10) / 10
 
               return (
                 <button
@@ -144,10 +207,10 @@ function StarScore({
                   onMouseEnter={() => setHoveredStar(starIndex)}
                   onClick={() => {
                     const newScore = currentStarCount === starIndex && hoveredStar === null ? 0 : pts
-                    onChange(newScore)
+                    onChange(Math.min(max, Math.max(0, newScore)))
                   }}
                   className="p-0.5 max-sm:p-1.5 rounded-md transition-transform hover:scale-125 max-sm:hover:scale-100 max-sm:active:scale-95 focus:outline-none cursor-pointer touch-manipulation"
-                  title={`${starIndex} Star${starIndex > 1 ? 's' : ''} = ${pts} Pts`}
+                  title={`${starIndex} Star${starIndex > 1 ? 's' : ''} = ${formatScore(pts)} Pts`}
                 >
                   <Star
                     size={16}
@@ -170,8 +233,8 @@ function StarScore({
             })}
           </div>
 
-          <span className="w-9 py-0.5 text-center rounded-md bg-orange-50 text-[#E83C00] border border-orange-200 font-mono font-black text-[11px] shrink-0">
-            {displayScore.toFixed(1)}
+          <span className="min-w-10 w-10 py-0.5 text-center rounded-md bg-orange-50 text-[#E83C00] border border-orange-200 font-mono font-black text-[11px] shrink-0">
+            {formatScore(displayScore)}
           </span>
         </div>
       </div>
@@ -191,13 +254,7 @@ export function JudgeDashboard() {
   const [activeRound, setActiveRound] = useState<number>(1)
 
   const [isEvaluating, setIsEvaluating] = useState(false)
-  const [scores, setScores] = useState<Record<string, number>>({
-    latency: 0,
-    conversationalQuality: 0,
-    languageAccuracy: 0,
-    aiUsage: 0,
-    technicalQuality: 0,
-  })
+  const [scores, setScores] = useState<Record<string, number>>(() => emptyScoresFromRubric(ROUND_1_SCORING_RUBRIC))
   const [searchQuery, setSearchQuery] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [notes, setNotes] = useState('')
@@ -205,23 +262,12 @@ export function JudgeDashboard() {
   useEffect(() => {
     setIsEvaluating(false)
     const target = assignedTeams.find(t => t.id === selectedId)
+    const rubric = getRubricForRound(target?.round)
     if (target && target.isScored && target.existingScores && Object.keys(target.existingScores).length > 0) {
-      setScores({
-        latency: target.existingScores.latency || 0,
-        conversationalQuality: target.existingScores.conversationalQuality || 0,
-        languageAccuracy: target.existingScores.languageAccuracy || 0,
-        aiUsage: target.existingScores.aiUsage || 0,
-        technicalQuality: target.existingScores.technicalQuality || 0,
-      })
+      setScores(scoresFromExisting(rubric, target.existingScores))
       setNotes(target.notes || '')
     } else {
-      setScores({
-        latency: 0,
-        conversationalQuality: 0,
-        languageAccuracy: 0,
-        aiUsage: 0,
-        technicalQuality: 0,
-      })
+      setScores(emptyScoresFromRubric(rubric))
       setNotes('')
     }
   }, [selectedId, assignedTeams])
@@ -292,6 +338,7 @@ export function JudgeDashboard() {
 
   const renderTeamCard = (team: Team) => {
     const active = team.id === selectedId
+    const teamMax = (team.round || 1) >= 2 ? 100 : 20
     return (
       <motion.div
         key={team.id}
@@ -337,7 +384,7 @@ export function JudgeDashboard() {
             <div className="flex items-center gap-1.5 px-2.5 max-sm:px-2 py-1 rounded-full bg-orange-50/50 border border-orange-200/50">
               <CheckCircle size={12} className="text-[#E83C00]" />
               <span className="text-[10px] font-bold font-mono text-[#E83C00]">
-                {team.totalScore !== null ? `${(Math.round(team.totalScore * 10) / 10).toFixed(1)} / 20` : 'Scored'}
+                {team.totalScore !== null ? `${formatScore(Math.round(team.totalScore * 10) / 10)} / ${teamMax}` : 'Scored'}
               </span>
             </div>
           ) : (
@@ -377,7 +424,12 @@ export function JudgeDashboard() {
   }
 
   const totalScore = Object.values(scores).reduce((sum, val) => sum + val, 0)
-  const maxPossibleScore = Object.values(SCORING_RUBRIC).reduce((sum, r) => sum + r.max, 0)
+  const activeRubric = getRubricForRound(activeTeam?.round)
+  const isRound2Scoring = (activeTeam?.round || 1) >= 2
+  const sheetMax = Object.values(activeRubric).reduce((sum, r) => sum + r.max, 0)
+  const displayMax = isRound2Scoring ? sheetMax : 20
+  const bonusForTotal = isRound2Scoring ? 0 : (activeTeam?.bonusPoints || 0)
+  const combinedTotal = totalScore + bonusForTotal
 
   const handleSubmitEvaluation = async () => {
     if (!session?.user?.id || !activeTeam?.id) {
@@ -390,11 +442,17 @@ export function JudgeDashboard() {
     const targetUserId = session.user.id
 
     const formattedScores = Object.entries(scores)
-      .filter(([_, value]) => value !== undefined && !isNaN(value))
+      .filter(([key, value]) => key in activeRubric && value !== undefined && !isNaN(value))
       .map(([key, value]) => ({
         criteriaId: key,
         score: Number(value),
       }))
+
+    if (formattedScores.length === 0) {
+      toast.error('Please score at least one criterion.')
+      setSubmitting(false)
+      return
+    }
 
     const payload: any = {
       judgeId: targetUserId,
@@ -620,26 +678,40 @@ export function JudgeDashboard() {
                       </div>
                     )}
 
-                    {/* Organizer Social Bonus Banner */}
-                    <div className="mx-3.5 mt-2.5 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between max-sm:flex-col max-sm:items-start max-sm:gap-1.5 shadow-xs">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Star className="text-amber-600 fill-amber-500 shrink-0" size={14} />
-                        <p className="text-[11px] font-black text-amber-950">
-                          Social Bonus: <span className="text-[#E83C00]">+{activeTeam.bonusPoints || 0} / 10 Pts</span>
+                    {/* Organizer Social Bonus Banner — Round 1 only (R2 boards use judge sheet /100) */}
+                    {!isRound2Scoring && (
+                      <div className="mx-3.5 mt-2.5 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between max-sm:flex-col max-sm:items-start max-sm:gap-1.5 shadow-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Star className="text-amber-600 fill-amber-500 shrink-0" size={14} />
+                          <p className="text-[11px] font-black text-amber-950">
+                            Social Bonus: <span className="text-[#E83C00]">+{activeTeam.bonusPoints || 0} / 10 Pts</span>
+                          </p>
+                        </div>
+                        <span className="text-[10px] font-bold text-amber-800 bg-amber-500/15 px-2 py-0.5 rounded-md shrink-0">
+                          {activeTeam.bonusPoints && activeTeam.bonusPoints >= 10 ? '⭐ Completed' : `+${activeTeam.bonusPoints || 0} Pts`}
+                        </span>
+                      </div>
+                    )}
+
+                    {isRound2Scoring && (
+                      <div className="mx-3.5 mt-2.5 px-3 py-2 rounded-xl bg-[#E83C00]/10 border border-[#E83C00]/25 shadow-xs">
+                        <p className="text-[11px] font-black text-[#1A1A1A] uppercase tracking-wider">
+                          Round 2 Score Card · / {sheetMax} Pts
+                        </p>
+                        <p className="text-[10.5px] text-slate-600 font-medium mt-0.5 leading-snug">
+                          Same rubric for Main and Special Category. Leaderboard sums all judges' sheets.
                         </p>
                       </div>
-                      <span className="text-[10px] font-bold text-amber-800 bg-amber-500/15 px-2 py-0.5 rounded-md shrink-0">
-                        {activeTeam.bonusPoints && activeTeam.bonusPoints >= 10 ? '⭐ Completed' : `+${activeTeam.bonusPoints || 0} Pts`}
-                      </span>
-                    </div>
+                    )}
 
                     {/* Compact Criteria List (Fits on 1 Screen) */}
                     <div className="flex-1 overflow-y-auto overscroll-contain px-3.5 py-2.5 space-y-1.5 [-webkit-overflow-scrolling:touch]">
-                      {Object.entries(SCORING_RUBRIC).map(([key, item]) => (
+                      {Object.entries(activeRubric).map(([key, item]) => (
                         <StarScore
                           key={key}
                           label={item.label}
                           description={item.description}
+                          max={item.max}
                           value={scores[key] || 0}
                           onChange={(val) => setScores(s => ({ ...s, [key]: val }))}
                         />
@@ -660,10 +732,14 @@ export function JudgeDashboard() {
                       {/* 2 Lines of Neat Judge Guidance Text */}
                       <div className="py-1 text-center">
                         <p className="text-[10px] font-semibold text-slate-500 leading-tight">
-                          💡 Tap stars to rate (1 Star = 0.4 Pts · 5 Stars = 2.0 Pts Max).
+                          {isRound2Scoring
+                            ? `💡 Tap stars to rate each criterion (5 stars = full points for that row · sheet max ${sheetMax}).`
+                            : '💡 Tap stars to rate (1 Star = 0.4 Pts · 5 Stars = 2.0 Pts Max).'}
                         </p>
                         <p className="text-[9.5px] text-slate-400 mt-0.5">
-                          Scores &amp; bonus points combine live for the team leaderboard.
+                          {isRound2Scoring
+                            ? 'Scores sync live to the Round 2 leaderboard (main & Special).'
+                            : 'Scores & bonus points combine live for the team leaderboard.'}
                         </p>
                       </div>
                     </div>
@@ -671,9 +747,13 @@ export function JudgeDashboard() {
                     {/* Compact Footer — sticky on mobile with safe-area */}
                     <div className="px-4 py-3 border-t border-[#EAE4D8] shrink-0 pb-4 max-sm:pb-[max(1.25rem,env(safe-area-inset-bottom))] space-y-2.5">
                       <div className="p-3.5 px-4 rounded-2xl bg-white border border-[#EAE4D8] flex items-center justify-between max-sm:flex-col max-sm:items-start max-sm:gap-1.5 text-xs sm:text-sm font-extrabold shadow-xs">
-                        <span className="text-slate-700">Test Call ({(totalScore).toFixed(1)}) + Bonus ({activeTeam.bonusPoints || 0})</span>
+                        <span className="text-slate-700">
+                          {isRound2Scoring
+                            ? `Judge Sheet (${formatScore(totalScore)})`
+                            : `Test Call (${formatScore(totalScore)}) + Bonus (${activeTeam.bonusPoints || 0})`}
+                        </span>
                         <span className="font-mono text-sm font-black text-[#E83C00]">
-                          Total: {(totalScore + (activeTeam.bonusPoints || 0)).toFixed(1)} <span className="text-xs text-slate-400 font-bold">/ 20 Pts</span>
+                          Total: {formatScore(combinedTotal)} <span className="text-xs text-slate-400 font-bold">/ {displayMax} Pts</span>
                         </span>
                       </div>
 
@@ -682,7 +762,11 @@ export function JudgeDashboard() {
                         disabled={submitting || totalScore === 0}
                         className="w-full py-3.5 rounded-2xl bg-[#E83C00] text-white font-black text-sm shadow-[0_4px_15px_rgba(232,60,0,0.25)] hover:bg-[#FF4500] hover:shadow-[0_6px_20px_rgba(232,60,0,0.35)] transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer touch-manipulation"
                       >
-                        {submitting ? 'Submitting...' : activeTeam.isScored ? `Update Score (${(totalScore + (activeTeam.bonusPoints || 0)).toFixed(1)} / 20)` : `Submit Evaluation (${(totalScore + (activeTeam.bonusPoints || 0)).toFixed(1)} / 20)`}
+                        {submitting
+                          ? 'Submitting...'
+                          : activeTeam.isScored
+                            ? `Update Score (${formatScore(combinedTotal)} / ${displayMax})`
+                            : `Submit Evaluation (${formatScore(combinedTotal)} / ${displayMax})`}
                       </button>
                     </div>
                   </div>
@@ -850,7 +934,7 @@ export function JudgeDashboard() {
                           <div className="flex justify-between items-center bg-orange-50/50 border border-orange-200 p-4 rounded-xl">
                             <div className="min-w-0">
                               <span className="text-[10px] text-[#E83C00] uppercase tracking-wider block font-bold">Evaluated Score</span>
-                              <span className="text-xl font-mono font-bold text-[#E83C00]">{activeTeam.totalScore} / 20</span>
+                              <span className="text-xl font-mono font-bold text-[#E83C00]">{formatScore(activeTeam.totalScore)} / {displayMax}</span>
                               {activeTeam.notes && (
                                 <p className="text-xs text-slate-600 font-medium mt-1 font-sans italic max-sm:line-clamp-2">"{activeTeam.notes}"</p>
                               )}
@@ -862,7 +946,7 @@ export function JudgeDashboard() {
                               onClick={() => setIsEvaluating(true)}
                               className="w-full py-3.5 rounded-xl bg-[#E83C00] text-white hover:bg-[#FF4500] font-bold text-sm transition-all shadow-sm touch-manipulation"
                             >
-                              Edit Evaluation ({activeTeam.totalScore} / 20)
+                              Edit Evaluation ({formatScore(activeTeam.totalScore)} / {displayMax})
                             </button>
                           )}
                         </div>

@@ -36,6 +36,7 @@ export const CHALLENGE_TRACKS = [
   },
 ] as const;
 
+/** Round 1 judge rubric — 5 × 2.0 = 10 pts (+ social bonus up to 10 → /20 on boards). */
 export const SCORING_RUBRIC = {
   latency: { max: 2, label: 'Latency & Speed', description: 'response time, real-time performance, minimal pauses during calls' },
   conversationalQuality: { max: 2, label: 'Conversational Flow', description: 'natural turn-taking, interruptions, context retention, handling unexpected responses' },
@@ -43,6 +44,50 @@ export const SCORING_RUBRIC = {
   aiUsage: { max: 2, label: 'Problem-Solving Ability', description: 'does the agent actually solve the intended problem, reason through edge cases, and take the right action' },
   technicalQuality: { max: 2, label: 'Real-World Implementation & Viability', description: 'is the use case practical, can it run in a real business environment, quality of implementation, integrations, architecture and scalability' },
 } as const;
+
+/** Round 2+ judge rubric (main + Special Category) — totals 100 pts per judge sheet. */
+export const ROUND_2_SCORING_RUBRIC = {
+  languageCommunicationFidelity: {
+    max: 20,
+    label: 'Language & Communication Fidelity',
+    description: 'clarity, Tamil/regional fluency, pronunciation, and how faithfully the agent communicates intent',
+  },
+  dataGroundedReasoning: {
+    max: 20,
+    label: 'Data-Grounded Reasoning',
+    description: 'answers grounded in provided data/context; correct reasoning without inventing facts',
+  },
+  schemeKnowledgeEligibilityAccuracy: {
+    max: 15,
+    label: 'Scheme Knowledge & Eligibility Accuracy',
+    description: 'accurate scheme/policy knowledge and correct eligibility determination',
+  },
+  guardrailsAgainstOverpromising: {
+    max: 20,
+    label: 'Guardrails Against Overpromising',
+    description: 'does not overpromise outcomes, benefits, or approvals beyond what is allowed',
+  },
+  escalationFraudAmbiguityHandling: {
+    max: 15,
+    label: 'Escalation & Fraud/Ambiguity Handling',
+    description: 'handles fraud signals, ambiguity, and escalates appropriately when unsure',
+  },
+  conversationDesignRecovery: {
+    max: 10,
+    label: 'Conversation Design & Recovery',
+    description: 'smooth conversation design, repair, and recovery from misunderstandings',
+  },
+} as const;
+
+export type ScoringRubric = typeof SCORING_RUBRIC | typeof ROUND_2_SCORING_RUBRIC;
+
+export function getScoringRubricForRound(round: number): ScoringRubric {
+  return round >= 2 ? ROUND_2_SCORING_RUBRIC : SCORING_RUBRIC;
+}
+
+export function getRubricMaxScore(round: number): number {
+  return Object.values(getScoringRubricForRound(round)).reduce((sum, item) => sum + item.max, 0);
+}
 
 export const SCHEDULE_ITEMS = [
   { date: 'Sep 05', time: '09:00 AM', title: 'Opening Ceremony', description: 'Welcome address, keynotes from industry leaders' },
