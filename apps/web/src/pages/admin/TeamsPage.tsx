@@ -1017,7 +1017,7 @@ export function TeamsPage() {
                     Viewing Round 2 Qualified Teams ({round2Count} Teams)
                   </p>
                   <p className="text-[11px] text-amber-300/70">
-                    Every available judge is assigned to all 20 teams. Team totals are 100 × judge count (5 judges → 500).
+                    Top 20 teams are randomly split across judges (~even). Each team gets 1 judge · /100 pts.
                   </p>
                 </div>
               </div>
@@ -1027,7 +1027,7 @@ export function TeamsPage() {
                 className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-xs font-black transition-all flex items-center gap-1.5 shadow-md disabled:opacity-50 cursor-pointer"
               >
                 <UserPlus size={13} />
-                {distributing ? 'Assigning…' : '⚡ Assign All Judges to Top 20'}
+                {distributing ? 'Assigning…' : '⚡ Random-Assign Top 20 to Judges'}
               </button>
             </div>
           )}

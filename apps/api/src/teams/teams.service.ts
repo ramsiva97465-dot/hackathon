@@ -205,7 +205,7 @@ export class TeamsService {
       message: replaced
         ? `Judge updated for Round ${judgingRound}.`
         : judgingRound === 2
-          ? `Judge added for Round 2. All assigned judges score this team (100 pts each).`
+          ? `Judge added for Round 2 (1 judge scores this team · /100 pts).`
           : `Judge assigned for Round ${judgingRound}.`,
     }
   }
@@ -234,8 +234,8 @@ export class TeamsService {
     if (teams.length === 0) return { success: false, message: `No active teams found${round ? ` in Round ${round}` : ''} to assign.` }
     if (judges.length === 0) return { success: false, message: 'No judges available.' }
 
-    // Round 2: every available judge scores every shortlisted team.
-    // Max score is 100 × judge count (5 judges → 500, 4 → 400, 3 → 300).
+    // Round 2: randomly split Top 20 across judges (≈even). Each team gets ONE judge.
+    // Do NOT assign every team to every judge.
     if (Number(round) === 2) {
       // Drop leftover Round 1 main assignments so judges only see Top 20.
       await this.prisma.judgeAssignment.deleteMany({
@@ -248,42 +248,85 @@ export class TeamsService {
         },
       })
 
-      let count = 0
-      for (const team of teams) {
-        for (const judge of judges) {
-          const existing = await this.prisma.judgeAssignment.findUnique({
-            where: { judgeId_teamId: { judgeId: judge.id, teamId: team.id } },
-          })
-          if (!existing) {
-            await this.prisma.judgeAssignment.create({
-              data: {
-                hackathonId: team.hackathonId,
-                judgeId: judge.id,
-                teamId: team.id,
-              },
-            })
-            count++
-          }
-          const existingSheet = await this.prisma.scoreSheet.findUnique({
-            where: {
-              judgeId_teamId_round: { judgeId: judge.id, teamId: team.id, round: 2 },
-            },
-          })
-          if (!existingSheet) {
-            await this.prisma.scoreSheet.create({
-              data: {
-                hackathonId: team.hackathonId,
-                judgeId: judge.id,
-                teamId: team.id,
-                round: 2,
-              },
-            })
-          }
+      // Clear previous Round 2 main assignments + empty sheets, keep submitted scores.
+      const teamIds = teams.map((t) => t.id)
+      const submittedSheets = await this.prisma.scoreSheet.findMany({
+        where: { teamId: { in: teamIds }, round: 2, isSubmitted: true },
+        select: { teamId: true, judgeId: true },
+      })
+      const keepKey = new Set(submittedSheets.map((s) => `${s.judgeId}|${s.teamId}`))
+
+      if (submittedSheets.length === 0) {
+        await this.prisma.judgeAssignment.deleteMany({ where: { teamId: { in: teamIds } } })
+      } else {
+        const allAssignments = await this.prisma.judgeAssignment.findMany({
+          where: { teamId: { in: teamIds } },
+          select: { id: true, judgeId: true, teamId: true },
+        })
+        const toDelete = allAssignments
+          .filter((a) => !keepKey.has(`${a.judgeId}|${a.teamId}`))
+          .map((a) => a.id)
+        if (toDelete.length) {
+          await this.prisma.judgeAssignment.deleteMany({ where: { id: { in: toDelete } } })
         }
       }
+      await this.prisma.scoreSheet.deleteMany({
+        where: {
+          teamId: { in: teamIds },
+          round: 2,
+          isSubmitted: false,
+        },
+      })
+
+      const teamsNeedingAssign = teams.filter(
+        (t) => !submittedSheets.some((s) => s.teamId === t.id),
+      )
+
+      // Fisher–Yates shuffle then round-robin for even random allocation
+      const shuffled = [...teamsNeedingAssign]
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+      }
+      const shuffledJudges = [...judges]
+      for (let i = shuffledJudges.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[shuffledJudges[i], shuffledJudges[j]] = [shuffledJudges[j], shuffledJudges[i]]
+      }
+
+      let count = 0
+      const distribution: Record<string, string[]> = {}
+      for (let i = 0; i < shuffled.length; i++) {
+        const team = shuffled[i]
+        const judge = shuffledJudges[i % shuffledJudges.length]
+        const key = `${judge.id}|${team.id}`
+        if (keepKey.has(key)) continue
+
+        await this.prisma.judgeAssignment.create({
+          data: {
+            hackathonId: team.hackathonId,
+            judgeId: judge.id,
+            teamId: team.id,
+          },
+        })
+        await this.prisma.scoreSheet.create({
+          data: {
+            hackathonId: team.hackathonId,
+            judgeId: judge.id,
+            teamId: team.id,
+            round: 2,
+          },
+        })
+        count++
+        const label = judge.id
+        if (!distribution[label]) distribution[label] = []
+        distribution[label].push(team.name)
+      }
+
+      const perJudge = Math.ceil(teams.length / Math.max(judges.length, 1))
       return {
         success: true,
-        message: `Assigned all ${judges.length} judges to all ${teams.length} Round 2 teams. Team totals are out of ${judges.length * 100}.`,
+        message: `Randomly assigned ${teams.length} Round 2 teams across ${judges.length} judges (~${perJudge} each). Each team has 1 judge · /100 pts.`,
         created: count,
       }
     }

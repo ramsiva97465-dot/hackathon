@@ -932,7 +932,7 @@ export function RoundsManagement() {
                   className="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
                 >
                   <Users size={12} className="text-amber-400" />
-                  <span>⚡ Assign All Judges to Top 20</span>
+                  <span>⚡ Random-Assign Top 20 to Judges</span>
                 </button>
               )}
               {isSpecialBoard && (activeTab === 1 || activeTab === 2) && tableTeams.length > 0 && (
