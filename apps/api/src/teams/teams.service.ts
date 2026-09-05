@@ -237,6 +237,17 @@ export class TeamsService {
     // Round 2: every available judge scores every shortlisted team.
     // Max score is 100 × judge count (5 judges → 500, 4 → 400, 3 → 300).
     if (Number(round) === 2) {
+      // Drop leftover Round 1 main assignments so judges only see Top 20.
+      await this.prisma.judgeAssignment.deleteMany({
+        where: {
+          team: {
+            status: 'COMPETING',
+            isSpecialCategory: false,
+            round: { not: 2 },
+          },
+        },
+      })
+
       let count = 0
       for (const team of teams) {
         for (const judge of judges) {
@@ -273,6 +284,7 @@ export class TeamsService {
       return {
         success: true,
         message: `Assigned all ${judges.length} judges to all ${teams.length} Round 2 teams. Team totals are out of ${judges.length * 100}.`,
+        created: count,
       }
     }
 
